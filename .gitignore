@@ -1,0 +1,22 @@
+# --- Gradle & Java build output ---
+**/build/
+**/out/
+.gradle/
+
+# --- Dev runtime & logs (Minecraft) ---
+**/run/
+**/logs/
+**/crash-reports/
+**/.architectury-transformer/
+
+# --- IDE project files ---
+.idea/
+*.iml
+.vscode/*
+!.vscode/tasks.json
+
+# --- OS cruft (harmless to ignore anywhere) ---
+.DS_Store           # macOS Finder metadata
+Thumbs.db           # Windows Explorer metadata
+
+**/bin/
