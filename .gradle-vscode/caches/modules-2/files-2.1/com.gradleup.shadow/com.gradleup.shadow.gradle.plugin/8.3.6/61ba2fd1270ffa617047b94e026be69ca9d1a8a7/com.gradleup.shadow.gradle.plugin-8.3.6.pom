@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>com.gradleup.shadow</groupId>
+  <artifactId>com.gradleup.shadow.gradle.plugin</artifactId>
+  <version>8.3.6</version>
+  <packaging>pom</packaging>
+  <name>Shadow Gradle Plugin</name>
+  <description>Gradle plugin to create fat/uber JARs, apply file transforms, and relocate packages for applications and libraries. Gradle version of Maven's Shade plugin.</description>
+  <url>https://github.com/GradleUp/shadow</url>
+  <inceptionYear>2024</inceptionYear>
+  <licenses>
+    <license>
+      <name>Apache-2.0</name>
+      <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
+      <distribution>repo</distribution>
+    </license>
+  </licenses>
+  <developers>
+    <developer>
+      <id>gradleup</id>
+      <name>GradleUp developers</name>
+      <url>https://github.com/GradleUp</url>
+    </developer>
+  </developers>
+  <scm>
+    <connection>scm:git:git://github.com/GradleUp/shadow.git</connection>
+    <developerConnection>scm:git:ssh://git@github.com/GradleUp/shadow.git</developerConnection>
+    <url>https://github.com/GradleUp/shadow</url>
+  </scm>
+  <dependencies>
+    <dependency>
+      <groupId>com.gradleup.shadow</groupId>
+      <artifactId>shadow-gradle-plugin</artifactId>
+      <version>8.3.6</version>
+    </dependency>
+  </dependencies>
+</project>

@@ -1,0 +1,98 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "net.minecraftforge",
+    "module": "DiffPatch",
+    "version": "2.0.7",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "6.8",
+      "buildId": "dfk2nb4qmbdephshypaemnwzcm"
+    }
+  },
+  "variants": [
+    {
+      "name": "apiElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 8,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-api"
+      },
+      "files": [
+        {
+          "name": "DiffPatch-2.0.7.jar",
+          "url": "DiffPatch-2.0.7.jar",
+          "size": 112419,
+          "sha512": "13665c3177086e213aa482f017521a2e477a4204908cf8aef721f40f3923920cbd991ff82f7554c6e9016fdc5f51cff4edc2ef580bb1dd4fcbcc2d2754d8387b",
+          "sha256": "756eac6054e2d39824ff6f8d33af95ace20a73b310f408fe0a77009352283833",
+          "sha1": "9272c79da332f55a7dca3f1c3270b4fa96f5c40f",
+          "md5": "126ea780205201256f5c9ebdca7d71b7"
+        }
+      ]
+    },
+    {
+      "name": "runtimeElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 8,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "dependencies": [
+        {
+          "group": "it.unimi.dsi",
+          "module": "fastutil",
+          "version": {
+            "requires": "8.3.1"
+          }
+        },
+        {
+          "group": "org.apache.commons",
+          "module": "commons-lang3",
+          "version": {
+            "requires": "3.9"
+          }
+        },
+        {
+          "group": "org.apache.commons",
+          "module": "commons-compress",
+          "version": {
+            "requires": "1.18"
+          }
+        },
+        {
+          "group": "org.tukaani",
+          "module": "xz",
+          "version": {
+            "requires": "1.8"
+          }
+        },
+        {
+          "group": "net.sf.jopt-simple",
+          "module": "jopt-simple",
+          "version": {
+            "requires": "5.0.4"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "DiffPatch-2.0.7.jar",
+          "url": "DiffPatch-2.0.7.jar",
+          "size": 112419,
+          "sha512": "13665c3177086e213aa482f017521a2e477a4204908cf8aef721f40f3923920cbd991ff82f7554c6e9016fdc5f51cff4edc2ef580bb1dd4fcbcc2d2754d8387b",
+          "sha256": "756eac6054e2d39824ff6f8d33af95ace20a73b310f408fe0a77009352283833",
+          "sha1": "9272c79da332f55a7dca3f1c3270b4fa96f5c40f",
+          "md5": "126ea780205201256f5c9ebdca7d71b7"
+        }
+      ]
+    }
+  ]
+}

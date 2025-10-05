@@ -1,0 +1,80 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "dev.architectury",
+    "module": "architectury-neoforge",
+    "version": "17.0.8",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "8.11"
+    }
+  },
+  "variants": [
+    {
+      "name": "apiElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 21,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-api"
+      },
+      "files": [
+        {
+          "name": "architectury-neoforge-17.0.8.jar",
+          "url": "architectury-neoforge-17.0.8.jar",
+          "size": 585847,
+          "sha512": "22d2f5cfa5dd151c0dc38337e171c649379a1a30a6f55278c78007a7a014fb255854d1fd6a35e08b17afec9ce00928837419b51aad79fe7f8f887e0c8cfea3d8",
+          "sha256": "56b57af493befe66e791d14568feb76935d63b8d02ad69e680bc654788d90a1c",
+          "sha1": "bc05422dec4f9cd23f4601e0aa1e4a8c8bacc255",
+          "md5": "2a7b21783bbaa0c4a502d52d64f9afd2"
+        }
+      ]
+    },
+    {
+      "name": "runtimeElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 21,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "architectury-neoforge-17.0.8.jar",
+          "url": "architectury-neoforge-17.0.8.jar",
+          "size": 585847,
+          "sha512": "22d2f5cfa5dd151c0dc38337e171c649379a1a30a6f55278c78007a7a014fb255854d1fd6a35e08b17afec9ce00928837419b51aad79fe7f8f887e0c8cfea3d8",
+          "sha256": "56b57af493befe66e791d14568feb76935d63b8d02ad69e680bc654788d90a1c",
+          "sha1": "bc05422dec4f9cd23f4601e0aa1e4a8c8bacc255",
+          "md5": "2a7b21783bbaa0c4a502d52d64f9afd2"
+        }
+      ]
+    },
+    {
+      "name": "sourcesElements",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "architectury-neoforge-17.0.8-sources.jar",
+          "url": "architectury-neoforge-17.0.8-sources.jar",
+          "size": 429644,
+          "sha512": "1ec0ab77a3be87646325380130f27d6de1b8ede649fef0b5112b5566c5e09c9e20f1f90d3b321f11fcce5a745c8bddd7d98a3fb37738f2f511ecd588faae5cdd",
+          "sha256": "cf8bdefdbc4d3bbe65a2679b77689c22009a6b316ad9777de299302f6c861140",
+          "sha1": "4f409d25115c70de156ae5b61dcebb62bdbac625",
+          "md5": "10fcbd724f05db359e998266208cc386"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,112 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "dev.architectury",
+    "module": "at",
+    "version": "1.0.1",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "8.5"
+    }
+  },
+  "variants": [
+    {
+      "name": "apiElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 8,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-api"
+      },
+      "dependencies": [
+        {
+          "group": "org.cadixdev",
+          "module": "bombe",
+          "version": {
+            "requires": "0.3.4"
+          }
+        },
+        {
+          "group": "net.fabricmc",
+          "module": "mapping-io",
+          "version": {
+            "requires": "0.4.2"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "at-1.0.1.jar",
+          "url": "at-1.0.1.jar",
+          "size": 25095,
+          "sha512": "55f82ff7fc388340165225fa740ad8b4818aa4256f08b008c11fef9a7ac3f4d337052369b4231d0d9c2daeba220a7d604741209ee6f94e1e483eb979ed0b6bb8",
+          "sha256": "df8b69556807b8d75adc55bc5b6827ef2e44ed1345e23d2bca6df150bd4811a3",
+          "sha1": "b6bd17d448f6f7beaa3d68a261b9e973121ee83f",
+          "md5": "a182f937e8daf379365c022603a56c3c"
+        }
+      ]
+    },
+    {
+      "name": "runtimeElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 8,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "dependencies": [
+        {
+          "group": "org.cadixdev",
+          "module": "bombe",
+          "version": {
+            "requires": "0.3.4"
+          }
+        },
+        {
+          "group": "net.fabricmc",
+          "module": "mapping-io",
+          "version": {
+            "requires": "0.4.2"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "at-1.0.1.jar",
+          "url": "at-1.0.1.jar",
+          "size": 25095,
+          "sha512": "55f82ff7fc388340165225fa740ad8b4818aa4256f08b008c11fef9a7ac3f4d337052369b4231d0d9c2daeba220a7d604741209ee6f94e1e483eb979ed0b6bb8",
+          "sha256": "df8b69556807b8d75adc55bc5b6827ef2e44ed1345e23d2bca6df150bd4811a3",
+          "sha1": "b6bd17d448f6f7beaa3d68a261b9e973121ee83f",
+          "md5": "a182f937e8daf379365c022603a56c3c"
+        }
+      ]
+    },
+    {
+      "name": "sourcesElements",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "at-1.0.1-sources.jar",
+          "url": "at-1.0.1-sources.jar",
+          "size": 19578,
+          "sha512": "2280b9c468cad81068e6efc84eacf538cfdf71f148a239d5e32c4576b127c797ccf6883b791523233f9a89e99582dab391a27157bbc3152cbe63d016be50f6ba",
+          "sha256": "ba81d56e2fc1856e20c2f14e0b61f0644e72f327f465e0764434e6aa70736a2a",
+          "sha1": "3e2187e9fe6e6c8a014723cc60b7ba3cdf71878f",
+          "md5": "c976b9dbc6b9a784212b2c50d8d11f15"
+        }
+      ]
+    }
+  ]
+}

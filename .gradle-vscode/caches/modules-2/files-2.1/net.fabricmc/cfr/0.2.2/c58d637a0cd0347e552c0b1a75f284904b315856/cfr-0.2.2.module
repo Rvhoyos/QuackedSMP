@@ -1,0 +1,80 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "net.fabricmc",
+    "module": "cfr",
+    "version": "0.2.2",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "7.1"
+    }
+  },
+  "variants": [
+    {
+      "name": "apiElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 8,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-api"
+      },
+      "files": [
+        {
+          "name": "cfr-0.2.2.jar",
+          "url": "cfr-0.2.2.jar",
+          "size": 2171982,
+          "sha512": "851bea4d5d5f6ea2de36ebfd57c39778fe1dd6825d3edd4a26e3015bda67f4dd8437a1a5c8b5639e2e1989eb114cec9c10f2a9bd10851820e6d0e4f2aa529e81",
+          "sha256": "9d2987d2af2c5574856843d4dea7fccd0e4c7604183aad21c285d4baa09da776",
+          "sha1": "749198a61958be2cda4d8ae8db1e4b963703d4ea",
+          "md5": "c1deed004d488d5d8e8685c269b7ad94"
+        }
+      ]
+    },
+    {
+      "name": "runtimeElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 8,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "cfr-0.2.2.jar",
+          "url": "cfr-0.2.2.jar",
+          "size": 2171982,
+          "sha512": "851bea4d5d5f6ea2de36ebfd57c39778fe1dd6825d3edd4a26e3015bda67f4dd8437a1a5c8b5639e2e1989eb114cec9c10f2a9bd10851820e6d0e4f2aa529e81",
+          "sha256": "9d2987d2af2c5574856843d4dea7fccd0e4c7604183aad21c285d4baa09da776",
+          "sha1": "749198a61958be2cda4d8ae8db1e4b963703d4ea",
+          "md5": "c1deed004d488d5d8e8685c269b7ad94"
+        }
+      ]
+    },
+    {
+      "name": "sourcesElements",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "cfr-0.2.2-sources.jar",
+          "url": "cfr-0.2.2-sources.jar",
+          "size": 1019673,
+          "sha512": "5e652d260ad386f9928a6c3d6eea9e3b00d6da51e5952a2bc81ccdd1f4d52a1f73ca34a6b98c6f651a181a5002cbf5c116256119b3f36e1e02694af704dc08bf",
+          "sha256": "198f2a7e29b0fb5bf41b9a5d11b6e004aba5c01b5665aee32aacccbed883ebc6",
+          "sha1": "d77b239c2a0a1a9736fb13329da677949cf261ee",
+          "md5": "28c632df03074d5eca483334f2ad9ea0"
+        }
+      ]
+    }
+  ]
+}

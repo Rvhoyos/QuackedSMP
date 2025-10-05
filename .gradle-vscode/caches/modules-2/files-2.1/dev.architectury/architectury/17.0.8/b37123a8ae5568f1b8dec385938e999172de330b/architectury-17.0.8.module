@@ -1,0 +1,89 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "dev.architectury",
+    "module": "architectury",
+    "version": "17.0.8",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "8.11"
+    }
+  },
+  "variants": [
+    {
+      "name": "apiElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 21,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-api"
+      },
+      "files": [
+        {
+          "name": "architectury-17.0.8.jar",
+          "url": "architectury-17.0.8.jar",
+          "size": 263922,
+          "sha512": "22839098105568490cabf1e6dba8e02e25320c4385e095d995183df56ecc2ede2e373ccc018a72c6ced3632147a6b242dc52752a7fdca73e1d057992eef6eb7b",
+          "sha256": "3c8045aa9de28aac771aaacbd9e4d1b7b2db1eebd132a8677aacb72281c9cb72",
+          "sha1": "1b4885ce34a68be673f0b3ab01d973d4d34c2f84",
+          "md5": "5a897ea56d8a6272e948b88a3bdc4f1b"
+        }
+      ]
+    },
+    {
+      "name": "runtimeElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 21,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "dependencies": [
+        {
+          "group": "net.fabricmc",
+          "module": "fabric-loader",
+          "version": {
+            "requires": "0.16.14"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "architectury-17.0.8.jar",
+          "url": "architectury-17.0.8.jar",
+          "size": 263922,
+          "sha512": "22839098105568490cabf1e6dba8e02e25320c4385e095d995183df56ecc2ede2e373ccc018a72c6ced3632147a6b242dc52752a7fdca73e1d057992eef6eb7b",
+          "sha256": "3c8045aa9de28aac771aaacbd9e4d1b7b2db1eebd132a8677aacb72281c9cb72",
+          "sha1": "1b4885ce34a68be673f0b3ab01d973d4d34c2f84",
+          "md5": "5a897ea56d8a6272e948b88a3bdc4f1b"
+        }
+      ]
+    },
+    {
+      "name": "sourcesElements",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "architectury-17.0.8-sources.jar",
+          "url": "architectury-17.0.8-sources.jar",
+          "size": 189418,
+          "sha512": "cfdb087de51da7ea980e16fae4b3aafe85b8d557ba76a0cce4ffc6e08275dd9a29d88019027e9f040c1cde091c8a0f3e5accd93592f02f59bc899872b73b1c59",
+          "sha256": "a8bd5c654c6b13b9bda71cb18100ddbf0e00c5b6de9a898ab9871e95fe7d89f3",
+          "sha1": "ec7e3e9f7541c4ab3df976527f610002bcc6c9e2",
+          "md5": "add4c5bc8e67be7fd3511b1a9ca463b1"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,151 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "net.neoforged.installertools",
+    "module": "installertools",
+    "version": "2.1.2",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "8.4"
+    }
+  },
+  "variants": [
+    {
+      "name": "apiElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 8,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-api"
+      },
+      "files": [
+        {
+          "name": "installertools-2.1.2.jar",
+          "url": "installertools-2.1.2.jar",
+          "size": 83543,
+          "sha512": "5f9f316f57ea620f371e79fc02b860ccf7c36d6dbe0ed460be0fbe7ab92f97b8261ce0333a8493154c38e25b93bcac17eea9ddce18fe114624493a893fb29839",
+          "sha256": "fc695a63f7cdc7f673f7a94d94c9f35518850594bd8fa5c933b0fff38352d8bb",
+          "sha1": "72524c0362f812d8aa4cdb4c03e9b45e2b71ae3b",
+          "md5": "bb7fc109b8134524971cb649ef9efc2a"
+        }
+      ]
+    },
+    {
+      "name": "runtimeElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 8,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "dependencies": [
+        {
+          "group": "net.neoforged",
+          "module": "srgutils",
+          "version": {
+            "requires": "1.0.0"
+          }
+        },
+        {
+          "group": "net.sf.jopt-simple",
+          "module": "jopt-simple",
+          "version": {
+            "requires": "5.0.4"
+          }
+        },
+        {
+          "group": "com.google.code.gson",
+          "module": "gson",
+          "version": {
+            "requires": "2.8.9"
+          }
+        },
+        {
+          "group": "net.md-5",
+          "module": "SpecialSource",
+          "version": {
+            "requires": "1.11.0"
+          }
+        },
+        {
+          "group": "de.siegmar",
+          "module": "fastcsv",
+          "version": {
+            "requires": "2.0.0"
+          }
+        },
+        {
+          "group": "org.ow2.asm",
+          "module": "asm-commons",
+          "version": {
+            "requires": "9.3"
+          }
+        },
+        {
+          "group": "net.neoforged.installertools",
+          "module": "cli-utils",
+          "version": {
+            "requires": "2.1.2"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "installertools-2.1.2.jar",
+          "url": "installertools-2.1.2.jar",
+          "size": 83543,
+          "sha512": "5f9f316f57ea620f371e79fc02b860ccf7c36d6dbe0ed460be0fbe7ab92f97b8261ce0333a8493154c38e25b93bcac17eea9ddce18fe114624493a893fb29839",
+          "sha256": "fc695a63f7cdc7f673f7a94d94c9f35518850594bd8fa5c933b0fff38352d8bb",
+          "sha1": "72524c0362f812d8aa4cdb4c03e9b45e2b71ae3b",
+          "md5": "bb7fc109b8134524971cb649ef9efc2a"
+        }
+      ]
+    },
+    {
+      "name": "shadowRuntimeElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "shadowed",
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "installertools-2.1.2-fatjar.jar",
+          "url": "installertools-2.1.2-fatjar.jar",
+          "size": 5742231,
+          "sha512": "4a7c564d9a6121075d3d84646a7dce407138498d16d1e036eff3f13d12ad89f5741eb8dbf2569e1fa1f725fbf26ddddf4a62f46fe5fddec4530f014f49bad072",
+          "sha256": "9fe7c6df17299f661b9cd07fc1c4e85493b63efae6bb9da0255a97d9d0a87c60",
+          "sha1": "62740d5aa8f75f4a4d542d363bdda5b64a198f7a",
+          "md5": "73670d717669fb1a2fd50b3faeddd579"
+        }
+      ]
+    },
+    {
+      "name": "sourcesElements",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "installertools-2.1.2-sources.jar",
+          "url": "installertools-2.1.2-sources.jar",
+          "size": 35355,
+          "sha512": "763b5e4157134455d40ee8168e68391d045be917497b452ee4c50cc832f7bef52152a9517eff999667a9436e6f4438eee5c71098fba953b3d50a59047a0d0d70",
+          "sha256": "03c3e5ca166b2190a4387aea61dfd362894843281155cd4219a983d177459ce9",
+          "sha1": "61e0082c42807e3a0df847805b86139c304aa213",
+          "md5": "6d76b023271b200f7d0c69333125413a"
+        }
+      ]
+    }
+  ]
+}

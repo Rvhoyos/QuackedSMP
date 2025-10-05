@@ -1,0 +1,89 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "net.neoforged.fancymodloader",
+    "module": "bootstraplauncher",
+    "version": "9.0.16",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "8.14.2"
+    }
+  },
+  "variants": [
+    {
+      "name": "apiElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 21,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-api"
+      },
+      "files": [
+        {
+          "name": "bootstraplauncher-9.0.16.jar",
+          "url": "bootstraplauncher-9.0.16.jar",
+          "size": 11197,
+          "sha512": "9f529d10417e278d99472048eb3bf515fbca9b66df56574cc76801ef4cc9333973276022e73015284fc3a1d5418cb12f5e29ba52f88a1605c357237d1fe3a8d4",
+          "sha256": "f774ae9d49ea88da64ba93c3ed2e4dc307e41967e5e0de6948277087eda0e6b4",
+          "sha1": "703417f9ccbdb2c69ba9b25b04458b0803987a0b",
+          "md5": "ed76f942d9a1bd49f2a41f0c29f6a2ef"
+        }
+      ]
+    },
+    {
+      "name": "runtimeElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 21,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "dependencies": [
+        {
+          "group": "net.neoforged.fancymodloader",
+          "module": "securejarhandler",
+          "version": {
+            "requires": "9.0.16"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "bootstraplauncher-9.0.16.jar",
+          "url": "bootstraplauncher-9.0.16.jar",
+          "size": 11197,
+          "sha512": "9f529d10417e278d99472048eb3bf515fbca9b66df56574cc76801ef4cc9333973276022e73015284fc3a1d5418cb12f5e29ba52f88a1605c357237d1fe3a8d4",
+          "sha256": "f774ae9d49ea88da64ba93c3ed2e4dc307e41967e5e0de6948277087eda0e6b4",
+          "sha1": "703417f9ccbdb2c69ba9b25b04458b0803987a0b",
+          "md5": "ed76f942d9a1bd49f2a41f0c29f6a2ef"
+        }
+      ]
+    },
+    {
+      "name": "sourcesElements",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "bootstraplauncher-9.0.16-sources.jar",
+          "url": "bootstraplauncher-9.0.16-sources.jar",
+          "size": 5529,
+          "sha512": "49a5a8be93307ce36f9277382ed7fc5669bc9b16667f1d59b832bbefd40f7c138e80ebba0d2cebe5b3dfad8ef002ce0dec04645346e1749d04278db01d2bde24",
+          "sha256": "7b8d87c358fad28028b4cfe5ed1c8d4c354d6895f70966497769e6db16a73de7",
+          "sha1": "b53aa1681eba7ee137b4cf47c24b8900699e49f5",
+          "md5": "9ee7004c11b0848b4147ee85dfd3ee98"
+        }
+      ]
+    }
+  ]
+}

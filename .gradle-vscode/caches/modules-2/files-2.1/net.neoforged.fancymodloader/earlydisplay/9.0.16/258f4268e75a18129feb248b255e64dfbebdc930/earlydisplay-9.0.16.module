@@ -1,0 +1,134 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "net.neoforged.fancymodloader",
+    "module": "earlydisplay",
+    "version": "9.0.16",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "8.14.2"
+    }
+  },
+  "variants": [
+    {
+      "name": "apiElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 21,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-api"
+      },
+      "files": [
+        {
+          "name": "earlydisplay-9.0.16.jar",
+          "url": "earlydisplay-9.0.16.jar",
+          "size": 325408,
+          "sha512": "983ab3904d994da181733a42f62f5a20679d95f460aacccefb2672c58dd7c1f3b5f6a7b8751e2f36ba1007a3dc096801874faced5c8bf4a0c7fee220fbe93583",
+          "sha256": "0766cf07d09920c49fb0798890f533fd6a09f59129aec16794b562bf38b63466",
+          "sha1": "303a11afeb7cb2f9477ab0e27cc739af2a930a9e",
+          "md5": "bd9ff7f7b88a9670b4cb9345149b545c"
+        }
+      ]
+    },
+    {
+      "name": "runtimeElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 21,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "dependencies": [
+        {
+          "group": "net.neoforged.fancymodloader",
+          "module": "loader",
+          "version": {
+            "requires": "9.0.16"
+          }
+        },
+        {
+          "group": "org.lwjgl",
+          "module": "lwjgl-bom",
+          "version": {
+            "requires": "3.3.3"
+          },
+          "attributes": {
+            "org.gradle.category": "platform"
+          },
+          "endorseStrictVersions": true
+        },
+        {
+          "group": "org.lwjgl",
+          "module": "lwjgl"
+        },
+        {
+          "group": "org.lwjgl",
+          "module": "lwjgl-glfw"
+        },
+        {
+          "group": "org.lwjgl",
+          "module": "lwjgl-opengl"
+        },
+        {
+          "group": "org.lwjgl",
+          "module": "lwjgl-stb"
+        },
+        {
+          "group": "org.lwjgl",
+          "module": "lwjgl-tinyfd"
+        },
+        {
+          "group": "org.slf4j",
+          "module": "slf4j-api",
+          "version": {
+            "requires": "2.0.16"
+          }
+        },
+        {
+          "group": "net.sf.jopt-simple",
+          "module": "jopt-simple",
+          "version": {
+            "requires": "5.0.4"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "earlydisplay-9.0.16.jar",
+          "url": "earlydisplay-9.0.16.jar",
+          "size": 325408,
+          "sha512": "983ab3904d994da181733a42f62f5a20679d95f460aacccefb2672c58dd7c1f3b5f6a7b8751e2f36ba1007a3dc096801874faced5c8bf4a0c7fee220fbe93583",
+          "sha256": "0766cf07d09920c49fb0798890f533fd6a09f59129aec16794b562bf38b63466",
+          "sha1": "303a11afeb7cb2f9477ab0e27cc739af2a930a9e",
+          "md5": "bd9ff7f7b88a9670b4cb9345149b545c"
+        }
+      ]
+    },
+    {
+      "name": "sourcesElements",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "earlydisplay-9.0.16-sources.jar",
+          "url": "earlydisplay-9.0.16-sources.jar",
+          "size": 247516,
+          "sha512": "60deefa700aa6970f95e09362b95ced8ff0c50476318a4cb722292bce75f3a070b19a3af28a50567357990dbc2c7397189d767f7e26e52c3f0e20f9dc608aa0f",
+          "sha256": "5ef56670ea8c46727fab63c8b20495ed9e767adb6c5dc38c40aa945889c38d80",
+          "sha1": "9ca81b31f63f2c6a598d32844a0c6388d0cb2bbf",
+          "md5": "c12bfc41f877febbd041a5e924fe8c35"
+        }
+      ]
+    }
+  ]
+}

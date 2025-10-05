@@ -1,0 +1,154 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "net.neoforged",
+    "module": "accesstransformers",
+    "version": "11.0.2",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "8.7"
+    }
+  },
+  "variants": [
+    {
+      "name": "apiElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 21,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-api"
+      },
+      "dependencies": [
+        {
+          "group": "org.slf4j",
+          "module": "slf4j-api",
+          "version": {
+            "requires": "2.0.9"
+          }
+        },
+        {
+          "group": "org.ow2.asm",
+          "module": "asm",
+          "version": {
+            "requires": "9.7"
+          }
+        },
+        {
+          "group": "org.ow2.asm",
+          "module": "asm-tree",
+          "version": {
+            "requires": "9.7"
+          }
+        },
+        {
+          "group": "org.ow2.asm",
+          "module": "asm-commons",
+          "version": {
+            "requires": "9.7"
+          }
+        },
+        {
+          "group": "net.neoforged.accesstransformers",
+          "module": "at-parser",
+          "version": {
+            "requires": "11.0.2"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "accesstransformers-11.0.2.jar",
+          "url": "accesstransformers-11.0.2.jar",
+          "size": 20292,
+          "sha512": "d746962832597794cf726fc338cade70feab7562154ea94b5c66d81f40c9f6c9c00c7d41cfaa5ee385840c9d32a1f1f02c6ad38d45d83ca80b1f46b52eb93b3e",
+          "sha256": "e5f175eca04f3ab68dab45742323f5c38d1b61cf9a098b5ad85bd1d19621cdba",
+          "sha1": "25dcb69c78b16669935f0ab91dff830ce192379d",
+          "md5": "922dcbacd9dcc03115e38ace7f518970"
+        }
+      ]
+    },
+    {
+      "name": "runtimeElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 21,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "dependencies": [
+        {
+          "group": "org.slf4j",
+          "module": "slf4j-api",
+          "version": {
+            "requires": "2.0.9"
+          }
+        },
+        {
+          "group": "org.ow2.asm",
+          "module": "asm",
+          "version": {
+            "requires": "9.7"
+          }
+        },
+        {
+          "group": "org.ow2.asm",
+          "module": "asm-tree",
+          "version": {
+            "requires": "9.7"
+          }
+        },
+        {
+          "group": "org.ow2.asm",
+          "module": "asm-commons",
+          "version": {
+            "requires": "9.7"
+          }
+        },
+        {
+          "group": "net.neoforged.accesstransformers",
+          "module": "at-parser",
+          "version": {
+            "requires": "11.0.2"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "accesstransformers-11.0.2.jar",
+          "url": "accesstransformers-11.0.2.jar",
+          "size": 20292,
+          "sha512": "d746962832597794cf726fc338cade70feab7562154ea94b5c66d81f40c9f6c9c00c7d41cfaa5ee385840c9d32a1f1f02c6ad38d45d83ca80b1f46b52eb93b3e",
+          "sha256": "e5f175eca04f3ab68dab45742323f5c38d1b61cf9a098b5ad85bd1d19621cdba",
+          "sha1": "25dcb69c78b16669935f0ab91dff830ce192379d",
+          "md5": "922dcbacd9dcc03115e38ace7f518970"
+        }
+      ]
+    },
+    {
+      "name": "sourcesElements",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "accesstransformers-11.0.2-sources.jar",
+          "url": "accesstransformers-11.0.2-sources.jar",
+          "size": 8877,
+          "sha512": "f21d493821506bd1e4340ba80d6d1386e914b69123f52bcae01578312ecde6bacdd3256b1d64b483444da7811f2756d0e9a99e6c21441bc0bccc78fadf803d2a",
+          "sha256": "d176c2fbc3f4c409e4dbaa5b1b7097f2f2d72869c051144bcf4f444957148583",
+          "sha1": "37519ae1a910288d15559a2f70de27d1708b8fd0",
+          "md5": "8eafc13e61e8c7d5ace7608bd0f9ae03"
+        }
+      ]
+    }
+  ]
+}

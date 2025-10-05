@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>net.fabricmc.fabric-api</groupId>
+  <artifactId>fabric-api-deprecated</artifactId>
+  <version>0.133.4+1.21.8</version>
+  <packaging>pom</packaging>
+  <dependencies>
+    <dependency>
+      <groupId>net.fabricmc.fabric-api</groupId>
+      <artifactId>fabric-convention-tags-v1</artifactId>
+      <version>2.1.41+7f945d5b2c</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>net.fabricmc.fabric-api</groupId>
+      <artifactId>fabric-loot-api-v2</artifactId>
+      <version>3.0.56+3f89f5a52c</version>
+      <scope>compile</scope>
+    </dependency>
+  </dependencies>
+</project>

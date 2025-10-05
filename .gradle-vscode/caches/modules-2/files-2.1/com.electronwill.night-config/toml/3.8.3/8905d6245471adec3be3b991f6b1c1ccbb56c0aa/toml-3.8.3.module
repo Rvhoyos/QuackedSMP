@@ -1,0 +1,118 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "com.electronwill.night-config",
+    "module": "toml",
+    "version": "3.8.3",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "8.8"
+    }
+  },
+  "variants": [
+    {
+      "name": "apiElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 8,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-api"
+      },
+      "dependencies": [
+        {
+          "group": "com.electronwill.night-config",
+          "module": "core",
+          "version": {
+            "requires": "3.8.3"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "toml-3.8.3.jar",
+          "url": "toml-3.8.3.jar",
+          "size": 39516,
+          "sha512": "9227f765c77b004e2aa856ac18df4b694bfbecd0bb2e224d49061f1fbad7d3c75b024e6f832309aa273bad7ecb3519c544fef2e32679f9d9003a656723b7e7aa",
+          "sha256": "ccb92882264bf071e3916ab122fe5ea3e211b8ebf199201698a1324f151f928f",
+          "sha1": "90b2fd6efcb4a7d5b9810cf78f9d824994d717f2",
+          "md5": "71c9f7b86422f206c0d78c1a0600fd3a"
+        }
+      ]
+    },
+    {
+      "name": "runtimeElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 8,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "dependencies": [
+        {
+          "group": "com.electronwill.night-config",
+          "module": "core",
+          "version": {
+            "requires": "3.8.3"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "toml-3.8.3.jar",
+          "url": "toml-3.8.3.jar",
+          "size": 39516,
+          "sha512": "9227f765c77b004e2aa856ac18df4b694bfbecd0bb2e224d49061f1fbad7d3c75b024e6f832309aa273bad7ecb3519c544fef2e32679f9d9003a656723b7e7aa",
+          "sha256": "ccb92882264bf071e3916ab122fe5ea3e211b8ebf199201698a1324f151f928f",
+          "sha1": "90b2fd6efcb4a7d5b9810cf78f9d824994d717f2",
+          "md5": "71c9f7b86422f206c0d78c1a0600fd3a"
+        }
+      ]
+    },
+    {
+      "name": "javadocElements",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "javadoc",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "toml-3.8.3-javadoc.jar",
+          "url": "toml-3.8.3-javadoc.jar",
+          "size": 27434,
+          "sha512": "9fec65a76a7cf114bf8ae20638fd1725989dd7e3f1b4614eb6ece511c547e45cd0c202d7b2ac2b845986b453796a70df4cf6c6a7b4657ac5c29d8bbfc79610fa",
+          "sha256": "a6ffc1ea93fa4fc84788fe728c7ef58cc70e236878be3da5dfe1f53673337f89",
+          "sha1": "3209fc4545df3789243898cc6ec75bd2bc41e2c2",
+          "md5": "4a072a744ecfab72db2b365be83425e4"
+        }
+      ]
+    },
+    {
+      "name": "sourcesElements",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "toml-3.8.3-sources.jar",
+          "url": "toml-3.8.3-sources.jar",
+          "size": 22621,
+          "sha512": "f0681270c684facba5391472e680ce37e4bf73946feb88b294581ba2f79f1f0ac418770075fefff25ba7b1c60509d2514eaef2cc74c7a9694b76ba5973a9d66f",
+          "sha256": "7f24d082fd578bcb7a4a6f122b878dcb94da8524cfd3a03053b3a26683df5c6a",
+          "sha1": "56dfa8456ff270f6028c513c9e743af03ad850e3",
+          "md5": "1eeed5919748feca3f57cc0cf193fbda"
+        }
+      ]
+    }
+  ]
+}

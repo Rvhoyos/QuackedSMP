@@ -1,0 +1,80 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "net.neoforged.fancymodloader",
+    "module": "securejarhandler",
+    "version": "9.0.16",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "8.14.2"
+    }
+  },
+  "variants": [
+    {
+      "name": "apiElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 21,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-api"
+      },
+      "files": [
+        {
+          "name": "securejarhandler-9.0.16.jar",
+          "url": "securejarhandler-9.0.16.jar",
+          "size": 103771,
+          "sha512": "eb12c7e3b1d7b9f6596bef7c4455fc6d33f04122b87b49aaefa44cf519d2cd8b5449b32fc571474ab275b84438262f54a1e33babf74e74a684946b91ec42196e",
+          "sha256": "e88860c41919c30410bdd0e37c3da615f81e3450d8c3693442e64006648b900f",
+          "sha1": "ae0b47dfdb029eb38243aae5d8980015f1274c59",
+          "md5": "aacbe4f2ddd6979834a347ed609c88df"
+        }
+      ]
+    },
+    {
+      "name": "runtimeElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 21,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "securejarhandler-9.0.16.jar",
+          "url": "securejarhandler-9.0.16.jar",
+          "size": 103771,
+          "sha512": "eb12c7e3b1d7b9f6596bef7c4455fc6d33f04122b87b49aaefa44cf519d2cd8b5449b32fc571474ab275b84438262f54a1e33babf74e74a684946b91ec42196e",
+          "sha256": "e88860c41919c30410bdd0e37c3da615f81e3450d8c3693442e64006648b900f",
+          "sha1": "ae0b47dfdb029eb38243aae5d8980015f1274c59",
+          "md5": "aacbe4f2ddd6979834a347ed609c88df"
+        }
+      ]
+    },
+    {
+      "name": "sourcesElements",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "securejarhandler-9.0.16-sources.jar",
+          "url": "securejarhandler-9.0.16-sources.jar",
+          "size": 44287,
+          "sha512": "194ebad23627070a40b22b04d98dfc8845cd58c6a0b4abf652df53220a08671b23a0e3aa2c25b3f675605f5f42d5aa0b74dcd4d133dfbcaa209228a9110baa40",
+          "sha256": "b9cf76c9bf8d020ecf4740323be5d3c0a6bcad46378361985c281ed2f4be5f2d",
+          "sha1": "9fc503d24f0c49a9e414dadb49f1023d8b150ba8",
+          "md5": "5ba5642244ab7bccd5f46b6df8672987"
+        }
+      ]
+    }
+  ]
+}

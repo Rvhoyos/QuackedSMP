@@ -1,0 +1,164 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "net.neoforged.installertools",
+    "module": "binarypatcher",
+    "version": "3.0.13",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "8.14.2"
+    }
+  },
+  "variants": [
+    {
+      "name": "apiElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 8,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-api"
+      },
+      "files": [
+        {
+          "name": "binarypatcher-3.0.13.jar",
+          "url": "binarypatcher-3.0.13.jar",
+          "size": 25337,
+          "sha512": "86975a64789b8e2f12bfafa6d78d4ccd66bbeda0f0db0ae7933847d7fd8fb185c5d3b7372547e3a5660ede44f432263aceed1fcad337e3a2b169196cb6e831db",
+          "sha256": "b249bbfd3c2bc7198bca65dbf0bcf6bde33107b15ee986d36cb2fa4fe203f20b",
+          "sha1": "c5283e4cf04b4f28961621628fb7c0b1c58f09f3",
+          "md5": "352db9a7f9eec27c05c6f9b466ea02b6"
+        }
+      ]
+    },
+    {
+      "name": "runtimeElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 8,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "dependencies": [
+        {
+          "group": "net.neoforged",
+          "module": "srgutils",
+          "version": {
+            "requires": "1.0.0"
+          }
+        },
+        {
+          "group": "net.sf.jopt-simple",
+          "module": "jopt-simple",
+          "version": {
+            "requires": "5.0.4"
+          }
+        },
+        {
+          "group": "org.tukaani",
+          "module": "xz",
+          "version": {
+            "requires": "1.10"
+          }
+        },
+        {
+          "group": "com.nothome",
+          "module": "javaxdelta",
+          "version": {
+            "requires": "2.0.1"
+          }
+        },
+        {
+          "group": "org.ow2.asm",
+          "module": "asm",
+          "version": {
+            "requires": "9.7"
+          }
+        },
+        {
+          "group": "net.neoforged.installertools",
+          "module": "cli-utils",
+          "version": {
+            "requires": "3.0.13"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "binarypatcher-3.0.13.jar",
+          "url": "binarypatcher-3.0.13.jar",
+          "size": 25337,
+          "sha512": "86975a64789b8e2f12bfafa6d78d4ccd66bbeda0f0db0ae7933847d7fd8fb185c5d3b7372547e3a5660ede44f432263aceed1fcad337e3a2b169196cb6e831db",
+          "sha256": "b249bbfd3c2bc7198bca65dbf0bcf6bde33107b15ee986d36cb2fa4fe203f20b",
+          "sha1": "c5283e4cf04b4f28961621628fb7c0b1c58f09f3",
+          "md5": "352db9a7f9eec27c05c6f9b466ea02b6"
+        }
+      ]
+    },
+    {
+      "name": "javadocElements",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "javadoc",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "binarypatcher-3.0.13-javadoc.jar",
+          "url": "binarypatcher-3.0.13-javadoc.jar",
+          "size": 31510,
+          "sha512": "56875e30994eef96bfeeb8744889157824d9a06235f3b6117f0059168674d7b9f541df7519fe1f7be48a00440c568153238742fb687ac5d63279886a072c0e5c",
+          "sha256": "003ac7c44f6f9945268364d2bf4a585623bf66be8e09b58b92a8d16a4409ddca",
+          "sha1": "7748cced2787ebe3d154aa313373c4dec74334b9",
+          "md5": "cb23ab6c7d17c47261033b3649fa9130"
+        }
+      ]
+    },
+    {
+      "name": "sourcesElements",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "binarypatcher-3.0.13-sources.jar",
+          "url": "binarypatcher-3.0.13-sources.jar",
+          "size": 10945,
+          "sha512": "195edad772ebbe86fd193a78ff695f13d4e1f10626f505b8ad3b9f9683d38d0446bb2feff2eb9f01f732f8e87ac97c0fb77e13fdabe52c91d693c39e2b965782",
+          "sha256": "c80d079ce7af13ecc1ae4cf2c73552b1c34bf65834eaeced8f50d63c3c29881d",
+          "sha1": "a7d1545fc0e01fde4451bb2a75eb2bae80c1c264",
+          "md5": "bbfe1f927dcdb28caa4ed5a69b7c80cc"
+        }
+      ]
+    },
+    {
+      "name": "shadowRuntimeElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "shadowed",
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "binarypatcher-3.0.13-fatjar.jar",
+          "url": "binarypatcher-3.0.13-fatjar.jar",
+          "size": 866879,
+          "sha512": "b89fda42a1e7c13ae8abacd2b4f40bb95be50c9925d8e08d20db2a3f687d1da347c9997671de1c89d9eb671aa9ef6fb4f277fa3505e409d44001ca265d541580",
+          "sha256": "0bd052b73cb538f2ccb49600a476c01c0a41abd071ff504ca180a7441b2bdf27",
+          "sha1": "5b68c9f3aabf5e45b1629534e257dd86791e1409",
+          "md5": "b29599b5114802c09c4a67d7580dfe8e"
+        }
+      ]
+    }
+  ]
+}

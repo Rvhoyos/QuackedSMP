@@ -1,0 +1,393 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "net.neoforged",
+    "module": "mergetool",
+    "version": "2.0.7",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "8.4"
+    }
+  },
+  "variants": [
+    {
+      "name": "apiElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 8,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-api"
+      },
+      "files": [
+        {
+          "name": "mergetool-2.0.7.jar",
+          "url": "mergetool-2.0.7.jar",
+          "size": 28166,
+          "sha512": "519f687b6746eb6001f099d32e21c6b8f996ae2de77bb774dd4510329b7a449992db15d488314d8038c1abb3020ebfe008ea4718f3698aaacaff22ffc2ac9335",
+          "sha256": "aca2de408721b77c664334030cf7d2013a80f4871e025337621d292e0e5ae265",
+          "sha1": "c5577c12d6cdbc50f6870d002282cca7f5382910",
+          "md5": "a5a9284426a7e82420e18b77008cdf59"
+        }
+      ],
+      "capabilities": [
+        {
+          "group": "net.neoforged",
+          "name": "mergetool",
+          "version": "2.0.7"
+        },
+        {
+          "group": "net.neoforged",
+          "name": "mergetool-forge",
+          "version": "2.0.7"
+        },
+        {
+          "group": "net.neoforged",
+          "name": "mergetool-api",
+          "version": "2.0.7"
+        },
+        {
+          "group": "net.neoforged",
+          "name": "mergetool-cpw",
+          "version": "2.0.7"
+        }
+      ]
+    },
+    {
+      "name": "runtimeElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 8,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "dependencies": [
+        {
+          "group": "org.ow2.asm",
+          "module": "asm",
+          "version": {
+            "requires": "9.5"
+          }
+        },
+        {
+          "group": "org.ow2.asm",
+          "module": "asm-tree",
+          "version": {
+            "requires": "9.5"
+          }
+        },
+        {
+          "group": "org.ow2.asm",
+          "module": "asm-util",
+          "version": {
+            "requires": "9.5"
+          }
+        },
+        {
+          "group": "net.sf.jopt-simple",
+          "module": "jopt-simple",
+          "version": {
+            "requires": "5.0.4"
+          }
+        },
+        {
+          "group": "net.neoforged",
+          "module": "srgutils",
+          "version": {
+            "requires": "1.0.10"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "mergetool-2.0.7.jar",
+          "url": "mergetool-2.0.7.jar",
+          "size": 28166,
+          "sha512": "519f687b6746eb6001f099d32e21c6b8f996ae2de77bb774dd4510329b7a449992db15d488314d8038c1abb3020ebfe008ea4718f3698aaacaff22ffc2ac9335",
+          "sha256": "aca2de408721b77c664334030cf7d2013a80f4871e025337621d292e0e5ae265",
+          "sha1": "c5577c12d6cdbc50f6870d002282cca7f5382910",
+          "md5": "a5a9284426a7e82420e18b77008cdf59"
+        }
+      ],
+      "capabilities": [
+        {
+          "group": "net.neoforged",
+          "name": "mergetool",
+          "version": "2.0.7"
+        },
+        {
+          "group": "net.neoforged",
+          "name": "mergetool-forge",
+          "version": "2.0.7"
+        },
+        {
+          "group": "net.neoforged",
+          "name": "mergetool-api",
+          "version": "2.0.7"
+        },
+        {
+          "group": "net.neoforged",
+          "name": "mergetool-cpw",
+          "version": "2.0.7"
+        }
+      ]
+    },
+    {
+      "name": "shadowRuntimeElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "shadowed",
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "mergetool-2.0.7-fatjar.jar",
+          "url": "mergetool-2.0.7-fatjar.jar",
+          "size": 470647,
+          "sha512": "73b0931c9ad4b89c7a6e6007225abedb3457796655fc09fa8211983952ce6511773d0d894abd7dbd31fdc733bdc15d36215cf70de64083f9b37ce31f4419abfd",
+          "sha256": "c5dd4b54361699d9cde410db6aed11f9f13088aae0c375f5a77dc5056a4a89c5",
+          "sha1": "8d217011e2eac8f185c9351240282c780be53e72",
+          "md5": "05ab4a09d24a118e69b7b939a89421fb"
+        }
+      ],
+      "capabilities": [
+        {
+          "group": "net.neoforged",
+          "name": "mergetool",
+          "version": "2.0.7"
+        },
+        {
+          "group": "net.neoforged",
+          "name": "mergetool-forge",
+          "version": "2.0.7"
+        },
+        {
+          "group": "net.neoforged",
+          "name": "mergetool-api",
+          "version": "2.0.7"
+        },
+        {
+          "group": "net.neoforged",
+          "name": "mergetool-cpw",
+          "version": "2.0.7"
+        }
+      ]
+    },
+    {
+      "name": "cpwFMLApiElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 8,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-api"
+      },
+      "files": [
+        {
+          "name": "mergetool-2.0.7-cpw.jar",
+          "url": "mergetool-2.0.7-cpw.jar",
+          "size": 1912,
+          "sha512": "135031214f0cbf3b9900a98a94da768c4fb9b9e3948b562472cdc23037b36fb1e2899e11b25e658bd7494a3e3af1ae455ff4ecb614b52f1a90d0811ebd7a4ce8",
+          "sha256": "b0b02dd835afcb5ef87b2933a51a30bd3da1a7e8f08b999716ef3abfa495b9ea",
+          "sha1": "129a2925222749c5a54b13a21ac22cf966570bc7",
+          "md5": "5f1786fffb6e337a5423a3d693e49be6"
+        }
+      ],
+      "capabilities": [
+        {
+          "group": "net.neoforged",
+          "name": "mergetool-cpw",
+          "version": "2.0.7"
+        }
+      ]
+    },
+    {
+      "name": "cpwFMLRuntimeElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 8,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "mergetool-2.0.7-cpw.jar",
+          "url": "mergetool-2.0.7-cpw.jar",
+          "size": 1912,
+          "sha512": "135031214f0cbf3b9900a98a94da768c4fb9b9e3948b562472cdc23037b36fb1e2899e11b25e658bd7494a3e3af1ae455ff4ecb614b52f1a90d0811ebd7a4ce8",
+          "sha256": "b0b02dd835afcb5ef87b2933a51a30bd3da1a7e8f08b999716ef3abfa495b9ea",
+          "sha1": "129a2925222749c5a54b13a21ac22cf966570bc7",
+          "md5": "5f1786fffb6e337a5423a3d693e49be6"
+        }
+      ],
+      "capabilities": [
+        {
+          "group": "net.neoforged",
+          "name": "mergetool-cpw",
+          "version": "2.0.7"
+        }
+      ]
+    },
+    {
+      "name": "forgeFMLApiElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 8,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-api"
+      },
+      "files": [
+        {
+          "name": "mergetool-2.0.7-forge.jar",
+          "url": "mergetool-2.0.7-forge.jar",
+          "size": 1969,
+          "sha512": "190851832edb782a22e4d746859c859d15024aea8ec835b561f35640b13c72766e72ddf440409018fe86d50d9c0c6786acb013bdad231aab1baca699a7e938f3",
+          "sha256": "f36d7b9fd08196cff32c5f6657697e7d65294305c210aa629053e03d5b711bc1",
+          "sha1": "f9c1ba912d1b8018fb35154cc4f80c1ab0a72feb",
+          "md5": "732a6129d73709cba7d860a48076d363"
+        }
+      ],
+      "capabilities": [
+        {
+          "group": "net.neoforged",
+          "name": "mergetool-forge",
+          "version": "2.0.7"
+        }
+      ]
+    },
+    {
+      "name": "forgeFMLRuntimeElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 8,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "mergetool-2.0.7-forge.jar",
+          "url": "mergetool-2.0.7-forge.jar",
+          "size": 1969,
+          "sha512": "190851832edb782a22e4d746859c859d15024aea8ec835b561f35640b13c72766e72ddf440409018fe86d50d9c0c6786acb013bdad231aab1baca699a7e938f3",
+          "sha256": "f36d7b9fd08196cff32c5f6657697e7d65294305c210aa629053e03d5b711bc1",
+          "sha1": "f9c1ba912d1b8018fb35154cc4f80c1ab0a72feb",
+          "md5": "732a6129d73709cba7d860a48076d363"
+        }
+      ],
+      "capabilities": [
+        {
+          "group": "net.neoforged",
+          "name": "mergetool-forge",
+          "version": "2.0.7"
+        }
+      ]
+    },
+    {
+      "name": "forgeAPIApiElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 8,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-api"
+      },
+      "files": [
+        {
+          "name": "mergetool-2.0.7-api.jar",
+          "url": "mergetool-2.0.7-api.jar",
+          "size": 2550,
+          "sha512": "9b29d91948af41910e2a00a05aa00fcaa53905907856933d95c30c9058afd44d29ddd17fb683d826c57c03963974094989e7da2d40959ae0f5f13e35d9c56626",
+          "sha256": "e78f586e085206e3b5699bf0a8de3ee94c59dd34d8cd5b4033e8c58e5ac9c2ec",
+          "sha1": "793b18456e92c4a7f66d9b5d8bf7a9c1c7a20b20",
+          "md5": "c73429c6311880db3ba09c99abc10a7d"
+        }
+      ],
+      "capabilities": [
+        {
+          "group": "net.neoforged",
+          "name": "mergetool-api",
+          "version": "2.0.7"
+        }
+      ]
+    },
+    {
+      "name": "forgeAPIRuntimeElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 8,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "mergetool-2.0.7-api.jar",
+          "url": "mergetool-2.0.7-api.jar",
+          "size": 2550,
+          "sha512": "9b29d91948af41910e2a00a05aa00fcaa53905907856933d95c30c9058afd44d29ddd17fb683d826c57c03963974094989e7da2d40959ae0f5f13e35d9c56626",
+          "sha256": "e78f586e085206e3b5699bf0a8de3ee94c59dd34d8cd5b4033e8c58e5ac9c2ec",
+          "sha1": "793b18456e92c4a7f66d9b5d8bf7a9c1c7a20b20",
+          "md5": "c73429c6311880db3ba09c99abc10a7d"
+        }
+      ],
+      "capabilities": [
+        {
+          "group": "net.neoforged",
+          "name": "mergetool-api",
+          "version": "2.0.7"
+        }
+      ]
+    },
+    {
+      "name": "sourcesElements",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "mergetool-2.0.7-sources.jar",
+          "url": "mergetool-2.0.7-sources.jar",
+          "size": 17626,
+          "sha512": "2aedadd8df59132973949a0d9e264d7e3db299767f3a348511797945d39b3e86f6cb711d191918d530bfbc9f809b5d350a7ba25bf199602bc9d260cc22ca3ce9",
+          "sha256": "78695429b2c1d2403a57bfca0a679ba58bf0d5d5ca430af9e0effc970466c2d7",
+          "sha1": "ed3b6413065aa738f8a9f74525af1d7bfd91a2fd",
+          "md5": "2b8b931178d2d394077f86f526c6f2f5"
+        }
+      ],
+      "capabilities": [
+        {
+          "group": "net.neoforged",
+          "name": "mergetool",
+          "version": "2.0.7"
+        },
+        {
+          "group": "net.neoforged",
+          "name": "mergetool-forge",
+          "version": "2.0.7"
+        },
+        {
+          "group": "net.neoforged",
+          "name": "mergetool-api",
+          "version": "2.0.7"
+        },
+        {
+          "group": "net.neoforged",
+          "name": "mergetool-cpw",
+          "version": "2.0.7"
+        }
+      ]
+    }
+  ]
+}

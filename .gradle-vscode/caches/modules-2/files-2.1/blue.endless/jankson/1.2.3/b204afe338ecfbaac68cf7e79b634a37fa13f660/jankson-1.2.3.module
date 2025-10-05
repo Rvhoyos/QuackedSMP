@@ -1,0 +1,60 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "blue.endless",
+    "module": "jankson",
+    "version": "1.2.3",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "7.3"
+    }
+  },
+  "variants": [
+    {
+      "name": "apiElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 8,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-api"
+      },
+      "files": [
+        {
+          "name": "jankson-1.2.3.jar",
+          "url": "jankson-1.2.3.jar",
+          "size": 74750,
+          "sha512": "dd48e0db5c138a1ca3bb0f64a1326beee4e796d13f2e45f01ff361b9e42c1ba487cfe0a0f875a8ae7384297cb6fbd3da5d8e10581871682b546305a384902046",
+          "sha256": "7a71dd9c4ac20cea37ce19c35c4aeda15385a40f31836b0058ff18f9e9554aad",
+          "sha1": "b6e55780c7e40dcf485413421440ba3b75cb148b",
+          "md5": "708c6e20e50032c16a2a5962f9a6530a"
+        }
+      ]
+    },
+    {
+      "name": "runtimeElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 8,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "jankson-1.2.3.jar",
+          "url": "jankson-1.2.3.jar",
+          "size": 74750,
+          "sha512": "dd48e0db5c138a1ca3bb0f64a1326beee4e796d13f2e45f01ff361b9e42c1ba487cfe0a0f875a8ae7384297cb6fbd3da5d8e10581871682b546305a384902046",
+          "sha256": "7a71dd9c4ac20cea37ce19c35c4aeda15385a40f31836b0058ff18f9e9554aad",
+          "sha1": "b6e55780c7e40dcf485413421440ba3b75cb148b",
+          "md5": "708c6e20e50032c16a2a5962f9a6530a"
+        }
+      ]
+    }
+  ]
+}

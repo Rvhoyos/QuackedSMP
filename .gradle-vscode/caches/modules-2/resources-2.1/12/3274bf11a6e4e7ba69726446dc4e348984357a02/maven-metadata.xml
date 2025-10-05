@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<metadata modelVersion="1.1.0"> 
+  <groupId>dev.architectury</groupId>  
+  <artifactId>architectury-loom</artifactId>  
+  <versioning> 
+    <lastUpdated>20251001081159</lastUpdated>  
+    <snapshot> 
+      <timestamp>20251001.081159</timestamp>  
+      <buildNumber>1</buildNumber> 
+    </snapshot>  
+    <snapshotVersions> 
+      <snapshotVersion> 
+        <extension>jar</extension>  
+        <value>1.11-20251001.081159-1</value>  
+        <updated>20251001081159</updated> 
+      </snapshotVersion>  
+      <snapshotVersion> 
+        <classifier>sources</classifier>  
+        <extension>jar</extension>  
+        <value>1.11-20251001.081159-1</value>  
+        <updated>20251001081159</updated> 
+      </snapshotVersion>  
+      <snapshotVersion> 
+        <extension>pom</extension>  
+        <value>1.11-20251001.081159-1</value>  
+        <updated>20251001081159</updated> 
+      </snapshotVersion> 
+    </snapshotVersions> 
+  </versioning>  
+  <version>1.11-SNAPSHOT</version> 
+</metadata>
