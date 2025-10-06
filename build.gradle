@@ -45,6 +45,10 @@ subprojects {
             officialMojangMappings()
             parchment("org.parchmentmc.data:parchment-1.21.8:2025.07.20@zip")
         }
+                // --- Added so common module can see CommandDispatcher ---
+        // Brigadier is a Mojang library already bundled with Minecraft.
+        // This line only exposes its classes at compile-time.
+        compileOnly("com.mojang:brigadier:1.0.500")
     }
 
     java {
