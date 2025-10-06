@@ -1,6 +1,7 @@
 package mc.smpessentials;
 
 import org.apache.logging.log4j.Logger;
+import mc.smpessentials.commands.CommandRegistrar;
 import org.apache.logging.log4j.LogManager;
 
 public final class SmpUtilsMod {
@@ -10,7 +11,9 @@ public final class SmpUtilsMod {
 
     public static void init() {
         // Write common init code here.
-        LOGGER.info("QuackSMP Essentials Mod initialized");
+        LOGGER.info("QuackedSMP Plugin initialized");
+        CommandRegistrar.init(); 
+
         
 
     }
