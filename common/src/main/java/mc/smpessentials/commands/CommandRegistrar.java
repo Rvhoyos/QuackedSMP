@@ -31,6 +31,8 @@ public final class CommandRegistrar {
                     .requires(src -> src.getEntity() instanceof net.minecraft.server.level.ServerPlayer)
                     .executes(ctx -> mc.smpessentials.commands.RulesCommand.execute(ctx.getSource()))
             );
+            // claims /claim /unclaim /claims
+            mc.smpessentials.claims.ClaimCommands.register(dispatcher);
 
         });
         
