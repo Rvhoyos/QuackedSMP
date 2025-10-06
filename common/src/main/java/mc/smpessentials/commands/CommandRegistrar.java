@@ -26,6 +26,12 @@ public final class CommandRegistrar {
                     .requires(src -> src.getEntity() instanceof ServerPlayer)
                     .executes(ctx -> mc.smpessentials.commands.SpawnCommand.execute(ctx.getSource()))
             );
+            dispatcher.register(
+                net.minecraft.commands.Commands.literal("rules")
+                    .requires(src -> src.getEntity() instanceof net.minecraft.server.level.ServerPlayer)
+                    .executes(ctx -> mc.smpessentials.commands.RulesCommand.execute(ctx.getSource()))
+            );
+
         });
         
     }
