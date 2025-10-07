@@ -27,9 +27,9 @@ public final class RulesCommand {
             .withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD));
 
         // Bulleted, short vanilla-friendly rules
-        player.sendSystemMessage(Component.literal("• Be respectful in chat.").withStyle(ChatFormatting.YELLOW));
-        player.sendSystemMessage(Component.literal("• No griefing or stealing from other players.").withStyle(ChatFormatting.YELLOW));
-        player.sendSystemMessage(Component.literal("• Build big, have fun")
+        player.sendSystemMessage(Component.literal("- 1. Be respectful in chat.").withStyle(ChatFormatting.YELLOW));
+        player.sendSystemMessage(Component.literal("- 2. No griefing or stealing from other players.").withStyle(ChatFormatting.YELLOW));
+        player.sendSystemMessage(Component.literal("- 3. Build big, have fun")
             .withStyle(ChatFormatting.YELLOW));
 
         // Spacer
@@ -40,7 +40,7 @@ public final class RulesCommand {
         player.sendSystemMessage(Component.literal("/home /claim(s) /trust /untrust /spawn (Commands Provided by QuackedSMP)")
             .withStyle(ChatFormatting.DARK_GRAY, ChatFormatting.ITALIC));
         player.sendSystemMessage(Component.literal("Wiki: https://quackedmod.wiki/")
-            .withStyle(ChatFormatting.AQUA, ChatFormatting.BOLD));
+            .withStyle(ChatFormatting.DARK_BLUE, ChatFormatting.BOLD));
 
     }
 }
