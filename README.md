@@ -13,21 +13,22 @@ It provides quality of life (QoL) multiplayer (and singleplayer) features such a
 ### Core
 - Claims and Teleport commands.
 ### Player Utilities
-**/home**  
+- **/home**  
 Teleports a player to their saved home location.  
-**/spawn**  
+- **/spawn**  
 Returns a player to the server spawn.  
-**/rules**  
+- **/rules**  
 Displays server rules as a chat message.
-**Welcome Message**
+
+- **Welcome Message**  
 Displays a welcome message with the players name. 
 
 ### Land Claims
-**/claim**  
+- **/claim**  
 Protects the player’s current chunk from modification by others.  
-**/unclaim**  
+- **/unclaim**  
 Releases ownership of the current chunk.  
-**/claims**  
+- **/claims**  
 Shows how many chunks the player owns and who owns the current one.
 
 ### Protection System
@@ -35,13 +36,13 @@ Block breaking, placing, and interactions are restricted in claimed chunks to th
 > Operators automatically bypass claim limits and all protection checks.
 
 ### Claim "trust" lists
-**/trust <player>**  
+- **/trust <player>**  
 Adds a player to your trustlist.  
-**/untrust <player>**  
+- **/untrust <player>**  
 Removes a player from the trustlist.  
-**/trustlist**  
-Displays all trusted players.
-trustlist membership applies globally across all claims owned by a player.
+- **/trustlist**  
+Displays all trusted players.   
+Trustlist membership applies globally across all claims owned by a player.
 
 ### Configuration and Behavior
 - Default claim cap: 50 chunks per player.
