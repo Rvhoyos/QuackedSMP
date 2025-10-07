@@ -23,26 +23,24 @@ public final class RulesCommand {
 
     private static void sendRules(ServerPlayer player) {
         // Header
-        player.sendSystemMessage(Component.literal("— SMP Rules —")
+        player.sendSystemMessage(Component.literal("— Server Rules —")
             .withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD));
 
         // Bulleted, short vanilla-friendly rules
-        player.sendSystemMessage(Component.literal("• Be respectful").withStyle(ChatFormatting.YELLOW));
-        player.sendSystemMessage(Component.literal("• No griefing or stealing").withStyle(ChatFormatting.YELLOW));
-        player.sendSystemMessage(Component.literal("• Build big, share resources, have fun")
+        player.sendSystemMessage(Component.literal("• Be respectful in chat.").withStyle(ChatFormatting.YELLOW));
+        player.sendSystemMessage(Component.literal("• No griefing or stealing from other players.").withStyle(ChatFormatting.YELLOW));
+        player.sendSystemMessage(Component.literal("• Build big, have fun")
             .withStyle(ChatFormatting.YELLOW));
 
         // Spacer
         player.sendSystemMessage(Component.empty());
 
-        // Links: let the client auto-detect (clickable if the player's setting allows web links)
-        player.sendSystemMessage(Component.literal("Live 3D Map: https://map.quackedmod.wiki/")
-            .withStyle(ChatFormatting.AQUA));
-        player.sendSystemMessage(Component.literal("Wiki:       https://quackedmod.wiki/")
-            .withStyle(ChatFormatting.AQUA));
 
         // Footer hint
-        player.sendSystemMessage(Component.literal("(Links are clickable if you enabled “Allow Chat: Web links” in Options → Chat Settings.)")
+        player.sendSystemMessage(Component.literal("/home /claim(s) /trust /untrust /spawn (Commands Provided by QuackedSMP)")
             .withStyle(ChatFormatting.DARK_GRAY, ChatFormatting.ITALIC));
+        player.sendSystemMessage(Component.literal("Wiki: https://quackedmod.wiki/")
+            .withStyle(ChatFormatting.AQUA, ChatFormatting.BOLD));
+
     }
 }
