@@ -14,7 +14,7 @@ public final class ClaimService {
     private ClaimService() {}
 
     /** Hard cap for MVP; tweak freely. */
-    public static final int MAX_PER_PLAYER = 25;
+    public static final int MAX_PER_PLAYER = 50;
 
     public static Optional<UUID> getOwner(ServerLevel level, ChunkPos pos) {
         return ClaimManager.get(level).get(pos).map(ClaimData::owner);
@@ -41,7 +41,7 @@ public final class ClaimService {
         return false;
     }
 
-    /** Player claims for themselves; OPs can still claim their own chunks. */
+    /** Player claims for themselves OPs can still claim their own chunks. */
     public static Result claim(ServerPlayer player, ServerLevel level, ChunkPos pos) {
         // Spawn protection guard (vanilla-like square)
         if (level.dimension() == Level.OVERWORLD) {
@@ -52,7 +52,7 @@ public final class ClaimService {
                 int cz = pos.getMiddleBlockZ();
                 int dx = Math.abs(cx - spawn.getX());
                 int dz = Math.abs(cz - spawn.getZ());
-                // ✅ square, matches vanilla behavior
+                //square, matches vanilla behavior
                 if (Math.max(dx, dz) <= radius) return Result.SPAWN_PROTECTED;
             }
             // Also block exact spawn chunk for safety
@@ -64,7 +64,9 @@ public final class ClaimService {
         if (mgr.isClaimed(pos)) return Result.ALREADY_CLAIMED;
 
         UUID me = player.getUUID();
-        if (ownedCount(level, me) >= MAX_PER_PLAYER) return Result.REACHED_CAP;
+        // OP bypass: allow server operators to ignore the per-player MAX_PER_PLAYER cap.
+        boolean isOp = player.getServer().getPlayerList().isOp(player.getGameProfile());
+        if (ownedCount(level, me) >= MAX_PER_PLAYER && !isOp) return Result.REACHED_CAP;
 
         mgr.claim(pos, me);
         return Result.SUCCESS;
