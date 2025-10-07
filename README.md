@@ -10,7 +10,7 @@ SMP Essentials is a server-side utility plugin, designed as a multiplatform tool
 It provides quality of life (QoL) multiplayer (and singleplayer) features such as player homes, spawn teleportation, server rules, land claim protection.
 
 ## Features
-## Core
+### Core
 - Claims and Teleport commands.
 ### Player Utilities
 **/home**  
