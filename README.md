@@ -1,3 +1,9 @@
+[![Release](https://img.shields.io/github/v/release/Rvhoyos/QuackedSMP)](https://github.com/Rvhoyos/QuackedSMP/releases)
+![GitHub Downloads](https://img.shields.io/github/downloads/Rvhoyos/QuackedSMP/total)
+[![CurseForge Downloads](https://img.shields.io/curseforge/dt/1140900?label=CurseForge%20downloads)](https://www.curseforge.com/minecraft/mc-mods/quackedsmp)
+[![Modrinth Downloads](https://img.shields.io/modrinth/dt/quackedsmp?label=Modrinth%20downloads)](https://modrinth.com/mod/quackedsmp)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue)](LICENSE)
+
 # SMP Essentials
 
 SMP Essentials is a server-side utility plugin, designed as a multiplatform tool for neoforge or Fabric moded Minecraft servers. 
