@@ -25,6 +25,11 @@ public final class ChatFilter {
     public static void init() {
         ChatEvent.DECORATE.register(ChatFilter::onDecorate);
     }
+    /*
+     * Chat decorate callback that inspects the raw message and replaces any word-token
+    * present in the persisted filter set with asterisks. Messages beginning with '/'
+    * are ignored. Operates server-side and is a no-op if the server instance is null.
+     */
 
     private static void onDecorate(ServerPlayer player, ChatEvent.ChatComponent component) {
         if (component == null) return;
