@@ -36,7 +36,7 @@ public final class CommandRegistrar {
             // claims: /trust /untrust
             mc.smpessentials.claims.TrustCommands.register(dispatcher);
 
-
+            mc.smpessentials.chatfilter.ChatFilterCommands.register(dispatcher);
         });
         
     }
