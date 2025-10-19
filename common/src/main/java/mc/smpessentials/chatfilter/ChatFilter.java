@@ -1,6 +1,7 @@
 package mc.smpessentials.chatfilter;
 
 import dev.architectury.event.events.common.ChatEvent;
+import dev.architectury.event.events.common.LifecycleEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
@@ -16,14 +17,17 @@ import java.util.regex.Pattern;
  * Registers a decorate callback that replaces offending word tokens with "****".
  */
 public final class ChatFilter {
-    private static final Pattern WORD = Pattern.compile("\\p{L}+");
+    private static final Pattern WORD = Pattern.compile("[\\p{L}\\p{N}_'@\\-]+");
     private ChatFilter() {}
 
     /**
-     * Registers the chat decorate event. Must be called once during common init.
+     * Registers the chat decorate event. 
+     * + Server start autoload
+     * Must be called once during common init.
      */
     public static void init() {
         ChatEvent.DECORATE.register(ChatFilter::onDecorate);
+        LifecycleEvent.SERVER_STARTED.register(server -> ChatFilterConfig.mergeFromConfig(server));
     }
     /*
      * Chat decorate callback that inspects the raw message and replaces any word-token

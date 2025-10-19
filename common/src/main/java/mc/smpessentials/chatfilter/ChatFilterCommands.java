@@ -61,6 +61,14 @@ public final class ChatFilterCommands {
                     return words.size();
                 })
             )
+            .then(Commands.literal("load")
+                .executes(ctx -> {
+                    var src = ctx.getSource();
+                    var res = ChatFilterConfig.mergeFromConfig(src.getServer());
+                    src.sendSuccess(() -> Component.literal("Loaded " + res.added() + " new words (total " + res.total() + ")."), false);
+                    return res.added();
+                })
+            )
         );
     }
 }
