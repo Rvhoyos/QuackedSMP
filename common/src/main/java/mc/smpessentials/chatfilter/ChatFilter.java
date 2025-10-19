@@ -17,7 +17,7 @@ import java.util.regex.Pattern;
  * Registers a decorate callback that replaces offending word tokens with "****".
  */
 public final class ChatFilter {
-    private static final Pattern WORD = Pattern.compile("[\\p{L}\\p{N}_'@\\-]+");
+    private static final Pattern WORD = Pattern.compile("[\\p{L}\\p{N}_'@\\-\\$!\\.\\+\\*#%&\\?~^]+");
     private ChatFilter() {}
 
     /**
