@@ -9,6 +9,7 @@ import net.minecraft.server.level.ServerPlayer;
 
 import java.text.Normalizer;
 import java.util.Locale;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -17,6 +18,7 @@ import java.util.regex.Pattern;
  * Registers a decorate callback that replaces offending word tokens with "****".
  */
 public final class ChatFilter {
+    // Letters, digits, and common in-word symbols: _ ' - @ $ ! . + * # % & ? ~ ^
     private static final Pattern WORD = Pattern.compile("[\\p{L}\\p{N}_'@\\-\\$!\\.\\+\\*#%&\\?~^]+");
     private ChatFilter() {}
 
@@ -46,7 +48,9 @@ public final class ChatFilter {
         if (server == null) return;
 
         ChatFilterSavedData data = getData(server);
-        String masked = mask(raw, data);
+        String masked = maskTokens(raw, data);
+        masked = maskPhrases(masked, data);
+        
         if (!masked.equals(raw)) {
             component.set(Component.literal(masked));
         }
@@ -64,7 +68,7 @@ public final class ChatFilter {
      * Replaces any whole-word token present in the SavedData set with "****".
      * Matching is case-insensitive and accent-insensitive via normalization.
      */
-    public static String mask(String message, ChatFilterSavedData data) {
+    public static String maskTokens(String message, ChatFilterSavedData data) {
         StringBuilder out = new StringBuilder(message);
         Matcher m = WORD.matcher(message);
         int delta = 0;
@@ -84,6 +88,34 @@ public final class ChatFilter {
             }
         }
         return out.toString();
+    }
+
+    /**
+     * Pass 2: masks phrases containing whitespace by substring search (case-insensitive).
+     * Uses lowercase-only normalization to maintain index alignment with the original string.
+     */
+    public static String maskPhrases(String message, ChatFilterSavedData data) {
+        java.util.Set<String> snapshot = data.snapshot();
+        String out = message;
+
+        for (String entry : snapshot) {
+            if (entry.isEmpty()) continue;
+
+            // Only run substring scan for entries that contain whitespace or non-alphanumeric
+            boolean needs = false;
+            for (int i = 0; i < entry.length(); i++) {
+                char c = entry.charAt(i);
+                if (Character.isWhitespace(c) || !Character.isLetterOrDigit(c)) { needs = true; break; }
+            }
+            if (!needs) continue;
+
+            java.util.regex.Pattern pat = java.util.regex.Pattern.compile(
+                java.util.regex.Pattern.quote(entry),
+                java.util.regex.Pattern.CASE_INSENSITIVE | java.util.regex.Pattern.UNICODE_CASE
+            );
+            out = pat.matcher(out).replaceAll("****");
+        }
+        return out;
     }
 
     /**
