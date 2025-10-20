@@ -15,15 +15,18 @@ It provides quality of life (QoL) multiplayer (and singleplayer) features such a
 - Claims and Teleport commands.
 ### Player Utilities
 - **/home**  
-Teleports a player to their saved home location.  
+Teleports a player to their saved home location.
+- /tpr & /tpa
+Teleport request to a player. Teleport accept or decline the request. 
 - **/spawn**  
 Returns a player to the server spawn.  
 - **/rules**  
-Displays server rules as a chat message.
-
+Displays server rules as a chat message.   
 - **Welcome Message**  
 Displays a welcome message with the players name. 
-
+- **/chatfilter**    
+Add, remove words or load them into the chatfilter from the json config.
+(Phrases can also be added in the config only)
 ### Land Claims
 - **/claim**  
 Protects the player’s current chunk from modification by others.  
