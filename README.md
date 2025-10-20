@@ -16,7 +16,7 @@ It provides quality of life (QoL) multiplayer (and singleplayer) features such a
 ### Player Utilities
 - **/home**  
 Teleports a player to their saved home location.
-- /tpr & /tpa
+- /**tpr** & /**tpa**    
 Teleport request to a player. Teleport accept or decline the request. 
 - **/spawn**  
 Returns a player to the server spawn.  
