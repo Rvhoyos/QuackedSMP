@@ -12,7 +12,7 @@ It provides quality of life (QoL) multiplayer (and singleplayer) features such a
 
 ## Features
 ### Core
-- Claims and Teleport commands.
+- Claims, Teleport commands and chatfilter.
 ### Player Utilities
 - **/home**  
 Teleports a player to their saved home location.
