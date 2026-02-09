@@ -50,7 +50,10 @@ public final class SmpConfig {
         loadList(root, "periodic_messages", PERIODIC_MESSAGES);
         if (PERIODIC_MESSAGES.isEmpty()) {
             PERIODIC_MESSAGES.add("&b[Tip] &fUse &a/claim &fto protect your land!");
-            PERIODIC_MESSAGES.add("&b[Tip] &fDon't forget to set your &a/home&f!");
+            PERIODIC_MESSAGES.add("&b[Tip] &fSet your home by sleeping in a bed!");
+            PERIODIC_MESSAGES.add("&b[Tip] &fType &a/smp help &ffor commands!");
+            PERIODIC_MESSAGES.add("&b[Reminder] &fPlease respect the &6/rules&f!");
+            PERIODIC_MESSAGES.add("&b[Tip] &fVisit Spawn Shops for blocks & gear! Trade items for Emeralds!");
         }
 
         if (root.has("messages") && root.get("messages").isJsonObject()) {

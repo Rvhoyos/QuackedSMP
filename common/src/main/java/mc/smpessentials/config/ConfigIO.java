@@ -123,7 +123,10 @@ public final class ConfigIO {
 
         com.google.gson.JsonArray pm = new com.google.gson.JsonArray();
         pm.add("&b[Tip] &fUse &a/claim &fto protect your land!");
-        pm.add("&b[Tip] &fDon't forget to set your &a/home&f!");
+        pm.add("&b[Tip] &fSet your home by sleeping in a bed!");
+        pm.add("&b[Tip] &fType &a/smp help &ffor commands!");
+        pm.add("&b[Reminder] &fPlease respect the &6/rules&f!");
+        pm.add("&b[Tip] &fVisit Spawn Shops for blocks & gear! Trade items for Emeralds!");
         root.add("periodic_messages", pm);
 
         JsonObject cf = new JsonObject();
