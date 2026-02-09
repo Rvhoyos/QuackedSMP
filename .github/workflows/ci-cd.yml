@@ -3,11 +3,16 @@ name: CI/CD Pipeline
 on:
   push:
     branches: [ "main" ]
+  release:
+    types: [ "published" ]
+
 
 
 jobs:
   build:
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v4
       - name: Set up JDK 21
@@ -53,6 +58,17 @@ jobs:
         run: |
           chmod +x ./scripts/deploy-staging.sh
           ./scripts/deploy-staging.sh "build/libs"
+
+  deploy-prod:
+    if: github.event_name == 'release'
+    runs-on: [self-hosted, linux, X64]
+
+    steps:
+      - name: Promote to Production (Run Script)
+        run: |
+           chmod +x /home/ubuntu/mcserver/promote-to-prod.sh
+           /home/ubuntu/mcserver/promote-to-prod.sh
+
 
 
 
