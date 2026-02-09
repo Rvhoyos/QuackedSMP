@@ -19,4 +19,4 @@
 .DS_Store           # macOS Finder metadata
 Thumbs.db           # Windows Explorer metadata
 
-**/bin/
+**/bin/.envrc

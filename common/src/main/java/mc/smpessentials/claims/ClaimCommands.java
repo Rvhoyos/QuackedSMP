@@ -9,75 +9,191 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.ChunkPos;
 
+import net.minecraft.network.chat.MutableComponent;
 import java.util.Optional;
 import java.util.UUID;
 
 public final class ClaimCommands {
-    private ClaimCommands() {}
+    private ClaimCommands() {
+    }
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         // /claim
         dispatcher.register(
-            Commands.literal("claim")
-                .requires(src -> src.getEntity() instanceof ServerPlayer)
-                .executes(ctx -> {
-                    ServerPlayer p = ctx.getSource().getPlayerOrException(); // may throw, Brigadier allows it
-                    ServerLevel lvl = p.level();
-                    ChunkPos pos = p.chunkPosition();
+                Commands.literal("claim")
+                        .requires(src -> src.getEntity() instanceof ServerPlayer)
+                        .executes(ctx -> {
+                            ServerPlayer p = ctx.getSource().getPlayerOrException(); // may throw, Brigadier allows it
+                            ServerLevel lvl = p.level();
+                            ChunkPos pos = p.chunkPosition();
 
-                    ClaimService.Result result = ClaimService.claim(p, lvl, pos);
-                    switch (result) {
-                        case SUCCESS -> ctx.getSource().sendSystemMessage(Component.literal("Chunk claimed."));
-                        case ALREADY_CLAIMED -> ctx.getSource().sendFailure(Component.literal("This claim is already protected."));
-                        case REACHED_CAP -> ctx.getSource().sendFailure(Component.literal("You reached the claim limit (" + ClaimService.MAX_PER_PLAYER + ")."));
-                        case SPAWN_PROTECTED -> ctx.getSource().sendFailure(Component.literal("You can’t claim inside spawn protection."));
-                    }
-                    return 1;
-                })
-        );
+                            ClaimService.Result result = ClaimService.claim(p, lvl, pos);
+                            switch (result) {
+                                case SUCCESS -> ctx.getSource().sendSystemMessage(Component.literal("Chunk claimed."));
+                                case ALREADY_CLAIMED -> ctx.getSource()
+                                        .sendSystemMessage(Component.literal("This claim is already protected."));
+                                case REACHED_CAP -> {
+                                    int max = mc.smpessentials.config.SmpConfig.MAX_CLAIMS;
+                                    if (mc.smpessentials.config.SmpConfig.VIPS
+                                            .contains(p.getGameProfile().getName())) {
+                                        max += mc.smpessentials.config.SmpConfig.VIP_BONUS_CLAIMS;
+                                    }
+                                    ctx.getSource().sendSystemMessage(Component
+                                            .literal("You reached the claim limit (" + max + ")."));
+                                }
+                                case SPAWN_PROTECTED -> ctx.getSource().sendSystemMessage(
+                                        Component.literal("You can’t claim inside spawn protection."));
+                            }
+                            return 1;
+                        })
+                        .then(Commands.literal("map")
+                                .executes(ctx -> {
+                                    ServerPlayer p = ctx.getSource().getPlayerOrException();
+                                    ServerLevel lvl = p.level();
+                                    ChunkPos center = p.chunkPosition();
+                                    int radius = 3; // 7x7 grid
+
+                                    MutableComponent header = Component.literal("  Claim Map (Radius " + radius + ")  ")
+                                            .withStyle(net.minecraft.ChatFormatting.GOLD,
+                                                    net.minecraft.ChatFormatting.BOLD);
+                                    ctx.getSource().sendSystemMessage(header);
+
+                                    // North is negative Z
+                                    ctx.getSource().sendSystemMessage(Component.literal("      N (Z-)")
+                                            .withStyle(net.minecraft.ChatFormatting.GRAY));
+
+                                    for (int dz = -radius; dz <= radius; dz++) {
+                                        MutableComponent line = Component.literal("");
+                                        for (int dx = -radius; dx <= radius; dx++) {
+                                            ChunkPos current = new ChunkPos(center.x + dx, center.z + dz);
+                                            Optional<UUID> owner = ClaimService.getOwner(lvl, current);
+
+                                            String symbol = "\u2588"; // Full Block
+                                            net.minecraft.ChatFormatting color = net.minecraft.ChatFormatting.GRAY;
+                                            String tooltip = "Wilderness (" + current.x + ", " + current.z + ")";
+
+                                            if (dx == 0 && dz == 0) {
+                                                symbol = "+"; // Player
+                                                color = net.minecraft.ChatFormatting.WHITE;
+                                                tooltip = "You are here (" + current.x + ", " + current.z + ")";
+                                                if (owner.isPresent()) {
+                                                    if (owner.get().equals(p.getUUID())) {
+                                                        color = net.minecraft.ChatFormatting.GREEN;
+                                                        tooltip += "\nOwned by You";
+                                                    } else {
+                                                        color = net.minecraft.ChatFormatting.RED;
+                                                        tooltip += "\nOwned by Eneny";
+                                                    }
+                                                }
+                                            } else if (owner.isPresent()) {
+                                                if (owner.get().equals(p.getUUID())) {
+                                                    color = net.minecraft.ChatFormatting.GREEN;
+                                                    tooltip = "Your Claim (" + current.x + ", " + current.z + ")";
+                                                } else {
+                                                    color = net.minecraft.ChatFormatting.RED;
+                                                    tooltip = "Enemy Claim (" + current.x + ", " + current.z + ")";
+                                                    // Resolve name async if possible? For now, simplistic.
+                                                }
+                                            } else {
+                                                symbol = "-"; // Wilderness
+                                            }
+
+                                            MutableComponent cell = Component.literal(symbol).withStyle(color);
+
+                                            String finalTooltip = tooltip;
+                                            // Add Hover
+                                            cell.withStyle(style -> style
+                                                    .withHoverEvent(new net.minecraft.network.chat.HoverEvent.ShowText(
+                                                            Component.literal(finalTooltip))));
+
+                                            // Add Click to claim? (Maybe dangerous, but fancy)
+                                            // cell.withStyle(style -> style.withClickEvent(new
+                                            // ClickEvent(ClickEvent.Action.RUN_COMMAND, "/claim " + current.x + " " +
+                                            // current.z)));
+
+                                            line.append(cell).append(Component.literal(" "));
+                                        }
+                                        ctx.getSource().sendSystemMessage(line);
+                                    }
+                                    ctx.getSource().sendSystemMessage(Component.literal("      S (Z+)")
+                                            .withStyle(net.minecraft.ChatFormatting.GRAY));
+                                    return 1;
+                                }))
+                        .then(Commands.literal("info")
+                                .executes(ctx -> {
+                                    ServerPlayer p = ctx.getSource().getPlayerOrException();
+                                    int owned = ClaimService.ownedCount(p.level(), p.getUUID());
+                                    int limit = mc.smpessentials.config.SmpConfig.MAX_CLAIMS;
+                                    boolean isVip = mc.smpessentials.config.SmpConfig.VIPS
+                                            .contains(p.getGameProfile().getName());
+                                    if (isVip) {
+                                        limit += mc.smpessentials.config.SmpConfig.VIP_BONUS_CLAIMS;
+                                    }
+                                    boolean isOp = p.hasPermissions(2);
+
+                                    MutableComponent msg = Component.literal("== Claim Info (Dimension) ==")
+                                            .withStyle(net.minecraft.ChatFormatting.GOLD);
+                                    msg.append(Component.literal("\nOwned: " + owned)
+                                            .withStyle(net.minecraft.ChatFormatting.WHITE));
+
+                                    if (isOp) {
+                                        msg.append(Component.literal("\nLimit: Unlimited (OP)")
+                                                .withStyle(net.minecraft.ChatFormatting.LIGHT_PURPLE));
+                                    } else {
+                                        String limitStr = String.valueOf(limit);
+                                        if (isVip) {
+                                            limitStr += " (+VIP)";
+                                        }
+                                        msg.append(Component.literal("\nLimit: " + limitStr)
+                                                .withStyle(net.minecraft.ChatFormatting.YELLOW));
+                                        msg.append(Component.literal("\nRemaining: " + Math.max(0, limit - owned))
+                                                .withStyle(net.minecraft.ChatFormatting.GREEN));
+                                    }
+
+                                    ctx.getSource().sendSystemMessage(msg);
+                                    return 1;
+                                })));
 
         // /unclaim
         dispatcher.register(
-            Commands.literal("unclaim")
-                .requires(src -> src.getEntity() instanceof ServerPlayer)
-                .executes(ctx -> {
-                    ServerPlayer p = ctx.getSource().getPlayerOrException();
-                    ServerLevel lvl = p.level();
-                    ChunkPos pos = p.chunkPosition();
+                Commands.literal("unclaim")
+                        .requires(src -> src.getEntity() instanceof ServerPlayer)
+                        .executes(ctx -> {
+                            ServerPlayer p = ctx.getSource().getPlayerOrException();
+                            ServerLevel lvl = p.level();
+                            ChunkPos pos = p.chunkPosition();
 
-                    boolean ok = ClaimService.unclaim(p, lvl, pos);
-                    if (ok) {
-                        ctx.getSource().sendSystemMessage(Component.literal("Chunk unclaimed."));
-                    } else {
-                        ctx.getSource().sendFailure(Component.literal("You don’t control this claim."));
-                    }
-                    return 1;
-                })
-        );
+                            boolean ok = ClaimService.unclaim(p, lvl, pos);
+                            if (ok) {
+                                ctx.getSource().sendSystemMessage(Component.literal("Chunk unclaimed."));
+                            } else {
+                                ctx.getSource().sendFailure(Component.literal("You don’t control this claim."));
+                            }
+                            return 1;
+                        }));
 
         // /claims (dimension-local count + current owner)
         dispatcher.register(
-            Commands.literal("claims")
-                .requires(src -> src.getEntity() instanceof ServerPlayer)
-                .executes(ctx -> {
-                    ServerPlayer p = ctx.getSource().getPlayerOrException();
-                    ServerLevel lvl = p.level();
-                    ChunkPos pos = p.chunkPosition();
+                Commands.literal("claims")
+                        .requires(src -> src.getEntity() instanceof ServerPlayer)
+                        .executes(ctx -> {
+                            ServerPlayer p = ctx.getSource().getPlayerOrException();
+                            ServerLevel lvl = p.level();
+                            ChunkPos pos = p.chunkPosition();
 
-                    int mine = ClaimService.ownedCount(lvl, p.getUUID()); // <-- updated
-                    ctx.getSource().sendSystemMessage(Component.literal("You own " + mine + " chunk(s) in this dimension."));
+                            int mine = ClaimService.ownedCount(lvl, p.getUUID()); // <-- updated
+                            ctx.getSource().sendSystemMessage(
+                                    Component.literal("You own " + mine + " chunk(s) in this dimension."));
 
-                    Optional<UUID> owner = ClaimService.getOwner(lvl, pos);
-                    if (owner.isPresent()) {
-                        boolean you = owner.get().equals(p.getUUID());
-                        ctx.getSource().sendSystemMessage(Component.literal(
-                            you ? "This chunk is protected by you." : "This chunk is protected."
-                        ));
-                    } else {
-                        ctx.getSource().sendSystemMessage(Component.literal("Current chunk is unclaimed."));
-                    }
-                    return 1;
-                })
-        );
+                            Optional<UUID> owner = ClaimService.getOwner(lvl, pos);
+                            if (owner.isPresent()) {
+                                boolean you = owner.get().equals(p.getUUID());
+                                ctx.getSource().sendSystemMessage(Component.literal(
+                                        you ? "This chunk is protected by you." : "This chunk is protected."));
+                            } else {
+                                ctx.getSource().sendSystemMessage(Component.literal("Current chunk is unclaimed."));
+                            }
+                            return 1;
+                        }));
     }
 }

@@ -11,10 +11,12 @@ import net.minecraft.world.phys.Vec3;
 import java.util.Set;
 
 public final class HomeCommand {
-    private HomeCommand() {}
+    private HomeCommand() {
+    }
 
     public static int execute(CommandSourceStack source) {
-        // Safety: registration already ensures this is a player, but keep a cheap check.
+        // Safety: registration already ensures this is a player, but keep a cheap
+        // check.
         if (!(source.getEntity() instanceof ServerPlayer player)) {
             // console / command block -> fail cleanly
             source.sendFailure(Component.literal("Only players can use /home."));
@@ -23,9 +25,16 @@ public final class HomeCommand {
 
         // Prefer the player's bed/respawn-anchor if set.
         if (player.getRespawnConfig() != null) {
-            TeleportTransition transition = player.findRespawnPositionAndUseSpawnBlock(false, p -> {});
-            player.teleport(transition);
-            source.sendSuccess(() -> Component.literal("Teleported to your respawn point."), false);
+            mc.smpessentials.teleport.TeleportScheduler.schedule(player, () -> {
+                TeleportTransition transition = player.findRespawnPositionAndUseSpawnBlock(false, p -> {
+                });
+                if (transition != null) {
+                    player.teleport(transition);
+                    player.displayClientMessage(Component.literal("Teleported to your respawn point."), false);
+                } else {
+                    player.displayClientMessage(Component.literal("Could not find respawn point."), false);
+                }
+            });
             return 1;
         }
 
@@ -34,9 +43,10 @@ public final class HomeCommand {
         BlockPos spawn = level.getSharedSpawnPos();
         Vec3 target = new Vec3(spawn.getX() + 0.5, spawn.getY(), spawn.getZ() + 0.5);
 
-        // Signature: teleportTo(ServerLevel, x, y, z, Set<Relative>, yaw, pitch, setCamera)
-        player.teleportTo(level, target.x, target.y, target.z, Set.of(), player.getYRot(), player.getXRot(), false);
-        source.sendSuccess(() -> Component.literal("No bed/anchor set. Teleported to world spawn."), false);
+        mc.smpessentials.teleport.TeleportScheduler.schedule(player, () -> {
+            player.teleportTo(level, target.x, target.y, target.z, Set.of(), player.getYRot(), player.getXRot(), false);
+            player.displayClientMessage(Component.literal("No bed/anchor set. Teleported to world spawn."), false);
+        });
         return 1;
     }
 }

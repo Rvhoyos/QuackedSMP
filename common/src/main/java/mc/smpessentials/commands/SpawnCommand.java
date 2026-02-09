@@ -15,7 +15,8 @@ import java.util.Set;
  * Uses 1.21.8's teleport signature and restricts execution to players only.
  */
 public final class SpawnCommand {
-    private SpawnCommand() {}
+    private SpawnCommand() {
+    }
 
     public static int execute(CommandSourceStack source) {
         // ---- SAFETY CHECK ----
@@ -32,10 +33,9 @@ public final class SpawnCommand {
         BlockPos safe = player.adjustSpawnLocation(overworld, spawn);
 
         boolean ok = player.teleportTo(
-            overworld,
-            safe.getX() + 0.5, safe.getY(), safe.getZ() + 0.5,
-            Set.of(), player.getYRot(), player.getXRot(), false
-        );
+                overworld,
+                safe.getX() + 0.5, safe.getY(), safe.getZ() + 0.5,
+                Set.of(), player.getYRot(), player.getXRot(), false);
 
         if (ok) {
             player.sendSystemMessage(Component.literal("Teleported to spawn."));

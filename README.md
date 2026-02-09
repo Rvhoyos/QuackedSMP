@@ -5,64 +5,101 @@
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue)](LICENSE)
 
 
-# SMP Essentials
+# QuackedSMP Essentials
 
-SMP Essentials is a server-side utility plugin, designed as a multiplatform tool for neoforge or Fabric moded Minecraft servers. 
-It provides quality of life (QoL) multiplayer (and singleplayer) features such as player homes, spawn teleportation, server rules, land claim protection.
+**QuackedSMP** is a robust server-side utility mod designed for Fabric and NeoForge. It bridges the gap between vanilla gameplay and managed multiplayer environments by providing essential quality-of-life features, land protection, and community management tools.
 
-## Features
-### Core
-- Claims, Teleport commands and chatfilter.
-### Player Utilities
-- **/home**  
-Teleports a player to their saved home location.
-- /**tpr** & /**tpa**    
-Teleport request to a player. Teleport accept or decline the request. 
-- **/spawn**  
-Returns a player to the server spawn.  
-- **/rules**  
-Displays server rules as a chat message.   
-- **Welcome Message**  
-Displays a welcome message with the players name. 
-- **/chatfilter**    
-Add, remove words or load them into the chatfilter from the json config.
-(Phrases can also be added in the config only)
-### Land Claims
-- **/claim**  
-Protects the player’s current chunk from modification by others.  
-- **/unclaim**  
-Releases ownership of the current chunk.  
-- **/claims**  
-Shows how many chunks the player owns and who owns the current one.
+## Core Philosophy
+- **Wilderness Danger:** Outside of claims, anything goes. PvP and griefing are enabled.
+- **Home Safety:** Claims provide a safe haven where players can build without fear.
+- **Fair Play:** Teleportation warmups prevent combat logging and instant escapes.
 
-### Protection System
-Block breaking, placing, and interactions are restricted in claimed chunks to their owners or trusted players.  
-> Operators automatically bypass claim limits and all protection checks.
+---
 
-### Claim "trust" lists
-- **/trust <player>**  
-Adds a player to your trustlist.  
-- **/untrust <player>**  
-Removes a player from the trustlist.  
-- **/trustlist**  
-Displays all trusted players.   
-Trustlist membership applies globally across all claims owned by a player.
+## 🔥 Features
 
-### Configuration and Behavior
-- Default claim cap: 50 chunks per player.
-- Operators bypass the cap and all restrictions.
-- Spawn protection prevents claiming near the server’s shared spawn point.
-- Supports all dimensions without special configuration.
+### 🛡️ Land Claims & Protection
+Protect your base from griefers with a simple chunk-based claiming system.
+- **`/claim`**: Secure the chunk you are standing in.
+- **`/claim map`**: Visualize nearby claims in chat (7x7 grid).
+- **`/claim info`**: View your claim usage and limits.
+- **`/trust <player>`**: Allow friends to build in your claims.
+- **Protection:** Prevents block breaking/placing, explosions, fire spread, and container access by non-trusted players.
+- **OP Bypass:** Server Operators automatically bypass all claim restrictions.
 
+### 🏠 Teleportation & Homes
+Navigate the world easily but fairly.
+- **`/home`**: Teleport to your bed or respawn anchor.
+- **`/spawn`**: Return to the world spawn.
+- **`/tpa <player>`**: Request to teleport to another player.
+- **Warmups:** Configurable delay (default 5s) before teleporting. Moving or taking damage cancels the teleport!
 
+### 💬 Chat & Community
+- **Chat Filter:** Blocks harmful language using an efficient, cached pattern matcher.
+- **Welcome Message:** Customizable join message with color support.
+- **Auto-Broadcast:** Periodic tips or announcements displayed to all players.
+- **Formatting:** Supports `&` color codes in config (e.g., `&aGreen`, `&cRed`, `&lBold`).
+- **`/rules`**: Display server rules (configurable).
 
-#### Next Update:
-- Json config for max claims, welcome message and making custom rules.
+### ⚙️ Configuration
+The mod is highly configurable via `config/quackedsmp.json`. Changes can be applied instantly with **`/smp reload`**.
 
-#### License
+#### Example Config:
+```json
+{
+  "max_claims": 50,
+  "tp_warmup": 5,
+  "welcome_message": "&6Welcome to QuackedSMP, {player}!",
+  "message_interval": 300,
+  "rules": [
+    "&e1. Be respectful.",
+    "&e2. No griefing inside claims.",
+    "&e3. Wilderness is dangerous."
+  ],
+  "periodic_messages": [
+    "&b[Tip] &fUse &a/claim &fto protect your land!",
+    "&b[Tip] &fDon't forget to set your &a/home&f!"
+  ]
+}
+```
 
-Licensed under the Apache License, Version 2.0. You may obtain a copy of the License at:
+#### Supported Formatting Codes
+| Code | Color/Style | Code | Color/Style |
+| :--- | :--- | :--- | :--- |
+| `&0` | Black | `&9` | Blue |
+| `&1` | Dark Blue | `&a` | Green |
+| `&2` | Dark Green | `&b` | Aqua |
+| `&3` | Dark Aqua | `&c` | Red |
+| `&4` | Dark Red | `&d` | Light Purple |
+| `&5` | Dark Purple | `&e` | Yellow |
+| `&6` | Gold | `&f` | White |
+| `&7` | Gray | `&l` | **Bold** |
+| `&8` | Dark Gray | `&o` | *Italic* |
 
-http://www.apache.org/licenses/LICENSE-2.0
+---
 
-Unless required by applicable law or agreed to in writing, software distributed under the License is provided on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
+## 📜 Commands
+| Command | Description | Permission |
+| :--- | :--- | :--- |
+| `/smp help` | List all user commands. | Everyone |
+| `/smp reload` | Reload configuration. | OP |
+| `/claim` | Claim current chunk. | Everyone |
+| `/unclaim` | Unclaim current chunk. | Everyone |
+| `/claim map` | Show claim map. | Everyone |
+| `/claim info` | Show claim limits/usage. | Everyone |
+| `/trust <player>` | Trust a player globally. | Everyone |
+| `/untrust <player>` | Revoke trust. | Everyone |
+| `/home` | Teleport to home. | Everyone |
+| `/spawn` | Teleport to spawn. | Everyone |
+| `/tpa <player>` | Request teleport. | Everyone |
+| `/tpaccept` | Accept teleport request. | Everyone |
+| `/tpdeny` | Deny teleport request. | Everyone |
+| `/rules` | View server rules. | Everyone |
+| `/chatfilter list` | View blocked words. | OP |
+| `/chatfilter add` | Add word to filter. | OP |
+| `/chatfilter remove`| Remove word from filter.| OP |
+
+---
+
+## License
+Licensed under the Apache License, Version 2.0.
