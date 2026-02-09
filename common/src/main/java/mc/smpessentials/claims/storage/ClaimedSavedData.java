@@ -1,4 +1,5 @@
 package mc.smpessentials.claims.storage;
+
 import mc.smpessentials.claims.model.ClaimData;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
@@ -21,16 +22,16 @@ public final class ClaimedSavedData extends SavedData {
 
     private final Map<ResourceKey<Level>, Long2ObjectOpenHashMap<ClaimData>> indexByDim = new HashMap<>();
 
+    private final Map<UUID, Integer> claimCounts = new HashMap<>();
+
     public static final SavedDataType<ClaimedSavedData> TYPE = new SavedDataType<>(
             "quackedsmp_claims",
             ctx -> new ClaimedSavedData(List.of()),
             ctx -> ClaimedSavedData.CODEC,
-            DataFixTypes.LEVEL
-    );
+            DataFixTypes.LEVEL);
 
     public static final Codec<ClaimedSavedData> CODEC = RecordCodecBuilder.create(i -> i.group(
-            ClaimData.CODEC.listOf().fieldOf("claims").forGetter(s -> s.claims)
-    ).apply(i, ClaimedSavedData::new));
+            ClaimData.CODEC.listOf().fieldOf("claims").forGetter(s -> s.claims)).apply(i, ClaimedSavedData::new));
 
     public ClaimedSavedData(List<ClaimData> claims) {
         this.claims = new ArrayList<>(claims);
@@ -43,8 +44,10 @@ public final class ClaimedSavedData extends SavedData {
 
     private void rebuildIndex() {
         indexByDim.clear();
+        claimCounts.clear();
         for (ClaimData c : claims) {
             indexByDim.computeIfAbsent(c.dimension(), k -> new Long2ObjectOpenHashMap<>()).put(c.chunk(), c);
+            claimCounts.merge(c.owner(), 1, Integer::sum);
         }
     }
 
@@ -67,11 +70,13 @@ public final class ClaimedSavedData extends SavedData {
     public boolean claim(ServerLevel level, ChunkPos chunk, UUID owner) {
         long key = chunk.toLong();
         var map = dimIndex(level.dimension());
-        if (map.containsKey(key)) return false;
+        if (map.containsKey(key))
+            return false;
 
         ClaimData cd = new ClaimData(level.dimension(), key, owner, System.currentTimeMillis());
         map.put(key, cd);
         claims.add(cd);
+        claimCounts.merge(owner, 1, Integer::sum);
         setDirty();
         return true;
     }
@@ -80,8 +85,10 @@ public final class ClaimedSavedData extends SavedData {
         long key = chunk.toLong();
         var map = dimIndex(level.dimension());
         ClaimData removed = map.remove(key);
-        if (removed == null) return false;
+        if (removed == null)
+            return false;
         claims.remove(removed);
+        claimCounts.computeIfPresent(removed.owner(), (k, v) -> v > 1 ? v - 1 : null);
         setDirty();
         return true;
     }
@@ -92,12 +99,7 @@ public final class ClaimedSavedData extends SavedData {
     // in mc.smpessentials.claims.storage.ClaimedSavedData
 
     public int countByOwner(ServerLevel level, UUID owner) {
-        var map = dimIndex(level.dimension());
-        int n = 0;
-        for (ClaimData c : map.values()) {
-            if (c.owner().equals(owner)) n++;
-        }
-        return n;
+        return claimCounts.getOrDefault(owner, 0);
     }
 
 }

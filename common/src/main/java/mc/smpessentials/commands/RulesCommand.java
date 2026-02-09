@@ -7,9 +7,13 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 
 public final class RulesCommand {
-    private RulesCommand() {}
+    private RulesCommand() {
+    }
 
-    /** Called from your CommandRegistrar: .executes(ctx -> RulesCommand.execute(ctx.getSource())) */
+    /**
+     * Called from your CommandRegistrar: .executes(ctx ->
+     * RulesCommand.execute(ctx.getSource()))
+     */
     public static int execute(CommandSourceStack source) {
         try {
             ServerPlayer player = source.getPlayerOrException(); // throws CommandSyntaxException if console/CB
@@ -24,23 +28,23 @@ public final class RulesCommand {
     private static void sendRules(ServerPlayer player) {
         // Header
         player.sendSystemMessage(Component.literal("— Server Rules —")
-            .withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD));
+                .withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD));
 
         // Bulleted, short vanilla-friendly rules
-        player.sendSystemMessage(Component.literal("- 1. Be respectful in chat.").withStyle(ChatFormatting.YELLOW));
-        player.sendSystemMessage(Component.literal("- 2. No griefing or stealing from other players.").withStyle(ChatFormatting.YELLOW));
-        player.sendSystemMessage(Component.literal("- 3. Build big, have fun")
-            .withStyle(ChatFormatting.YELLOW));
+        // Configured Rules
+        for (String rule : mc.smpessentials.config.SmpConfig.RULES) {
+            player.sendSystemMessage(mc.smpessentials.util.TextUtil.format(rule));
+        }
 
         // Spacer
         player.sendSystemMessage(Component.empty());
 
-
         // Footer hint
-        player.sendSystemMessage(Component.literal("/home /claim(s) /trust /untrust /spawn (Commands Provided by QuackedSMP)")
-            .withStyle(ChatFormatting.DARK_GRAY, ChatFormatting.ITALIC));
-        player.sendSystemMessage(Component.literal("Wiki: https://quackedmod.wiki/")
-            .withStyle(ChatFormatting.DARK_BLUE, ChatFormatting.BOLD));
+        player.sendSystemMessage(Component.literal("/home /claim(s) /trust /untrust /spawn /smp help")
+                .withStyle(ChatFormatting.DARK_GRAY, ChatFormatting.ITALIC));
+        // Credit (Small)
+        player.sendSystemMessage(Component.literal("QuackedSMP by quackedmod.wiki")
+                .withStyle(ChatFormatting.DARK_GRAY, ChatFormatting.ITALIC));
 
     }
 }

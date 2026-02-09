@@ -15,15 +15,18 @@ import java.util.regex.Pattern;
 
 /**
  * Chat masking hook and SavedData accessor.
- * Registers a decorate callback that replaces offending word tokens with "****".
+ * Registers a decorate callback that replaces offending word tokens with
+ * "****".
  */
 public final class ChatFilter {
     // Letters, digits, and common in-word symbols: _ ' - @ $ ! . + * # % & ? ~ ^
     private static final Pattern WORD = Pattern.compile("[\\p{L}\\p{N}_'@\\-\\$!\\.\\+\\*#%&\\?~^]+");
-    private ChatFilter() {}
+
+    private ChatFilter() {
+    }
 
     /**
-     * Registers the chat decorate event. 
+     * Registers the chat decorate event.
      * + Server start autoload
      * Must be called once during common init.
      */
@@ -32,25 +35,31 @@ public final class ChatFilter {
         LifecycleEvent.SERVER_STARTED.register(server -> ChatFilterConfig.mergeFromConfig(server));
     }
     /*
-     * Chat decorate callback that inspects the raw message and replaces any word-token
-    * present in the persisted filter set with asterisks. Messages beginning with '/'
-    * are ignored. Operates server-side and is a no-op if the server instance is null.
+     * Chat decorate callback that inspects the raw message and replaces any
+     * word-token
+     * present in the persisted filter set with asterisks. Messages beginning with
+     * '/'
+     * are ignored. Operates server-side and is a no-op if the server instance is
+     * null.
      */
 
     private static void onDecorate(ServerPlayer player, ChatEvent.ChatComponent component) {
-        if (component == null) return;
+        if (component == null)
+            return;
 
         // Do not process commands
         String raw = component.get().getString();
-        if (raw.startsWith("/")) return;
+        if (raw.startsWith("/"))
+            return;
 
         MinecraftServer server = (player != null) ? player.getServer() : null;
-        if (server == null) return;
+        if (server == null)
+            return;
 
         ChatFilterSavedData data = getData(server);
         String masked = maskTokens(raw, data);
         masked = maskPhrases(masked, data);
-        
+
         if (!masked.equals(raw)) {
             component.set(Component.literal(masked));
         }
@@ -91,28 +100,15 @@ public final class ChatFilter {
     }
 
     /**
-     * Pass 2: masks phrases containing whitespace by substring search (case-insensitive).
-     * Uses lowercase-only normalization to maintain index alignment with the original string.
+     * Pass 2: masks phrases containing whitespace by substring search
+     * (case-insensitive).
+     * Uses lowercase-only normalization to maintain index alignment with the
+     * original string.
      */
     public static String maskPhrases(String message, ChatFilterSavedData data) {
-        java.util.Set<String> snapshot = data.snapshot();
         String out = message;
 
-        for (String entry : snapshot) {
-            if (entry.isEmpty()) continue;
-
-            // Only run substring scan for entries that contain whitespace or non-alphanumeric
-            boolean needs = false;
-            for (int i = 0; i < entry.length(); i++) {
-                char c = entry.charAt(i);
-                if (Character.isWhitespace(c) || !Character.isLetterOrDigit(c)) { needs = true; break; }
-            }
-            if (!needs) continue;
-
-            java.util.regex.Pattern pat = java.util.regex.Pattern.compile(
-                java.util.regex.Pattern.quote(entry),
-                java.util.regex.Pattern.CASE_INSENSITIVE | java.util.regex.Pattern.UNICODE_CASE
-            );
+        for (java.util.regex.Pattern pat : data.getPhrasePatterns()) {
             out = pat.matcher(out).replaceAll("****");
         }
         return out;

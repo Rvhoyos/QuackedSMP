@@ -16,23 +16,22 @@ public final class WhitelistSavedData extends SavedData {
     private final Map<UUID, Set<UUID>> byOwner; // owner -> trusted set
 
     public static final Codec<WhitelistSavedData> CODEC = RecordCodecBuilder.create(i -> i.group(
-        Codec.list(Entry.CODEC).fieldOf("entries").forGetter(s ->
-            s.byOwner.entrySet().stream()
-                .map(e -> new Entry(e.getKey(), new ArrayList<>(e.getValue())))
-                .collect(Collectors.toList())
-        )
-    ).apply(i, entries -> {
-        Map<UUID, Set<UUID>> map = new Object2ObjectOpenHashMap<>();
-        for (Entry e : entries) map.put(e.owner, new HashSet<>(e.trusted));
-        return new WhitelistSavedData(map);
-    }));
+            Codec.list(Entry.CODEC).fieldOf("entries").forGetter(s -> s.byOwner.entrySet().stream()
+                    .map(e -> new Entry(e.getKey(), new ArrayList<>(e.getValue())))
+                    .collect(Collectors.toList())))
+            .apply(i, entries -> {
+                Map<UUID, Set<UUID>> map = new Object2ObjectOpenHashMap<>();
+                for (Entry e : entries) {
+                    map.put(e.owner(), new HashSet<>(e.trusted()));
+                }
+                return new WhitelistSavedData(map);
+            }));
 
     public static final SavedDataType<WhitelistSavedData> TYPE = new SavedDataType<>(
-        "quackedsmp_whitelist",
-        ctx -> new WhitelistSavedData(new Object2ObjectOpenHashMap<>()),
-        ctx -> WhitelistSavedData.CODEC,
-        DataFixTypes.LEVEL
-    );
+            "quackedsmp_whitelist",
+            ctx -> new WhitelistSavedData(new Object2ObjectOpenHashMap<>()),
+            ctx -> WhitelistSavedData.CODEC,
+            DataFixTypes.LEVEL);
 
     public WhitelistSavedData(Map<UUID, Set<UUID>> byOwner) {
         this.byOwner = byOwner;
@@ -43,7 +42,8 @@ public final class WhitelistSavedData extends SavedData {
     }
 
     public boolean isTrusted(UUID owner, UUID actor) {
-        if (owner.equals(actor)) return true;
+        if (owner.equals(actor))
+            return true;
         Set<UUID> set = byOwner.get(owner);
         return set != null && set.contains(actor);
     }
@@ -55,30 +55,35 @@ public final class WhitelistSavedData extends SavedData {
     public boolean add(UUID owner, UUID trusted) {
         Set<UUID> set = byOwner.computeIfAbsent(owner, k -> new HashSet<>());
         boolean changed = set.add(trusted);
-        if (changed) setDirty();
+        if (changed)
+            setDirty();
         return changed;
     }
 
     public boolean remove(UUID owner, UUID trusted) {
         Set<UUID> set = byOwner.get(owner);
-        if (set == null) return false;
+        if (set == null)
+            return false;
         boolean changed = set.remove(trusted);
-        if (changed) setDirty();
-        if (set.isEmpty()) byOwner.remove(owner);
+        if (changed)
+            setDirty();
+        if (set.isEmpty())
+            byOwner.remove(owner);
         return changed;
     }
 
     /* small codec record for (owner, [trusted...]) */
     private static record Entry(UUID owner, List<UUID> trusted) {
         static final Codec<Entry> CODEC = RecordCodecBuilder.create(i -> i.group(
-            UUIDUtilPlus.CODEC.fieldOf("owner").forGetter(Entry::owner),
-            UUIDUtilPlus.CODEC.listOf().fieldOf("trusted").forGetter(Entry::trusted)
-        ).apply(i, Entry::new));
+                UUIDUtilPlus.CODEC.fieldOf("owner").forGetter(Entry::owner),
+                UUIDUtilPlus.CODEC.listOf().fieldOf("trusted").forGetter(Entry::trusted)).apply(i, Entry::new));
     }
 
     /** Tiny UUID codec helper (vanilla doesn't expose one here). */
     public static final class UUIDUtilPlus {
         public static final Codec<UUID> CODEC = Codec.STRING.xmap(UUID::fromString, UUID::toString);
-        private UUIDUtilPlus() {}
+
+        private UUIDUtilPlus() {
+        }
     }
 }

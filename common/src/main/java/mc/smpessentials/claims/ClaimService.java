@@ -11,10 +11,11 @@ import java.util.Optional;
 import java.util.UUID;
 
 public final class ClaimService {
-    private ClaimService() {}
+    private ClaimService() {
+    }
 
-    /** Hard cap for MVP; tweak freely. */
-    public static final int MAX_PER_PLAYER = 50;
+    /** Limit configured in SmpConfig. */
+    // public static final int MAX_PER_PLAYER = 50; // moved to config
 
     public static Optional<UUID> getOwner(ServerLevel level, ChunkPos pos) {
         return ClaimManager.get(level).get(pos).map(ClaimData::owner);
@@ -29,7 +30,8 @@ public final class ClaimService {
     public static boolean unclaim(ServerPlayer player, ServerLevel level, ChunkPos pos) {
         var mgr = ClaimManager.get(level);
         var existing = mgr.get(pos);
-        if (existing.isEmpty()) return false;
+        if (existing.isEmpty())
+            return false;
 
         if (existing.get().owner().equals(player.getUUID())) {
             return mgr.unclaimIfOwned(pos, player.getUUID());
@@ -52,26 +54,35 @@ public final class ClaimService {
                 int cz = pos.getMiddleBlockZ();
                 int dx = Math.abs(cx - spawn.getX());
                 int dz = Math.abs(cz - spawn.getZ());
-                //square, matches vanilla behavior
-                if (Math.max(dx, dz) <= radius) return Result.SPAWN_PROTECTED;
+                // square, matches vanilla behavior
+                if (Math.max(dx, dz) <= radius)
+                    return Result.SPAWN_PROTECTED;
             }
             // Also block exact spawn chunk for safety
-            if (pos.equals(new ChunkPos(spawn))) return Result.SPAWN_PROTECTED;
+            if (pos.equals(new ChunkPos(spawn)))
+                return Result.SPAWN_PROTECTED;
         }
 
         var mgr = ClaimManager.get(level);
 
-        if (mgr.isClaimed(pos)) return Result.ALREADY_CLAIMED;
+        if (mgr.isClaimed(pos))
+            return Result.ALREADY_CLAIMED;
 
         UUID me = player.getUUID();
-        // OP bypass: allow server operators to ignore the per-player MAX_PER_PLAYER cap.
+        // OP bypass: allow server operators to ignore the per-player MAX_PER_PLAYER
+        // cap.
         boolean isOp = player.getServer().getPlayerList().isOp(player.getGameProfile());
-        if (ownedCount(level, me) >= MAX_PER_PLAYER && !isOp) return Result.REACHED_CAP;
+        int limit = mc.smpessentials.config.SmpConfig.MAX_CLAIMS;
+        if (mc.smpessentials.config.SmpConfig.VIPS.contains(player.getGameProfile().getName())) {
+            limit += mc.smpessentials.config.SmpConfig.VIP_BONUS_CLAIMS;
+        }
+
+        if (!isOp && ownedCount(level, me) >= limit)
+            return Result.REACHED_CAP;
 
         mgr.claim(pos, me);
         return Result.SUCCESS;
     }
-
 
     public enum Result {
         SUCCESS,

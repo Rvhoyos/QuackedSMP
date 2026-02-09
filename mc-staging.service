@@ -1,0 +1,13 @@
+[Unit]
+Description=Minecraft Staging Server
+After=network.target
+
+[Service]
+User=ubuntu
+WorkingDirectory=/home/ubuntu/mcserver/staging-server
+ExecStart=/bin/bash /home/ubuntu/mcserver/staging-server/run.sh
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
