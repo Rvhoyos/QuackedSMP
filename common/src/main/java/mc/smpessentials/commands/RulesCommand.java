@@ -40,7 +40,7 @@ public final class RulesCommand {
         player.sendSystemMessage(Component.empty());
 
         // Footer hint
-        player.sendSystemMessage(Component.literal("/home /claim(s) /trust /untrust /spawn /smp help")
+        player.sendSystemMessage(Component.literal("For commands, type /smp help")
                 .withStyle(ChatFormatting.DARK_GRAY, ChatFormatting.ITALIC));
         // Credit (Small)
         player.sendSystemMessage(Component.literal("QuackedSMP by quackedmod.wiki")
