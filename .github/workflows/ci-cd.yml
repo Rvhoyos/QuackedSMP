@@ -52,7 +52,7 @@ jobs:
       - name: Deploy to Staging
         run: |
           chmod +x ./scripts/deploy-staging.sh
-          ./scripts/deploy-staging.sh "neoforge/build/libs"
+          ./scripts/deploy-staging.sh "build/libs"
 
 
 
