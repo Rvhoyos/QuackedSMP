@@ -134,18 +134,20 @@ public final class ActiveAbilities {
         }
 
         data.setCooldown(uuid, skill);
-        // Duration scales with level: 5s base + 0.1s per level
-        int durationTicks = (int) ((5 + level * 0.1) * 20);
+        // Duration scales with level: 10s base + 0.2s per level
+        int durationTicks = (int) ((10 + level * 0.2) * 20);
 
         switch (skill) {
             case MINING -> {
                 sp.addEffect(new MobEffectInstance(MobEffects.HASTE, durationTicks, 4, false, false));
                 superBreakerActive.put(uuid, System.currentTimeMillis() + (durationTicks * 50L));
                 announce(sp, name, durationTicks / 20);
+                resyncHand(sp);
             }
             case EXCAVATION -> {
                 sp.addEffect(new MobEffectInstance(MobEffects.HASTE, durationTicks, 4, false, false));
                 announce(sp, name, durationTicks / 20);
+                resyncHand(sp);
             }
             default -> {
             }
@@ -167,9 +169,11 @@ public final class ActiveAbilities {
         }
 
         data.setCooldown(uuid, SkillType.WOODCUTTING);
-        int durationTicks = (int) ((5 + level * 0.1) * 20);
+        // Duration scales with level: 10s base + 0.2s per level
+        int durationTicks = (int) ((10 + level * 0.2) * 20);
         treeFellerActive.put(uuid, System.currentTimeMillis() + (durationTicks * 50L));
         announce(sp, "Tree Feller", durationTicks / 20);
+        resyncHand(sp);
         return true;
     }
 
@@ -237,13 +241,13 @@ public final class ActiveAbilities {
                         if (net.minecraft.world.item.BoneMealItem.growCrop(
                                 new ItemStack(Items.BONE_MEAL), level, pos)) {
                             bonemealed++;
-                            level.levelEvent(1505, pos, 0);
                         }
                     }
                 }
             }
         }
         announce(sp, "Green Terra", bonemealed + " crops boosted");
+        resyncHand(sp);
         return true;
     }
 
@@ -261,9 +265,10 @@ public final class ActiveAbilities {
         }
 
         data.setCooldown(uuid, SkillType.FISHING);
-        int durationTicks = 30 * 20;
+        int durationTicks = (int) ((10 + fishLevel * 0.2) * 20);
         sp.addEffect(new MobEffectInstance(MobEffects.LUCK, durationTicks, 4, false, false));
-        announce(sp, "Master Angler", 30);
+        announce(sp, "Master Angler", durationTicks / 20);
+        resyncHand(sp);
         return true;
     }
 
@@ -281,10 +286,11 @@ public final class ActiveAbilities {
         }
 
         data.setCooldown(uuid, SkillType.MELEE);
-        int durationTicks = (int) ((5 + meleeLevel * 0.05) * 20);
+        int durationTicks = (int) ((10 + meleeLevel * 0.2) * 20);
         sp.addEffect(new MobEffectInstance(MobEffects.STRENGTH, durationTicks, 1, false, false));
         sp.addEffect(new MobEffectInstance(MobEffects.SPEED, durationTicks, 1, false, false));
         announce(sp, "Berzerk", durationTicks / 20);
+        resyncHand(sp);
         return true;
     }
 
@@ -302,9 +308,11 @@ public final class ActiveAbilities {
         }
 
         data.setCooldown(uuid, SkillType.ARCHERY);
-        sp.addEffect(new MobEffectInstance(MobEffects.SLOW_FALLING, 100, 0, false, false));
-        sp.addEffect(new MobEffectInstance(MobEffects.NIGHT_VISION, 100, 0, false, false));
-        announce(sp, "Sniper", 5);
+        int durationTicks = (int) ((10 + archLevel * 0.2) * 20);
+        sp.addEffect(new MobEffectInstance(MobEffects.SLOW_FALLING, durationTicks, 0, false, false));
+        sp.addEffect(new MobEffectInstance(MobEffects.NIGHT_VISION, durationTicks, 0, false, false));
+        announce(sp, "Sniper", durationTicks / 20);
+        resyncHand(sp);
         return true;
     }
 
@@ -322,10 +330,11 @@ public final class ActiveAbilities {
         }
 
         data.setCooldown(uuid, SkillType.DEFENSE);
-        int durationTicks = (int) ((5 + defLevel * 0.05) * 20);
+        int durationTicks = (int) ((10 + defLevel * 0.2) * 20);
         sp.addEffect(new MobEffectInstance(MobEffects.RESISTANCE, durationTicks, 3, false, false));
         sp.addEffect(new MobEffectInstance(MobEffects.SLOWNESS, durationTicks, 3, false, false));
         announce(sp, "Juggernaut", durationTicks / 20);
+        resyncHand(sp);
         return true;
     }
 
@@ -380,6 +389,7 @@ public final class ActiveAbilities {
         int repairAmount = Math.max(1, (int) (maxDmg * 0.10));
         droppedItem.setDamageValue(Math.max(0, droppedItem.getDamageValue() - repairAmount));
         announce(sp, "Arcane Infusion", "Repaired 10%");
+        resyncHand(sp);
         return true;
     }
 
@@ -403,5 +413,11 @@ public final class ActiveAbilities {
         if (seconds >= 60)
             return (seconds / 60) + "m " + (seconds % 60) + "s";
         return seconds + "s";
+    }
+
+    private static void resyncHand(ServerPlayer sp) {
+        // Force the client to refresh the inventory, fixing the "ghost item" visual
+        // glitch
+        sp.inventoryMenu.sendAllDataToRemote();
     }
 }

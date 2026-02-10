@@ -13,6 +13,10 @@ QuackedSMP is a server-side utility mod for Fabric and NeoForge. It provides lan
 
 - **Land Claims:** Chunk-based claiming system to protect builds. Server operators bypass restrictions.
 - **Teleportation:** Commands for home setting, spawn warping, and player-to-player teleport requests (TPA) with configurable warmups.
+### Leveling
+- **Levels 1-10:** Fast progression (Flat 50 XP per level).
+- **Levels 11-100:** Standard progression (Exponential curve).
+- **Global XP Multiplier:** Configurable via `xp_exponent` (default 1.5).
 - **Chat Management:** Simple chat filter, automated broadcasts, and welcome messages.
 - **Skill System:** 12 skills across 4 categories with XP progression, active abilities, and passive buffs.
 - **Configuration:** Hot-reloadable JSON configuration.
@@ -183,18 +187,18 @@ The `skills` section is auto-generated in `config/quackedsmp.json` on first load
     "cap_combat_damage": 1.0,
     "cap_knowledge_xp": 1.0,
     "cooldowns": {
-      "mining": 1200,
-      "excavation": 1800,
-      "woodcutting": 900,
-      "farming": 600,
-      "fishing": 900,
+      "mining": 240,
+      "excavation": 300,
+      "woodcutting": 300,
+      "farming": 180,
+      "fishing": 300,
       "agility": 10,
-      "melee": 1200,
-      "archery": 600,
-      "defense": 2700,
-      "enchanting": 3600,
-      "alchemy": 1200,
-      "trading": 3600
+      "melee": 300,
+      "archery": 180,
+      "defense": 600,
+      "enchanting": 1200,
+      "alchemy": 600,
+      "trading": 1200
     }
   }
 }
@@ -204,7 +208,27 @@ The `skills` section is auto-generated in `config/quackedsmp.json` on first load
 | :--- | :--- | :--- |
 | `xp_exponent` | Controls the XP curve steepness | `1.5` |
 | `cap_*` | Maximum buff value at level 100 | Varies |
-| `cooldowns.*` | Ability cooldown in seconds | Varies |
+| `cooldowns.*` | Base cooldown in seconds (see below) | Varies |
+
+### Rebalanced Cooldowns & Scaling
+
+Cooldowns now follow a **piecewise reduction curve** based on skill level:
+- **Lv 0-10:** Drops quickly to **75%** of base time.
+- **Lv 10-100:** Drops steadily to **25%** of base time.
+
+| Ability | Base Cooldown (Lv 0) | Min Cooldown (Lv 100) |
+| :--- | :--- | :--- |
+| **Mining** | 240s (4m) | 60s (1m) |
+| **Excavation** | 300s (5m) | 75s (1m 15s) |
+| **Woodcutting** | 300s (5m) | 75s (1m 15s) |
+| **Farming** | 180s (3m) | 45s |
+| **Fishing** | 300s (5m) | 75s (1m 15s) |
+| **Combat** | 300s (5m) | 75s (1m 15s) |
+| **Archery** | 180s (3m) | 45s |
+| **Defense** | 600s (10m) | 150s (2.5m) |
+| **Knowledge** | 1200s (20m) | 300s (5m) |
+
+Durations have been **doubled**: Base 10s + 0.2s/level (e.g., 30s at Lv 100).
 
 ### Testing Guide
 

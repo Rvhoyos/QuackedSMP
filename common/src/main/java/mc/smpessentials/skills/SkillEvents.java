@@ -62,36 +62,40 @@ public final class SkillEvents {
             if (!(level instanceof ServerLevel sl))
                 return EventResult.pass();
 
-            SkillData data = SkillData.get(sl);
+            try {
+                SkillData data = SkillData.get(sl);
 
-            // ---- Mining (Pickaxe blocks) ----
-            if (isOre(state)) {
-                double xp = oreXp(state);
-                awardXp(sp, data, SkillType.MINING, xp);
-                applyDoubleDrop(sp, data, state, pos, sl);
-            } else if (isStone(state)) {
-                awardXp(sp, data, SkillType.MINING, 1);
-            }
+                // ---- Mining (Pickaxe blocks) ----
+                if (isOre(state)) {
+                    double xp = oreXp(state);
+                    awardXp(sp, data, SkillType.MINING, xp);
+                    applyDoubleDrop(sp, data, state, pos, sl);
+                } else if (isStone(state)) {
+                    awardXp(sp, data, SkillType.MINING, 1);
+                }
 
-            // ---- Excavation (Shovel blocks) ----
-            else if (isShovelBlock(state)) {
-                awardXp(sp, data, SkillType.EXCAVATION, 1);
-                applyTreasureFind(sp, data, pos, sl);
-            }
+                // ---- Excavation (Shovel blocks) ----
+                else if (isShovelBlock(state)) {
+                    awardXp(sp, data, SkillType.EXCAVATION, 1);
+                    applyTreasureFind(sp, data, pos, sl);
+                }
 
-            // ---- Woodcutting (Logs) ----
-            else if (state.is(BlockTags.LOGS)) {
-                awardXp(sp, data, SkillType.WOODCUTTING, 5);
-                applyDoubleDrop(sp, data, state, pos, sl);
-                applyLeafBlower(sp, data, pos, sl);
-                // Tree Feller: chain-break connected logs if ability is active
-                ActiveAbilities.onLogBreak(sp, pos, sl);
-            }
+                // ---- Woodcutting (Logs) ----
+                else if (state.is(BlockTags.LOGS)) {
+                    awardXp(sp, data, SkillType.WOODCUTTING, 5);
+                    applyDoubleDrop(sp, data, state, pos, sl);
+                    applyLeafBlower(sp, data, pos, sl);
+                    // Tree Feller: chain-break connected logs if ability is active
+                    ActiveAbilities.onLogBreak(sp, pos, sl);
+                }
 
-            // ---- Farming (Crops) ----
-            else if (state.is(BlockTags.CROPS) && isMatureCrop(state)) {
-                awardXp(sp, data, SkillType.FARMING, 5);
-                applyAutoReplant(sp, data, state, pos, sl);
+                // ---- Farming (Crops) ----
+                else if (state.is(BlockTags.CROPS) && isMatureCrop(state)) {
+                    awardXp(sp, data, SkillType.FARMING, 5);
+                    applyAutoReplant(sp, data, state, pos, sl);
+                }
+            } catch (Exception e) {
+                SmpUtilsMod.LOGGER.error("Error in SkillEvents block break handler", e);
             }
 
             return EventResult.pass();
