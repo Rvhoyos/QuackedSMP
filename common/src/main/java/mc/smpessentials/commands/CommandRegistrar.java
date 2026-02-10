@@ -39,6 +39,7 @@ public final class CommandRegistrar {
             mc.smpessentials.chatfilter.ChatFilterCommands.register(dispatcher);
             mc.smpessentials.commands.GeneralCommands.register(dispatcher);
             mc.smpessentials.teleport.TeleportCommands.register(dispatcher);
+            mc.smpessentials.commands.SkillCommands.register(dispatcher);
 
         });
 

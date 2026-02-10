@@ -31,12 +31,18 @@ public class GeneralCommands {
                                 .append(Component.literal(" - Teleport to bed/spawn").withStyle(desc)));
                 src.sendSystemMessage(Component.literal("/spawn").withStyle(cmd)
                                 .append(Component.literal(" - Teleport to world spawn").withStyle(desc)));
-                src.sendSystemMessage(Component.literal("/tpa <player>").withStyle(cmd)
+                src.sendSystemMessage(Component.literal("/tpr <player>").withStyle(cmd)
                                 .append(Component.literal(" - Request teleport").withStyle(desc)));
+                src.sendSystemMessage(Component.literal("/tpa accept/deny").withStyle(cmd)
+                                .append(Component.literal(" - Accept or deny request").withStyle(desc)));
                 src.sendSystemMessage(Component.literal("/claim").withStyle(cmd)
                                 .append(Component.literal(" - Claim current chunk").withStyle(desc)));
                 src.sendSystemMessage(Component.literal("/unclaim").withStyle(cmd)
                                 .append(Component.literal(" - Unclaim current chunk").withStyle(desc)));
+                src.sendSystemMessage(Component.literal("/claim map").withStyle(cmd)
+                                .append(Component.literal(" - View nearby claims").withStyle(desc)));
+                src.sendSystemMessage(Component.literal("/claim info").withStyle(cmd)
+                                .append(Component.literal(" - View claim usage").withStyle(desc)));
                 src.sendSystemMessage(Component.literal("/trust <player>").withStyle(cmd)
                                 .append(Component.literal(" - Trust player globally").withStyle(desc)));
                 src.sendSystemMessage(Component.literal("/untrust <player>").withStyle(cmd)
@@ -47,6 +53,8 @@ public class GeneralCommands {
                                 .append(Component.literal(" - View claim count (VIPs get bonus!)").withStyle(desc)));
                 src.sendSystemMessage(Component.literal("/rules").withStyle(cmd)
                                 .append(Component.literal(" - Read server rules").withStyle(desc)));
+                src.sendSystemMessage(Component.literal("/skills").withStyle(cmd)
+                                .append(Component.literal(" - View your skill levels").withStyle(desc)));
 
                 return 1;
         }
