@@ -1,7 +1,6 @@
 package mc.smpessentials.skills;
 
 import dev.architectury.event.EventResult;
-import dev.architectury.event.events.common.InteractionEvent;
 import dev.architectury.event.events.common.PlayerEvent;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
@@ -11,8 +10,6 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.tags.ItemTags;
-import net.minecraft.world.InteractionHand;
-import net.minecraft.world.InteractionResult;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.item.*;
@@ -107,23 +104,6 @@ public final class ActiveAbilities {
             return EventResult.pass();
         });
 
-        // ── Sprint + right-click empty hand → Agility Dash ────────────
-        // Empty-hand right-click has no vanilla action, so zero conflicts.
-        InteractionEvent.RIGHT_CLICK_ITEM.register((player, hand) -> {
-            if (!(player instanceof ServerPlayer sp))
-                return InteractionResult.PASS;
-            if (hand != InteractionHand.MAIN_HAND)
-                return InteractionResult.PASS;
-            if (!sp.getMainHandItem().isEmpty())
-                return InteractionResult.PASS;
-            if (!sp.isSprinting())
-                return InteractionResult.PASS;
-
-            ServerLevel sl = (ServerLevel) sp.level();
-            SkillData data = SkillData.get(sl);
-            tryActivateDash(sp, data, sp.getUUID());
-            return InteractionResult.PASS;
-        });
     }
 
     // ========== ABILITY IMPLEMENTATIONS ==========
