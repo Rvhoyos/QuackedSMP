@@ -18,6 +18,15 @@ import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.item.*;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.level.ClipContext;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.nbt.CompoundTag;
+
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.world.item.component.CustomData;
 
 import java.util.*;
 
@@ -81,6 +90,9 @@ public final class ActiveAbilities {
                 handled = tryActivateSniper(sp, data, uuid);
             } else if (dropped.getItem() instanceof ShieldItem) {
                 handled = tryActivateJuggernaut(sp, data, uuid);
+            } else if (dropped.getItem() == Items.BOOK || dropped.getItem() == Items.ENCHANTED_BOOK) {
+                // Alchemy: Book + Sneak + Q -> Silk Touch Spawner
+                handled = tryActivateAlchemy(sp, data, uuid);
             } else if (dropped.isDamageableItem() && dropped.isDamaged()) {
                 // Non-tool damaged item → Arcane Infusion (repair 10%)
                 handled = tryArcaneInfusion(sp, data, uuid, dropped);
@@ -419,5 +431,67 @@ public final class ActiveAbilities {
         // Force the client to refresh the inventory, fixing the "ghost item" visual
         // glitch
         sp.inventoryMenu.sendAllDataToRemote();
+    }
+
+    /** @return true if handled */
+    private static boolean tryActivateAlchemy(ServerPlayer sp, SkillData data, UUID uuid) {
+        int alchLevel = data.getLevel(uuid, SkillType.ALCHEMY);
+        if (alchLevel < MIN_LEVEL_FOR_ABILITY)
+            return false;
+
+        // Perform raycast to see if looking at a spawner (5 blocks range)
+        Vec3 start = sp.getEyePosition();
+        Vec3 look = sp.getViewVector(1.0F);
+        Vec3 end = start.add(look.x * 5, look.y * 5, look.z * 5);
+        BlockHitResult hit = sp.level()
+                .clip(new ClipContext(start, end, ClipContext.Block.OUTLINE, ClipContext.Fluid.NONE, sp));
+
+        if (hit.getType() != HitResult.Type.BLOCK)
+            return false;
+
+        BlockPos pos = hit.getBlockPos();
+        BlockState state = sp.level().getBlockState(pos);
+
+        if (!state.is(Blocks.SPAWNER))
+            return false;
+
+        // Check cooldown only after verifying a valid target
+        if (!data.isAbilityReady(uuid, SkillType.ALCHEMY)) {
+            long remaining = data.getCooldownRemaining(uuid, SkillType.ALCHEMY);
+            sp.displayClientMessage(Component.literal(
+                    "\u00a7cAlchemy on cooldown! \u00a77(" + formatTime(remaining) + ")"), true);
+            return true;
+        }
+
+        // Get spawner data
+        BlockEntity be = sp.level().getBlockEntity(pos);
+        if (be == null)
+            return false;
+
+        // Create spawner item with NBT
+        ItemStack spawnerItem = new ItemStack(Blocks.SPAWNER);
+        CompoundTag tag = be.saveWithoutMetadata(sp.registryAccess());
+
+        // Use DataComponents for 1.21+
+        spawnerItem.set(DataComponents.BLOCK_ENTITY_DATA, CustomData.of(tag));
+
+        // Drop item
+        net.minecraft.world.entity.item.ItemEntity it = new net.minecraft.world.entity.item.ItemEntity(
+                sp.level(), pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, spawnerItem);
+        it.setDefaultPickUpDelay();
+        sp.level().addFreshEntity(it);
+
+        // Destroy block (no drops, since we dropped custom)
+        sp.level().destroyBlock(pos, false, sp);
+
+        // Cooldown + Effects
+        data.setCooldown(uuid, SkillType.ALCHEMY);
+        announce(sp, "Philosopher's Touch", "Spawner Silk Touched!");
+        resyncHand(sp);
+
+        // Particles/Sound
+        sp.level().playSound(null, pos, SoundEvents.ZOMBIE_VILLAGER_CONVERTED, SoundSource.PLAYERS, 1.0f, 1.0f);
+
+        return true;
     }
 }
