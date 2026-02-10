@@ -179,18 +179,18 @@ public final class ConfigIO {
         sk.addProperty("xp_exponent", 1.5);
 
         JsonObject cds = new JsonObject();
-        cds.addProperty("mining", 1200);
-        cds.addProperty("excavation", 1800);
-        cds.addProperty("woodcutting", 900);
-        cds.addProperty("farming", 600);
-        cds.addProperty("fishing", 900);
+        cds.addProperty("mining", 240);
+        cds.addProperty("excavation", 300);
+        cds.addProperty("woodcutting", 300);
+        cds.addProperty("farming", 180);
+        cds.addProperty("fishing", 300);
         cds.addProperty("agility", 10);
-        cds.addProperty("melee", 1200);
-        cds.addProperty("archery", 600);
-        cds.addProperty("defense", 2700);
-        cds.addProperty("enchanting", 3600);
-        cds.addProperty("alchemy", 1200);
-        cds.addProperty("trading", 3600);
+        cds.addProperty("melee", 300);
+        cds.addProperty("archery", 180);
+        cds.addProperty("defense", 600);
+        cds.addProperty("enchanting", 1200);
+        cds.addProperty("alchemy", 600);
+        cds.addProperty("trading", 1200);
         sk.add("cooldowns", cds);
 
         JsonObject caps = new JsonObject();

@@ -18,6 +18,15 @@ public final class SkillManager {
     public static long xpForLevel(int level) {
         if (level <= 0)
             return 0;
+
+        // Piecewise XP Curve:
+        // Lv 1-10: Easy early game (flat 50 XP per level)
+        if (level <= 10) {
+            return 50;
+        }
+
+        // Lv 11+: Standard exponential curve
+        // Formula: 100 * (level^1.5)
         return (long) Math.floor(BASE_XP * Math.pow(level, SmpConfig.SKILL_XP_EXPONENT));
     }
 

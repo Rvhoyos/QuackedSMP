@@ -121,9 +121,30 @@ public final class SkillData extends SavedData {
         if (lastUsed == null)
             return 0;
 
-        long cooldownSeconds = mc.smpessentials.config.SmpConfig.getSkillCooldown(skill);
+        // Base cooldown from config
+        double baseCd = mc.smpessentials.config.SmpConfig.getSkillCooldown(skill);
+
+        // Get level for scaling
+        int level = getLevel(uuid, skill);
+
+        // Piecewise scaling:
+        // Lv 0-10: Drops from 100% to 75% (2.5% per level)
+        // Lv 10-100: Drops from 75% to 25% (~0.556% per level)
+        double multiplier;
+        if (level < 10) {
+            multiplier = 1.0 - (0.025 * level);
+        } else {
+            // (level - 10) goes from 0 to 90
+            // We want to drop 0.50 over 90 levels -> 0.50 / 90 = 0.005555...
+            multiplier = 0.75 - ((level - 10) * 0.00555556);
+        }
+
+        // Clamp min multiplier to 25% just in case
+        multiplier = Math.max(0.25, multiplier);
+
+        long effectiveCd = (long) (baseCd * multiplier);
         long elapsed = (System.currentTimeMillis() - lastUsed) / 1000;
-        long remaining = cooldownSeconds - elapsed;
+        long remaining = effectiveCd - elapsed;
         return Math.max(0, remaining);
     }
 

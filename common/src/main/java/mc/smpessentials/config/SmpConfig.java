@@ -30,18 +30,18 @@ public final class SmpConfig {
 
     private static long defaultCooldown(SkillType skill) {
         return switch (skill) {
-            case MINING -> 1200; // 20m
-            case EXCAVATION -> 1800; // 30m
-            case WOODCUTTING -> 900; // 15m
-            case FARMING -> 600; // 10m
-            case FISHING -> 900; // 15m
-            case AGILITY -> 10; // 10s
-            case MELEE -> 1200; // 20m
-            case ARCHERY -> 600; // 10m
-            case DEFENSE -> 2700; // 45m
-            case ENCHANTING -> 3600; // 1h
-            case ALCHEMY -> 1200; // 20m
-            case TRADING -> 3600; // 1h
+            case MINING -> 240L; // 4m
+            case EXCAVATION -> 300L; // 5m
+            case WOODCUTTING -> 300L; // 5m
+            case FARMING -> 180L; // 3m
+            case FISHING -> 300L; // 5m
+            case AGILITY -> 10L; // 10s (unchanged)
+            case MELEE -> 300L; // 5m
+            case ARCHERY -> 180L; // 3m
+            case DEFENSE -> 600L; // 10m
+            case ENCHANTING -> 1200L; // 20m
+            case ALCHEMY -> 600L; // 10m
+            case TRADING -> 1200L; // 20m
         };
     }
 
