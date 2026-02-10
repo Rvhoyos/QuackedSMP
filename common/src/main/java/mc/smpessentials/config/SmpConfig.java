@@ -1,6 +1,7 @@
 package mc.smpessentials.config;
 
 import com.google.gson.JsonObject;
+import mc.smpessentials.skills.SkillType;
 
 public final class SmpConfig {
     public static int MAX_CLAIMS = 50;
@@ -13,6 +14,36 @@ public final class SmpConfig {
     public static int VIP_BONUS_CLAIMS = 20;
     public static boolean ALLOW_LAVA_WILDERNESS = false;
     public static java.util.Map<String, String> MESSAGES = new java.util.HashMap<>();
+
+    // ---- Skills ----
+    public static double SKILL_XP_EXPONENT = 1.5;
+    public static java.util.Map<String, Long> SKILL_COOLDOWNS = new java.util.HashMap<>();
+    public static double CAP_INDUSTRIAL_SPEED = 0.5; // +50% mining speed at max
+    public static double CAP_NATURE_HEALTH = 10.0; // +10 hearts at max
+    public static double CAP_COMBAT_DAMAGE = 1.0; // +100% damage at max
+    public static double CAP_KNOWLEDGE_XP = 1.0; // +100% xp orbs at max
+
+    /** Get cooldown in seconds for a skill's active ability. */
+    public static long getSkillCooldown(SkillType skill) {
+        return SKILL_COOLDOWNS.getOrDefault(skill.name().toLowerCase(), defaultCooldown(skill));
+    }
+
+    private static long defaultCooldown(SkillType skill) {
+        return switch (skill) {
+            case MINING -> 1200; // 20m
+            case EXCAVATION -> 1800; // 30m
+            case WOODCUTTING -> 900; // 15m
+            case FARMING -> 600; // 10m
+            case FISHING -> 900; // 15m
+            case AGILITY -> 10; // 10s
+            case MELEE -> 1200; // 20m
+            case ARCHERY -> 600; // 10m
+            case DEFENSE -> 2700; // 45m
+            case ENCHANTING -> 3600; // 1h
+            case ALCHEMY -> 1200; // 20m
+            case TRADING -> 3600; // 1h
+        };
+    }
 
     private SmpConfig() {
     }
@@ -60,6 +91,31 @@ public final class SmpConfig {
             JsonObject msgs = root.getAsJsonObject("messages");
             for (String key : msgs.keySet()) {
                 MESSAGES.put(key, msgs.get(key).getAsString());
+            }
+        }
+
+        // ---- Skills ----
+        if (root.has("skills") && root.get("skills").isJsonObject()) {
+            JsonObject sk = root.getAsJsonObject("skills");
+            if (sk.has("xp_exponent"))
+                SKILL_XP_EXPONENT = sk.get("xp_exponent").getAsDouble();
+            if (sk.has("cooldowns") && sk.get("cooldowns").isJsonObject()) {
+                SKILL_COOLDOWNS.clear();
+                JsonObject cds = sk.getAsJsonObject("cooldowns");
+                for (String key : cds.keySet()) {
+                    SKILL_COOLDOWNS.put(key, cds.get(key).getAsLong());
+                }
+            }
+            if (sk.has("caps") && sk.get("caps").isJsonObject()) {
+                JsonObject caps = sk.getAsJsonObject("caps");
+                if (caps.has("industrial_speed"))
+                    CAP_INDUSTRIAL_SPEED = caps.get("industrial_speed").getAsDouble();
+                if (caps.has("nature_health"))
+                    CAP_NATURE_HEALTH = caps.get("nature_health").getAsDouble();
+                if (caps.has("combat_damage"))
+                    CAP_COMBAT_DAMAGE = caps.get("combat_damage").getAsDouble();
+                if (caps.has("knowledge_xp"))
+                    CAP_KNOWLEDGE_XP = caps.get("knowledge_xp").getAsDouble();
             }
         }
     }

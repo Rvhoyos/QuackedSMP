@@ -6,6 +6,10 @@
   "client": [
   ],
   "mixins": [
+    "FishingHookMixin",
+    "EnchantmentMenuMixin",
+    "BrewingStandMixin",
+    "VillagerMixin"
   ],
   "injectors": {
     "defaultRequire": 1

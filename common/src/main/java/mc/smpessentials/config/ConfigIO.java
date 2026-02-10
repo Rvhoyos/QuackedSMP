@@ -93,6 +93,10 @@ public final class ConfigIO {
                 obj.add("vips", new com.google.gson.JsonArray());
                 dirty = true;
             }
+            if (!obj.has("skills") || !obj.get("skills").isJsonObject()) {
+                obj.add("skills", defaultSkillsJson());
+                dirty = true;
+            }
 
             if (dirty) {
                 Files.writeString(p, GSON.toJson(obj), StandardCharsets.UTF_8);
@@ -166,7 +170,36 @@ public final class ConfigIO {
         msgs.addProperty("tpa.denied_confirm", "Denied the oldest pending request.");
 
         root.add("messages", msgs);
+        root.add("skills", defaultSkillsJson());
         return root;
     }
 
+    static JsonObject defaultSkillsJson() {
+        JsonObject sk = new JsonObject();
+        sk.addProperty("xp_exponent", 1.5);
+
+        JsonObject cds = new JsonObject();
+        cds.addProperty("mining", 1200);
+        cds.addProperty("excavation", 1800);
+        cds.addProperty("woodcutting", 900);
+        cds.addProperty("farming", 600);
+        cds.addProperty("fishing", 900);
+        cds.addProperty("agility", 10);
+        cds.addProperty("melee", 1200);
+        cds.addProperty("archery", 600);
+        cds.addProperty("defense", 2700);
+        cds.addProperty("enchanting", 3600);
+        cds.addProperty("alchemy", 1200);
+        cds.addProperty("trading", 3600);
+        sk.add("cooldowns", cds);
+
+        JsonObject caps = new JsonObject();
+        caps.addProperty("industrial_speed", 0.5);
+        caps.addProperty("nature_health", 10);
+        caps.addProperty("combat_damage", 1.0);
+        caps.addProperty("knowledge_xp", 1.0);
+        sk.add("caps", caps);
+
+        return sk;
+    }
 }

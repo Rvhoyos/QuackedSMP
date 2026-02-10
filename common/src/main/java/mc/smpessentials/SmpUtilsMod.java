@@ -21,6 +21,8 @@ public final class SmpUtilsMod {
         ChatFilter.init();
         mc.smpessentials.teleport.TeleportScheduler.init();
         mc.smpessentials.events.MessageScheduler.init();
+        mc.smpessentials.skills.SkillEvents.init();
+        mc.smpessentials.skills.ActiveAbilities.init();
 
     }
 }

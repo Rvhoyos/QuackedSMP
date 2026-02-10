@@ -7,13 +7,14 @@
 
 # QuackedSMP Essentials
 
-QuackedSMP is a server-side utility mod for Fabric and NeoForge. It provides land claiming, teleportation commands, and chat management tools for multiplayer servers.
+QuackedSMP is a server-side utility mod for Fabric and NeoForge. It provides land claiming, teleportation commands, chat management, and an RPG-style skill system.
 
 ## Core Features
 
 - **Land Claims:** Chunk-based claiming system to protect builds. Server operators bypass restrictions.
 - **Teleportation:** Commands for home setting, spawn warping, and player-to-player teleport requests (TPA) with configurable warmups.
 - **Chat Management:** Simple chat filter, automated broadcasts, and welcome messages.
+- **Skill System:** 12 skills across 4 categories with XP progression, active abilities, and passive buffs.
 - **Configuration:** Hot-reloadable JSON configuration.
 
 ## Configuration
@@ -103,6 +104,140 @@ Text fields support standard Minecraft legacy color codes (e.g., `&a` for green,
 | `/chatfilter list` | View blocked words | OP |
 | `/chatfilter add` | Add a word to the filter | OP |
 | `/chatfilter remove`| Remove a word from the filter | OP |
+| `/skills` | Open the skills book GUI | Everyone |
+| `/skills <skill>` | View details for a specific skill | Everyone |
+| `/skills admin givexp <player> <skill> <amount>` | Award XP to a player | OP |
+
+---
+
+## Skill System
+
+### Overview
+
+Players earn XP by performing in-game actions. Skills level up to 100 using an exponential XP curve. Each category has a parent level (average of its sub-skills) that provides passive attribute buffs.
+
+### Categories & Skills
+
+| Category | Skills | XP Sources |
+| :--- | :--- | :--- |
+| ⛏ **Industrial** | Mining, Excavation, Woodcutting | Breaking ores, dirt/gravel/sand, logs |
+| 🌿 **Nature** | Farming, Fishing, Agility | Harvesting crops, catching fish, sprinting/swimming |
+| ⚔ **Combat** | Melee, Archery, Defense | Hitting mobs, bow kills, taking damage |
+| 📖 **Knowledge** | Enchanting, Alchemy, Trading | Enchanting items, brewing potions, villager trades |
+
+### Active Abilities
+
+Abilities unlock at **level 10** and are triggered by **sneaking + pressing Q** (drop key) while holding the matching tool. The item drop is cancelled — the item stays in your hand and the ability activates. Each ability has a configurable cooldown.
+
+| Trigger | Ability | Effect |
+| :--- | :--- | :--- |
+| Sneak + Q with **pickaxe** | Super Breaker | Haste V (duration scales with level) |
+| Sneak + Q with **shovel** | Giga Drill | Haste V |
+| Sneak + Q with **axe** | Tree Feller | Chain-breaks connected logs (max 64) |
+| Sneak + Q with **hoe** | Green Terra | Bonemeals crops in 5-block radius |
+| Sneak + Q with **fishing rod** | Master Angler | Luck V for 30 seconds |
+| Sneak + Q with **sword** | Berzerk | Strength II + Speed II |
+| Sneak + Q with **bow/crossbow** | Sniper | Slow Falling + Night Vision |
+| Sneak + Q with **shield** | Juggernaut | Resistance IV + Slowness IV |
+| Sneak + Q with **damaged non-tool item** | Arcane Infusion | Repairs item by 10% durability |
+| **Sprint** + right-click **empty hand** | Dash | Velocity boost in look direction |
+
+> [!IMPORTANT]
+> **Two trigger systems:**
+> - **Sneak + Q** — used by all tool-based abilities (9 of 10). Avoids conflicts with vanilla tool actions like tilling, stripping, and drawing bows. The item drop is cancelled — nothing leaves your inventory.
+> - **Sprint + right-click empty hand** — used only by **Dash**. Since you can't "drop" an empty hand, Dash uses right-click instead. Empty-hand right-click has no vanilla action, so there are zero conflicts.
+>
+> If any ability is on cooldown, the input is still consumed and you'll see the remaining cooldown time.
+
+
+### Parent Buffs
+
+Parent buffs are passive attribute modifiers that scale with the average level of sub-skills in each category. They are applied automatically on level-up and player join.
+
+| Category | Buff | Default Cap |
+| :--- | :--- | :--- |
+| Industrial | +Movement Speed (multiplier) | +50% at max |
+| Nature | +Max Health (flat HP) | +10 hearts at max |
+| Combat | +Attack Damage (multiplier) | +100% at max |
+| Knowledge | +XP Gain (all skills) | +100% at max |
+
+### Passive Perks
+
+- **Double Drops** — chance to double block drops (Industrial/Nature)
+- **Bleed** — chance to apply bleed damage on melee hits
+- **Treasure Hunter** — chance to find bonus items from blocks
+- **Arrow Recovery** — chance to recover arrows after bow kills
+- **Damage Reduction** — flat damage reduction from Defense level
+
+### Skill Configuration
+
+The `skills` section is auto-generated in `config/quackedsmp.json` on first load:
+
+```json
+{
+  "skills": {
+    "xp_exponent": 1.5,
+    "cap_industrial_speed": 0.5,
+    "cap_nature_health": 10.0,
+    "cap_combat_damage": 1.0,
+    "cap_knowledge_xp": 1.0,
+    "cooldowns": {
+      "mining": 1200,
+      "excavation": 1800,
+      "woodcutting": 900,
+      "farming": 600,
+      "fishing": 900,
+      "agility": 10,
+      "melee": 1200,
+      "archery": 600,
+      "defense": 2700,
+      "enchanting": 3600,
+      "alchemy": 1200,
+      "trading": 3600
+    }
+  }
+}
+```
+
+| Key | Description | Default |
+| :--- | :--- | :--- |
+| `xp_exponent` | Controls the XP curve steepness | `1.5` |
+| `cap_*` | Maximum buff value at level 100 | Varies |
+| `cooldowns.*` | Ability cooldown in seconds | Varies |
+
+### Testing Guide
+
+Use `/skills admin givexp` to quickly test each skill:
+
+```
+# Award XP and check the action bar notification
+/skills admin givexp @s mining 500
+
+# Open the book GUI to verify levels
+/skills
+
+# Test an active ability (need level 10+)
+/skills admin givexp @s melee 1000
+# Then hold a sword, sneak, and press Q → Berzerk should activate
+
+# Test parent buffs (need average sub-skill levels)
+/skills admin givexp @s mining 5000
+/skills admin givexp @s excavation 5000
+/skills admin givexp @s woodcutting 5000
+# Check movement speed increase (Industrial parent buff)
+```
+
+**What to verify:**
+
+1. **XP Notifications** — action bar shows `+X Skill XP ▰▰▱▱ (Lv.N)` on each XP gain
+2. **Level Ups** — gold announcement in chat with sound effect
+3. **Book GUI** — `/skills` opens a 4-page written book with all categories
+4. **Active Abilities** — sneak + Q with tool at level 10+ triggers ability with cooldown message
+5. **Parent Buffs** — speed/health/damage modifiers visible in player attributes
+6. **Persistence** — XP survives server restart (data stored in world save)
+7. **Mixins** — fish catches, enchanting, brewing, and trading all award XP
+
+---
 
 ## License
 Licensed under the Apache License, Version 2.0.
