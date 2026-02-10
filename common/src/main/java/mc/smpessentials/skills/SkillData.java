@@ -19,6 +19,12 @@ public final class SkillData extends SavedData {
     /** Per-player record: XP for each skill + cooldown timestamps. */
     public record PlayerProfile(UUID uuid, Map<String, Double> xp, Map<String, Long> cooldowns) {
 
+        public PlayerProfile {
+            // Ensure maps are mutable
+            xp = new HashMap<>(xp);
+            cooldowns = new HashMap<>(cooldowns);
+        }
+
         public static final Codec<PlayerProfile> CODEC = RecordCodecBuilder.create(i -> i.group(
                 UUIDUtil.CODEC.fieldOf("uuid").forGetter(PlayerProfile::uuid),
                 Codec.unboundedMap(Codec.STRING, Codec.DOUBLE).fieldOf("xp").forGetter(PlayerProfile::xp),
