@@ -41,6 +41,7 @@ public final class SkillCommands {
                 // /skills admin givexp <player> <skill> <amount>
                 .then(Commands.literal("admin")
                         .requires(src -> src.hasPermission(2))
+                        // /skills admin givexp <player> <skill> <amount>
                         .then(Commands.literal("givexp")
                                 .then(Commands.argument("player", EntityArgument.player())
                                         .then(Commands.argument("skill", StringArgumentType.word())
@@ -51,7 +52,22 @@ public final class SkillCommands {
                                                     return builder.buildFuture();
                                                 })
                                                 .then(Commands.argument("amount", DoubleArgumentType.doubleArg(1))
-                                                        .executes(SkillCommands::adminGiveXp)))))));
+                                                        .executes(SkillCommands::adminGiveXp)))))
+                        // /skills admin setlevel <player> <skill> <level>
+                        .then(Commands.literal("setlevel")
+                                .then(Commands.argument("player", EntityArgument.player())
+                                        .then(Commands.argument("skill", StringArgumentType.word())
+                                                .suggests((ctx, builder) -> {
+                                                    for (SkillType st : SkillType.values()) {
+                                                        builder.suggest(st.name().toLowerCase());
+                                                    }
+                                                    return builder.buildFuture();
+                                                })
+                                                .then(Commands
+                                                        .argument("level",
+                                                                com.mojang.brigadier.arguments.IntegerArgumentType
+                                                                        .integer(0, 100))
+                                                        .executes(SkillCommands::adminSetLevel)))))));
     }
 
     private static int openBook(CommandContext<CommandSourceStack> ctx) {
@@ -130,6 +146,45 @@ public final class SkillCommands {
                     "\u00a7aGave " + (long) amount + " " + capitalize(skill.name())
                             + " XP to " + target.getName().getString()
                             + " (now Lv." + newLevel + ")"),
+                    true);
+            return 1;
+        } catch (Exception e) {
+            ctx.getSource().sendFailure(Component.literal("Error: " + e.getMessage()));
+            return 0;
+        }
+    }
+
+    private static int adminSetLevel(CommandContext<CommandSourceStack> ctx) {
+        try {
+            ServerPlayer target = EntityArgument.getPlayer(ctx, "player");
+            String skillName = StringArgumentType.getString(ctx, "skill").toUpperCase();
+            int level = com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(ctx, "level");
+
+            SkillType skill;
+            try {
+                skill = SkillType.valueOf(skillName);
+            } catch (IllegalArgumentException e) {
+                ctx.getSource().sendFailure(Component.literal("Unknown skill: " + skillName));
+                return 0;
+            }
+
+            // Clamped between 0 and 100
+            level = Math.max(0, Math.min(SkillManager.MAX_LEVEL, level));
+
+            ServerLevel sl = (ServerLevel) target.level();
+            SkillData data = SkillData.get(sl);
+
+            // Calculate exact XP for this level
+            // define totalXpForLevel(0) as 0.0
+            double targetXp = (level == 0) ? 0.0 : SkillManager.totalXpForLevel(level);
+
+            data.setXp(target.getUUID(), skill, targetXp);
+
+            int finalLevel = level;
+            ctx.getSource().sendSuccess(() -> Component.literal(
+                    "\u00a7aSet " + capitalize(skill.name())
+                            + " level for " + target.getName().getString()
+                            + " to " + finalLevel),
                     true);
             return 1;
         } catch (Exception e) {

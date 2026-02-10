@@ -97,6 +97,14 @@ public final class SkillData extends SavedData {
         return newTotal;
     }
 
+    /** Set XP for a skill directly. Returns the new total. */
+    public double setXp(UUID uuid, SkillType skill, double amount) {
+        PlayerProfile p = getOrCreate(uuid);
+        p.xp().put(skill.name(), amount);
+        setDirty();
+        return amount;
+    }
+
     /** Get level for a specific skill. */
     public int getLevel(UUID uuid, SkillType skill) {
         return SkillManager.levelFromXp(getXp(uuid, skill));

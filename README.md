@@ -107,6 +107,7 @@ Text fields support standard Minecraft legacy color codes (e.g., `&a` for green,
 | `/skills` | Open the skills book GUI | Everyone |
 | `/skills <skill>` | View details for a specific skill | Everyone |
 | `/skills admin givexp <player> <skill> <amount>` | Award XP to a player | OP |
+| `/skills admin setlevel <player> <skill> <level>` | Set a player's skill level (0-100) | OP |
 
 ---
 
