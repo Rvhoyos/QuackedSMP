@@ -7,99 +7,102 @@
 
 # QuackedSMP Essentials
 
-**QuackedSMP** is a robust server-side utility mod designed for Fabric and NeoForge. It bridges the gap between vanilla gameplay and managed multiplayer environments by providing essential quality-of-life features, land protection, and community management tools.
+QuackedSMP is a server-side utility mod for Fabric and NeoForge. It provides land claiming, teleportation commands, and chat management tools for multiplayer servers.
 
-## Core Philosophy
-- **Wilderness Danger:** Outside of claims, anything goes. PvP and griefing are enabled.
-- **Home Safety:** Claims provide a safe haven where players can build without fear.
-- **Fair Play:** Teleportation warmups prevent combat logging and instant escapes.
+## Core Features
 
----
+- **Land Claims:** Chunk-based claiming system to protect builds. Server operators bypass restrictions.
+- **Teleportation:** Commands for home setting, spawn warping, and player-to-player teleport requests (TPA) with configurable warmups.
+- **Chat Management:** Simple chat filter, automated broadcasts, and welcome messages.
+- **Configuration:** Hot-reloadable JSON configuration.
 
-## 🔥 Features
+## Configuration
 
-### 🛡️ Land Claims & Protection
-Protect your base from griefers with a simple chunk-based claiming system.
-- **`/claim`**: Secure the chunk you are standing in.
-- **`/claim map`**: Visualize nearby claims in chat (7x7 grid).
-- **`/claim info`**: View your claim usage and limits.
-- **`/trust <player>`**: Allow friends to build in your claims.
-- **Protection:** Prevents block breaking/placing, explosions, fire spread, and container access by non-trusted players.
-- **OP Bypass:** Server Operators automatically bypass all claim restrictions.
+The configuration file is located at `config/quackedsmp.json`. You can reload changes in-game using `/smp reload`.
 
-### 🏠 Teleportation & Homes
-Navigate the world easily but fairly.
-- **`/home`**: Teleport to your bed or respawn anchor.
-- **`/spawn`**: Return to the world spawn.
-- **`/tpa <player>`**: Request to teleport to another player.
-- **Warmups:** Configurable delay (default 5s) before teleporting. Moving or taking damage cancels the teleport!
+### Default Configuration
 
-### 💬 Chat & Community
-- **Chat Filter:** Blocks harmful language using an efficient, cached pattern matcher.
-- **Welcome Message:** Customizable join message with color support.
-- **Auto-Broadcast:** Periodic tips or announcements displayed to all players.
-- **Formatting:** Supports `&` color codes in config (e.g., `&aGreen`, `&cRed`, `&lBold`).
-- **`/rules`**: Display server rules (configurable).
-
-### ⚙️ Configuration
-The mod is highly configurable via `config/quackedsmp.json`. Changes can be applied instantly with **`/smp reload`**.
-
-#### Example Config:
 ```json
 {
   "max_claims": 50,
   "tp_warmup": 5,
   "welcome_message": "&6Welcome to QuackedSMP, {player}!",
   "message_interval": 300,
+  "vip_bonus_claims": 20,
+  "allow_lava_wilderness": false,
+  "vips": [],
   "rules": [
     "&e1. Be respectful.",
     "&e2. No griefing inside claims.",
-    "&e3. Wilderness is dangerous."
+    "&e3. Wilderness is dangerous (PvP enabled).",
+    "&e4. No cheating."
   ],
   "periodic_messages": [
     "&b[Tip] &fUse &a/claim &fto protect your land!",
-    "&b[Tip] &fDon't forget to set your &a/home&f!"
-  ]
+    "&b[Tip] &fSet your home by sleeping in a bed!",
+    "&b[Tip] &fType &a/smp help &ffor commands!",
+    "&b[Reminder] &fPlease respect the &6/rules&f!",
+    "&b[Tip] &fVisit Spawn Shops for blocks & gear! Trade items for Emeralds!"
+  ],
+  "chatfilter": {
+    "contents": [
+      "word1",
+      "word2"
+    ]
+  },
+  "messages": {
+    "claim.success": "Chunk claimed.",
+    "claim.already_claimed": "This claim is already protected.",
+    "claim.limit_reached": "You reached the claim limit ({count}).",
+    "claim.spawn_protected": "You can’t claim inside spawn protection.",
+    "unclaim.success": "Chunk unclaimed.",
+    "unclaim.fail_ownership": "You don’t control this claim.",
+    "claim.info.owned": "You own {count} chunk(s) in this dimension.",
+    "claim.info.protected_by_you": "This chunk is protected by you.",
+    "claim.info.protected": "This chunk is protected.",
+    "claim.info.unclaimed": "Current chunk is unclaimed.",
+    "tpr.sent": "Teleport request sent to {player}",
+    "tpr.received": "{player} requested to teleport to you. Use /tpa accept or /tpa deny.",
+    "tpr.self": "Cannot request teleport to self.",
+    "tpr.cooldown": "A request was sent recently. Please wait.",
+    "tpr.already_pending": "A request is already pending.",
+    "tpr.queue_full": "That player has too many pending requests.",
+    "tpa.no_pending": "No pending teleport requests.",
+    "tpa.requester_offline": "Requester is no longer online.",
+    "tpa.requester_busy": "Requester cannot be teleported right now.",
+    "tpa.no_location": "No valid teleport location.",
+    "tpa.teleporting_requester": "Teleporting {player} in 5 seconds...",
+    "tpa.teleporting_to": "Teleported to {player}",
+    "tpa.denied": "Teleport request denied by {player}",
+    "tpa.denied_confirm": "Denied the oldest pending request."
+  }
 }
 ```
 
-#### Supported Formatting Codes
-| Code | Color/Style | Code | Color/Style |
-| :--- | :--- | :--- | :--- |
-| `&0` | Black | `&9` | Blue |
-| `&1` | Dark Blue | `&a` | Green |
-| `&2` | Dark Green | `&b` | Aqua |
-| `&3` | Dark Aqua | `&c` | Red |
-| `&4` | Dark Red | `&d` | Light Purple |
-| `&5` | Dark Purple | `&e` | Yellow |
-| `&6` | Gold | `&f` | White |
-| `&7` | Gray | `&l` | **Bold** |
-| `&8` | Dark Gray | `&o` | *Italic* |
+### Formatting Codes
+Text fields support standard Minecraft legacy color codes (e.g., `&a` for green, `&c` for red, `&l` for bold).
 
----
+## Commands
 
-## 📜 Commands
 | Command | Description | Permission |
 | :--- | :--- | :--- |
-| `/smp help` | List all user commands. | Everyone |
-| `/smp reload` | Reload configuration. | OP |
-| `/claim` | Claim current chunk. | Everyone |
-| `/unclaim` | Unclaim current chunk. | Everyone |
-| `/claim map` | Show claim map. | Everyone |
-| `/claim info` | Show claim limits/usage. | Everyone |
-| `/trust <player>` | Trust a player globally. | Everyone |
-| `/untrust <player>` | Revoke trust. | Everyone |
-| `/home` | Teleport to home. | Everyone |
-| `/spawn` | Teleport to spawn. | Everyone |
-| `/tpa <player>` | Request teleport. | Everyone |
-| `/tpaccept` | Accept teleport request. | Everyone |
-| `/tpdeny` | Deny teleport request. | Everyone |
-| `/rules` | View server rules. | Everyone |
-| `/chatfilter list` | View blocked words. | OP |
-| `/chatfilter add` | Add word to filter. | OP |
-| `/chatfilter remove`| Remove word from filter.| OP |
-
----
+| `/smp help` | List user commands | Everyone |
+| `/smp reload` | Reload configuration | OP |
+| `/claim` | Claim the chunk you are standing in | Everyone |
+| `/unclaim` | Unclaim the current chunk | Everyone |
+| `/claim map` | Display a map of claims around you | Everyone |
+| `/claim info` | Check claim status and limits | Everyone |
+| `/trust <player>` | Allow a player to interact with your claims | Everyone |
+| `/untrust <player>` | Revoke trust from a player | Everyone |
+| `/home` | Teleport to your respawn point (bed/anchor) | Everyone |
+| `/spawn` | Teleport to world spawn | Everyone |
+| `/tpa <player>` | Request to teleport to another player | Everyone |
+| `/tpaccept` | Accept a teleport request | Everyone |
+| `/tpdeny` | Deny a teleport request | Everyone |
+| `/rules` | View server rules | Everyone |
+| `/chatfilter list` | View blocked words | OP |
+| `/chatfilter add` | Add a word to the filter | OP |
+| `/chatfilter remove`| Remove a word from the filter | OP |
 
 ## License
 Licensed under the Apache License, Version 2.0.
