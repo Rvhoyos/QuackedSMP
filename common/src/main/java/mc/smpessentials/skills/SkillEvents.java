@@ -189,8 +189,9 @@ public final class SkillEvents {
 
                 if (dist > 0 && dist < 10) { // ignore teleports
                     double accum = distanceAccum.getOrDefault(uuid, 0.0) + dist;
+                    ServerLevel sl = (ServerLevel) sp.level();
+
                     if (accum >= 100) { // 100 blocks walked = 1 XP
-                        ServerLevel sl = (ServerLevel) sp.level();
                         SkillData data = SkillData.get(sl);
                         int chunks = (int) (accum / 100);
                         awardXp(sp, data, SkillType.AGILITY, chunks);
@@ -211,6 +212,16 @@ public final class SkillEvents {
                 }
             }
             lastPositions.put(uuid, current);
+
+            // Agility Dash Trigger: Sprint + Sneak (Shift)
+            // Ideally we'd use Jump, but detecting jump start server-side is tricky without
+            // mixins.
+            // Sprint + Sneak is a unique combo (normally stops sprint).
+            if (sp.isSprinting() && sp.isShiftKeyDown() && !sp.onGround()) {
+                // The player is seemingly "rocket jumping" or dash-jumping
+                ServerLevel sl = (ServerLevel) sp.level();
+                mc.smpessentials.skills.ActiveAbilities.tryActivateDash(sp, SkillData.get(sl), uuid);
+            }
         });
 
         // Clean up on logout

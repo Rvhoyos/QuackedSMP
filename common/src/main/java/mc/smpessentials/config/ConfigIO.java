@@ -73,7 +73,12 @@ public final class ConfigIO {
             if (!obj.has("periodic_messages")) {
                 com.google.gson.JsonArray pm = new com.google.gson.JsonArray();
                 pm.add("&b[Tip] &fUse &a/claim &fto protect your land!");
-                pm.add("&b[Tip] &fDon't forget to set your &a/home&f!");
+                pm.add("&b[Tip] &fSleep in a bed to set your &a/home&f location!");
+                pm.add("&b[Tip] &fType &a/smp help &ffor a list of commands!");
+                pm.add("&b[Reminder] &fPlease respect the &6/rules&f!");
+                pm.add("&b[Tip] &fUnlock active abilities by leveling up your &a/skills&f!");
+                pm.add("&b[Tip] &fUse &a/tpa <player>&f to teleport to friends!");
+                pm.add("&b[Tip] &fVisit Spawn Shops for blocks & gear! Trade items for Emeralds!");
                 obj.add("periodic_messages", pm);
                 dirty = true;
             }
@@ -127,9 +132,11 @@ public final class ConfigIO {
 
         com.google.gson.JsonArray pm = new com.google.gson.JsonArray();
         pm.add("&b[Tip] &fUse &a/claim &fto protect your land!");
-        pm.add("&b[Tip] &fSet your home by sleeping in a bed!");
-        pm.add("&b[Tip] &fType &a/smp help &ffor commands!");
+        pm.add("&b[Tip] &fSleep in a bed to set your &a/home&f location!");
+        pm.add("&b[Tip] &fType &a/smp help &ffor a list of commands!");
         pm.add("&b[Reminder] &fPlease respect the &6/rules&f!");
+        pm.add("&b[Tip] &fUnlock active abilities by leveling up your &a/skills&f!");
+        pm.add("&b[Tip] &fUse &a/tpa <player>&f to teleport to friends!");
         pm.add("&b[Tip] &fVisit Spawn Shops for blocks & gear! Trade items for Emeralds!");
         root.add("periodic_messages", pm);
 
