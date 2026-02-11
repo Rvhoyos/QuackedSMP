@@ -139,6 +139,13 @@ Commands with configurable warmups.
 
 Located at `config/quackedsmp.json`. Hot-reloadable via `/smp reload`.
 
+### In-Game GUI (OP Only)
+
+You can manage the server configuration in-game using a visual interface:
+-   **Open Menu**: `/smp config`
+-   **Features**: Adjust claim limits, teleport warmups, message intervals, and skill leveling curves via a Chest GUI.
+-   **Factory Reset**: Shift-Click the red powder in the config menu or use `/smp config reset` to restore all default settings.
+
 ### Configuration Reference
 
 | Key | Type | Default | Description |
@@ -231,6 +238,8 @@ The `caps` section defines the maximum bonus a player receives when a parent cat
 | :--- | :--- | :--- |
 | `/smp help` | List top-level commands | Everyone |
 | `/smp reload` | Reload configuration | OP |
+| `/smp config` | Open configuration GUI | OP |
+| `/smp config reset` | Factory reset config | OP |
 | `/rules` | View server rules | Everyone |
 | `/claim` | Claim current chunk | Everyone |
 | `/unclaim` | Unclaim current chunk | Everyone |
