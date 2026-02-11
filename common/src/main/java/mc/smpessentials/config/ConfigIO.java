@@ -277,4 +277,96 @@ public final class ConfigIO {
 
         return cf;
     }
+
+    public static void save() {
+        JsonObject root = defaultJson();
+
+        // Update root with current values
+        root.addProperty("max_claims", SmpConfig.MAX_CLAIMS);
+        root.addProperty("tp_warmup", SmpConfig.TP_WARMUP);
+        root.addProperty("welcome_message", SmpConfig.WELCOME_MESSAGE);
+        root.addProperty("message_interval", SmpConfig.MESSAGE_INTERVAL);
+        root.addProperty("vip_bonus_claims", SmpConfig.VIP_BONUS_CLAIMS);
+        root.addProperty("allow_lava_wilderness", SmpConfig.ALLOW_LAVA_WILDERNESS);
+
+        com.google.gson.JsonArray vips = new com.google.gson.JsonArray();
+        for (String v : SmpConfig.VIPS)
+            vips.add(v);
+        root.add("vips", vips);
+
+        com.google.gson.JsonArray rules = new com.google.gson.JsonArray();
+        for (String r : SmpConfig.RULES)
+            rules.add(r);
+        root.add("rules", rules);
+
+        com.google.gson.JsonArray pm = new com.google.gson.JsonArray();
+        for (String p : SmpConfig.PERIODIC_MESSAGES)
+            pm.add(p);
+        root.add("periodic_messages", pm);
+
+        // Messages
+        JsonObject msgs = new JsonObject();
+        for (var entry : SmpConfig.MESSAGES.entrySet()) {
+            msgs.addProperty(entry.getKey(), entry.getValue());
+        }
+        root.add("messages", msgs);
+
+        // Skills
+        JsonObject skills = new JsonObject();
+        skills.addProperty("xp_exponent", SmpConfig.SKILL_XP_EXPONENT);
+
+        JsonObject cds = new JsonObject();
+        for (var entry : SmpConfig.SKILL_COOLDOWNS.entrySet()) {
+            cds.addProperty(entry.getKey(), entry.getValue());
+        }
+        skills.add("cooldowns", cds);
+
+        JsonObject unlocks = new JsonObject();
+        for (var entry : SmpConfig.SKILL_UNLOCK_LEVELS.entrySet()) {
+            unlocks.addProperty(entry.getKey(), entry.getValue());
+        }
+        skills.add("ability_unlock_levels", unlocks);
+
+        JsonObject caps = new JsonObject();
+        caps.addProperty("industrial_speed", SmpConfig.CAP_INDUSTRIAL_SPEED);
+        caps.addProperty("nature_health", SmpConfig.CAP_NATURE_HEALTH);
+        caps.addProperty("combat_damage", SmpConfig.CAP_COMBAT_DAMAGE);
+        caps.addProperty("knowledge_xp", SmpConfig.CAP_KNOWLEDGE_XP);
+        skills.add("caps", caps);
+
+        root.add("skills", skills);
+
+        // Chat Filter (preserve existing from disk if possible, or dump current)
+        // ideally we would read the current filter state, but for this simple save
+        // we might just want to preserve the file's filter section or rely on other
+        // tools.
+        // For now, let's re-save what we have in memory if we had a ChatFilter config
+        // class.
+        // Since ChatFilter is separate, let's just use the default or what we read.
+        // A better approach for a full "Save" is to read the file, update only known
+        // keys, and write back.
+        // But here we'll just overwrite with what we know.
+        // TODO: Integrate ChatFilter saving if needed. For now, we reuse default if
+        // missing.
+
+        // Actually, we should probably read the existing file to preserve chatfilter if
+        // we aren't tracking it here.
+        try {
+            Path p = path();
+            if (Files.exists(p)) {
+                String s = Files.readString(p, StandardCharsets.UTF_8);
+                JsonObject existing = GSON.fromJson(s, JsonObject.class);
+                if (existing != null && existing.has("chatfilter")) {
+                    root.add("chatfilter", existing.get("chatfilter"));
+                } else {
+                    root.add("chatfilter", defaultChatFilterJson());
+                }
+            } else {
+                root.add("chatfilter", defaultChatFilterJson());
+            }
+            Files.writeString(p, GSON.toJson(root), StandardCharsets.UTF_8);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 }
