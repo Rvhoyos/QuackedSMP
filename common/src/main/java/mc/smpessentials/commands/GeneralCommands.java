@@ -55,6 +55,9 @@ public class GeneralCommands {
                                 .append(Component.literal(" - Read server rules").withStyle(desc)));
                 src.sendSystemMessage(Component.literal("/skills").withStyle(cmd)
                                 .append(Component.literal(" - View your skill levels").withStyle(desc)));
+                src.sendSystemMessage(Component.literal("/sos").withStyle(cmd)
+                                .append(Component.literal(" - Eject untrusted players in your claims")
+                                                .withStyle(desc)));
 
                 return 1;
         }
