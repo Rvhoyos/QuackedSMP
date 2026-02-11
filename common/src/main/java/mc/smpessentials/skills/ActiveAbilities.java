@@ -133,12 +133,12 @@ public final class ActiveAbilities {
             case MINING -> {
                 sp.addEffect(new MobEffectInstance(MobEffects.HASTE, durationTicks, 4, false, false));
                 superBreakerActive.put(uuid, System.currentTimeMillis() + (durationTicks * 50L));
-                announce(sp, name, durationTicks / 20);
+                announce(sp, name, durationTicks / 20, SoundEvents.ANVIL_LAND);
                 resyncHand(sp);
             }
             case EXCAVATION -> {
                 sp.addEffect(new MobEffectInstance(MobEffects.HASTE, durationTicks, 4, false, false));
-                announce(sp, name, durationTicks / 20);
+                announce(sp, name, durationTicks / 20, SoundEvents.GRASS_BREAK);
                 resyncHand(sp);
             }
             default -> {
@@ -164,7 +164,7 @@ public final class ActiveAbilities {
         // Duration scales with level: 10s base + 0.2s per level
         int durationTicks = (int) ((10 + level * 0.2) * 20);
         treeFellerActive.put(uuid, System.currentTimeMillis() + (durationTicks * 50L));
-        announce(sp, "Tree Feller", durationTicks / 20);
+        announce(sp, "Tree Feller", durationTicks / 20, SoundEvents.UI_STONECUTTER_TAKE_RESULT);
         resyncHand(sp);
         return true;
     }
@@ -238,7 +238,7 @@ public final class ActiveAbilities {
                 }
             }
         }
-        announce(sp, "Green Terra", bonemealed + " crops boosted");
+        announce(sp, "Green Terra", bonemealed + " crops boosted", SoundEvents.BONE_MEAL_USE);
         resyncHand(sp);
         return true;
     }
@@ -259,7 +259,7 @@ public final class ActiveAbilities {
         data.setCooldown(uuid, SkillType.FISHING);
         int durationTicks = (int) ((10 + fishLevel * 0.2) * 20);
         sp.addEffect(new MobEffectInstance(MobEffects.LUCK, durationTicks, 4, false, false));
-        announce(sp, "Master Angler", durationTicks / 20);
+        announce(sp, "Master Angler", durationTicks / 20, SoundEvents.EXPERIENCE_ORB_PICKUP);
         resyncHand(sp);
         return true;
     }
@@ -281,7 +281,7 @@ public final class ActiveAbilities {
         int durationTicks = (int) ((10 + meleeLevel * 0.2) * 20);
         sp.addEffect(new MobEffectInstance(MobEffects.STRENGTH, durationTicks, 1, false, false));
         sp.addEffect(new MobEffectInstance(MobEffects.SPEED, durationTicks, 1, false, false));
-        announce(sp, "Berzerk", durationTicks / 20);
+        announce(sp, "Berzerk", durationTicks / 20, SoundEvents.ENDER_DRAGON_GROWL);
         resyncHand(sp);
         return true;
     }
@@ -303,7 +303,7 @@ public final class ActiveAbilities {
         int durationTicks = (int) ((10 + archLevel * 0.2) * 20);
         sp.addEffect(new MobEffectInstance(MobEffects.SLOW_FALLING, durationTicks, 0, false, false));
         sp.addEffect(new MobEffectInstance(MobEffects.NIGHT_VISION, durationTicks, 0, false, false));
-        announce(sp, "Sniper", durationTicks / 20);
+        announce(sp, "Sniper", durationTicks / 20, SoundEvents.ARROW_HIT_PLAYER);
         resyncHand(sp);
         return true;
     }
@@ -325,7 +325,7 @@ public final class ActiveAbilities {
         int durationTicks = (int) ((10 + defLevel * 0.2) * 20);
         sp.addEffect(new MobEffectInstance(MobEffects.RESISTANCE, durationTicks, 3, false, false));
         sp.addEffect(new MobEffectInstance(MobEffects.SLOWNESS, durationTicks, 3, false, false));
-        announce(sp, "Juggernaut", durationTicks / 20);
+        announce(sp, "Juggernaut", durationTicks / 20, SoundEvents.SHIELD_BLOCK);
         resyncHand(sp);
         return true;
     }
@@ -351,7 +351,7 @@ public final class ActiveAbilities {
         double power = 1.5 + (agiLevel * 0.01);
         sp.setDeltaMovement(look.x * power, Math.max(look.y * power, 0.4), look.z * power);
         sp.hurtMarked = true;
-        announce(sp, "Dash", 0);
+        announce(sp, "Dash", 0, SoundEvents.FIREWORK_ROCKET_LAUNCH);
     }
 
     // ========== KNOWLEDGE ABILITIES ==========
@@ -380,23 +380,35 @@ public final class ActiveAbilities {
         int maxDmg = droppedItem.getMaxDamage();
         int repairAmount = Math.max(1, (int) (maxDmg * 0.10));
         droppedItem.setDamageValue(Math.max(0, droppedItem.getDamageValue() - repairAmount));
-        announce(sp, "Arcane Infusion", "Repaired 10%");
+        announce(sp, "Arcane Infusion", "Repaired 10%", SoundEvents.ENCHANTMENT_TABLE_USE);
         resyncHand(sp);
         return true;
     }
 
     // ========== HELPERS ==========
 
-    private static void announce(ServerPlayer sp, String abilityName, int seconds) {
-        String msg = "\u00a76\u00a7l\u2605 " + abilityName + " Activated! \u00a7r\u00a77(" + seconds + "s)";
+    private static void announce(ServerPlayer sp, String abilityName, int seconds,
+            net.minecraft.sounds.SoundEvent sound) {
+        String msg;
+        if (seconds > 0) {
+            msg = "\u00a76\u00a7l\u2605 " + abilityName + " Activated! \u00a7r\u00a77(" + seconds + "s)";
+        } else {
+            msg = "\u00a76\u00a7l\u2605 " + abilityName + " Activated! \u00a7r";
+        }
         sp.displayClientMessage(Component.literal(msg), false);
-        sp.playNotifySound(SoundEvents.BEACON_ACTIVATE, SoundSource.PLAYERS, 1.0f, 1.5f);
+        sp.playNotifySound(sound, SoundSource.PLAYERS, 1.0f, 1.5f);
     }
 
-    private static void announce(ServerPlayer sp, String abilityName, String detail) {
+    private static void announce(ServerPlayer sp, String abilityName, int seconds,
+            net.minecraft.core.Holder<net.minecraft.sounds.SoundEvent> sound) {
+        announce(sp, abilityName, seconds, sound.value());
+    }
+
+    private static void announce(ServerPlayer sp, String abilityName, String detail,
+            net.minecraft.sounds.SoundEvent sound) {
         String msg = "\u00a76\u00a7l\u2605 " + abilityName + "! \u00a7r\u00a77" + detail;
         sp.displayClientMessage(Component.literal(msg), false);
-        sp.playNotifySound(SoundEvents.BEACON_ACTIVATE, SoundSource.PLAYERS, 1.0f, 1.5f);
+        sp.playNotifySound(sound, SoundSource.PLAYERS, 1.0f, 1.5f);
     }
 
     private static String formatTime(long seconds) {
@@ -466,7 +478,7 @@ public final class ActiveAbilities {
 
         // Cooldown + Effects
         data.setCooldown(uuid, SkillType.ALCHEMY);
-        announce(sp, "Philosopher's Touch", "Spawner Silk Touched!");
+        announce(sp, "Philosopher's Touch", "Spawner Silk Touched!", SoundEvents.ZOMBIE_VILLAGER_CONVERTED);
         resyncHand(sp);
 
         // Particles/Sound
