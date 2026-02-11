@@ -1,6 +1,7 @@
 package mc.smpessentials.chatfilter;
 
 import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.util.datafix.DataFixTypes;
 import net.minecraft.world.level.saveddata.SavedData;
 import net.minecraft.world.level.saveddata.SavedDataType;
@@ -13,43 +14,54 @@ import java.util.Set;
 import java.util.TreeSet;
 
 /**
- * World-persistent chat filter word set backed by SavedDataType (MC 1.21+).
+ * World-persistent chat filter data: blocked words + whitelist.
  * Stored once under the Overworld's DimensionDataStorage and read server-wide.
  */
 public final class ChatFilterSavedData extends SavedData {
-    private static final Codec<List<String>> WORDS_CODEC = Codec.list(Codec.STRING);
+    private static final Codec<List<String>> STRING_LIST = Codec.list(Codec.STRING);
 
     /**
-     * Codec for the entire data object; persists a simple sorted list of normalized
-     * words.
+     * Codec for the entire data object; persists both blocked words and whitelist.
      */
-    public static final Codec<ChatFilterSavedData> CODEC = WORDS_CODEC.xmap(ChatFilterSavedData::fromList,
-            ChatFilterSavedData::toList);
+    public static final Codec<ChatFilterSavedData> CODEC = RecordCodecBuilder.create(instance -> instance.group(
+            STRING_LIST.optionalFieldOf("words", List.of()).forGetter(d -> d.toList()),
+            STRING_LIST.optionalFieldOf("whitelist", List.of()).forGetter(d -> d.toWhitelistList()))
+            .apply(instance, ChatFilterSavedData::fromLists));
+
     /**
      * SavedDataType identifier; uses DataFixTypes.LEVEL for vanilla data fixers.
-     * Constructor order: id, supplier-ctor, codec, data-fix type.
      */
     public static final SavedDataType<ChatFilterSavedData> TYPE = new SavedDataType<>("quackedsmp_chat_filter",
             ChatFilterSavedData::new, CODEC, DataFixTypes.LEVEL);
 
     private final Set<String> words = new HashSet<>();
+    private final Set<String> whitelist = new HashSet<>();
 
     public ChatFilterSavedData() {
     }
 
-    private static ChatFilterSavedData fromList(List<String> list) {
+    private static ChatFilterSavedData fromLists(List<String> wordList, List<String> whitelistList) {
         ChatFilterSavedData data = new ChatFilterSavedData();
-        for (String s : list) {
+        for (String s : wordList) {
             if (s != null && !s.isEmpty())
                 data.words.add(ChatFilter.normalize(s));
+        }
+        for (String s : whitelistList) {
+            if (s != null && !s.isEmpty())
+                data.whitelist.add(ChatFilter.normalize(s));
         }
         return data;
     }
 
     private List<String> toList() {
-        // Persist deterministically for stable diffs
         return new ArrayList<>(new TreeSet<>(words));
     }
+
+    private List<String> toWhitelistList() {
+        return new ArrayList<>(new TreeSet<>(whitelist));
+    }
+
+    // ---- Blocked words ----
 
     /**
      * Adds a word (normalized) to the filter set.
@@ -84,10 +96,51 @@ public final class ChatFilterSavedData extends SavedData {
     }
 
     /**
-     * Returns an immutable snapshot sorted for readability.
+     * Returns an immutable snapshot of blocked words, sorted for readability.
      */
     public Set<String> snapshot() {
         return Collections.unmodifiableSet(new TreeSet<>(words));
+    }
+
+    // ---- Whitelist (Scunthorpe problem prevention) ----
+
+    /**
+     * Adds a word to the whitelist (normalized).
+     * Whitelisted words are never masked, even if they contain blocked substrings.
+     * 
+     * @return true if the set changed
+     */
+    public boolean addWhitelist(String rawWord) {
+        boolean changed = whitelist.add(ChatFilter.normalize(rawWord));
+        if (changed)
+            setDirty();
+        return changed;
+    }
+
+    /**
+     * Removes a word from the whitelist.
+     * 
+     * @return true if the set changed
+     */
+    public boolean removeWhitelist(String rawWord) {
+        boolean changed = whitelist.remove(ChatFilter.normalize(rawWord));
+        if (changed)
+            setDirty();
+        return changed;
+    }
+
+    /**
+     * Checks if a normalized token is whitelisted.
+     */
+    public boolean isWhitelisted(String normalizedToken) {
+        return whitelist.contains(normalizedToken);
+    }
+
+    /**
+     * Returns an immutable snapshot of whitelisted words, sorted.
+     */
+    public Set<String> whitelistSnapshot() {
+        return Collections.unmodifiableSet(new TreeSet<>(whitelist));
     }
 
     // --- Optimization: Cached Patterns ---
@@ -104,8 +157,6 @@ public final class ChatFilterSavedData extends SavedData {
         List<java.util.regex.Pattern> list = new ArrayList<>();
         for (String entry : words) {
             // Only compile patterns for phrases that maskTokens() won't catch
-            // (whitespace/non-alphanumeric).
-            // Logic mirrored from ChatFilter.maskPhrases
             boolean needs = false;
             for (int i = 0; i < entry.length(); i++) {
                 char c = entry.charAt(i);

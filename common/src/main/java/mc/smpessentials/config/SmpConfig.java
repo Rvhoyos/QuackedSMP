@@ -18,6 +18,7 @@ public final class SmpConfig {
     // ---- Skills ----
     public static double SKILL_XP_EXPONENT = 1.5;
     public static java.util.Map<String, Long> SKILL_COOLDOWNS = new java.util.HashMap<>();
+    public static java.util.Map<String, Integer> SKILL_UNLOCK_LEVELS = new java.util.HashMap<>();
     public static double CAP_INDUSTRIAL_SPEED = 0.5; // +50% mining speed at max
     public static double CAP_NATURE_HEALTH = 10.0; // +10 hearts at max
     public static double CAP_COMBAT_DAMAGE = 1.0; // +100% damage at max
@@ -26,6 +27,11 @@ public final class SmpConfig {
     /** Get cooldown in seconds for a skill's active ability. */
     public static long getSkillCooldown(SkillType skill) {
         return SKILL_COOLDOWNS.getOrDefault(skill.name().toLowerCase(), defaultCooldown(skill));
+    }
+
+    /** Get the minimum level required to unlock a skill's active ability. */
+    public static int getAbilityUnlockLevel(SkillType skill) {
+        return SKILL_UNLOCK_LEVELS.getOrDefault(skill.name().toLowerCase(), 10);
     }
 
     private static long defaultCooldown(SkillType skill) {
@@ -104,6 +110,13 @@ public final class SmpConfig {
                 JsonObject cds = sk.getAsJsonObject("cooldowns");
                 for (String key : cds.keySet()) {
                     SKILL_COOLDOWNS.put(key, cds.get(key).getAsLong());
+                }
+            }
+            if (sk.has("ability_unlock_levels") && sk.get("ability_unlock_levels").isJsonObject()) {
+                SKILL_UNLOCK_LEVELS.clear();
+                JsonObject unlocks = sk.getAsJsonObject("ability_unlock_levels");
+                for (String key : unlocks.keySet()) {
+                    SKILL_UNLOCK_LEVELS.put(key, unlocks.get(key).getAsInt());
                 }
             }
             if (sk.has("caps") && sk.get("caps").isJsonObject()) {

@@ -17,7 +17,7 @@ QuackedSMP is a server-side utility mod for Fabric and NeoForge. It provides lan
 - **Levels 1-10:** Fast progression (Flat 50 XP per level).
 - **Levels 11-100:** Standard progression (Exponential curve).
 - **Global XP Multiplier:** Configurable via `xp_exponent` (default 1.5).
-- **Chat Management:** Simple chat filter, automated broadcasts, and welcome messages.
+- **Chat Management:** Advanced chat filter with anti-evasion detection (leet-speak, separators, repeated characters), whitelist support, sign/book/anvil filtering, automated broadcasts, and welcome messages.
 - **Skill System:** 12 skills across 4 categories with XP progression, active abilities, and passive buffs.
 - **Configuration:** Hot-reloadable JSON configuration.
 
@@ -51,8 +51,12 @@ The configuration file is located at `config/quackedsmp.json`. You can reload ch
   ],
   "chatfilter": {
     "contents": [
-      "word1",
-      "word2"
+      "badword1",
+      "badword2"
+    ],
+    "whitelist": [
+      "assassin",
+      "classic"
     ]
   },
   "messages": {
@@ -107,8 +111,13 @@ Text fields support standard Minecraft legacy color codes (e.g., `&a` for green,
 | `/tpdeny` | Deny a teleport request | Everyone |
 | `/rules` | View server rules | Everyone |
 | `/chatfilter list` | View blocked words | OP |
-| `/chatfilter add` | Add a word to the filter | OP |
-| `/chatfilter remove`| Remove a word from the filter | OP |
+| `/chatfilter add <word or phrase>` | Add a word/phrase to the filter | OP |
+| `/chatfilter remove <word or phrase>` | Remove a word/phrase from the filter | OP |
+| `/chatfilter test <message>` | Dry-run a message through the filter | OP |
+| `/chatfilter whitelist add <word>` | Whitelist a word (prevents false positives) | OP |
+| `/chatfilter whitelist remove <word>` | Remove a word from the whitelist | OP |
+| `/chatfilter whitelist list` | View whitelisted words | OP |
+| `/chatfilter strikes [player]` | View filter violation strikes | OP |
 | `/skills` | Open the skills book GUI | Everyone |
 | `/skills <skill>` | View details for a specific skill | Everyone |
 | `/skills admin givexp <player> <skill> <amount>` | Award XP to a player | OP |
@@ -202,6 +211,20 @@ The `skills` section is auto-generated in `config/quackedsmp.json` on first load
       "enchanting": 1200,
       "alchemy": 600,
       "trading": 1200
+    },
+    "ability_unlock_levels": {
+      "mining": 10,
+      "excavation": 10,
+      "woodcutting": 10,
+      "farming": 10,
+      "fishing": 10,
+      "agility": 10,
+      "melee": 10,
+      "archery": 10,
+      "defense": 10,
+      "enchanting": 10,
+      "alchemy": 10,
+      "trading": 10
     }
   }
 }
@@ -212,6 +235,7 @@ The `skills` section is auto-generated in `config/quackedsmp.json` on first load
 | `xp_exponent` | Controls the XP curve steepness | `1.5` |
 | `cap_*` | Maximum buff value at level 100 | Varies |
 | `cooldowns.*` | Base cooldown in seconds (see below) | Varies |
+| `ability_unlock_levels.*` | Minimum level to unlock active ability | `10` |
 
 ### Rebalanced Cooldowns & Scaling
 
