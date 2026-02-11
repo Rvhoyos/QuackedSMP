@@ -41,11 +41,21 @@ public final class MessageScheduler {
         if (msgs.isEmpty())
             return;
 
-        if (index >= msgs.size())
-            index = 0;
-        String line = msgs.get(index);
-        index++;
+        // Try to find a non-empty message, preventing infinite loop if all are empty
+        for (int i = 0; i < msgs.size(); i++) {
+            if (index >= msgs.size()) {
+                index = 0;
+            }
 
-        server.getPlayerList().broadcastSystemMessage(TextUtil.format(line), false);
+            String line = msgs.get(index);
+            index++;
+
+            if (line != null && !line.trim().isEmpty()) {
+                System.out.println("[QuackedSMP] Broadcasting Periodic Message (" + (index - 1) + "/" + msgs.size()
+                        + "): " + line);
+                server.getPlayerList().broadcastSystemMessage(TextUtil.format(line), false);
+                return;
+            }
+        }
     }
 }
