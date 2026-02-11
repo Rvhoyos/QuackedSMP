@@ -13,8 +13,19 @@ public class GeneralCommands {
                                 .then(Commands.literal("reload")
                                                 .requires(s -> s.hasPermission(2)) // OP only
                                                 .executes(GeneralCommands::reloadConfig))
+                                .then(Commands.literal("config")
+                                                .requires(s -> s.hasPermission(2)) // OP only
+                                                .executes(GeneralCommands::openConfig))
                                 .then(Commands.literal("help")
                                                 .executes(GeneralCommands::sendHelp)));
+        }
+
+        private static int openConfig(CommandContext<CommandSourceStack> ctx) {
+                if (ctx.getSource().getEntity() instanceof net.minecraft.server.level.ServerPlayer sp) {
+                        mc.smpessentials.config.ConfigGui.open(sp);
+                        return 1;
+                }
+                return 0;
         }
 
         private static int sendHelp(CommandContext<CommandSourceStack> ctx) {
