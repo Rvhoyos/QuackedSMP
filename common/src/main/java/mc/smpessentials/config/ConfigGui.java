@@ -3,21 +3,17 @@ package mc.smpessentials.config;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.Style;
+
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ChestMenu;
-import net.minecraft.world.inventory.MenuType;
+
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.component.ItemLore;
-
-import net.minecraft.sounds.SoundEvent;
-import net.minecraft.sounds.SoundEvents;
-import net.minecraft.sounds.SoundSource;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -40,6 +36,31 @@ public class ConfigGui {
     private static final int SLOT_WARMUP_MINUS = 28;
     private static final int SLOT_WARMUP_DISPLAY = 29;
     private static final int SLOT_WARMUP_PLUS = 30;
+
+    private static final int SLOT_VIP_BONUS_MINUS = 23;
+    private static final int SLOT_VIP_BONUS_DISPLAY = 24;
+    private static final int SLOT_VIP_BONUS_PLUS = 25;
+
+    private static final int SLOT_MSG_INTERVAL_MINUS = 32;
+    private static final int SLOT_MSG_INTERVAL_DISPLAY = 33;
+    private static final int SLOT_MSG_INTERVAL_PLUS = 34;
+
+    // Skill Caps (Row 0 and 4)
+    private static final int SLOT_CAP_SPEED_MINUS = 1;
+    private static final int SLOT_CAP_SPEED_DISPLAY = 2;
+    private static final int SLOT_CAP_SPEED_PLUS = 3;
+
+    private static final int SLOT_CAP_HEALTH_MINUS = 5;
+    private static final int SLOT_CAP_HEALTH_DISPLAY = 6;
+    private static final int SLOT_CAP_HEALTH_PLUS = 7;
+
+    private static final int SLOT_CAP_DAMAGE_MINUS = 37;
+    private static final int SLOT_CAP_DAMAGE_DISPLAY = 38;
+    private static final int SLOT_CAP_DAMAGE_PLUS = 39;
+
+    private static final int SLOT_CAP_XP_MINUS = 41;
+    private static final int SLOT_CAP_XP_DISPLAY = 42;
+    private static final int SLOT_CAP_XP_PLUS = 43;
 
     public static void open(ServerPlayer player) {
         MenuProvider provider = new MenuProvider() {
@@ -86,6 +107,44 @@ public class ConfigGui {
         container.setItem(SLOT_WARMUP_DISPLAY, createInfoItem(Items.CLOCK, "TP Warmup", SmpConfig.TP_WARMUP + "s"));
         container.setItem(SLOT_WARMUP_PLUS, createActionItem(Items.GREEN_CONCRETE, "\u00a7a+1s Warmup"));
 
+        // 4. VIP Bonus Claims (Integer)
+        container.setItem(SLOT_VIP_BONUS_MINUS, createActionItem(Items.RED_CONCRETE, "\u00a7c-1 Bonus"));
+        container.setItem(SLOT_VIP_BONUS_DISPLAY,
+                createInfoItem(Items.GOLD_INGOT, "VIP Bonus Claims", String.valueOf(SmpConfig.VIP_BONUS_CLAIMS)));
+        container.setItem(SLOT_VIP_BONUS_PLUS, createActionItem(Items.GREEN_CONCRETE, "\u00a7a+1 Bonus"));
+
+        // 5. Message Interval (Integer)
+        container.setItem(SLOT_MSG_INTERVAL_MINUS, createActionItem(Items.RED_CONCRETE, "\u00a7c-60s Interval"));
+        container.setItem(SLOT_MSG_INTERVAL_DISPLAY,
+                createInfoItem(Items.OAK_SIGN, "Msg Interval", SmpConfig.MESSAGE_INTERVAL + "s"));
+        container.setItem(SLOT_MSG_INTERVAL_PLUS, createActionItem(Items.GREEN_CONCRETE, "\u00a7a+60s Interval"));
+
+        // --- Skill Caps ---
+
+        // Industrial Speed
+        container.setItem(SLOT_CAP_SPEED_MINUS, createActionItem(Items.RED_STAINED_GLASS, "\u00a7c-0.1 Speed"));
+        container.setItem(SLOT_CAP_SPEED_DISPLAY, createInfoItem(Items.GOLDEN_PICKAXE, "Cap: Mining Speed",
+                String.format("%.1f", SmpConfig.CAP_INDUSTRIAL_SPEED)));
+        container.setItem(SLOT_CAP_SPEED_PLUS, createActionItem(Items.GREEN_STAINED_GLASS, "\u00a7a+0.1 Speed"));
+
+        // Nature Health
+        container.setItem(SLOT_CAP_HEALTH_MINUS, createActionItem(Items.RED_STAINED_GLASS, "\u00a7c-1.0 Health"));
+        container.setItem(SLOT_CAP_HEALTH_DISPLAY, createInfoItem(Items.GOLDEN_APPLE, "Cap: Bonus Health",
+                String.format("%.1f", SmpConfig.CAP_NATURE_HEALTH)));
+        container.setItem(SLOT_CAP_HEALTH_PLUS, createActionItem(Items.GREEN_STAINED_GLASS, "\u00a7a+1.0 Health"));
+
+        // Combat Damage
+        container.setItem(SLOT_CAP_DAMAGE_MINUS, createActionItem(Items.RED_STAINED_GLASS, "\u00a7c-0.1 Damage"));
+        container.setItem(SLOT_CAP_DAMAGE_DISPLAY, createInfoItem(Items.IRON_SWORD, "Cap: Bonus Damage",
+                String.format("%.1f", SmpConfig.CAP_COMBAT_DAMAGE)));
+        container.setItem(SLOT_CAP_DAMAGE_PLUS, createActionItem(Items.GREEN_STAINED_GLASS, "\u00a7a+0.1 Damage"));
+
+        // Knowledge XP
+        container.setItem(SLOT_CAP_XP_MINUS, createActionItem(Items.RED_STAINED_GLASS, "\u00a7c-0.1 XP Mult"));
+        container.setItem(SLOT_CAP_XP_DISPLAY, createInfoItem(Items.EXPERIENCE_BOTTLE, "Cap: XP Multiplier",
+                String.format("%.1f", SmpConfig.CAP_KNOWLEDGE_XP)));
+        container.setItem(SLOT_CAP_XP_PLUS, createActionItem(Items.GREEN_STAINED_GLASS, "\u00a7a+0.1 XP Mult"));
+
         // --- Controls ---
 
         // Reload from Disk
@@ -119,6 +178,44 @@ public class ConfigGui {
             refresh = true;
         } else if (slotId == SLOT_WARMUP_PLUS) {
             SmpConfig.TP_WARMUP += 1;
+            refresh = true;
+        } else if (slotId == SLOT_VIP_BONUS_MINUS) {
+            SmpConfig.VIP_BONUS_CLAIMS = Math.max(0, SmpConfig.VIP_BONUS_CLAIMS - 1);
+            refresh = true;
+        } else if (slotId == SLOT_VIP_BONUS_PLUS) {
+            SmpConfig.VIP_BONUS_CLAIMS += 1;
+            refresh = true;
+        } else if (slotId == SLOT_MSG_INTERVAL_MINUS) {
+            SmpConfig.MESSAGE_INTERVAL = Math.max(60, SmpConfig.MESSAGE_INTERVAL - 60);
+            refresh = true;
+        } else if (slotId == SLOT_MSG_INTERVAL_PLUS) {
+            SmpConfig.MESSAGE_INTERVAL += 60;
+            refresh = true;
+        }
+        // Skill Caps
+        else if (slotId == SLOT_CAP_SPEED_MINUS) {
+            SmpConfig.CAP_INDUSTRIAL_SPEED = Math.max(0.0, SmpConfig.CAP_INDUSTRIAL_SPEED - 0.1);
+            refresh = true;
+        } else if (slotId == SLOT_CAP_SPEED_PLUS) {
+            SmpConfig.CAP_INDUSTRIAL_SPEED += 0.1;
+            refresh = true;
+        } else if (slotId == SLOT_CAP_HEALTH_MINUS) {
+            SmpConfig.CAP_NATURE_HEALTH = Math.max(0.0, SmpConfig.CAP_NATURE_HEALTH - 1.0);
+            refresh = true;
+        } else if (slotId == SLOT_CAP_HEALTH_PLUS) {
+            SmpConfig.CAP_NATURE_HEALTH += 1.0;
+            refresh = true;
+        } else if (slotId == SLOT_CAP_DAMAGE_MINUS) {
+            SmpConfig.CAP_COMBAT_DAMAGE = Math.max(0.0, SmpConfig.CAP_COMBAT_DAMAGE - 0.1);
+            refresh = true;
+        } else if (slotId == SLOT_CAP_DAMAGE_PLUS) {
+            SmpConfig.CAP_COMBAT_DAMAGE += 0.1;
+            refresh = true;
+        } else if (slotId == SLOT_CAP_XP_MINUS) {
+            SmpConfig.CAP_KNOWLEDGE_XP = Math.max(0.0, SmpConfig.CAP_KNOWLEDGE_XP - 0.1);
+            refresh = true;
+        } else if (slotId == SLOT_CAP_XP_PLUS) {
+            SmpConfig.CAP_KNOWLEDGE_XP += 0.1;
             refresh = true;
         } else if (slotId == SLOT_SAVE) {
             save = true;
