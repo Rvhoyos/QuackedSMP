@@ -78,6 +78,11 @@ public final class ConfigIO {
                 pm.add("&b[Reminder] &fPlease respect the &6/rules&f!");
                 pm.add("&b[Tip] &fUnlock active abilities by leveling up your &a/skills&f!");
                 pm.add("&b[Tip] &fUse &a/tpa <player>&f to teleport to friends!");
+                pm.add("&b[Tip] &fStuck with an intruder? Use &a/sos &fto eject them from your claim!");
+                pm.add("&b[Tip] &fReach &aLevel 10 &fin a skill to unlock its unique Active Ability!");
+                pm.add("&b[Tip] &fUse &aSneak + Drop (Q) &fwith a tool to activate its ability!");
+                pm.add("&b[Tip] &fActivate &bDash &fby &aSprinting + Jumping + Sneaking&f!");
+                pm.add("&b[Tip] &fLeveling up skills grants passive buffs like &c+Health &fand &f+Speed!");
                 pm.add("&b[Tip] &fVisit Spawn Shops for blocks & gear! Trade items for Emeralds!");
                 obj.add("periodic_messages", pm);
                 dirty = true;
@@ -137,6 +142,11 @@ public final class ConfigIO {
         pm.add("&b[Reminder] &fPlease respect the &6/rules&f!");
         pm.add("&b[Tip] &fUnlock active abilities by leveling up your &a/skills&f!");
         pm.add("&b[Tip] &fUse &a/tpa <player>&f to teleport to friends!");
+        pm.add("&b[Tip] &fStuck with an intruder? Use &a/sos &fto eject them from your claim!");
+        pm.add("&b[Tip] &fReach &aLevel 10 &fin a skill to unlock its unique Active Ability!");
+        pm.add("&b[Tip] &fUse &aSneak + Drop (Q) &fwith a tool to activate its ability!");
+        pm.add("&b[Tip] &fActivate &bDash &fby &aSprinting + Jumping + Sneaking&f!");
+        pm.add("&b[Tip] &fLeveling up skills grants passive buffs like &c+Health &fand &f+Speed!");
         pm.add("&b[Tip] &fVisit Spawn Shops for blocks & gear! Trade items for Emeralds!");
         root.add("periodic_messages", pm);
 

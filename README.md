@@ -99,6 +99,7 @@ Text fields support standard Minecraft legacy color codes (e.g., `&a` for green,
 | `/claim info` | Check claim status and limits | Everyone |
 | `/trust <player>` | Allow a player to interact with your claims | Everyone |
 | `/untrust <player>` | Revoke trust from a player | Everyone |
+| `/sos` | Eject all untrusted players from your claims | Everyone |
 | `/home` | Teleport to your respawn point (bed/anchor) | Everyone |
 | `/spawn` | Teleport to world spawn | Everyone |
 | `/tpa <player>` | Request to teleport to another player | Everyone |
@@ -145,7 +146,8 @@ Abilities unlock at **level 10** and are triggered by **sneaking + pressing Q** 
 | Sneak + Q with **bow/crossbow** | Sniper | Slow Falling + Night Vision |
 | Sneak + Q with **shield** | Juggernaut | Resistance IV + Slowness IV |
 | Sneak + Q with **damaged non-tool item** | Arcane Infusion | Repairs item by 10% durability |
-| **Sprint** + right-click **empty hand** | Dash | Velocity boost in look direction |
+| Sneak + Q with **book** (look at spawner) | Philosopher's Touch | Silk Touch Spawner (drops as item) |
+| **Sprint + Jump + Sneak** (Tap Shift) | Dash | Velocity boost in look direction |
 
 > [!IMPORTANT]
 > **Two trigger systems:**
@@ -230,37 +232,7 @@ Cooldowns now follow a **piecewise reduction curve** based on skill level:
 
 Durations have been **doubled**: Base 10s + 0.2s/level (e.g., 30s at Lv 100).
 
-### Testing Guide
 
-Use `/skills admin givexp` to quickly test each skill:
-
-```
-# Award XP and check the action bar notification
-/skills admin givexp @s mining 500
-
-# Open the book GUI to verify levels
-/skills
-
-# Test an active ability (need level 10+)
-/skills admin givexp @s melee 1000
-# Then hold a sword, sneak, and press Q → Berzerk should activate
-
-# Test parent buffs (need average sub-skill levels)
-/skills admin givexp @s mining 5000
-/skills admin givexp @s excavation 5000
-/skills admin givexp @s woodcutting 5000
-# Check movement speed increase (Industrial parent buff)
-```
-
-**What to verify:**
-
-1. **XP Notifications** — action bar shows `+X Skill XP ▰▰▱▱ (Lv.N)` on each XP gain
-2. **Level Ups** — gold announcement in chat with sound effect
-3. **Book GUI** — `/skills` opens a 4-page written book with all categories
-4. **Active Abilities** — sneak + Q with tool at level 10+ triggers ability with cooldown message
-5. **Parent Buffs** — speed/health/damage modifiers visible in player attributes
-6. **Persistence** — XP survives server restart (data stored in world save)
-7. **Mixins** — fish catches, enchanting, brewing, and trading all award XP
 
 ---
 
