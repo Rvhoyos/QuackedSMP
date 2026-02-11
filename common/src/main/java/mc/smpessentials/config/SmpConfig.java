@@ -31,7 +31,16 @@ public final class SmpConfig {
 
     /** Get the minimum level required to unlock a skill's active ability. */
     public static int getAbilityUnlockLevel(SkillType skill) {
-        return SKILL_UNLOCK_LEVELS.getOrDefault(skill.name().toLowerCase(), 10);
+        return SKILL_UNLOCK_LEVELS.getOrDefault(skill.name().toLowerCase(), defaultUnlockLevel(skill));
+    }
+
+    private static int defaultUnlockLevel(SkillType skill) {
+        return switch (skill) {
+            case TRADING -> 1;
+            case DEFENSE -> 5;
+            case AGILITY -> 3;
+            default -> 10;
+        };
     }
 
     private static long defaultCooldown(SkillType skill) {

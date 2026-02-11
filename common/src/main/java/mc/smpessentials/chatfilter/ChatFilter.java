@@ -166,6 +166,15 @@ public final class ChatFilter {
                         blocked = data.containsNormalized(squashed);
                     }
                 }
+
+                // 3. Check Triple-Squashed form (e.g. "niggger" -> "nigger")
+                // This catches spammers trying to evade double-letter checks.
+                if (!blocked) {
+                    String squashed2 = squash3PlusTo2(leet);
+                    if (!squashed2.equals(leet) && !data.isWhitelisted(squashed2)) {
+                        blocked = data.containsNormalized(squashed2);
+                    }
+                }
             }
 
             if (blocked) {
@@ -245,6 +254,17 @@ public final class ChatFilter {
      */
     public static String squash(String s) {
         return REPEATED_CHARS.matcher(s).replaceAll("$1");
+    }
+
+    /**
+     * Aggressive normalization part 3: Squash 3+ repeated characters to 2 (niggger
+     * ->
+     * nigger).
+     */
+    public static String squash3PlusTo2(String s) {
+        // Find any character repeated 3 or more times ((.)\1{2,}) and replace with 2
+        // instances ($1$1)
+        return s.replaceAll("(.)\\1{2,}", "$1$1");
     }
 
     /**
