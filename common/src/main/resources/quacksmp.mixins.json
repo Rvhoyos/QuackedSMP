@@ -11,7 +11,9 @@
     "VillagerMixin",
     "SignBlockEntityMixin",
     "ServerGamePacketListenerMixin",
-    "AnvilMenuMixin"
+    "AnvilMenuMixin",
+    "ChestMenuMixin",
+    "AbstractContainerMenuMixin"
   ],
   "injectors": {
     "defaultRequire": 1
