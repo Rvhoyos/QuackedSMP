@@ -26,6 +26,7 @@ public class ConfigGui {
     // Helper to identify our slots
     // --- Constants ---
     private static final int SLOT_RELOAD = 45;
+    private static final int SLOT_RESET = 49;
     private static final int SLOT_SAVE = 53;
 
     // Row 0: World & Claims
@@ -197,9 +198,21 @@ public class ConfigGui {
         ItemStack save = new ItemStack(Items.LIME_TERRACOTTA);
         save.set(DataComponents.CUSTOM_NAME, Component.literal("Save to Disk").withStyle(ChatFormatting.GREEN));
         container.setItem(SLOT_SAVE, save);
+
+        // Factory Reset (Slot 49)
+        ItemStack reset = new ItemStack(Items.RED_CONCRETE_POWDER);
+        reset.set(DataComponents.CUSTOM_NAME, Component.literal("Factory Reset").withStyle(ChatFormatting.RED));
+        List<Component> resetLore = new ArrayList<>();
+        resetLore.add(Component.literal("Restores all settings to defaults.").withStyle(ChatFormatting.GRAY));
+        resetLore.add(Component.literal("Wipes current config file!").withStyle(ChatFormatting.DARK_RED));
+        resetLore.add(Component.empty());
+        resetLore.add(Component.literal("Shift + Left Click to confirm").withStyle(ChatFormatting.YELLOW));
+        reset.set(DataComponents.LORE, new ItemLore(resetLore));
+        container.setItem(SLOT_RESET, reset);
     }
 
-    public static void onClick(ServerPlayer player, ConfigMenuContainer container, int slotId) {
+    public static void onClick(ServerPlayer player, ConfigMenuContainer container, int slotId,
+            net.minecraft.world.inventory.ClickType clickType) {
         boolean refresh = false;
         boolean save = false;
         boolean reload = false;
@@ -276,6 +289,17 @@ public class ConfigGui {
             save = true;
         } else if (slotId == SLOT_RELOAD) {
             reload = true;
+        } else if (slotId == SLOT_RESET) {
+            // Check for Shift + Click (QUICK_MOVE in MC internal terminology usually maps
+            // to Shift-Click)
+            if (clickType == net.minecraft.world.inventory.ClickType.QUICK_MOVE) {
+                ConfigIO.resetToFactory();
+                player.closeContainer();
+                player.sendSystemMessage(Component.literal("\u00a7aConfiguration reset to factory defaults!"));
+                return;
+            } else {
+                player.sendSystemMessage(Component.literal("\u00a7cHold SHIFT and click to Factory Reset!"));
+            }
         }
 
         if (refresh) {

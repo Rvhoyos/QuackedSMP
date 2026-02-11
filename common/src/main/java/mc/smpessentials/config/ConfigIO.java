@@ -336,21 +336,6 @@ public final class ConfigIO {
 
         root.add("skills", skills);
 
-        // Chat Filter (preserve existing from disk if possible, or dump current)
-        // ideally we would read the current filter state, but for this simple save
-        // we might just want to preserve the file's filter section or rely on other
-        // tools.
-        // For now, let's re-save what we have in memory if we had a ChatFilter config
-        // class.
-        // Since ChatFilter is separate, let's just use the default or what we read.
-        // A better approach for a full "Save" is to read the file, update only known
-        // keys, and write back.
-        // But here we'll just overwrite with what we know.
-        // TODO: Integrate ChatFilter saving if needed. For now, we reuse default if
-        // missing.
-
-        // Actually, we should probably read the existing file to preserve chatfilter if
-        // we aren't tracking it here.
         try {
             Path p = path();
             if (Files.exists(p)) {
@@ -365,6 +350,18 @@ public final class ConfigIO {
                 root.add("chatfilter", defaultChatFilterJson());
             }
             Files.writeString(p, GSON.toJson(root), StandardCharsets.UTF_8);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Deletes the config file and reloads defaults.
+     */
+    public static void resetToFactory() {
+        try {
+            Files.deleteIfExists(path());
+            SmpConfig.load();
         } catch (IOException e) {
             e.printStackTrace();
         }

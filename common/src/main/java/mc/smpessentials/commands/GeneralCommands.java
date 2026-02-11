@@ -15,7 +15,9 @@ public class GeneralCommands {
                                                 .executes(GeneralCommands::reloadConfig))
                                 .then(Commands.literal("config")
                                                 .requires(s -> s.hasPermission(2)) // OP only
-                                                .executes(GeneralCommands::openConfig))
+                                                .executes(GeneralCommands::openConfig)
+                                                .then(Commands.literal("reset")
+                                                                .executes(GeneralCommands::resetConfig)))
                                 .then(Commands.literal("help")
                                                 .executes(GeneralCommands::sendHelp)));
         }
@@ -93,6 +95,20 @@ public class GeneralCommands {
                         return 0;
                 } catch (Exception e) {
                         ctx.getSource().sendFailure(Component.literal("Failed to reload config: " + e.getMessage()));
+                        e.printStackTrace();
+                        return 0;
+                }
+        }
+
+        private static int resetConfig(CommandContext<CommandSourceStack> ctx) {
+                try {
+                        mc.smpessentials.config.ConfigIO.resetToFactory();
+                        ctx.getSource().sendSuccess(
+                                        () -> Component.literal("\u00a7aConfiguration reset to factory defaults!"),
+                                        true);
+                        return 1;
+                } catch (Exception e) {
+                        ctx.getSource().sendFailure(Component.literal("Failed to reset config: " + e.getMessage()));
                         e.printStackTrace();
                         return 0;
                 }

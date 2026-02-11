@@ -25,7 +25,7 @@ public class AbstractContainerMenuMixin {
 
                 // Handle our logic
                 if (player instanceof ServerPlayer sp && slotId >= 0 && slotId < configContainer.getContainerSize()) {
-                    ConfigGui.onClick(sp, configContainer, slotId);
+                    ConfigGui.onClick(sp, configContainer, slotId, clickType);
                 }
             }
         }
