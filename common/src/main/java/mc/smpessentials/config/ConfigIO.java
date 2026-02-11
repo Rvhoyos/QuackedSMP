@@ -3,6 +3,7 @@ package mc.smpessentials.config;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonSyntaxException;
 import dev.architectury.platform.Platform;
 
 import java.io.IOException;
@@ -42,7 +43,7 @@ public final class ConfigIO {
             boolean dirty = false;
             // Backfill missing sections for forward-compat
             if (!obj.has("chatfilter") || !obj.get("chatfilter").isJsonObject()) {
-                obj.add("chatfilter", defaultJson().getAsJsonObject("chatfilter"));
+                obj.add("chatfilter", defaultChatFilterJson());
                 dirty = true;
             }
             if (!obj.has("messages") || !obj.get("messages").isJsonObject()) {
@@ -112,9 +113,24 @@ public final class ConfigIO {
                 Files.writeString(p, GSON.toJson(obj), StandardCharsets.UTF_8);
             }
             return obj;
+        } catch (JsonSyntaxException e) {
+            // Malformed JSON — throw a descriptive error for callers to display
+            throw new ConfigParseException(
+                    "Malformed JSON in " + FILE_NAME + ": " + e.getMessage(), e);
         } catch (IOException e) {
             // Fall back to default in-memory config when IO fails
             return defaultJson();
+        }
+    }
+
+    /**
+     * Thrown when quackedsmp.json contains invalid JSON syntax.
+     * The message includes Gson's description of what went wrong
+     * (line, column, and expected token).
+     */
+    public static class ConfigParseException extends RuntimeException {
+        public ConfigParseException(String message, Throwable cause) {
+            super(message, cause);
         }
     }
 
@@ -150,12 +166,7 @@ public final class ConfigIO {
         pm.add("&b[Tip] &fVisit Spawn Shops for blocks & gear! Trade items for Emeralds!");
         root.add("periodic_messages", pm);
 
-        JsonObject cf = new JsonObject();
-        com.google.gson.JsonArray arr = new com.google.gson.JsonArray();
-        arr.add("word1");
-        arr.add("word2");
-        cf.add("contents", arr);
-        root.add("chatfilter", cf);
+        root.add("chatfilter", defaultChatFilterJson());
 
         JsonObject msgs = new JsonObject();
         // Claiming
@@ -210,6 +221,21 @@ public final class ConfigIO {
         cds.addProperty("trading", 1200);
         sk.add("cooldowns", cds);
 
+        JsonObject unlocks = new JsonObject();
+        unlocks.addProperty("mining", 10);
+        unlocks.addProperty("excavation", 10);
+        unlocks.addProperty("woodcutting", 10);
+        unlocks.addProperty("farming", 10);
+        unlocks.addProperty("fishing", 10);
+        unlocks.addProperty("agility", 10);
+        unlocks.addProperty("melee", 10);
+        unlocks.addProperty("archery", 10);
+        unlocks.addProperty("defense", 10);
+        unlocks.addProperty("enchanting", 10);
+        unlocks.addProperty("alchemy", 10);
+        unlocks.addProperty("trading", 10);
+        sk.add("ability_unlock_levels", unlocks);
+
         JsonObject caps = new JsonObject();
         caps.addProperty("industrial_speed", 0.5);
         caps.addProperty("nature_health", 10);
@@ -218,5 +244,37 @@ public final class ConfigIO {
         sk.add("caps", caps);
 
         return sk;
+    }
+
+    /** Default chatfilter section with starter blocklist and whitelist. */
+    private static JsonObject defaultChatFilterJson() {
+        JsonObject cf = new JsonObject();
+
+        // Starter blocklist — common profanity for kid-safety
+        com.google.gson.JsonArray contents = new com.google.gson.JsonArray();
+        for (String w : new String[] {
+                "fuck", "shit", "bitch", "ass", "damn", "crap",
+                "dick", "cock", "pussy", "bastard", "slut", "whore",
+                "cunt", "piss", "nigger", "nigga", "faggot", "retard",
+                "kill yourself", "kys"
+        }) {
+            contents.add(w);
+        }
+        cf.add("contents", contents);
+
+        // Default whitelist — words that contain blocked substrings
+        com.google.gson.JsonArray whitelist = new com.google.gson.JsonArray();
+        for (String w : new String[] {
+                "assassin", "bass", "class", "grass", "glass", "mass",
+                "pass", "compass", "bypass", "classic", "assign",
+                "assist", "assumption", "password", "butterscotch",
+                "cockatoo", "cocktail", "peacock", "scrapbook",
+                "shitake", "therapist"
+        }) {
+            whitelist.add(w);
+        }
+        cf.add("whitelist", whitelist);
+
+        return cf;
     }
 }

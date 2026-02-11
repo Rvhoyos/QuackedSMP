@@ -1,5 +1,7 @@
 package mc.smpessentials.skills;
 
+import mc.smpessentials.config.SmpConfig;
+
 import dev.architectury.event.EventResult;
 import dev.architectury.event.events.common.PlayerEvent;
 import net.minecraft.core.BlockPos;
@@ -42,8 +44,6 @@ import java.util.*;
  * (no vanilla conflict since empty-hand right-click does nothing).
  */
 public final class ActiveAbilities {
-
-    private static final int MIN_LEVEL_FOR_ABILITY = 10;
 
     // Track active ability durations (player UUID -> expiry time)
     private static final Map<UUID, Long> superBreakerActive = new HashMap<>();
@@ -118,7 +118,7 @@ public final class ActiveAbilities {
      */
     private static boolean tryActivate(ServerPlayer sp, SkillData data, SkillType skill, String name, UUID uuid) {
         int level = data.getLevel(uuid, skill);
-        if (level < MIN_LEVEL_FOR_ABILITY)
+        if (level < SmpConfig.getAbilityUnlockLevel(skill))
             return false;
 
         if (!data.isAbilityReady(uuid, skill)) {
@@ -153,7 +153,7 @@ public final class ActiveAbilities {
     /** @return true if handled */
     private static boolean tryActivateTreeFeller(ServerPlayer sp, SkillData data, UUID uuid) {
         int level = data.getLevel(uuid, SkillType.WOODCUTTING);
-        if (level < MIN_LEVEL_FOR_ABILITY)
+        if (level < SmpConfig.getAbilityUnlockLevel(SkillType.WOODCUTTING))
             return false;
 
         if (!data.isAbilityReady(uuid, SkillType.WOODCUTTING)) {
@@ -213,7 +213,7 @@ public final class ActiveAbilities {
     /** @return true if handled */
     private static boolean tryActivateGreenTerra(ServerPlayer sp, SkillData data, UUID uuid, ServerLevel level) {
         int farmLevel = data.getLevel(uuid, SkillType.FARMING);
-        if (farmLevel < MIN_LEVEL_FOR_ABILITY)
+        if (farmLevel < SmpConfig.getAbilityUnlockLevel(SkillType.FARMING))
             return false;
 
         if (!data.isAbilityReady(uuid, SkillType.FARMING)) {
@@ -249,7 +249,7 @@ public final class ActiveAbilities {
     /** @return true if handled */
     private static boolean tryActivateMasterAngler(ServerPlayer sp, SkillData data, UUID uuid) {
         int fishLevel = data.getLevel(uuid, SkillType.FISHING);
-        if (fishLevel < MIN_LEVEL_FOR_ABILITY)
+        if (fishLevel < SmpConfig.getAbilityUnlockLevel(SkillType.FISHING))
             return false;
 
         if (!data.isAbilityReady(uuid, SkillType.FISHING)) {
@@ -270,7 +270,7 @@ public final class ActiveAbilities {
     /** @return true if handled */
     private static boolean tryActivateBerzerk(ServerPlayer sp, SkillData data, UUID uuid) {
         int meleeLevel = data.getLevel(uuid, SkillType.MELEE);
-        if (meleeLevel < MIN_LEVEL_FOR_ABILITY)
+        if (meleeLevel < SmpConfig.getAbilityUnlockLevel(SkillType.MELEE))
             return false;
 
         if (!data.isAbilityReady(uuid, SkillType.MELEE)) {
@@ -292,7 +292,7 @@ public final class ActiveAbilities {
     /** @return true if handled */
     private static boolean tryActivateSniper(ServerPlayer sp, SkillData data, UUID uuid) {
         int archLevel = data.getLevel(uuid, SkillType.ARCHERY);
-        if (archLevel < MIN_LEVEL_FOR_ABILITY)
+        if (archLevel < SmpConfig.getAbilityUnlockLevel(SkillType.ARCHERY))
             return false;
 
         if (!data.isAbilityReady(uuid, SkillType.ARCHERY)) {
@@ -314,7 +314,7 @@ public final class ActiveAbilities {
     /** @return true if handled */
     private static boolean tryActivateJuggernaut(ServerPlayer sp, SkillData data, UUID uuid) {
         int defLevel = data.getLevel(uuid, SkillType.DEFENSE);
-        if (defLevel < MIN_LEVEL_FOR_ABILITY)
+        if (defLevel < SmpConfig.getAbilityUnlockLevel(SkillType.DEFENSE))
             return false;
 
         if (!data.isAbilityReady(uuid, SkillType.DEFENSE)) {
@@ -339,7 +339,7 @@ public final class ActiveAbilities {
      */
     public static void tryActivateDash(ServerPlayer sp, SkillData data, UUID uuid) {
         int agiLevel = data.getLevel(uuid, SkillType.AGILITY);
-        if (agiLevel < MIN_LEVEL_FOR_ABILITY)
+        if (agiLevel < SmpConfig.getAbilityUnlockLevel(SkillType.AGILITY))
             return;
 
         if (!data.isAbilityReady(uuid, SkillType.AGILITY)) {
@@ -369,7 +369,7 @@ public final class ActiveAbilities {
      */
     private static boolean tryArcaneInfusion(ServerPlayer sp, SkillData data, UUID uuid, ItemStack droppedItem) {
         int level = data.getLevel(uuid, SkillType.ENCHANTING);
-        if (level < MIN_LEVEL_FOR_ABILITY)
+        if (level < SmpConfig.getAbilityUnlockLevel(SkillType.ENCHANTING))
             return false;
 
         if (!data.isAbilityReady(uuid, SkillType.ENCHANTING)) {
@@ -431,7 +431,7 @@ public final class ActiveAbilities {
     /** @return true if handled */
     private static boolean tryActivateAlchemy(ServerPlayer sp, SkillData data, UUID uuid) {
         int alchLevel = data.getLevel(uuid, SkillType.ALCHEMY);
-        if (alchLevel < MIN_LEVEL_FOR_ABILITY)
+        if (alchLevel < SmpConfig.getAbilityUnlockLevel(SkillType.ALCHEMY))
             return false;
 
         // Perform raycast to see if looking at a spawner (5 blocks range)
@@ -493,7 +493,7 @@ public final class ActiveAbilities {
     /** @return true if handled */
     private static boolean tryActivateTycoon(ServerPlayer sp, SkillData data, UUID uuid) {
         int tradeLevel = data.getLevel(uuid, SkillType.TRADING);
-        if (tradeLevel < MIN_LEVEL_FOR_ABILITY)
+        if (tradeLevel < SmpConfig.getAbilityUnlockLevel(SkillType.TRADING))
             return false;
 
         if (!data.isAbilityReady(uuid, SkillType.TRADING)) {

@@ -65,11 +65,24 @@ public class GeneralCommands {
         private static int reloadConfig(CommandContext<CommandSourceStack> ctx) {
                 try {
                         SmpConfig.load();
-                        mc.smpessentials.chatfilter.ChatFilterConfig.mergeFromConfig(ctx.getSource().getServer());
+                        var res = mc.smpessentials.chatfilter.ChatFilterConfig
+                                        .mergeFromConfig(ctx.getSource().getServer());
                         ctx.getSource().sendSuccess(() -> Component.literal("QuackedSMP config reloaded!"), true);
+                        if (!res.warnings().isEmpty()) {
+                                ctx.getSource().sendSystemMessage(
+                                                Component.literal("\u00a7e[Warning] Chat Filter issues:"));
+                                for (String w : res.warnings()) {
+                                        ctx.getSource().sendSystemMessage(Component.literal("\u00a7e - " + w));
+                                }
+                        }
                         return 1;
+                } catch (mc.smpessentials.config.ConfigIO.ConfigParseException e) {
+                        ctx.getSource().sendFailure(
+                                        Component.literal("\u00a7c[Error] Malformed JSON config: " + e.getMessage()));
+                        return 0;
                 } catch (Exception e) {
                         ctx.getSource().sendFailure(Component.literal("Failed to reload config: " + e.getMessage()));
+                        e.printStackTrace();
                         return 0;
                 }
         }
