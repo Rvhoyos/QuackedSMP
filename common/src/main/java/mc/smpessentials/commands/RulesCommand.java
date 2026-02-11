@@ -43,8 +43,9 @@ public final class RulesCommand {
         player.sendSystemMessage(Component.literal("For commands, type /smp help")
                 .withStyle(ChatFormatting.DARK_GRAY, ChatFormatting.ITALIC));
         // Credit (Small)
-        player.sendSystemMessage(Component.literal("QuackedSMP by quackedmod.wiki")
-                .withStyle(ChatFormatting.DARK_GRAY, ChatFormatting.ITALIC));
+        // Credit (Small)
+        player.sendSystemMessage(
+                mc.smpessentials.util.TextUtil.format("&7&oQuackedSMP by [quackedmod.wiki](https://quackedmod.wiki)"));
 
     }
 }

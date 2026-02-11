@@ -90,6 +90,9 @@ public final class ActiveAbilities {
             } else if (dropped.getItem() == Items.BOOK || dropped.getItem() == Items.ENCHANTED_BOOK) {
                 // Alchemy: Book + Sneak + Q -> Silk Touch Spawner
                 handled = tryActivateAlchemy(sp, data, uuid);
+            } else if (dropped.getItem() == Items.EMERALD) {
+                // Trading: Emerald + Sneak + Q -> Tycoon's Charm (Hero of Village)
+                handled = tryActivateTycoon(sp, data, uuid);
             } else if (dropped.isDamageableItem() && dropped.isDamaged()) {
                 // Non-tool damaged item → Arcane Infusion (repair 10%)
                 handled = tryArcaneInfusion(sp, data, uuid, dropped);
@@ -484,6 +487,37 @@ public final class ActiveAbilities {
         // Particles/Sound
         sp.level().playSound(null, pos, SoundEvents.ZOMBIE_VILLAGER_CONVERTED, SoundSource.PLAYERS, 1.0f, 1.0f);
 
+        return true;
+    }
+
+    /** @return true if handled */
+    private static boolean tryActivateTycoon(ServerPlayer sp, SkillData data, UUID uuid) {
+        int tradeLevel = data.getLevel(uuid, SkillType.TRADING);
+        if (tradeLevel < MIN_LEVEL_FOR_ABILITY)
+            return false;
+
+        if (!data.isAbilityReady(uuid, SkillType.TRADING)) {
+            long remaining = data.getCooldownRemaining(uuid, SkillType.TRADING);
+            sp.displayClientMessage(Component.literal(
+                    "\u00a7cTycoon's Charm on cooldown! \u00a77(" + formatTime(remaining) + ")"), true);
+            return true;
+        }
+
+        data.setCooldown(uuid, SkillType.TRADING);
+
+        // Duration: 30s base + 0.5s per level
+        int durationTicks = (int) ((30 + tradeLevel * 0.5) * 20);
+
+        // Amplifier calculation
+        int amp = 0;
+        if (tradeLevel >= 80)
+            amp = 2; // Hero III
+        else if (tradeLevel >= 50)
+            amp = 1; // Hero II
+
+        sp.addEffect(new MobEffectInstance(MobEffects.HERO_OF_THE_VILLAGE, durationTicks, amp, false, false));
+        announce(sp, "Tycoon's Charm", durationTicks / 20, SoundEvents.UI_TOAST_CHALLENGE_COMPLETE);
+        resyncHand(sp);
         return true;
     }
 }
