@@ -150,9 +150,21 @@ public final class ChatFilter {
 
             // Fallback: aggressive normalization for evasion detection
             if (!blocked) {
-                String aggressive = normalizeAggressive(token);
-                if (!aggressive.equals(norm) && !data.isWhitelisted(aggressive)) {
-                    blocked = data.containsNormalized(aggressive);
+                // 1. Check Leet-speak form (e.g. "N1Gg3R" -> "nigger")
+                // This catches words that rely on double letters (ass, nigger) which squashing
+                // ruins.
+                String leet = normalizeLeet(token);
+                if (!leet.equals(norm) && !data.isWhitelisted(leet)) {
+                    blocked = data.containsNormalized(leet);
+                }
+
+                // 2. Check Squashed form (e.g. "fuuuck" -> "fuck")
+                // This catches elongated words.
+                if (!blocked) {
+                    String squashed = squash(leet);
+                    if (!squashed.equals(leet) && !data.isWhitelisted(squashed)) {
+                        blocked = data.containsNormalized(squashed);
+                    }
                 }
             }
 
@@ -203,13 +215,10 @@ public final class ChatFilter {
     }
 
     /**
-     * Aggressive normalization for evasion resistance. Applies on top of basic
-     * normalization:
-     * 1. Leet-speak substitution (@ → a, 0 → o, 3 → e, etc.)
-     * 2. Separator stripping (remove . - _ * ~ between letters)
-     * 3. Repeated character squashing (fuuuck → fuck)
+     * Aggressive normalization part 1: Leet-speak + Separator stripping.
+     * Does NOT squash repeated chars yet.
      */
-    public static String normalizeAggressive(String s) {
+    public static String normalizeLeet(String s) {
         String base = normalize(s);
 
         // 1. Leet-speak substitution
@@ -228,10 +237,21 @@ public final class ChatFilter {
                 cleaned.append(c);
             }
         }
+        return cleaned.toString();
+    }
 
-        // 3. Squash repeated characters (2+ identical → 1)
-        String squashed = REPEATED_CHARS.matcher(cleaned.toString()).replaceAll("$1");
+    /**
+     * Aggressive normalization part 2: Squash repeated characters (fuuuck -> fuck).
+     */
+    public static String squash(String s) {
+        return REPEATED_CHARS.matcher(s).replaceAll("$1");
+    }
 
-        return squashed;
+    /**
+     * Legacy method for backward compatibility if needed, though maskTokens uses
+     * split logic now.
+     */
+    public static String normalizeAggressive(String s) {
+        return squash(normalizeLeet(s));
     }
 }
