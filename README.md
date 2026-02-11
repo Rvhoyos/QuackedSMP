@@ -147,6 +147,7 @@ Abilities unlock at **level 10** and are triggered by **sneaking + pressing Q** 
 | Sneak + Q with **shield** | Juggernaut | Resistance IV + Slowness IV |
 | Sneak + Q with **damaged non-tool item** | Arcane Infusion | Repairs item by 10% durability |
 | Sneak + Q with **book** (look at spawner) | Philosopher's Touch | Silk Touch Spawner (drops as item) |
+| Sneak + Q with **emerald** | Tycoon's Charm | Hero of the Village (discounts) |
 | **Sprint + Jump + Sneak** (Tap Shift) | Dash | Velocity boost in look direction |
 
 > [!IMPORTANT]
@@ -228,7 +229,9 @@ Cooldowns now follow a **piecewise reduction curve** based on skill level:
 | **Combat** | 300s (5m) | 75s (1m 15s) |
 | **Archery** | 180s (3m) | 45s |
 | **Defense** | 600s (10m) | 150s (2.5m) |
-| **Knowledge** | 1200s (20m) | 300s (5m) |
+| **Trading** | 1200s (20m) | 300s (5m) |
+| **Enchanting** | 1200s (20m) | 300s (5m) |
+| **Alchemy** | 600s (10m) | 150s (2.5m) |
 
 Durations have been **doubled**: Base 10s + 0.2s/level (e.g., 30s at Lv 100).
 
