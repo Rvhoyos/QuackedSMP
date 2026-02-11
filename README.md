@@ -99,6 +99,7 @@ Text fields support standard Minecraft legacy color codes (e.g., `&a` for green,
 | `/claim info` | Check claim status and limits | Everyone |
 | `/trust <player>` | Allow a player to interact with your claims | Everyone |
 | `/untrust <player>` | Revoke trust from a player | Everyone |
+| `/sos` | Eject all untrusted players from your claims | Everyone |
 | `/home` | Teleport to your respawn point (bed/anchor) | Everyone |
 | `/spawn` | Teleport to world spawn | Everyone |
 | `/tpa <player>` | Request to teleport to another player | Everyone |
