@@ -22,7 +22,7 @@ public final class ChatFilterConfig {
     private static final List<String> BUILTIN_WORDS = List.of(
             "fuck", "shit", "ass", "bitch", "damn",
             "dick", "cock", "pussy", "cunt", "whore",
-            "slut", "bastard", "nigger", "nigga", "faggot",
+            "slut", "bastard", "nigger", "nigga", "nig", "faggot",
             "retard", "kys", "stfu", "porn", "hentai",
             "penis", "vagina", "tits", "boobs", "cum",
             "jizz", "blowjob", "handjob", "dildo", "anal");
