@@ -10,7 +10,7 @@
 QuackedSMP is a server-side utility mod for **Fabric** and **NeoForge**. It provides a land claiming system, an RPG-style skill progression system, teleportation commands, and chat management.
 
 ## Core Features
-
+> do '/smp help' in game
 - **RPG Skills**: 12 skills with active abilities, passive perks, and attribute buffs.
 - **Land Claims**: Chunk-based protection.
 - **Teleportation**: `/home`, `/spawn`, and `/tpa` requests with configurable warmups.
@@ -111,13 +111,13 @@ Chunk-based claiming system.
 
 Commands with configurable warmups.
 
-- **/home**: Teleport to respawn point.
+- **/home**: Teleport to respawn point (Bed).
 - **/spawn**: Teleport to world spawn.
-- **/tpa <player>**: Request teleport to player.
-- **/tpaccept**: Accept request.
-- **/tpdeny**: Deny request.
+- **/tpr <player>**: Request teleport to player.
+- **/tpa accept**: Accept request.
+- **/tpa deny**: Deny request.
 
-> **Warmup**: Default 5-second warmup. Movement cancels teleport.
+> **Warmup**: Default 5-second warmup. Movement cancels teleport. Configurable in config..
 
 ---
 
@@ -127,6 +127,7 @@ Commands with configurable warmups.
 - **Anti-Evasion**: Detects "leet speak", separators, and repeated characters.
 - **Whitelist**: Prevents false positives.
 - **Periodic Messages**: Broadcast automated announcements.
+> Default lists are provided by default for you. 
 
 **Commands (OP Only):**
 - `/chatfilter add <word>`: Add word to blocklist.
@@ -143,7 +144,7 @@ Located at `config/quackedsmp.json`. Hot-reloadable via `/smp reload`.
 
 You can manage the server configuration in-game using a visual interface:
 -   **Open Menu**: `/smp config`
--   **Features**: Adjust claim limits, teleport warmups, message intervals, and skill leveling curves via a Chest GUI.
+-   **Features**: Adjust claim limits, teleport warmups, message intervals, and skill leveling curves via a GUI.
 -   **Factory Reset**: Shift-Click the red powder in the config menu or use `/smp config reset` to restore all default settings.
 
 ### Configuration Reference
@@ -248,10 +249,10 @@ The `caps` section defines the maximum bonus a player receives when a parent cat
 | `/sos` | Eject strangers from claim | Everyone |
 | `/home` | Teleport to bed/spawn | Everyone |
 | `/spawn` | Teleport to world spawn | Everyone |
-| `/tpa <player>` | Request teleport | Everyone |
+| `/tpr <player>` | Request teleport | Everyone |
+  `/tpa <player>` | Accept or deny teleport | Everyone |
 | `/skills` | Open skills GUI | Everyone |
-| `/chatfilter list` | View blocked words | OP |
-| `/chatfilter strikes` | View collision history | OP |
+
 
 ---
 
