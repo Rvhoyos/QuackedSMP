@@ -127,9 +127,14 @@ Commands with configurable warmups.
 - **Anti-Evasion**: Detects "leet speak", separators, and repeated characters.
 - **Whitelist**: Prevents false positives.
 - **Periodic Messages**: Broadcast automated announcements.
-> Default lists are provided by default for you. 
+- **Progressive Mutes**: Repeated violations trigger auto-mutes.
+  - 3 strikes -> 1m mute (default).
+  - Subsequent bans increase in duration (e.g., 2h, 4h, 8h, 24h).
+  - Resets after 24h of good behavior.
 
 **Commands (OP Only):**
+- `/mute <player> <minutes>`: Temporarily mute a player.
+- `/unmute <player>`: Unmute a player.
 - `/chatfilter add <word>`: Add word to blocklist.
 - `/chatfilter whitelist add <word>`: Whitelist safe word.
 - `/chatfilter test <msg>`: Test message filter.
@@ -157,6 +162,7 @@ You can manage the server configuration in-game using a visual interface:
 | `tp_warmup` | Integer | `5` | Seconds to stand still before teleporting. |
 | `message_interval` | Integer | `300` | Seconds between periodic announcements. |
 | `allow_lava_wilderness`| Boolean | `false` | If true, allows placing lava outside claims. |
+| `mute_levels_minutes` | List | `[60,...]` | Mute durations (mins) for progressive bans (Tier 1-5). |
 | `welcome_message` | String | *See JSON* | Join message. |
 | `periodic_messages` | List | *See JSON* | Periodic broadcast messages. |
 | `skills.xp_exponent` | Double | `1.5` | Exponential factor for skill leveling. |
@@ -186,6 +192,13 @@ The `caps` section defines the maximum bonus a player receives when a parent cat
   "tp_warmup": 5,
   "message_interval": 300,
   "allow_lava_wilderness": false,
+  "mute_levels_minutes": [
+    60,
+    120,
+    240,
+    480,
+    1440
+  ],
   "welcome_message": "&6Welcome to QuackedSMP, {player}!",
   "rules": [
     "&e1. Be respectful.",
@@ -241,6 +254,8 @@ The `caps` section defines the maximum bonus a player receives when a parent cat
 | `/smp reload` | Reload configuration | OP |
 | `/smp config` | Open configuration GUI | OP |
 | `/smp config reset` | Factory reset config | OP |
+| `/mute <player> <mins>` | Mute a player | OP |
+| `/unmute <player>` | Unmute a player | OP |
 | `/rules` | View server rules | Everyone |
 | `/claim` | Claim current chunk | Everyone |
 | `/unclaim` | Unclaim current chunk | Everyone |
@@ -250,7 +265,7 @@ The `caps` section defines the maximum bonus a player receives when a parent cat
 | `/home` | Teleport to bed/spawn | Everyone |
 | `/spawn` | Teleport to world spawn | Everyone |
 | `/tpr <player>` | Request teleport | Everyone |
-  `/tpa <player>` | Accept or deny teleport | Everyone |
+| `/tpa <player>` | Accept or deny teleport | Everyone |
 | `/skills` | Open skills GUI | Everyone |
 
 

@@ -83,11 +83,17 @@ public final class ChatFilter {
      * Chat decorate callback. Replaces offending tokens/phrases with "****".
      * Messages beginning with '/' are ignored.
      */
+    /**
+     * Chat decorate callback. Replaces offending tokens/phrases with "****".
+     * Messages beginning with '/' are ignored.
+     */
     private static void onDecorate(ServerPlayer player, ChatEvent.ChatComponent component) {
         if (component == null)
             return;
 
         String raw = component.get().getString();
+
+        // Skip commands
         if (raw.startsWith("/"))
             return;
 
@@ -96,21 +102,58 @@ public final class ChatFilter {
             return;
 
         ChatFilterSavedData data = getData(server);
+
+        // 1. Check if Muted
+        if (player != null && data.isMuted(player.getUUID())) {
+            component.set(Component.empty());
+            long remaining = data.getMuteEnd(player.getUUID()) - System.currentTimeMillis();
+            long mins = Math.max(1, remaining / 60000L);
+            player.sendSystemMessage(Component.literal("\u00a7cYou are muted for " + mins + " more minute(s)."));
+            return;
+        }
+
+        // 2. Filter logic
         String masked = maskTokens(raw, data);
         masked = maskPhrases(masked, data);
 
         if (!masked.equals(raw)) {
             component.set(Component.literal(masked));
 
-            // Track strike and notify OPs
+            // Track strike and potential auto-mute
             if (player != null) {
-                int strikes = ChatFilterStrikeTracker.increment(player.getUUID());
-                String alert = "\u00a7c[Filter] \u00a7e" + player.getName().getString()
-                        + " \u00a77(strike #" + strikes + "): \u00a7f" + raw;
-                for (ServerPlayer op : server.getPlayerList().getPlayers()) {
-                    if (server.getPlayerList().isOp(op.getGameProfile())) {
-                        op.sendSystemMessage(Component.literal(alert));
+                long muteDuration = data.addStrike(player.getUUID());
+
+                if (muteDuration > 0) {
+                    // Trigger Auto-Mute
+                    data.mute(player.getUUID(), muteDuration);
+                    long durationMins = muteDuration / 60000L;
+
+                    // Notify player
+                    player.sendSystemMessage(
+                            Component.literal("\u00a7c\u00a7l[ChatFilter] \u00a7eYou have been auto-muted for "
+                                    + durationMins + " minutes due to repeated violations."));
+
+                    // Notify OPs
+                    String alert = "\u00a7c[Filter] \u00a7e" + player.getName().getString()
+                            + " \u00a77was auto-muted for " + durationMins + "m due to Chat Filter violations.";
+                    // Just broadcast the mute
+                    for (ServerPlayer op : server.getPlayerList().getPlayers()) {
+                        if (server.getPlayerList().isOp(op.getGameProfile())) {
+                            op.sendSystemMessage(Component.literal(alert));
+                        }
                     }
+                } else {
+                    // Standard warning
+                    // (We don't need strikes count here as data.addStrike manages it internally,
+                    // but maybe we should show warnings)
+                    String alert = "\u00a7c[Filter] \u00a7e" + player.getName().getString()
+                            + ": \u00a7f" + raw;
+                    for (ServerPlayer op : server.getPlayerList().getPlayers()) {
+                        if (server.getPlayerList().isOp(op.getGameProfile())) {
+                            op.sendSystemMessage(Component.literal(alert));
+                        }
+                    }
+                    player.sendSystemMessage(Component.literal("\u00a7cDo not use that language!"));
                 }
             }
         }
