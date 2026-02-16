@@ -62,7 +62,7 @@ public class BeaconManager {
             while (iterator.hasNext()) {
                 Map.Entry<BlockPos, BeaconInfo> entry = iterator.next();
                 BlockPos pos = entry.getKey();
-                BeaconInfo info = entry.getValue();
+                // BeaconInfo info = entry.getValue(); // Unused
 
                 // Validation: Check if chunk is loaded first to avoid generating chunks
                 if (level.isLoaded(pos)) {
@@ -101,10 +101,6 @@ public class BeaconManager {
             // Check if player is within the chunk grid relative to beacon
             if (Math.abs(playerChunk.x - beaconChunk.x) <= radius &&
                     Math.abs(playerChunk.z - beaconChunk.z) <= radius) {
-
-                // DEBUG
-                // System.out.println("[BeaconDebug] Applying effect to " +
-                // player.getName().getString() + " from " + beacon.pos());
 
                 // specific logic: Apply effects
                 int duration = 300; // 15 seconds

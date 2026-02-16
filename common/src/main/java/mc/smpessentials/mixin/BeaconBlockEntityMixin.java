@@ -76,8 +76,6 @@ public abstract class BeaconBlockEntityMixin extends BlockEntity {
             BeaconManager.get().register(pos, level.dimension().location().toString(), info);
         } else {
             // Invalid or no power
-            // DEBUG
-            // System.out.println("[BeaconDebug] Unregistering beacon at " + pos);
             BeaconManager.get().unregister(pos, level.dimension().location().toString());
         }
     }
@@ -88,11 +86,6 @@ public abstract class BeaconBlockEntityMixin extends BlockEntity {
         // the current valid level.
         // Or strictly: The tier is determined by the "Lowest Common Denominator"
         // material in the structure.
-
-        // Let's check the first layer (3x3) as a baseline.
-        // If levels >= 4, we check the 9x9 layer? No, vanilla max is 4 layers (9x9
-        // base).
-        // Let's simply check the blocks at y-1.
 
         // Strategy: Check the 3x3 ring immediately below.
         BeaconTier minTier = BeaconTier.NETHERITE; // Start high, downgrade if we find weaker blocks
