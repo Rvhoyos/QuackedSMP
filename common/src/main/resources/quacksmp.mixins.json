@@ -13,7 +13,10 @@
     "ServerGamePacketListenerMixin",
     "AnvilMenuMixin",
     "ChestMenuMixin",
-    "AbstractContainerMenuMixin"
+    "ChestMenuMixin",
+    "AbstractContainerMenuMixin",
+    "BeaconBlockEntityMixin",
+    "MinecraftServerMixin"
   ],
   "injectors": {
     "defaultRequire": 1

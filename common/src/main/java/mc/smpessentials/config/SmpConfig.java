@@ -14,6 +14,8 @@ public final class SmpConfig {
     public static int VIP_BONUS_CLAIMS = 20;
     public static boolean ALLOW_LAVA_WILDERNESS = false;
     public static java.util.Map<String, String> MESSAGES = new java.util.HashMap<>();
+    public static boolean ENABLE_CUSTOM_BEACONS = true;
+    public static java.util.Map<String, Integer> BEACON_SIZES = new java.util.HashMap<>();
     public static java.util.List<Integer> MUTE_LEVELS_MINUTES = new java.util.ArrayList<>(
             java.util.List.of(60, 120, 240, 480, 1440));
 
@@ -108,6 +110,18 @@ public final class SmpConfig {
             JsonObject msgs = root.getAsJsonObject("messages");
             for (String key : msgs.keySet()) {
                 MESSAGES.put(key, msgs.get(key).getAsString());
+            }
+        }
+
+        if (root.has("enable_custom_beacons")) {
+            ENABLE_CUSTOM_BEACONS = root.get("enable_custom_beacons").getAsBoolean();
+        }
+
+        if (root.has("beacon_sizes") && root.get("beacon_sizes").isJsonObject()) {
+            BEACON_SIZES.clear();
+            JsonObject bs = root.getAsJsonObject("beacon_sizes");
+            for (String key : bs.keySet()) {
+                BEACON_SIZES.put(key, bs.get(key).getAsInt());
             }
         }
 

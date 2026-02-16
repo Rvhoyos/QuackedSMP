@@ -78,6 +78,22 @@ Abilities unlock at **Level 10** by default (configurable per skill).
 - **Arrow Recovery**: Chance to retrieve arrows from killed mobs.
 - **Damage Reduction**: Flat damage mitigation from Defense level.
 
+
+---
+
+## Better Beacons
+
+A complete overhaul of the vanilla beacon system to make them globally useful.
+
+### Features
+-   **Chunk-Based Ranges**: Beacons cover massive square areas defined by chunks, not blocks.
+    -   **Iron/Gold**: 3x3 Chunks (~48 blocks wide)
+    -   **Diamond**: 7x7 Chunks (~112 blocks wide)
+    -   **Netherite**: 9x9 Chunks (~144 blocks wide)
+-   **Persistence**: Beacon effects persist even if the chunk containing the beacon is unloaded. As long as you are within the chunk range, you get the active buffs.
+-   **Lazy Cleanup**: The server checks every 4 seconds to verify active beacons still exist. If a beacon is broken, it is automatically unregistered.
+-   **Configurable**: You can customize the size (in chunks) of every beacon tier in the config.
+
 ---
 
 ## Land Claiming
@@ -169,6 +185,8 @@ You can manage the server configuration in-game using a visual interface:
 | `skills.ability_unlock_levels` | Map | `10*` | Map of skill names to level required for ability unlock. Defaults: Trading (1), Defense (5), Agility (3), others (10). |
 | `skills.cooldowns` | Map | *Varies* | Base cooldowns (seconds) for abilities. |
 | `skills.caps` | Map | *See JSON* | Maximum value for parent attribute buffs at Level 100. |
+| `enable_custom_beacons` | Boolean | `true` | Toggle the entire custom beacon system. |
+| `beacon_sizes` | Map | *See JSON* | Map of material name to chunk size (odd numbers recommended). |
 
 ### Caps Explanation
 
@@ -240,6 +258,14 @@ The `caps` section defines the maximum bonus a player receives when a parent cat
       "combat_damage": 1.0,
       "knowledge_xp": 1.0
     }
+  },
+  "enable_custom_beacons": true,
+  "beacon_sizes": {
+    "iron": 9,
+    "gold": 3,
+    "emerald": 5,
+    "diamond": 7,
+    "netherite": 9
   }
 }
 ```
