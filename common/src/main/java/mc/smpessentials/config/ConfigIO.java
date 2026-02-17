@@ -100,14 +100,7 @@ public final class ConfigIO {
                 obj.addProperty("allow_lava_wilderness", false);
                 dirty = true;
             }
-            if (!obj.has("enable_custom_beacons")) {
-                obj.addProperty("enable_custom_beacons", true);
-                dirty = true;
-            }
-            if (!obj.has("beacon_sizes") || !obj.get("beacon_sizes").isJsonObject()) {
-                obj.add("beacon_sizes", defaultBeaconSizesJson());
-                dirty = true;
-            }
+
             if (!obj.has("vips")) {
                 obj.add("vips", new com.google.gson.JsonArray());
                 dirty = true;
@@ -160,8 +153,6 @@ public final class ConfigIO {
         root.addProperty("message_interval", 300);
         root.addProperty("vip_bonus_claims", 20);
         root.addProperty("allow_lava_wilderness", false);
-        root.addProperty("enable_custom_beacons", true);
-        root.add("beacon_sizes", defaultBeaconSizesJson());
 
         com.google.gson.JsonArray muteLevels = new com.google.gson.JsonArray();
         muteLevels.add(60);
@@ -275,16 +266,6 @@ public final class ConfigIO {
         return sk;
     }
 
-    static JsonObject defaultBeaconSizesJson() {
-        JsonObject bs = new JsonObject();
-        bs.addProperty("iron", 3); // 3x3 chunks
-        bs.addProperty("gold", 3); // 3x3 chunks
-        bs.addProperty("emerald", 5); // 5x5 chunks
-        bs.addProperty("diamond", 7); // 7x7 chunks
-        bs.addProperty("netherite", 9); // 9x9 chunks
-        return bs;
-    }
-
     /** Default chatfilter section with starter blocklist and whitelist. */
     private static JsonObject defaultChatFilterJson() {
         JsonObject cf = new JsonObject();
@@ -327,13 +308,6 @@ public final class ConfigIO {
         root.addProperty("message_interval", SmpConfig.MESSAGE_INTERVAL);
         root.addProperty("vip_bonus_claims", SmpConfig.VIP_BONUS_CLAIMS);
         root.addProperty("allow_lava_wilderness", SmpConfig.ALLOW_LAVA_WILDERNESS);
-        root.addProperty("enable_custom_beacons", SmpConfig.ENABLE_CUSTOM_BEACONS);
-
-        JsonObject bs = new JsonObject();
-        for (var entry : SmpConfig.BEACON_SIZES.entrySet()) {
-            bs.addProperty(entry.getKey(), entry.getValue());
-        }
-        root.add("beacon_sizes", bs);
 
         com.google.gson.JsonArray muteLevels = new com.google.gson.JsonArray();
         for (int m : SmpConfig.MUTE_LEVELS_MINUTES)

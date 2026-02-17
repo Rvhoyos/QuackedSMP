@@ -14,9 +14,7 @@
     "AnvilMenuMixin",
     "ChestMenuMixin",
     "ChestMenuMixin",
-    "AbstractContainerMenuMixin",
-    "BeaconBlockEntityMixin",
-    "MinecraftServerMixin"
+    "AbstractContainerMenuMixin"
   ],
   "injectors": {
     "defaultRequire": 1
