@@ -53,6 +53,9 @@ Abilities unlock at **Level 10** by default (configurable per skill).
 - **Tool Abilities**: Hold tool + Sneak + Drop Item (Q). Item drop is cancelled.
 - **Dash**: Sprint + Jump + Sneak (Tap Shift) while moving.
 
+> [!NOTE] 
+> **Simultaneous Activation**: If you hold a damaged tool (e.g., Pickaxe) and use **Sneak + Drop**, both the tool ability (Super Breaker) and the repair ability (Arcane Infusion) can trigger at the same time!
+
 | Skill | Ability | Effect | Cooldown (Lv 10 -> Lv 100) |
 | :--- | :--- | :--- | :--- |
 | **Mining** | Super Breaker | Haste V | 3m -> 1m |
@@ -81,18 +84,7 @@ Abilities unlock at **Level 10** by default (configurable per skill).
 
 ---
 
-## Better Beacons
 
-A complete overhaul of the vanilla beacon system to make them globally useful.
-
-### Features
--   **Chunk-Based Ranges**: Beacons cover massive square areas defined by chunks, not blocks.
-    -   **Iron/Gold**: 3x3 Chunks (~48 blocks wide)
-    -   **Diamond**: 7x7 Chunks (~112 blocks wide)
-    -   **Netherite**: 9x9 Chunks (~144 blocks wide)
--   **Persistence**: Beacon effects persist even if the chunk containing the beacon is unloaded. As long as you are within the chunk range, you get the active buffs.
--   **Lazy Cleanup**: The server checks every 4 seconds to verify active beacons still exist. If a beacon is broken, it is automatically unregistered.
--   **Configurable**: You can customize the size (in chunks) of every beacon tier in the config.
 
 ---
 
@@ -259,14 +251,7 @@ The `caps` section defines the maximum bonus a player receives when a parent cat
       "knowledge_xp": 1.0
     }
   },
-  "enable_custom_beacons": true,
-  "beacon_sizes": {
-    "iron": 9,
-    "gold": 3,
-    "emerald": 5,
-    "diamond": 7,
-    "netherite": 9
-  }
+
 }
 ```
 

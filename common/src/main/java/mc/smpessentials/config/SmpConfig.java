@@ -130,17 +130,6 @@ public final class SmpConfig {
                     SKILL_UNLOCK_LEVELS.put(key, unlocks.get(key).getAsInt());
                 }
             }
-            if (sk.has("caps") && sk.get("caps").isJsonObject()) {
-                JsonObject caps = sk.getAsJsonObject("caps");
-                if (caps.has("industrial_speed"))
-                    CAP_INDUSTRIAL_SPEED = caps.get("industrial_speed").getAsDouble();
-                if (caps.has("nature_health"))
-                    CAP_NATURE_HEALTH = caps.get("nature_health").getAsDouble();
-                if (caps.has("combat_damage"))
-                    CAP_COMBAT_DAMAGE = caps.get("combat_damage").getAsDouble();
-                if (caps.has("knowledge_xp"))
-                    CAP_KNOWLEDGE_XP = caps.get("knowledge_xp").getAsDouble();
-            }
         }
 
         if (root.has("mute_levels_minutes") && root.get("mute_levels_minutes").isJsonArray()) {
@@ -149,7 +138,6 @@ public final class SmpConfig {
                 MUTE_LEVELS_MINUTES.add(el.getAsInt());
             }
         }
-
     }
 
     private static void loadList(JsonObject root, String key, java.util.List<String> list) {

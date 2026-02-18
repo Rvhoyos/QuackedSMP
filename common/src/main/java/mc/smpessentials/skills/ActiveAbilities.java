@@ -72,30 +72,44 @@ public final class ActiveAbilities {
             boolean handled = false;
 
             if (dropped.is(ItemTags.PICKAXES)) {
-                handled = tryActivate(sp, data, SkillType.MINING, "Super Breaker", uuid);
+                if (tryActivate(sp, data, SkillType.MINING, "Super Breaker", uuid))
+                    handled = true;
             } else if (dropped.is(ItemTags.SHOVELS)) {
-                handled = tryActivate(sp, data, SkillType.EXCAVATION, "Giga Drill", uuid);
+                if (tryActivate(sp, data, SkillType.EXCAVATION, "Giga Drill", uuid))
+                    handled = true;
             } else if (dropped.is(ItemTags.AXES)) {
-                handled = tryActivateTreeFeller(sp, data, uuid);
+                if (tryActivateTreeFeller(sp, data, uuid))
+                    handled = true;
             } else if (dropped.is(ItemTags.HOES)) {
-                handled = tryActivateGreenTerra(sp, data, uuid, sl);
+                if (tryActivateGreenTerra(sp, data, uuid, sl))
+                    handled = true;
             } else if (dropped.getItem() instanceof FishingRodItem) {
-                handled = tryActivateMasterAngler(sp, data, uuid);
+                if (tryActivateMasterAngler(sp, data, uuid))
+                    handled = true;
             } else if (dropped.is(ItemTags.SWORDS)) {
-                handled = tryActivateBerzerk(sp, data, uuid);
+                if (tryActivateBerzerk(sp, data, uuid))
+                    handled = true;
             } else if (dropped.getItem() instanceof BowItem || dropped.getItem() instanceof CrossbowItem) {
-                handled = tryActivateSniper(sp, data, uuid);
+                if (tryActivateSniper(sp, data, uuid))
+                    handled = true;
             } else if (dropped.getItem() instanceof ShieldItem) {
-                handled = tryActivateJuggernaut(sp, data, uuid);
+                if (tryActivateJuggernaut(sp, data, uuid))
+                    handled = true;
             } else if (dropped.getItem() == Items.BOOK || dropped.getItem() == Items.ENCHANTED_BOOK) {
                 // Alchemy: Book + Sneak + Q -> Silk Touch Spawner
-                handled = tryActivateAlchemy(sp, data, uuid);
+                if (tryActivateAlchemy(sp, data, uuid))
+                    handled = true;
             } else if (dropped.getItem() == Items.EMERALD) {
                 // Trading: Emerald + Sneak + Q -> Tycoon's Charm (Hero of Village)
-                handled = tryActivateTycoon(sp, data, uuid);
-            } else if (dropped.isDamageableItem() && dropped.isDamaged()) {
-                // Non-tool damaged item → Arcane Infusion (repair 10%)
-                handled = tryArcaneInfusion(sp, data, uuid, dropped);
+                if (tryActivateTycoon(sp, data, uuid))
+                    handled = true;
+            }
+
+            // Independent check: Arcane Infusion (Repair)
+            // Triggers alongside above abilities if the item is damageable and damaged
+            if (dropped.isDamageableItem() && dropped.isDamaged()) {
+                if (tryArcaneInfusion(sp, data, uuid, dropped))
+                    handled = true;
             }
 
             if (handled) {
