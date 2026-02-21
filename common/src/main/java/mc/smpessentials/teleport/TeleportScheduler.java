@@ -1,7 +1,5 @@
 package mc.smpessentials.teleport;
 
-import dev.architectury.event.EventResult;
-import dev.architectury.event.events.common.EntityEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.phys.Vec3;
@@ -17,20 +15,15 @@ public final class TeleportScheduler {
     }
 
     public static void init() {
-        // Register Tick
-        dev.architectury.event.events.common.TickEvent.PLAYER_POST.register(player -> {
-            if (player instanceof ServerPlayer sp) {
-                tick(sp);
-            }
-        });
+        // Nothing to init anymore; platforms subscribe and call statically
+    }
 
-        // Register Damage (Combat Tag / Cancel)
-        EntityEvent.LIVING_HURT.register((entity, source, amount) -> {
-            if (entity instanceof ServerPlayer sp) {
-                onDamage(sp);
-            }
-            return EventResult.pass();
-        });
+    public static void onPlayerTick(ServerPlayer sp) {
+        tick(sp);
+    }
+
+    public static void onPlayerHurt(ServerPlayer sp) {
+        onDamage(sp);
     }
 
     public static void schedule(ServerPlayer player, Runnable action) {

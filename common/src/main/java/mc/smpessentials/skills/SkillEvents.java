@@ -1,10 +1,5 @@
 package mc.smpessentials.skills;
 
-import dev.architectury.event.EventResult;
-import dev.architectury.event.events.common.BlockEvent;
-import dev.architectury.event.events.common.EntityEvent;
-import dev.architectury.event.events.common.PlayerEvent;
-import dev.architectury.event.events.common.TickEvent;
 import mc.smpessentials.SmpUtilsMod;
 import mc.smpessentials.config.SmpConfig;
 import net.minecraft.core.BlockPos;
@@ -13,6 +8,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.BlockTags;
+import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
@@ -21,7 +17,9 @@ import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.monster.Monster;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.*;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.*;
 import net.minecraft.world.level.block.state.BlockState;
 
@@ -44,212 +42,187 @@ public final class SkillEvents {
     }
 
     public static void init() {
-        registerBlockBreak();
-        registerCombat();
-        registerPlayerTick();
-        registerFishing();
-        registerPlayerJoin();
-
         SmpUtilsMod.LOGGER.info("QuackedSMP Skills system initialized");
     }
 
     // ========== BLOCK BREAK (Mining, Excavation, Woodcutting, Farming) ==========
 
-    private static void registerBlockBreak() {
-        BlockEvent.BREAK.register((level, pos, state, player, exp) -> {
-            if (!(player instanceof ServerPlayer sp))
-                return EventResult.pass();
-            if (!(level instanceof ServerLevel sl))
-                return EventResult.pass();
+    public static void onBlockBreak(Level level, BlockPos pos, BlockState state, Player player) {
+        if (!(player instanceof ServerPlayer sp))
+            return;
+        if (!(level instanceof ServerLevel sl))
+            return;
 
-            try {
-                SkillData data = SkillData.get(sl);
+        try {
+            SkillData data = SkillData.get(sl);
 
-                // ---- Mining (Pickaxe blocks) ----
-                if (isOre(state)) {
-                    double xp = oreXp(state);
-                    awardXp(sp, data, SkillType.MINING, xp);
-                    applyDoubleDrop(sp, data, state, pos, sl);
-                } else if (isStone(state)) {
-                    awardXp(sp, data, SkillType.MINING, 1);
-                }
-
-                // ---- Excavation (Shovel blocks) ----
-                else if (isShovelBlock(state)) {
-                    awardXp(sp, data, SkillType.EXCAVATION, 1);
-                    applyTreasureFind(sp, data, pos, sl);
-                }
-
-                // ---- Woodcutting (Logs) ----
-                else if (state.is(BlockTags.LOGS)) {
-                    awardXp(sp, data, SkillType.WOODCUTTING, 5);
-                    applyDoubleDrop(sp, data, state, pos, sl);
-                    applyLeafBlower(sp, data, pos, sl);
-                    // Tree Feller: chain-break connected logs if ability is active
-                    ActiveAbilities.onLogBreak(sp, pos, sl);
-                }
-
-                // ---- Farming (Crops) ----
-                else if (state.is(BlockTags.CROPS) && isMatureCrop(state)) {
-                    awardXp(sp, data, SkillType.FARMING, 5);
-                    applyAutoReplant(sp, data, state, pos, sl);
-                }
-            } catch (Exception e) {
-                SmpUtilsMod.LOGGER.error("Error in SkillEvents block break handler", e);
+            // ---- Mining (Pickaxe blocks) ----
+            if (isOre(state)) {
+                double xp = oreXp(state);
+                awardXp(sp, data, SkillType.MINING, xp);
+                applyDoubleDrop(sp, data, state, pos, sl);
+            } else if (isStone(state)) {
+                awardXp(sp, data, SkillType.MINING, 1);
             }
 
-            return EventResult.pass();
-        });
+            // ---- Excavation (Shovel blocks) ----
+            else if (isShovelBlock(state)) {
+                awardXp(sp, data, SkillType.EXCAVATION, 1);
+                applyTreasureFind(sp, data, pos, sl);
+            }
+
+            // ---- Woodcutting (Logs) ----
+            else if (state.is(BlockTags.LOGS)) {
+                awardXp(sp, data, SkillType.WOODCUTTING, 5);
+                applyDoubleDrop(sp, data, state, pos, sl);
+                applyLeafBlower(sp, data, pos, sl);
+                // Tree Feller: chain-break connected logs if ability is active
+                ActiveAbilities.onLogBreak(sp, pos, sl);
+            }
+
+            // ---- Farming (Crops) ----
+            else if (state.is(BlockTags.CROPS) && isMatureCrop(state)) {
+                awardXp(sp, data, SkillType.FARMING, 5);
+                applyAutoReplant(sp, data, state, pos, sl);
+            }
+        } catch (Exception e) {
+            SmpUtilsMod.LOGGER.error("Error in SkillEvents block break handler", e);
+        }
     }
 
     // ========== COMBAT (Melee, Archery, Defense) ==========
 
-    private static void registerCombat() {
-        // XP on kill
-        EntityEvent.LIVING_DEATH.register((entity, source) -> {
-            if (entity.level().isClientSide())
-                return EventResult.pass();
-            if (!(entity instanceof Monster mob))
-                return EventResult.pass();
+    public static void onLivingDeath(LivingEntity entity, DamageSource source) {
+        if (entity.level().isClientSide())
+            return;
+        if (!(entity instanceof Monster mob))
+            return;
 
-            Entity attacker = source.getEntity();
-            if (!(attacker instanceof ServerPlayer sp))
-                return EventResult.pass();
+        Entity attacker = source.getEntity();
+        if (!(attacker instanceof ServerPlayer sp))
+            return;
 
-            ServerLevel sl = (ServerLevel) sp.level();
+        ServerLevel sl = (ServerLevel) sp.level();
+        SkillData data = SkillData.get(sl);
+
+        double baseXp = mobXp(mob);
+
+        // Determine melee vs archery from damage source
+        if (!source.isDirect()) {
+            // Projectile = Archery
+            double dist = sp.distanceTo(mob);
+            double bonus = dist > 30 ? 2.0 : 1.0; // distance bonus
+            awardXp(sp, data, SkillType.ARCHERY, baseXp * bonus);
+        } else {
+            awardXp(sp, data, SkillType.MELEE, baseXp);
+        }
+    }
+
+    public static void onLivingHurt(LivingEntity entity, DamageSource source, float amount) {
+        if (entity.level().isClientSide())
+            return;
+
+        // Defense: player takes damage
+        if (entity instanceof ServerPlayer victim) {
+            ServerLevel sl = (ServerLevel) victim.level();
             SkillData data = SkillData.get(sl);
+            double xp = Math.max(1, Math.floor(amount)); // 1 XP per half-heart
+            awardXp(victim, data, SkillType.DEFENSE, xp);
+        }
 
-            double baseXp = mobXp(mob);
-
-            // Determine melee vs archery from damage source
-            if (!source.isDirect()) {
-                // Projectile = Archery
-                double dist = sp.distanceTo(mob);
-                double bonus = dist > 30 ? 2.0 : 1.0; // distance bonus
-                awardXp(sp, data, SkillType.ARCHERY, baseXp * bonus);
-            } else {
-                awardXp(sp, data, SkillType.MELEE, baseXp);
-            }
-
-            return EventResult.pass();
-        });
-
-        // Defense XP on damage taken + Bleed passive on attack
-        EntityEvent.LIVING_HURT.register((entity, source, amount) -> {
-            if (entity.level().isClientSide())
-                return EventResult.pass();
-
-            // Defense: player takes damage
-            if (entity instanceof ServerPlayer victim) {
-                ServerLevel sl = (ServerLevel) victim.level();
+        // Bleed: player attacks with melee
+        Entity attacker = source.getEntity();
+        if (attacker instanceof ServerPlayer sp && entity instanceof LivingEntity target) {
+            if (source.isDirect()) { // melee only
+                ServerLevel sl = (ServerLevel) sp.level();
                 SkillData data = SkillData.get(sl);
-                double xp = Math.max(1, Math.floor(amount)); // 1 XP per half-heart
-                awardXp(victim, data, SkillType.DEFENSE, xp);
-            }
-
-            // Bleed: player attacks with melee
-            Entity attacker = source.getEntity();
-            if (attacker instanceof ServerPlayer sp && entity instanceof LivingEntity target) {
-                if (source.isDirect()) { // melee only
-                    ServerLevel sl = (ServerLevel) sp.level();
-                    SkillData data = SkillData.get(sl);
-                    int meleeLevel = data.getLevel(sp.getUUID(), SkillType.MELEE);
-                    double bleedChance = meleeLevel * 0.005; // 0.5% per level, 50% at 100
-                    if (sp.getRandom().nextDouble() < bleedChance) {
-                        target.addEffect(new MobEffectInstance(MobEffects.WITHER, 60, 0)); // 3s
-                    }
-
-                    // Combat parent damage buff applied via attribute would be better,
-                    // but for simplicity we don't modify the event amount here.
-                    // Parent buff is handled in ActiveAbilities or a separate tick.
+                int meleeLevel = data.getLevel(sp.getUUID(), SkillType.MELEE);
+                double bleedChance = meleeLevel * 0.005; // 0.5% per level, 50% at 100
+                if (sp.getRandom().nextDouble() < bleedChance) {
+                    target.addEffect(new MobEffectInstance(MobEffects.WITHER, 60, 0)); // 3s
                 }
-            }
 
-            return EventResult.pass();
-        });
+                // Combat parent damage buff applied via attribute would be better,
+                // but for simplicity we don't modify the event amount here.
+                // Parent buff is handled in ActiveAbilities or a separate tick.
+            }
+        }
     }
 
     // ========== AGILITY (Movement) ==========
 
-    private static void registerPlayerTick() {
-        TickEvent.PLAYER_POST.register(player -> {
-            if (!(player instanceof ServerPlayer sp))
-                return;
-            if (sp.level().isClientSide())
-                return;
+    public static void onPlayerTick(Player player) {
+        if (!(player instanceof ServerPlayer sp))
+            return;
+        if (sp.level().isClientSide())
+            return;
 
-            UUID uuid = sp.getUUID();
-            BlockPos current = sp.blockPosition();
-            BlockPos last = lastPositions.get(uuid);
+        UUID uuid = sp.getUUID();
+        BlockPos current = sp.blockPosition();
+        BlockPos last = lastPositions.get(uuid);
 
-            if (last != null && !sp.isPassenger() && !sp.isFallFlying()) {
-                double dx = current.getX() - last.getX();
-                double dz = current.getZ() - last.getZ();
-                double dist = Math.sqrt(dx * dx + dz * dz);
+        if (last != null && !sp.isPassenger() && !sp.isFallFlying()) {
+            double dx = current.getX() - last.getX();
+            double dz = current.getZ() - last.getZ();
+            double dist = Math.sqrt(dx * dx + dz * dz);
 
-                if (dist > 0 && dist < 10) { // ignore teleports
-                    double accum = distanceAccum.getOrDefault(uuid, 0.0) + dist;
-                    ServerLevel sl = (ServerLevel) sp.level();
+            if (dist > 0 && dist < 10) { // ignore teleports
+                double accum = distanceAccum.getOrDefault(uuid, 0.0) + dist;
+                ServerLevel sl = (ServerLevel) sp.level();
 
-                    if (accum >= 100) { // 100 blocks walked = 1 XP
-                        SkillData data = SkillData.get(sl);
-                        int chunks = (int) (accum / 100);
-                        awardXp(sp, data, SkillType.AGILITY, chunks);
-                        accum -= chunks * 100;
+                if (accum >= 100) { // 100 blocks walked = 1 XP
+                    SkillData data = SkillData.get(sl);
+                    int chunks = (int) (accum / 100);
+                    awardXp(sp, data, SkillType.AGILITY, chunks);
+                    accum -= chunks * 100;
 
-                        // Fall damage reduction passive
-                        int agiLevel = data.getLevel(uuid, SkillType.AGILITY);
-                        if (agiLevel > 0 && sp.fallDistance > 3) {
-                            double reduction = agiLevel * 0.005; // 0.5% per level
-                            // We can't easily modify fall damage here,
-                            // so we apply Slow Falling briefly on high falls
-                            if (sp.fallDistance > 5 && sp.getRandom().nextDouble() < reduction) {
-                                sp.addEffect(new MobEffectInstance(MobEffects.SLOW_FALLING, 20, 0, false, false));
-                            }
+                    // Fall damage reduction passive
+                    int agiLevel = data.getLevel(uuid, SkillType.AGILITY);
+                    if (agiLevel > 0 && sp.fallDistance > 3) {
+                        double reduction = agiLevel * 0.005; // 0.5% per level
+                        // We can't easily modify fall damage here,
+                        // so we apply Slow Falling briefly on high falls
+                        if (sp.fallDistance > 5 && sp.getRandom().nextDouble() < reduction) {
+                            sp.addEffect(new MobEffectInstance(MobEffects.SLOW_FALLING, 20, 0, false, false));
                         }
                     }
-                    distanceAccum.put(uuid, accum);
                 }
+                distanceAccum.put(uuid, accum);
             }
-            lastPositions.put(uuid, current);
+        }
+        lastPositions.put(uuid, current);
 
-            // Agility Dash Trigger: Sprint + Sneak (Shift)
-            // Ideally we'd use Jump, but detecting jump start server-side is tricky without
-            // mixins.
-            // Sprint + Sneak is a unique combo (normally stops sprint).
-            if (sp.isSprinting() && sp.isShiftKeyDown() && !sp.onGround()) {
-                // The player is seemingly "rocket jumping" or dash-jumping
-                ServerLevel sl = (ServerLevel) sp.level();
-                mc.smpessentials.skills.ActiveAbilities.tryActivateDash(sp, SkillData.get(sl), uuid);
-            }
-        });
+        // Agility Dash Trigger: Sprint + Sneak (Shift)
+        // Ideally we'd use Jump, but detecting jump start server-side is tricky without
+        // mixins.
+        // Sprint + Sneak is a unique combo (normally stops sprint).
+        if (sp.isSprinting() && sp.isShiftKeyDown() && !sp.onGround()) {
+            // The player is seemingly "rocket jumping" or dash-jumping
+            ServerLevel sl = (ServerLevel) sp.level();
+            mc.smpessentials.skills.ActiveAbilities.tryActivateDash(sp, SkillData.get(sl), uuid);
+        }
+    }
 
-        // Clean up on logout
-        PlayerEvent.PLAYER_QUIT.register(player -> {
-            lastPositions.remove(player.getUUID());
-            distanceAccum.remove(player.getUUID());
-        });
+    public static void onPlayerLoggedOut(Player player) {
+        lastPositions.remove(player.getUUID());
+        distanceAccum.remove(player.getUUID());
     }
 
     // ========== FISHING ==========
 
-    private static void registerFishing() {
-        // Fishing XP is handled by FishingHookMixin — no listener needed here.
-        // The mixin injects into FishingHook.retrieve() and awards 15 XP on catch.
-    }
+    // Fishing XP is handled by FishingHookMixin — no listener needed here.
+    // The mixin injects into FishingHook.retrieve() and awards 15 XP on catch.
 
     /**
      * Register listener for player join to apply parent buffs on login.
      * Also applies Knowledge XP multiplier context for future awards.
      */
-    private static void registerPlayerJoin() {
-        PlayerEvent.PLAYER_JOIN.register(player -> {
-            if (player instanceof ServerPlayer sp) {
-                ServerLevel sl = (ServerLevel) sp.level();
-                SkillData data = SkillData.get(sl);
-                updateParentBuffs(sp, data);
-            }
-        });
+    public static void onPlayerJoin(Player player) {
+        if (player instanceof ServerPlayer sp) {
+            ServerLevel sl = (ServerLevel) sp.level();
+            SkillData data = SkillData.get(sl);
+            updateParentBuffs(sp, data);
+        }
     }
 
     // ========== XP AWARD + ACTION BAR ==========

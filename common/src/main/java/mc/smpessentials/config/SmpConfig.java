@@ -14,6 +14,8 @@ public final class SmpConfig {
     public static int VIP_BONUS_CLAIMS = 20;
     public static boolean ALLOW_LAVA_WILDERNESS = false;
     public static java.util.Map<String, String> MESSAGES = new java.util.HashMap<>();
+    public static java.util.List<Integer> MUTE_LEVELS_MINUTES = new java.util.ArrayList<>(
+            java.util.List.of(60, 120, 240, 480, 1440));
 
     // ---- Skills ----
     public static double SKILL_XP_EXPONENT = 1.5;
@@ -128,16 +130,12 @@ public final class SmpConfig {
                     SKILL_UNLOCK_LEVELS.put(key, unlocks.get(key).getAsInt());
                 }
             }
-            if (sk.has("caps") && sk.get("caps").isJsonObject()) {
-                JsonObject caps = sk.getAsJsonObject("caps");
-                if (caps.has("industrial_speed"))
-                    CAP_INDUSTRIAL_SPEED = caps.get("industrial_speed").getAsDouble();
-                if (caps.has("nature_health"))
-                    CAP_NATURE_HEALTH = caps.get("nature_health").getAsDouble();
-                if (caps.has("combat_damage"))
-                    CAP_COMBAT_DAMAGE = caps.get("combat_damage").getAsDouble();
-                if (caps.has("knowledge_xp"))
-                    CAP_KNOWLEDGE_XP = caps.get("knowledge_xp").getAsDouble();
+        }
+
+        if (root.has("mute_levels_minutes") && root.get("mute_levels_minutes").isJsonArray()) {
+            MUTE_LEVELS_MINUTES.clear();
+            for (var el : root.get("mute_levels_minutes").getAsJsonArray()) {
+                MUTE_LEVELS_MINUTES.add(el.getAsInt());
             }
         }
     }

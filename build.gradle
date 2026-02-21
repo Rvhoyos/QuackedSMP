@@ -1,11 +1,7 @@
 plugins {
-    id 'dev.architectury.loom' version '1.11-SNAPSHOT' apply false
-    id 'architectury-plugin' version '3.4-SNAPSHOT'
+    id 'fabric-loom' version '1.10-SNAPSHOT' apply false
+    id 'net.neoforged.moddev' version '2.0.140' apply false
     id 'com.gradleup.shadow' version '8.3.6' apply false
-}
-
-architectury {
-    minecraft = project.minecraft_version
 }
 
 allprojects {
@@ -13,65 +9,67 @@ allprojects {
     version = rootProject.mod_version
 
     repositories {
+        mavenCentral()
         maven {
             name = 'ParchmentMC'
             url = 'https://maven.parchmentmc.org'
+        }
+        maven {
+            name = 'NeoForge'
+            url = 'https://maven.neoforged.net/releases'
+        }
+        maven {
+            name = 'Fabric'
+            url = 'https://maven.fabricmc.net'
+        }
+        maven {
+            name = 'SpongePowered'
+            url = 'https://repo.spongepowered.org/repository/maven-public'
         }
     }
 }
 
 subprojects {
-    apply plugin: 'dev.architectury.loom'
-    apply plugin: 'architectury-plugin'
     apply plugin: 'maven-publish'
 
-    base {
-        // Set up a suffixed format for the mod jar names, e.g. `example-fabric`.
-        archivesName = "$rootProject.archives_name-$project.name"
-    }
-
-    repositories {
-        // Add repositories to retrieve artifacts from in here.
-        // Loom adds the essential maven repositories automatically.
-    }
-
-    loom {
-        silentMojangMappingsLicense()
-    }
-
-    dependencies {
-        minecraft "net.minecraft:minecraft:$rootProject.minecraft_version"
-        mappings loom.layered() {
-            officialMojangMappings()
-            parchment("org.parchmentmc.data:parchment-1.21.8:2025.09.14@zip")
+    afterEvaluate {
+        base {
+            archivesName = "$rootProject.archives_name-$project.name"
         }
-                // --- Added so common module can see CommandDispatcher ---
-        // Brigadier is a Mojang library already bundled with Minecraft.
-        // This line only exposes its classes at compile-time.
-        compileOnly("com.mojang:brigadier:1.0.500")
-    }
 
-    java {
-        withSourcesJar()
-        toolchain {
-            languageVersion = JavaLanguageVersion.of(21)
+        java {
+            toolchain {
+                languageVersion = JavaLanguageVersion.of(21)
+            }
+            withSourcesJar()
         }
-    }
 
-    tasks.withType(JavaCompile).configureEach {
-        it.options.release = 21
-    }
+        tasks.withType(JavaCompile).configureEach {
+            it.options.release = 21
+        }
 
-    publishing {
-        publications {
-            mavenJava(MavenPublication) {
-                artifactId = base.archivesName.get()
-                from components.java
+        // Include common sources in platform projects
+        if (project.name != 'common') {
+            tasks.named('compileJava').configure {
+                source project(':common').sourceSets.main.allSource
+            }
+
+            tasks.named('sourcesJar').configure {
+                from project(':common').sourceSets.main.allSource
+            }
+
+            tasks.withType(ProcessResources).configureEach {
+                from project(':common').sourceSets.main.resources
             }
         }
-        repositories {
-            // Add publishing repositories here if needed.
+
+        publishing {
+            publications {
+                mavenJava(MavenPublication) {
+                    artifactId = base.archivesName.get()
+                    from components.java
+                }
+            }
         }
     }
 }
-

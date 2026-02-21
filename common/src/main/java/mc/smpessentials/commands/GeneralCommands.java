@@ -6,6 +6,7 @@ import mc.smpessentials.config.SmpConfig;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerPlayer;
 
 public class GeneralCommands {
         public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
@@ -20,6 +21,58 @@ public class GeneralCommands {
                                                                 .executes(GeneralCommands::resetConfig)))
                                 .then(Commands.literal("help")
                                                 .executes(GeneralCommands::sendHelp)));
+
+                dispatcher.register(Commands.literal("mute")
+                                .requires(s -> s.hasPermission(2))
+                                .then(Commands.argument("player",
+                                                net.minecraft.commands.arguments.EntityArgument.player())
+                                                .then(Commands.argument("minutes",
+                                                                com.mojang.brigadier.arguments.IntegerArgumentType
+                                                                                .integer(1))
+                                                                .executes(GeneralCommands::mutePlayer))));
+
+                dispatcher.register(Commands.literal("unmute")
+                                .requires(s -> s.hasPermission(2))
+                                .then(Commands.argument("player",
+                                                net.minecraft.commands.arguments.EntityArgument.player())
+                                                .executes(GeneralCommands::unmutePlayer)));
+        }
+
+        private static int mutePlayer(CommandContext<CommandSourceStack> ctx) {
+                try {
+                        ServerPlayer target = net.minecraft.commands.arguments.EntityArgument.getPlayer(ctx, "player");
+                        int minutes = com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(ctx, "minutes");
+
+                        var data = mc.smpessentials.chatfilter.ChatFilter.getData(ctx.getSource().getServer());
+                        data.mute(target.getUUID(), minutes * 60 * 1000L);
+
+                        ctx.getSource().sendSuccess(() -> Component.literal("\u00a7aMuted "
+                                        + target.getName().getString() + " for " + minutes + " minutes."), true);
+                        target.sendSystemMessage(Component.literal(
+                                        "\u00a7cYou have been muted for " + minutes + " minutes by an operator."));
+                        return 1;
+                } catch (Exception e) {
+                        ctx.getSource().sendFailure(Component.literal("Error: " + e.getMessage()));
+                        return 0;
+                }
+        }
+
+        private static int unmutePlayer(CommandContext<CommandSourceStack> ctx) {
+                try {
+                        ServerPlayer target = net.minecraft.commands.arguments.EntityArgument.getPlayer(ctx, "player");
+
+                        var data = mc.smpessentials.chatfilter.ChatFilter.getData(ctx.getSource().getServer());
+                        data.unmute(target.getUUID());
+
+                        ctx.getSource().sendSuccess(
+                                        () -> Component.literal("\u00a7aUnmuted " + target.getName().getString() + "."),
+                                        true);
+                        target.sendSystemMessage(Component.literal("\u00a7aYou have been unmuted."));
+                        return 1;
+                } catch (Exception e) {
+                        ctx.getSource().sendFailure(Component.literal("Error: " + e.getMessage()));
+                        return 0;
+                }
         }
 
         private static int openConfig(CommandContext<CommandSourceStack> ctx) {

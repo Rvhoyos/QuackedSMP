@@ -1,0 +1,5 @@
+/smp config
+/claims
+/claim info
+/claim map
+/unmute Dev

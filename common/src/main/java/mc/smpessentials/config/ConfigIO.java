@@ -4,7 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
-import dev.architectury.platform.Platform;
+import mc.smpessentials.platform.SmpServices;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -20,7 +20,7 @@ public final class ConfigIO {
     }
 
     public static Path path() {
-        return Platform.getConfigFolder().resolve(FILE_NAME);
+        return SmpServices.PLATFORM.getConfigDir().resolve(FILE_NAME);
     }
 
     /**
@@ -100,12 +100,23 @@ public final class ConfigIO {
                 obj.addProperty("allow_lava_wilderness", false);
                 dirty = true;
             }
+
             if (!obj.has("vips")) {
                 obj.add("vips", new com.google.gson.JsonArray());
                 dirty = true;
             }
             if (!obj.has("skills") || !obj.get("skills").isJsonObject()) {
                 obj.add("skills", defaultSkillsJson());
+                dirty = true;
+            }
+            if (!obj.has("mute_levels_minutes")) {
+                com.google.gson.JsonArray ml = new com.google.gson.JsonArray();
+                ml.add(60);
+                ml.add(120);
+                ml.add(240);
+                ml.add(480);
+                ml.add(1440);
+                obj.add("mute_levels_minutes", ml);
                 dirty = true;
             }
 
@@ -142,6 +153,15 @@ public final class ConfigIO {
         root.addProperty("message_interval", 300);
         root.addProperty("vip_bonus_claims", 20);
         root.addProperty("allow_lava_wilderness", false);
+
+        com.google.gson.JsonArray muteLevels = new com.google.gson.JsonArray();
+        muteLevels.add(60);
+        muteLevels.add(120);
+        muteLevels.add(240);
+        muteLevels.add(480);
+        muteLevels.add(1440);
+        root.add("mute_levels_minutes", muteLevels);
+
         root.add("vips", new com.google.gson.JsonArray());
 
         com.google.gson.JsonArray rules = new com.google.gson.JsonArray();
@@ -288,6 +308,11 @@ public final class ConfigIO {
         root.addProperty("message_interval", SmpConfig.MESSAGE_INTERVAL);
         root.addProperty("vip_bonus_claims", SmpConfig.VIP_BONUS_CLAIMS);
         root.addProperty("allow_lava_wilderness", SmpConfig.ALLOW_LAVA_WILDERNESS);
+
+        com.google.gson.JsonArray muteLevels = new com.google.gson.JsonArray();
+        for (int m : SmpConfig.MUTE_LEVELS_MINUTES)
+            muteLevels.add(m);
+        root.add("mute_levels_minutes", muteLevels);
 
         com.google.gson.JsonArray vips = new com.google.gson.JsonArray();
         for (String v : SmpConfig.VIPS)

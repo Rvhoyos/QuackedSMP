@@ -7,10 +7,10 @@
 
 # QuackedSMP Essentials
 
-QuackedSMP is a server-side utility mod for **Fabric** and **NeoForge**. It provides a land claiming system, an RPG-style skill progression system, teleportation commands, and chat management.
+QuackedSMP is a server-side utility mod for **Minecraft 1.21.8**, supporting both **Fabric** and **NeoForge**. It provides a land claiming system, an RPG-style skill progression system, teleportation commands, and chat management. This project has been migrated to a native multiloader structure, removing the Architectury API dependency for better performance and compatibility.
 
 ## Core Features
-
+> do '/smp help' in game
 - **RPG Skills**: 12 skills with active abilities, passive perks, and attribute buffs.
 - **Land Claims**: Chunk-based protection.
 - **Teleportation**: `/home`, `/spawn`, and `/tpa` requests with configurable warmups.
@@ -53,6 +53,9 @@ Abilities unlock at **Level 10** by default (configurable per skill).
 - **Tool Abilities**: Hold tool + Sneak + Drop Item (Q). Item drop is cancelled.
 - **Dash**: Sprint + Jump + Sneak (Tap Shift) while moving.
 
+> [!NOTE] 
+> **Simultaneous Activation**: If you hold a damaged tool (e.g., Pickaxe) and use **Sneak + Drop**, both the tool ability (Super Breaker) and the repair ability (Arcane Infusion) can trigger at the same time!
+
 | Skill | Ability | Effect | Cooldown (Lv 10 -> Lv 100) |
 | :--- | :--- | :--- | :--- |
 | **Mining** | Super Breaker | Haste V | 3m -> 1m |
@@ -77,6 +80,11 @@ Abilities unlock at **Level 10** by default (configurable per skill).
 - **Treasure Hunter**: Chance to find rare items in dirt/sand.
 - **Arrow Recovery**: Chance to retrieve arrows from killed mobs.
 - **Damage Reduction**: Flat damage mitigation from Defense level.
+
+
+---
+
+
 
 ---
 
@@ -111,13 +119,13 @@ Chunk-based claiming system.
 
 Commands with configurable warmups.
 
-- **/home**: Teleport to respawn point.
+- **/home**: Teleport to respawn point (Bed).
 - **/spawn**: Teleport to world spawn.
-- **/tpa <player>**: Request teleport to player.
-- **/tpaccept**: Accept request.
-- **/tpdeny**: Deny request.
+- **/tpr <player>**: Request teleport to player.
+- **/tpa accept**: Accept request.
+- **/tpa deny**: Deny request.
 
-> **Warmup**: Default 5-second warmup. Movement cancels teleport.
+> **Warmup**: Default 5-second warmup. Movement cancels teleport. Configurable in config..
 
 ---
 
@@ -127,8 +135,14 @@ Commands with configurable warmups.
 - **Anti-Evasion**: Detects "leet speak", separators, and repeated characters.
 - **Whitelist**: Prevents false positives.
 - **Periodic Messages**: Broadcast automated announcements.
+- **Progressive Mutes**: Repeated violations trigger auto-mutes.
+  - 3 strikes -> 1m mute (default).
+  - Subsequent bans increase in duration (e.g., 2h, 4h, 8h, 24h).
+  - Resets after 24h of good behavior.
 
 **Commands (OP Only):**
+- `/mute <player> <minutes>`: Temporarily mute a player.
+- `/unmute <player>`: Unmute a player.
 - `/chatfilter add <word>`: Add word to blocklist.
 - `/chatfilter whitelist add <word>`: Whitelist safe word.
 - `/chatfilter test <msg>`: Test message filter.
@@ -143,7 +157,7 @@ Located at `config/quackedsmp.json`. Hot-reloadable via `/smp reload`.
 
 You can manage the server configuration in-game using a visual interface:
 -   **Open Menu**: `/smp config`
--   **Features**: Adjust claim limits, teleport warmups, message intervals, and skill leveling curves via a Chest GUI.
+-   **Features**: Adjust claim limits, teleport warmups, message intervals, and skill leveling curves via a GUI.
 -   **Factory Reset**: Shift-Click the red powder in the config menu or use `/smp config reset` to restore all default settings.
 
 ### Configuration Reference
@@ -156,6 +170,7 @@ You can manage the server configuration in-game using a visual interface:
 | `tp_warmup` | Integer | `5` | Seconds to stand still before teleporting. |
 | `message_interval` | Integer | `300` | Seconds between periodic announcements. |
 | `allow_lava_wilderness`| Boolean | `false` | If true, allows placing lava outside claims. |
+| `mute_levels_minutes` | List | `[60,...]` | Mute durations (mins) for progressive bans (Tier 1-5). |
 | `welcome_message` | String | *See JSON* | Join message. |
 | `periodic_messages` | List | *See JSON* | Periodic broadcast messages. |
 | `skills.xp_exponent` | Double | `1.5` | Exponential factor for skill leveling. |
@@ -185,6 +200,13 @@ The `caps` section defines the maximum bonus a player receives when a parent cat
   "tp_warmup": 5,
   "message_interval": 300,
   "allow_lava_wilderness": false,
+  "mute_levels_minutes": [
+    60,
+    120,
+    240,
+    480,
+    1440
+  ],
   "welcome_message": "&6Welcome to QuackedSMP, {player}!",
   "rules": [
     "&e1. Be respectful.",
@@ -240,6 +262,8 @@ The `caps` section defines the maximum bonus a player receives when a parent cat
 | `/smp reload` | Reload configuration | OP |
 | `/smp config` | Open configuration GUI | OP |
 | `/smp config reset` | Factory reset config | OP |
+| `/mute <player> <mins>` | Mute a player | OP |
+| `/unmute <player>` | Unmute a player | OP |
 | `/rules` | View server rules | Everyone |
 | `/claim` | Claim current chunk | Everyone |
 | `/unclaim` | Unclaim current chunk | Everyone |
@@ -248,10 +272,10 @@ The `caps` section defines the maximum bonus a player receives when a parent cat
 | `/sos` | Eject strangers from claim | Everyone |
 | `/home` | Teleport to bed/spawn | Everyone |
 | `/spawn` | Teleport to world spawn | Everyone |
-| `/tpa <player>` | Request teleport | Everyone |
+| `/tpr <player>` | Request teleport | Everyone |
+| `/tpa <player>` | Accept or deny teleport | Everyone |
 | `/skills` | Open skills GUI | Everyone |
-| `/chatfilter list` | View blocked words | OP |
-| `/chatfilter strikes` | View collision history | OP |
+
 
 ---
 
