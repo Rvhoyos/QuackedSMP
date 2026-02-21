@@ -2,8 +2,6 @@ package mc.smpessentials.skills;
 
 import mc.smpessentials.config.SmpConfig;
 
-import dev.architectury.event.EventResult;
-import dev.architectury.event.events.common.PlayerEvent;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
@@ -52,75 +50,74 @@ public final class ActiveAbilities {
     private ActiveAbilities() {
     }
 
-    public static void init() {
+    /**
+     * Called when a player drops an item.
+     * 
+     * @return true if the event is handled and should be cancelled, false
+     *         otherwise.
+     */
+    public static boolean onPlayerDropItem(net.minecraft.world.entity.player.Player player,
+            net.minecraft.world.entity.item.ItemEntity entity) {
+        if (!(player instanceof ServerPlayer sp))
+            return false;
+        if (!sp.isShiftKeyDown())
+            return false;
 
-        // ── Sneak + Q (drop key) activates tool abilities ──────────────
-        // When the player sneaks and presses Q, the DROP_ITEM event fires
-        // AFTER the item is removed from inventory. We cancel the event
-        // (preventing the ItemEntity from spawning) and put the item back.
-        PlayerEvent.DROP_ITEM.register((player, entity) -> {
-            if (!(player instanceof ServerPlayer sp))
-                return EventResult.pass();
-            if (!sp.isShiftKeyDown())
-                return EventResult.pass();
+        ItemStack dropped = entity.getItem();
+        ServerLevel sl = (ServerLevel) sp.level();
+        SkillData data = SkillData.get(sl);
+        UUID uuid = sp.getUUID();
 
-            ItemStack dropped = entity.getItem();
-            ServerLevel sl = (ServerLevel) sp.level();
-            SkillData data = SkillData.get(sl);
-            UUID uuid = sp.getUUID();
+        boolean handled = false;
 
-            boolean handled = false;
+        if (dropped.is(ItemTags.PICKAXES)) {
+            if (tryActivate(sp, data, SkillType.MINING, "Super Breaker", uuid))
+                handled = true;
+        } else if (dropped.is(ItemTags.SHOVELS)) {
+            if (tryActivate(sp, data, SkillType.EXCAVATION, "Giga Drill", uuid))
+                handled = true;
+        } else if (dropped.is(ItemTags.AXES)) {
+            if (tryActivateTreeFeller(sp, data, uuid))
+                handled = true;
+        } else if (dropped.is(ItemTags.HOES)) {
+            if (tryActivateGreenTerra(sp, data, uuid, sl))
+                handled = true;
+        } else if (dropped.getItem() instanceof FishingRodItem) {
+            if (tryActivateMasterAngler(sp, data, uuid))
+                handled = true;
+        } else if (dropped.is(ItemTags.SWORDS)) {
+            if (tryActivateBerzerk(sp, data, uuid))
+                handled = true;
+        } else if (dropped.getItem() instanceof BowItem || dropped.getItem() instanceof CrossbowItem) {
+            if (tryActivateSniper(sp, data, uuid))
+                handled = true;
+        } else if (dropped.getItem() instanceof ShieldItem) {
+            if (tryActivateJuggernaut(sp, data, uuid))
+                handled = true;
+        } else if (dropped.getItem() == Items.BOOK || dropped.getItem() == Items.ENCHANTED_BOOK) {
+            // Alchemy: Book + Sneak + Q -> Silk Touch Spawner
+            if (tryActivateAlchemy(sp, data, uuid))
+                handled = true;
+        } else if (dropped.getItem() == Items.EMERALD) {
+            // Trading: Emerald + Sneak + Q -> Tycoon's Charm (Hero of Village)
+            if (tryActivateTycoon(sp, data, uuid))
+                handled = true;
+        }
 
-            if (dropped.is(ItemTags.PICKAXES)) {
-                if (tryActivate(sp, data, SkillType.MINING, "Super Breaker", uuid))
-                    handled = true;
-            } else if (dropped.is(ItemTags.SHOVELS)) {
-                if (tryActivate(sp, data, SkillType.EXCAVATION, "Giga Drill", uuid))
-                    handled = true;
-            } else if (dropped.is(ItemTags.AXES)) {
-                if (tryActivateTreeFeller(sp, data, uuid))
-                    handled = true;
-            } else if (dropped.is(ItemTags.HOES)) {
-                if (tryActivateGreenTerra(sp, data, uuid, sl))
-                    handled = true;
-            } else if (dropped.getItem() instanceof FishingRodItem) {
-                if (tryActivateMasterAngler(sp, data, uuid))
-                    handled = true;
-            } else if (dropped.is(ItemTags.SWORDS)) {
-                if (tryActivateBerzerk(sp, data, uuid))
-                    handled = true;
-            } else if (dropped.getItem() instanceof BowItem || dropped.getItem() instanceof CrossbowItem) {
-                if (tryActivateSniper(sp, data, uuid))
-                    handled = true;
-            } else if (dropped.getItem() instanceof ShieldItem) {
-                if (tryActivateJuggernaut(sp, data, uuid))
-                    handled = true;
-            } else if (dropped.getItem() == Items.BOOK || dropped.getItem() == Items.ENCHANTED_BOOK) {
-                // Alchemy: Book + Sneak + Q -> Silk Touch Spawner
-                if (tryActivateAlchemy(sp, data, uuid))
-                    handled = true;
-            } else if (dropped.getItem() == Items.EMERALD) {
-                // Trading: Emerald + Sneak + Q -> Tycoon's Charm (Hero of Village)
-                if (tryActivateTycoon(sp, data, uuid))
-                    handled = true;
-            }
+        // Independent check: Arcane Infusion (Repair)
+        // Triggers alongside above abilities if the item is damageable and damaged
+        if (dropped.isDamageableItem() && dropped.isDamaged()) {
+            if (tryArcaneInfusion(sp, data, uuid, dropped))
+                handled = true;
+        }
 
-            // Independent check: Arcane Infusion (Repair)
-            // Triggers alongside above abilities if the item is damageable and damaged
-            if (dropped.isDamageableItem() && dropped.isDamaged()) {
-                if (tryArcaneInfusion(sp, data, uuid, dropped))
-                    handled = true;
-            }
+        if (handled) {
+            // Cancel the drop and return the item to the player
+            sp.getInventory().add(entity.getItem());
+            return true;
+        }
 
-            if (handled) {
-                // Cancel the drop and return the item to the player
-                sp.getInventory().add(entity.getItem());
-                return EventResult.interruptFalse();
-            }
-
-            return EventResult.pass();
-        });
-
+        return false;
     }
 
     // ========== ABILITY IMPLEMENTATIONS ==========

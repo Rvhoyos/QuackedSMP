@@ -1,44 +1,34 @@
 plugins {
-    id 'com.gradleup.shadow'
+    id 'net.neoforged.moddev'
 }
 
-architectury {
-    platformSetupLoomIde()
-    neoForge()
-}
+neoForge {
+    version = rootProject.neoforge_version
 
-configurations {
-    common {
-        canBeResolved = true
-        canBeConsumed = false
+    parchment.minecraftVersion = rootProject.parchment_mc_version
+    parchment.mappingsVersion = rootProject.parchment_version
+
+    runs {
+        client {
+            client()
+            programArguments.addAll '--username', 'Dev'
+        }
+        server {
+            server()
+            programArgument '--nogui'
+        }
     }
-    compileClasspath.extendsFrom common
-    runtimeClasspath.extendsFrom common
-    developmentNeoForge.extendsFrom common
 
-    // Files in this configuration will be bundled into your mod using the Shadow plugin.
-    // Don't use the `shadow` configuration from the plugin itself as it's meant for excluding files.
-    shadowBundle {
-        canBeResolved = true
-        canBeConsumed = false
-    }
-}
-
-repositories {
-    maven {
-        name = 'NeoForged'
-        url = 'https://maven.neoforged.net/releases'
+    mods {
+        quacksmp {
+            sourceSet project.sourceSets.main
+        }
     }
 }
 
 dependencies {
-    neoForge "net.neoforged:neoforge:$rootProject.neoforge_version"
-
-    // Architectury API. This is optional, and you can comment it out if you don't need it.
-    modImplementation "dev.architectury:architectury-neoforge:$rootProject.architectury_api_version"
-
-    common(project(path: ':common', configuration: 'namedElements')) { transitive = false }
-    shadowBundle project(path: ':common', configuration: 'transformProductionNeoForge')
+    // Common module
+    compileOnly project(':common')
 }
 
 processResources {
@@ -47,13 +37,4 @@ processResources {
     filesMatching('META-INF/neoforge.mods.toml') {
         expand version: inputs.properties.version
     }
-}
-
-shadowJar {
-    configurations = [project.configurations.shadowBundle]
-    archiveClassifier = 'dev-shadow'
-}
-
-remapJar {
-    inputFile.set shadowJar.archiveFile
 }

@@ -1,6 +1,5 @@
 package mc.smpessentials.events;
 
-import dev.architectury.event.events.common.TickEvent;
 import mc.smpessentials.config.SmpConfig;
 import mc.smpessentials.util.TextUtil;
 import net.minecraft.server.MinecraftServer;
@@ -14,10 +13,8 @@ public final class MessageScheduler {
     private static int ticks = 0;
     private static int index = 0;
 
-    public static void init() {
-        TickEvent.SERVER_POST.register((MinecraftServer server) -> {
-            tick(server);
-        });
+    public static void onServerTick(MinecraftServer server) {
+        tick(server);
     }
 
     private static void tick(MinecraftServer server) {

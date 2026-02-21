@@ -1,7 +1,5 @@
 package mc.smpessentials.chatfilter;
 
-import dev.architectury.event.events.common.ChatEvent;
-import dev.architectury.event.events.common.LifecycleEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
@@ -58,58 +56,49 @@ public final class ChatFilter {
     }
 
     /**
-     * Registers the chat decorate event.
-     * + Server start autoload
-     * Must be called once during common init.
+     * Called when the server starts.
      */
-    public static void init() {
-        ChatEvent.DECORATE.register(ChatFilter::onDecorate);
-        LifecycleEvent.SERVER_STARTED.register(server -> {
-            try {
-                var res = ChatFilterConfig.mergeFromConfig(server);
-                if (!res.warnings().isEmpty()) {
-                    System.err.println("[QuackedSMP] Chat Filter Warnings:");
-                    for (String w : res.warnings())
-                        System.err.println(" - " + w);
-                }
-            } catch (Exception e) {
-                System.err.println("[QuackedSMP] Failed to load chat filter config: " + e.getMessage());
-                e.printStackTrace();
+    public static void onServerStart(MinecraftServer server) {
+        try {
+            var res = ChatFilterConfig.mergeFromConfig(server);
+            if (!res.warnings().isEmpty()) {
+                System.err.println("[QuackedSMP] Chat Filter Warnings:");
+                for (String w : res.warnings())
+                    System.err.println(" - " + w);
             }
-        });
+        } catch (Exception e) {
+            System.err.println("[QuackedSMP] Failed to load chat filter config: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 
     /**
      * Chat decorate callback. Replaces offending tokens/phrases with "****".
      * Messages beginning with '/' are ignored.
+     * Returns the modified component, or null if it was deleted (e.g. muted).
      */
-    /**
-     * Chat decorate callback. Replaces offending tokens/phrases with "****".
-     * Messages beginning with '/' are ignored.
-     */
-    private static void onDecorate(ServerPlayer player, ChatEvent.ChatComponent component) {
+    public static Component onDecorate(ServerPlayer player, Component component) {
         if (component == null)
-            return;
+            return component;
 
-        String raw = component.get().getString();
+        String raw = component.getString();
 
         // Skip commands
         if (raw.startsWith("/"))
-            return;
+            return component;
 
         MinecraftServer server = (player != null) ? player.getServer() : null;
         if (server == null)
-            return;
+            return component;
 
         ChatFilterSavedData data = getData(server);
 
         // 1. Check if Muted
         if (player != null && data.isMuted(player.getUUID())) {
-            component.set(Component.empty());
             long remaining = data.getMuteEnd(player.getUUID()) - System.currentTimeMillis();
             long mins = Math.max(1, remaining / 60000L);
             player.sendSystemMessage(Component.literal("\u00a7cYou are muted for " + mins + " more minute(s)."));
-            return;
+            return Component.empty();
         }
 
         // 2. Filter logic
@@ -117,7 +106,7 @@ public final class ChatFilter {
         masked = maskPhrases(masked, data);
 
         if (!masked.equals(raw)) {
-            component.set(Component.literal(masked));
+            Component maskedComponent = Component.literal(masked);
 
             // Track strike and potential auto-mute
             if (player != null) {
@@ -156,7 +145,10 @@ public final class ChatFilter {
                     player.sendSystemMessage(Component.literal("\u00a7cDo not use that language!"));
                 }
             }
+            return maskedComponent;
         }
+
+        return component;
     }
 
     /**

@@ -4,7 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
-import dev.architectury.platform.Platform;
+import mc.smpessentials.platform.SmpServices;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -20,7 +20,7 @@ public final class ConfigIO {
     }
 
     public static Path path() {
-        return Platform.getConfigFolder().resolve(FILE_NAME);
+        return SmpServices.PLATFORM.getConfigDir().resolve(FILE_NAME);
     }
 
     /**

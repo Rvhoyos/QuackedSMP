@@ -7,7 +7,7 @@
 
 # QuackedSMP Essentials
 
-QuackedSMP is a server-side utility mod for **Fabric** and **NeoForge**. It provides a land claiming system, an RPG-style skill progression system, teleportation commands, and chat management.
+QuackedSMP is a server-side utility mod for **Minecraft 1.21.8**, supporting both **Fabric** and **NeoForge**. It provides a land claiming system, an RPG-style skill progression system, teleportation commands, and chat management. This project has been migrated to a native multiloader structure, removing the Architectury API dependency for better performance and compatibility.
 
 ## Core Features
 > do '/smp help' in game
@@ -177,8 +177,6 @@ You can manage the server configuration in-game using a visual interface:
 | `skills.ability_unlock_levels` | Map | `10*` | Map of skill names to level required for ability unlock. Defaults: Trading (1), Defense (5), Agility (3), others (10). |
 | `skills.cooldowns` | Map | *Varies* | Base cooldowns (seconds) for abilities. |
 | `skills.caps` | Map | *See JSON* | Maximum value for parent attribute buffs at Level 100. |
-| `enable_custom_beacons` | Boolean | `true` | Toggle the entire custom beacon system. |
-| `beacon_sizes` | Map | *See JSON* | Map of material name to chunk size (odd numbers recommended). |
 
 ### Caps Explanation
 
@@ -250,8 +248,7 @@ The `caps` section defines the maximum bonus a player receives when a parent cat
       "combat_damage": 1.0,
       "knowledge_xp": 1.0
     }
-  },
-
+  }
 }
 ```
 
