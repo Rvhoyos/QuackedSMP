@@ -87,7 +87,7 @@ public final class ChatFilter {
         if (raw.startsWith("/"))
             return component;
 
-        MinecraftServer server = (player != null) ? player.getServer() : null;
+        MinecraftServer server = (player != null) ? ((ServerLevel) player.level()).getServer() : null;
         if (server == null)
             return component;
 
@@ -127,7 +127,7 @@ public final class ChatFilter {
                             + " \u00a77was auto-muted for " + durationMins + "m due to Chat Filter violations.";
                     // Just broadcast the mute
                     for (ServerPlayer op : server.getPlayerList().getPlayers()) {
-                        if (server.getPlayerList().isOp(op.getGameProfile())) {
+                        if (op.level().getServer().getPlayerList().isOp(op.nameAndId())) {
                             op.sendSystemMessage(Component.literal(alert));
                         }
                     }
@@ -138,7 +138,7 @@ public final class ChatFilter {
                     String alert = "\u00a7c[Filter] \u00a7e" + player.getName().getString()
                             + ": \u00a7f" + raw;
                     for (ServerPlayer op : server.getPlayerList().getPlayers()) {
-                        if (server.getPlayerList().isOp(op.getGameProfile())) {
+                        if (op.level().getServer().getPlayerList().isOp(op.nameAndId())) {
                             op.sendSystemMessage(Component.literal(alert));
                         }
                     }

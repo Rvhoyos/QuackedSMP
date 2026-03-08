@@ -38,7 +38,7 @@ public final class SosCommand {
                 continue; // Don't eject self
             if (target.isSpectator())
                 continue; // Ignore spectators
-            if (target.getServer().getPlayerList().isOp(target.getGameProfile()))
+            if (((ServerLevel) target.level()).getServer().getPlayerList().isOp(target.nameAndId()))
                 continue; // Ignore OPs
 
             // Check if target is in a chunk owned by caller
@@ -56,10 +56,10 @@ public final class SosCommand {
                     ejectPlayer(target);
                     // Notify caller
                     caller.sendSystemMessage(
-                            Component.literal("Ejected " + target.getGameProfile().getName() + " from your claim."));
+                            Component.literal("Ejected " + target.getName().getString() + " from your claim."));
                     // Notify target
                     target.displayClientMessage(Component.literal(
-                            "You were ejected from " + caller.getGameProfile().getName() + "'s claim via /sos."), true);
+                            "You were ejected from " + caller.getName().getString() + "'s claim via /sos."), true);
                     ejectedCount++;
                 }
             }
@@ -86,8 +86,8 @@ public final class SosCommand {
         // Fallback to world spawn (Overworld)
         // We use overworld spawn to ensure they aren't stuck in a dangerous nether/end
         // spawn if they have no bed.
-        ServerLevel overworld = player.getServer().overworld();
-        BlockPos spawn = overworld.getSharedSpawnPos();
+        ServerLevel overworld = ((ServerLevel) player.level()).getServer().overworld();
+        BlockPos spawn = overworld.getRespawnData().pos();
 
         // TeleportTransition requires a Vec3 for position and float for rotation
         player.teleportTo(overworld, spawn.getX() + 0.5, spawn.getY(), spawn.getZ() + 0.5, Set.of(), player.getYRot(),

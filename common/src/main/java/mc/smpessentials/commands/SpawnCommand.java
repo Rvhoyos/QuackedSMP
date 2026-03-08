@@ -25,11 +25,11 @@ public final class SpawnCommand {
             return 0;
         }
 
-        MinecraftServer server = player.getServer();
+        MinecraftServer server = source.getServer();
         ServerLevel overworld = server.overworld();
 
         // Use world’s shared spawn position
-        BlockPos spawn = overworld.getSharedSpawnPos();
+        BlockPos spawn = overworld.getRespawnData().pos();
         BlockPos safe = player.adjustSpawnLocation(overworld, spawn);
 
         boolean ok = player.teleportTo(

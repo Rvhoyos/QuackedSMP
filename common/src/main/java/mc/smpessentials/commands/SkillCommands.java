@@ -40,7 +40,7 @@ public final class SkillCommands {
 
                 // /skills admin givexp <player> <skill> <amount>
                 .then(Commands.literal("admin")
-                        .requires(src -> src.hasPermission(2))
+                        .requires(src -> net.minecraft.commands.Commands.LEVEL_GAMEMASTERS.check(src.permissions()))
                         // /skills admin givexp <player> <skill> <amount>
                         .then(Commands.literal("givexp")
                                 .then(Commands.argument("player", EntityArgument.player())

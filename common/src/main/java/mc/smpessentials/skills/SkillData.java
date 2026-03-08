@@ -40,8 +40,8 @@ public final class SkillData extends SavedData {
 
     public static final SavedDataType<SkillData> TYPE = new SavedDataType<>(
             "quackedsmp_skills",
-            ctx -> new SkillData(Map.of()),
-            ctx -> SkillData.CODEC,
+            () -> new SkillData(new HashMap<>()),
+            SkillData.CODEC,
             DataFixTypes.LEVEL);
 
     private SkillData(Map<UUID, PlayerProfile> profiles) {

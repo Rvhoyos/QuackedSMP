@@ -10,15 +10,18 @@ import java.util.UUID;
 
 /** Centralizes "can this player act here?" */
 public final class ClaimAccess {
-    private ClaimAccess() {}
+    private ClaimAccess() {
+    }
 
     public static boolean canModify(ServerPlayer actor, ServerLevel level, ChunkPos chunk) {
         // OPs bypass
-        if (actor.getServer().getPlayerList().isOp(actor.getGameProfile())) return true;
+        if (actor.level().getServer().getPlayerList().isOp(actor.nameAndId()))
+            return true;
 
         var claims = ClaimedSavedData.get(level);
         var cd = claims.getClaim(level, chunk);
-        if (cd.isEmpty()) return true; // unclaimed: allowed
+        if (cd.isEmpty())
+            return true; // unclaimed: allowed
 
         UUID owner = cd.get().owner();
         return WhitelistSavedData.get(level).isTrusted(owner, actor.getUUID());

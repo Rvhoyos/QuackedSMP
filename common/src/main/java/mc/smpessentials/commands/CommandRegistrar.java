@@ -10,44 +10,49 @@ import net.minecraft.server.level.ServerPlayer;
  * No Brigadier imports are required here; we rely on lambda type inference.
  */
 public final class CommandRegistrar {
-    private CommandRegistrar() {
-    }
+        private CommandRegistrar() {
+        }
 
-    public static void registerCommands(com.mojang.brigadier.CommandDispatcher<CommandSourceStack> dispatcher,
-            net.minecraft.commands.CommandBuildContext buildContext,
-            Commands.CommandSelection selection) {
-        // --- /home ---
-        dispatcher.register(
-                net.minecraft.commands.Commands.literal("home")
-                        .requires(src -> src.getEntity() instanceof net.minecraft.server.level.ServerPlayer)
-                        .executes(ctx -> mc.smpessentials.commands.HomeCommand.execute(ctx.getSource())));
-        // --- /spawn ---
-        dispatcher.register(
-                Commands.literal("spawn")
-                        .requires(src -> src.getEntity() instanceof ServerPlayer)
-                        .executes(ctx -> mc.smpessentials.commands.SpawnCommand.execute(ctx.getSource())));
-        dispatcher.register(
-                net.minecraft.commands.Commands.literal("rules")
-                        .requires(src -> src.getEntity() instanceof net.minecraft.server.level.ServerPlayer)
-                        .executes(ctx -> mc.smpessentials.commands.RulesCommand.execute(ctx.getSource())));
-        // claims: /claim /unclaim /claims
-        mc.smpessentials.claims.ClaimCommands.register(dispatcher);
-        // claims: /trust /untrust
-        mc.smpessentials.claims.TrustCommands.register(dispatcher);
+        public static void registerCommands(com.mojang.brigadier.CommandDispatcher<CommandSourceStack> dispatcher,
+                        net.minecraft.commands.CommandBuildContext buildContext,
+                        Commands.CommandSelection selection) {
+                // --- /home ---
+                dispatcher.register(
+                                net.minecraft.commands.Commands.literal("home")
+                                                .requires(src -> src
+                                                                .getEntity() instanceof net.minecraft.server.level.ServerPlayer)
+                                                .executes(ctx -> mc.smpessentials.commands.HomeCommand
+                                                                .execute(ctx.getSource())));
+                // --- /spawn ---
+                dispatcher.register(
+                                Commands.literal("spawn")
+                                                .requires(src -> src.getEntity() instanceof ServerPlayer)
+                                                .executes(ctx -> mc.smpessentials.commands.SpawnCommand
+                                                                .execute(ctx.getSource())));
+                dispatcher.register(
+                                net.minecraft.commands.Commands.literal("rules")
+                                                .requires(src -> src
+                                                                .getEntity() instanceof net.minecraft.server.level.ServerPlayer)
+                                                .executes(ctx -> mc.smpessentials.commands.RulesCommand
+                                                                .execute(ctx.getSource())));
+                // claims: /claim /unclaim /claims
+                mc.smpessentials.claims.ClaimCommands.register(dispatcher);
+                // claims: /trust /untrust
+                mc.smpessentials.claims.TrustCommands.register(dispatcher);
 
-        mc.smpessentials.chatfilter.ChatFilterCommands.register(dispatcher);
-        mc.smpessentials.commands.GeneralCommands.register(dispatcher);
-        mc.smpessentials.teleport.TeleportCommands.register(dispatcher);
-        mc.smpessentials.commands.SkillCommands.register(dispatcher);
-        dispatcher.register(net.minecraft.commands.Commands.literal("sos")
-                .requires(src -> src.getEntity() instanceof net.minecraft.server.level.ServerPlayer)
-                .executes(ctx -> mc.smpessentials.commands.SosCommand.execute(ctx.getSource())));
+                mc.smpessentials.chatfilter.ChatFilterCommands.register(dispatcher);
+                mc.smpessentials.commands.GeneralCommands.register(dispatcher);
+                mc.smpessentials.teleport.TeleportCommands.register(dispatcher);
+                mc.smpessentials.commands.SkillCommands.register(dispatcher);
+                dispatcher.register(net.minecraft.commands.Commands.literal("sos")
+                                .requires(src -> src.getEntity() instanceof net.minecraft.server.level.ServerPlayer)
+                                .executes(ctx -> mc.smpessentials.commands.SosCommand.execute(ctx.getSource())));
 
-    }
+        }
 
-    /** Simple OP check. Uses Minecraft's documented permission levels. */
-    public static boolean isOp(CommandSourceStack source) {
-        // LEVEL_GAMEMASTERS is the typical "op level 2+" gate for server commands.
-        return source.hasPermission(Commands.LEVEL_GAMEMASTERS);
-    }
+        /** Simple OP check. Uses Minecraft's documented permission levels. */
+        public static boolean isOp(CommandSourceStack source) {
+                // LEVEL_GAMEMASTERS is the typical "op level 2+" gate for server commands.
+                return Commands.LEVEL_GAMEMASTERS.check(source.permissions());
+        }
 }

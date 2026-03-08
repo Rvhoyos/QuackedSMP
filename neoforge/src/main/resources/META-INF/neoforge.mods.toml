@@ -9,7 +9,7 @@ version = "${version}"
 displayName = "QuackSMP"
 authors = "Rvhoyos"
 description = '''
-Comprehensive server-side utility mod featuring claims, RPG skills, and chat management for 1.21.8.
+Comprehensive server-side utility mod featuring claims, RPG skills, and chat management for 1.21.11.
 '''
 issueTrackerURL = "https://github.com/Rvhoyos/QuackedSMP/issues"
 displayURL = "https://www.curseforge.com/minecraft/mc-mods/quackedsmp"
@@ -19,14 +19,14 @@ logoFile = "assets/quacksmp/icon.png"
 [[dependencies.quacksmp]]
 modId = "neoforge"
 type = "required"
-versionRange = "[21.8,)"
+versionRange = "[21.11,)"
 ordering = "NONE"
 side = "BOTH"
 
 [[dependencies.quacksmp]]
 modId = "minecraft"
 type = "required"
-versionRange = "[1.21.8,)"
+versionRange = "[1.21.11,)"
 ordering = "NONE"
 side = "BOTH"
 

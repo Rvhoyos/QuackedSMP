@@ -48,8 +48,7 @@ public final class MessageScheduler {
             index++;
 
             if (line != null && !line.trim().isEmpty()) {
-                System.out.println("[QuackedSMP] Broadcasting Periodic Message (" + (index - 1) + "/" + msgs.size()
-                        + "): " + line);
+                // Periodic message broadcast
                 server.getPlayerList().broadcastSystemMessage(TextUtil.format(line), false);
                 return;
             }

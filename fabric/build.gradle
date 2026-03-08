@@ -1,5 +1,5 @@
 plugins {
-    id 'fabric-loom'
+    id 'net.fabricmc.fabric-loom-remap'
 }
 
 dependencies {
@@ -20,7 +20,7 @@ loom {
         client {
             runDir 'runs/client'
             ideConfigGenerated true
-            programArg '--username=Dev'
+            programArg "--username=Player${new Random().nextInt(10000)}"
         }
         server {
             runDir 'runs/server'

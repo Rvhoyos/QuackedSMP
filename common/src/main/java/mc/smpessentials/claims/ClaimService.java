@@ -4,6 +4,7 @@ import mc.smpessentials.claims.model.ClaimData;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.ChunkPos;
+import net.minecraft.server.dedicated.DedicatedServer;
 import net.minecraft.world.level.Level;
 import net.minecraft.core.BlockPos;
 
@@ -37,7 +38,7 @@ public final class ClaimService {
             return mgr.unclaimIfOwned(pos, player.getUUID());
         }
         // OP force
-        if (player.getServer().getPlayerList().isOp(player.getGameProfile())) {
+        if (((ServerLevel) player.level()).getServer().getPlayerList().isOp(player.nameAndId())) {
             return mgr.forceUnclaim(pos);
         }
         return false;
@@ -47,8 +48,10 @@ public final class ClaimService {
     public static Result claim(ServerPlayer player, ServerLevel level, ChunkPos pos) {
         // Spawn protection guard (vanilla-like square)
         if (level.dimension() == Level.OVERWORLD) {
-            BlockPos spawn = level.getSharedSpawnPos();
-            int radius = player.getServer().getSpawnRadius(level); // vanilla API
+            BlockPos spawn = level.getRespawnData().pos();
+            int radius = (((ServerLevel) player.level()).getServer() instanceof DedicatedServer ds)
+                    ? ds.spawnProtectionRadius()
+                    : 0; // vanilla API
             if (radius > 0) {
                 int cx = pos.getMiddleBlockX();
                 int cz = pos.getMiddleBlockZ();
@@ -71,9 +74,9 @@ public final class ClaimService {
         UUID me = player.getUUID();
         // OP bypass: allow server operators to ignore the per-player MAX_PER_PLAYER
         // cap.
-        boolean isOp = player.getServer().getPlayerList().isOp(player.getGameProfile());
+        boolean isOp = ((ServerLevel) player.level()).getServer().getPlayerList().isOp(player.nameAndId());
         int limit = mc.smpessentials.config.SmpConfig.MAX_CLAIMS;
-        if (mc.smpessentials.config.SmpConfig.VIPS.contains(player.getGameProfile().getName())) {
+        if (mc.smpessentials.config.SmpConfig.VIPS.contains(player.getName().getString())) {
             limit += mc.smpessentials.config.SmpConfig.VIP_BONUS_CLAIMS;
         }
 
