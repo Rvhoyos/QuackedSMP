@@ -21,6 +21,14 @@ public class GeneralCommands {
                                                 .executes(GeneralCommands::openConfig)
                                                 .then(Commands.literal("reset")
                                                                 .executes(GeneralCommands::resetConfig)))
+                                .then(Commands.literal("end")
+                                                .requires(s -> net.minecraft.commands.Commands.LEVEL_GAMEMASTERS
+                                                                .check(s.permissions()))
+                                                .then(Commands.literal("reset")
+                                                                .then(Commands.literal("dragon")
+                                                                                .executes(GeneralCommands::resetEndDragon))
+                                                                .then(Commands.literal("world")
+                                                                                .executes(GeneralCommands::resetEndWorld))))
                                 .then(Commands.literal("help")
                                                 .executes(GeneralCommands::sendHelp)));
 
@@ -167,5 +175,33 @@ public class GeneralCommands {
                         e.printStackTrace();
                         return 0;
                 }
+        }
+
+        private static int resetEndDragon(CommandContext<CommandSourceStack> ctx) {
+                int result = EndResetLogic.resetDragon(ctx.getSource().getServer(), false);
+                if (result == 1) {
+                        ctx.getSource().sendSuccess(() -> Component.literal("\u00a7aEnd Dragon fight has been reset!"),
+                                        true);
+                } else if (result == 0) {
+                        ctx.getSource().sendFailure(Component.literal("Could not find the End or Dragon fight state."));
+                } else {
+                        ctx.getSource().sendFailure(Component.literal("An error occurred while resetting the dragon."));
+                }
+                return result;
+        }
+
+        private static int resetEndWorld(CommandContext<CommandSourceStack> ctx) {
+                int result = EndResetLogic.resetWorld(ctx.getSource().getServer());
+                if (result == 1) {
+                        ctx.getSource().sendSuccess(() -> Component.literal(
+                                        "\u00a7aEnd dimension has been queued for reset! Region files cleared."), true);
+                        ctx.getSource().sendSystemMessage(Component.literal(
+                                        "\u00a7e[Warning] For best results, restart the server to ensure all files are regenerated safely."));
+                } else if (result == 0) {
+                        ctx.getSource().sendFailure(Component.literal("Could not find the End dimension."));
+                } else {
+                        ctx.getSource().sendFailure(Component.literal("An error occurred while clearing End files."));
+                }
+                return result;
         }
 }
