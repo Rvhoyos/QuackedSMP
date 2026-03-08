@@ -5,9 +5,9 @@
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue)](LICENSE)
 
 
-# QuackedSMP Essentials
+# QuackedSMP
 
-QuackedSMP is a server-side utility mod for **Minecraft 1.21.11**, supporting both **Fabric** and **NeoForge**. It provides a land claiming system, an RPG-style skill progression system, teleportation commands, and chat management. This project has been migrated to a native multiloader structure, removing the Architectury API dependency for better performance and compatibility.
+QuackedSMP is a server-side utility mod for **Minecraft 1.21.11**, supporting both **Fabric** and **NeoForge**. It provides a land claiming system, an RPG-style skill progression system, teleportation commands, and chat management.
 
 ## Core Features
 > do '/smp help' in game
@@ -15,6 +15,7 @@ QuackedSMP is a server-side utility mod for **Minecraft 1.21.11**, supporting bo
 - **Land Claims**: Chunk-based protection.
 - **Teleportation**: `/home`, `/spawn`, and `/tpa` requests with configurable warmups.
 - **Chat Management**: Anti-evasion filters, whitelists, and automated announcements.
+- **End Reset**: Live reset of the End dimension and Dragon fight without server restart.
 - **Configurable**: Features are toggleable and tunable via JSON config.
 
 ---
@@ -274,6 +275,8 @@ The `caps` section defines the maximum bonus a player receives when a parent cat
 | `/spawn` | Teleport to world spawn | Everyone |
 | `/tpr <player>` | Request teleport | Everyone |
 | `/tpa <player>` | Accept or deny teleport | Everyone |
+| `/smp end reset dragon` | Reset Ender Dragon fight | OP |
+| `/smp end reset world` | Live reset End dimension | OP |
 | `/skills` | Open skills GUI | Everyone |
 
 
