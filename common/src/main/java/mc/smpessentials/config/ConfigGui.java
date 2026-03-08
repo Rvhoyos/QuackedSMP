@@ -3,6 +3,7 @@ package mc.smpessentials.config;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
+import net.minecraft.sounds.SoundEvents;
 
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.MenuProvider;
@@ -304,8 +305,8 @@ public class ConfigGui {
 
         if (refresh) {
             populate(container);
-            // TODO: Fix sound (Holder vs SoundEvent ambiguity)
-            // player.playNotifySound(net.minecraft.sounds.SoundEvents.UI_BUTTON_CLICK.value(),
+            // Fix sound (Holder vs SoundEvent ambiguity) if needed in future
+            player.playSound(SoundEvents.EXPERIENCE_ORB_PICKUP, 1f, 1f);
             // net.minecraft.sounds.SoundSource.MASTER, 1f, 1f);
         }
 

@@ -4,7 +4,7 @@ import mc.smpessentials.SmpUtilsMod;
 import mc.smpessentials.config.SmpConfig;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.BlockTags;
@@ -260,8 +260,8 @@ public final class SkillEvents {
                     "\u00a76\u00a7l\u2605 LEVEL UP! \u00a7r" + skill.category().color()
                             + capitalize(skill.name()) + " \u00a7fis now level \u00a7e" + newLevel + "\u00a7f!"),
                     false);
-            player.playNotifySound(net.minecraft.sounds.SoundEvents.PLAYER_LEVELUP,
-                    net.minecraft.sounds.SoundSource.PLAYERS, 1.0f, 1.0f);
+            player.playSound(net.minecraft.sounds.SoundEvents.PLAYER_LEVELUP,
+                    1.0f, 1.0f);
 
             // Recalculate parent buff attribute modifiers on level change
             updateParentBuffs(player, data);
@@ -318,7 +318,7 @@ public final class SkillEvents {
         if (attr == null)
             return;
 
-        ResourceLocation id = ResourceLocation.fromNamespaceAndPath(namespace, path);
+        Identifier id = Identifier.fromNamespaceAndPath(namespace, path);
         attr.removeModifier(id);
         if (value > 0) {
             attr.addPermanentModifier(new AttributeModifier(id, value, operation));

@@ -2,6 +2,7 @@ package mc.smpessentials.mixin;
 
 import mc.smpessentials.chatfilter.ChatFilter;
 import mc.smpessentials.chatfilter.ChatFilterSavedData;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.FilteredText;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
@@ -26,9 +27,9 @@ public abstract class ServerGamePacketListenerMixin {
 
     @ModifyVariable(method = "updateBookContents", at = @At("HEAD"), argsOnly = true, ordinal = 0)
     private List<FilteredText> quackedsmp$filterWritablePages(List<FilteredText> pages) {
-        if (this.player.getServer() == null)
+        if (this.player.level().isClientSide())
             return pages;
-        ChatFilterSavedData data = ChatFilter.getData(this.player.getServer());
+        ChatFilterSavedData data = ChatFilter.getData(((ServerLevel) this.player.level()).getServer());
         List<FilteredText> result = new ArrayList<>(pages.size());
         for (FilteredText ft : pages) {
             result.add(quackedsmp$applyFilter(ft, data));
@@ -40,9 +41,9 @@ public abstract class ServerGamePacketListenerMixin {
 
     @ModifyVariable(method = "signBook", at = @At("HEAD"), argsOnly = true, ordinal = 0)
     private FilteredText quackedsmp$filterBookTitle(FilteredText title) {
-        if (this.player.getServer() == null)
+        if (this.player.level().isClientSide())
             return title;
-        ChatFilterSavedData data = ChatFilter.getData(this.player.getServer());
+        ChatFilterSavedData data = ChatFilter.getData(((ServerLevel) this.player.level()).getServer());
         return quackedsmp$applyFilter(title, data);
     }
 
@@ -50,9 +51,9 @@ public abstract class ServerGamePacketListenerMixin {
 
     @ModifyVariable(method = "signBook", at = @At("HEAD"), argsOnly = true, ordinal = 0)
     private List<FilteredText> quackedsmp$filterSignedPages(List<FilteredText> pages) {
-        if (this.player.getServer() == null)
+        if (this.player.level().isClientSide())
             return pages;
-        ChatFilterSavedData data = ChatFilter.getData(this.player.getServer());
+        ChatFilterSavedData data = ChatFilter.getData(((ServerLevel) this.player.level()).getServer());
         List<FilteredText> result = new ArrayList<>(pages.size());
         for (FilteredText ft : pages) {
             result.add(quackedsmp$applyFilter(ft, data));

@@ -16,7 +16,7 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.decoration.ArmorStand;
 import net.minecraft.world.entity.decoration.HangingEntity;
 import net.minecraft.world.entity.monster.Monster;
-import net.minecraft.world.entity.npc.Villager;
+import net.minecraft.world.entity.npc.villager.Villager;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
@@ -129,7 +129,7 @@ public final class ClaimProtection {
     }
 
     public static boolean onLivingHurt(LivingEntity entity, DamageSource source, float amount) {
-        if (entity.level().isClientSide)
+        if (entity.level().isClientSide())
             return true;
         Entity attackerEntity = source.getEntity();
 
@@ -166,7 +166,7 @@ public final class ClaimProtection {
     }
 
     private static boolean canInteractEntity(ServerPlayer player, Entity target) {
-        if (player.hasPermissions(2))
+        if (((ServerLevel) player.level()).getServer().getPlayerList().isOp(player.nameAndId()))
             return true; // OP bypass
         ServerLevel level = (ServerLevel) target.level();
         ChunkPos pos = new ChunkPos(target.blockPosition());

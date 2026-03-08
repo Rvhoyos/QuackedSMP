@@ -29,8 +29,8 @@ public final class WhitelistSavedData extends SavedData {
 
     public static final SavedDataType<WhitelistSavedData> TYPE = new SavedDataType<>(
             "quackedsmp_whitelist",
-            ctx -> new WhitelistSavedData(new Object2ObjectOpenHashMap<>()),
-            ctx -> WhitelistSavedData.CODEC,
+            () -> new WhitelistSavedData(new Object2ObjectOpenHashMap<>()),
+            WhitelistSavedData.CODEC,
             DataFixTypes.LEVEL);
 
     public WhitelistSavedData(Map<UUID, Set<UUID>> byOwner) {

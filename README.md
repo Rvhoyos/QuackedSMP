@@ -7,7 +7,7 @@
 
 # QuackedSMP Essentials
 
-QuackedSMP is a server-side utility mod for **Minecraft 1.21.8**, supporting both **Fabric** and **NeoForge**. It provides a land claiming system, an RPG-style skill progression system, teleportation commands, and chat management. This project has been migrated to a native multiloader structure, removing the Architectury API dependency for better performance and compatibility.
+QuackedSMP is a server-side utility mod for **Minecraft 1.21.11**, supporting both **Fabric** and **NeoForge**. It provides a land claiming system, an RPG-style skill progression system, teleportation commands, and chat management. This project has been migrated to a native multiloader structure, removing the Architectury API dependency for better performance and compatibility.
 
 ## Core Features
 > do '/smp help' in game

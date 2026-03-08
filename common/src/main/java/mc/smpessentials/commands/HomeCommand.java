@@ -40,7 +40,7 @@ public final class HomeCommand {
 
         // Fallback to world spawn
         ServerLevel level = source.getLevel();
-        BlockPos spawn = level.getSharedSpawnPos();
+        BlockPos spawn = level.getRespawnData().pos();
         Vec3 target = new Vec3(spawn.getX() + 0.5, spawn.getY(), spawn.getZ() + 0.5);
 
         mc.smpessentials.teleport.TeleportScheduler.schedule(player, () -> {

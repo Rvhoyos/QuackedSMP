@@ -12,10 +12,12 @@ public class GeneralCommands {
         public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
                 dispatcher.register(Commands.literal("smp")
                                 .then(Commands.literal("reload")
-                                                .requires(s -> s.hasPermission(2)) // OP only
+                                                .requires(s -> net.minecraft.commands.Commands.LEVEL_GAMEMASTERS
+                                                                .check(s.permissions())) // OP only
                                                 .executes(GeneralCommands::reloadConfig))
                                 .then(Commands.literal("config")
-                                                .requires(s -> s.hasPermission(2)) // OP only
+                                                .requires(s -> net.minecraft.commands.Commands.LEVEL_GAMEMASTERS
+                                                                .check(s.permissions())) // OP only
                                                 .executes(GeneralCommands::openConfig)
                                                 .then(Commands.literal("reset")
                                                                 .executes(GeneralCommands::resetConfig)))
@@ -23,7 +25,7 @@ public class GeneralCommands {
                                                 .executes(GeneralCommands::sendHelp)));
 
                 dispatcher.register(Commands.literal("mute")
-                                .requires(s -> s.hasPermission(2))
+                                .requires(s -> net.minecraft.commands.Commands.LEVEL_GAMEMASTERS.check(s.permissions()))
                                 .then(Commands.argument("player",
                                                 net.minecraft.commands.arguments.EntityArgument.player())
                                                 .then(Commands.argument("minutes",
@@ -32,7 +34,7 @@ public class GeneralCommands {
                                                                 .executes(GeneralCommands::mutePlayer))));
 
                 dispatcher.register(Commands.literal("unmute")
-                                .requires(s -> s.hasPermission(2))
+                                .requires(s -> net.minecraft.commands.Commands.LEVEL_GAMEMASTERS.check(s.permissions()))
                                 .then(Commands.argument("player",
                                                 net.minecraft.commands.arguments.EntityArgument.player())
                                                 .executes(GeneralCommands::unmutePlayer)));

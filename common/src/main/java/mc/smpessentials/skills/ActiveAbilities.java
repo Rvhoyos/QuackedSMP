@@ -23,7 +23,8 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.nbt.CompoundTag;
 
 import net.minecraft.core.component.DataComponents;
-import net.minecraft.world.item.component.CustomData;
+import net.minecraft.world.item.component.TypedEntityData;
+import net.minecraft.world.level.block.entity.BlockEntityType;
 
 import java.util.*;
 
@@ -410,7 +411,7 @@ public final class ActiveAbilities {
             msg = "\u00a76\u00a7l\u2605 " + abilityName + " Activated! \u00a7r";
         }
         sp.displayClientMessage(Component.literal(msg), false);
-        sp.playNotifySound(sound, SoundSource.PLAYERS, 1.0f, 1.5f);
+        sp.playSound(sound, 1.0f, 1.5f);
     }
 
     private static void announce(ServerPlayer sp, String abilityName, int seconds,
@@ -422,7 +423,7 @@ public final class ActiveAbilities {
             net.minecraft.sounds.SoundEvent sound) {
         String msg = "\u00a76\u00a7l\u2605 " + abilityName + "! \u00a7r\u00a77" + detail;
         sp.displayClientMessage(Component.literal(msg), false);
-        sp.playNotifySound(sound, SoundSource.PLAYERS, 1.0f, 1.5f);
+        sp.playSound(sound, 1.0f, 1.5f);
     }
 
     private static String formatTime(long seconds) {
@@ -476,10 +477,10 @@ public final class ActiveAbilities {
 
         // Create spawner item with NBT
         ItemStack spawnerItem = new ItemStack(Blocks.SPAWNER);
-        CompoundTag tag = be.saveWithoutMetadata(sp.registryAccess());
+        CompoundTag tag = be.saveWithFullMetadata(sp.registryAccess());
 
         // Use DataComponents for 1.21+
-        spawnerItem.set(DataComponents.BLOCK_ENTITY_DATA, CustomData.of(tag));
+        spawnerItem.set(DataComponents.BLOCK_ENTITY_DATA, TypedEntityData.of(BlockEntityType.MOB_SPAWNER, tag));
 
         // Drop item
         net.minecraft.world.entity.item.ItemEntity it = new net.minecraft.world.entity.item.ItemEntity(

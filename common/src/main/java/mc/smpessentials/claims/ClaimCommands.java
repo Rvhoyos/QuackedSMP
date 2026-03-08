@@ -35,7 +35,7 @@ public final class ClaimCommands {
                                 case REACHED_CAP -> {
                                     int max = mc.smpessentials.config.SmpConfig.MAX_CLAIMS;
                                     if (mc.smpessentials.config.SmpConfig.VIPS
-                                            .contains(p.getGameProfile().getName())) {
+                                            .contains(p.getName().getString())) {
                                         max += mc.smpessentials.config.SmpConfig.VIP_BONUS_CLAIMS;
                                     }
                                     ctx.getSource().sendSystemMessage(Component
@@ -125,11 +125,12 @@ public final class ClaimCommands {
                                     int owned = ClaimService.ownedCount(p.level(), p.getUUID());
                                     int limit = mc.smpessentials.config.SmpConfig.MAX_CLAIMS;
                                     boolean isVip = mc.smpessentials.config.SmpConfig.VIPS
-                                            .contains(p.getGameProfile().getName());
+                                            .contains(p.getName().getString());
                                     if (isVip) {
                                         limit += mc.smpessentials.config.SmpConfig.VIP_BONUS_CLAIMS;
                                     }
-                                    boolean isOp = p.hasPermissions(2);
+                                    boolean isOp = ((ServerLevel) p.level()).getServer().getPlayerList()
+                                            .isOp(p.nameAndId());
 
                                     MutableComponent msg = Component.literal("== Claim Info (Dimension) ==")
                                             .withStyle(net.minecraft.ChatFormatting.GOLD);

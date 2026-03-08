@@ -24,14 +24,14 @@ public final class ClaimedSavedData extends SavedData {
 
     private final Map<UUID, Integer> claimCounts = new HashMap<>();
 
-    public static final SavedDataType<ClaimedSavedData> TYPE = new SavedDataType<>(
-            "quackedsmp_claims",
-            ctx -> new ClaimedSavedData(List.of()),
-            ctx -> ClaimedSavedData.CODEC,
-            DataFixTypes.LEVEL);
-
     public static final Codec<ClaimedSavedData> CODEC = RecordCodecBuilder.create(i -> i.group(
             ClaimData.CODEC.listOf().fieldOf("claims").forGetter(s -> s.claims)).apply(i, ClaimedSavedData::new));
+
+    public static final SavedDataType<ClaimedSavedData> TYPE = new SavedDataType<>(
+            "quackedsmp_claims",
+            () -> new ClaimedSavedData(new ArrayList<>()),
+            ClaimedSavedData.CODEC,
+            DataFixTypes.LEVEL);
 
     public ClaimedSavedData(List<ClaimData> claims) {
         this.claims = new ArrayList<>(claims);
