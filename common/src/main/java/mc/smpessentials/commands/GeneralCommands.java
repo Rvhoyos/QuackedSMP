@@ -195,8 +195,6 @@ public class GeneralCommands {
                 if (result == 1) {
                         ctx.getSource().sendSuccess(() -> Component.literal(
                                         "\u00a7aEnd dimension has been queued for reset! Region files cleared."), true);
-                        ctx.getSource().sendSystemMessage(Component.literal(
-                                        "\u00a7e[Warning] For best results, restart the server to ensure all files are regenerated safely."));
                 } else if (result == 0) {
                         ctx.getSource().sendFailure(Component.literal("Could not find the End dimension."));
                 } else {
