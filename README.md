@@ -151,23 +151,6 @@ Commands with configurable warmups.
 
 ---
 
-## BlueMap Integration
-*Optional Feature. Will NOT crash the server if BlueMap is missing!*
-
-If the [BlueMap](https://bluemap.bluecolored.de/) mod is installed alongside QuackedSMP, it will automatically connect and provide live web-map support.
-
-### Synchronized Data
-- **Homes**: All offline and online player spawn points are drawn as house icons.
-- **Claims**: Land claims are rendered as geometric, colored boundaries.
-  - OP Claims are rendered in Gold (`#FFD700`).
-  - VIP Claims are rendered in Purple (`#8A2BE2`).
-  - Standard Claims are rendered in Cyan (`#00FFFF`).
-- **Optimization**: Syncs non-blocking every 10 minutes (6000 ticks) and implements in-memory `.dat` file caching for offline player data to protect disk I/O.
-
-Settings for map synchronization and colors can be toggled inside `quackedsmp.json`.
-
----
-
 ## Configuration
 
 Located at `config/quackedsmp.json`. Hot-reloadable via `/smp reload`.
