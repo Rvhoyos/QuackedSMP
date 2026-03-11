@@ -113,15 +113,15 @@ public final class ConfigIO {
                 dirty = true;
             }
             if (!obj.has("bluemap_claim_color")) {
-                obj.addProperty("bluemap_claim_color", "#4400FF00");
+                obj.addProperty("bluemap_claim_color", "00FFFF");
                 dirty = true;
             }
             if (!obj.has("bluemap_op_claim_color")) {
-                obj.addProperty("bluemap_op_claim_color", "#66FFD700");
+                obj.addProperty("bluemap_op_claim_color", "FFD700");
                 dirty = true;
             }
             if (!obj.has("bluemap_vip_claim_color")) {
-                obj.addProperty("bluemap_vip_claim_color", "#66AA00FF");
+                obj.addProperty("bluemap_vip_claim_color", "8A2BE2");
                 dirty = true;
             }
 
@@ -180,9 +180,9 @@ public final class ConfigIO {
         root.addProperty("bluemap_enable", true);
         root.addProperty("bluemap_show_homes", true);
         root.addProperty("bluemap_show_claims", true);
-        root.addProperty("bluemap_claim_color", "#4400FF00");
-        root.addProperty("bluemap_op_claim_color", "#66FFD700");
-        root.addProperty("bluemap_vip_claim_color", "#66AA00FF");
+        root.addProperty("bluemap_claim_color", "00FFFF");
+        root.addProperty("bluemap_op_claim_color", "FFD700");
+        root.addProperty("bluemap_vip_claim_color", "8A2BE2");
 
         com.google.gson.JsonArray muteLevels = new com.google.gson.JsonArray();
         muteLevels.add(60);

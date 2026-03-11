@@ -16,6 +16,7 @@ QuackedSMP is a server-side utility mod for **Minecraft 1.21.11**, supporting bo
 - **Teleportation**: `/home`, `/spawn`, and `/tpa` requests with configurable warmups.
 - **Chat Management**: Anti-evasion filters, whitelists, and automated announcements.
 - **End Reset**: Live reset of the End dimension and Dragon fight without server restart.
+- **BlueMap Support**: Optional, seamless sync of Claims and Player Homes to the web map.
 - **Configurable**: Features are toggleable and tunable via JSON config.
 
 ---
@@ -150,6 +151,23 @@ Commands with configurable warmups.
 
 ---
 
+## BlueMap Integration
+*Optional Feature. Will NOT crash the server if BlueMap is missing!*
+
+If the [BlueMap](https://bluemap.bluecolored.de/) mod is installed alongside QuackedSMP, it will automatically connect and provide live web-map support.
+
+### Synchronized Data
+- **Homes**: All offline and online player spawn points are drawn as house icons.
+- **Claims**: Land claims are rendered as geometric, colored boundaries.
+  - OP Claims are rendered in Gold (`#FFD700`).
+  - VIP Claims are rendered in Purple (`#8A2BE2`).
+  - Standard Claims are rendered in Cyan (`#00FFFF`).
+- **Optimization**: Syncs non-blocking every 10 minutes (6000 ticks) and implements in-memory `.dat` file caching for offline player data to protect disk I/O.
+
+Settings for map synchronization and colors can be toggled inside `quackedsmp.json`.
+
+---
+
 ## Configuration
 
 Located at `config/quackedsmp.json`. Hot-reloadable via `/smp reload`.
@@ -171,6 +189,11 @@ You can manage the server configuration in-game using a visual interface:
 | `tp_warmup` | Integer | `5` | Seconds to stand still before teleporting. |
 | `message_interval` | Integer | `300` | Seconds between periodic announcements. |
 | `allow_lava_wilderness`| Boolean | `false` | If true, allows placing lava outside claims. |
+| `bluemap_show_homes` | Boolean | `true` | Show player beds on map. |
+| `bluemap_show_claims`| Boolean | `true` | Show claimed regions on map. |
+| `bluemap_claim_color`| String | `00FFFF` | Hex color of claims. |
+| `bluemap_op_claim_color`| String | `FFD700` | Hex color of OP claims. |
+| `bluemap_vip_claim_color`| String| `8A2BE2` | Hex color of VIP claims. |
 | `mute_levels_minutes` | List | `[60,...]` | Mute durations (mins) for progressive bans (Tier 1-5). |
 | `welcome_message` | String | *See JSON* | Join message. |
 | `periodic_messages` | List | *See JSON* | Periodic broadcast messages. |
@@ -201,6 +224,11 @@ The `caps` section defines the maximum bonus a player receives when a parent cat
   "tp_warmup": 5,
   "message_interval": 300,
   "allow_lava_wilderness": false,
+  "bluemap_show_homes": true,
+  "bluemap_show_claims": true,
+  "bluemap_claim_color": "00FFFF",
+  "bluemap_op_claim_color": "FFD700",
+  "bluemap_vip_claim_color": "8A2BE2",
   "mute_levels_minutes": [
     60,
     120,

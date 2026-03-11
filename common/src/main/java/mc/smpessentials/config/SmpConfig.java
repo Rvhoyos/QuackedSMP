@@ -25,9 +25,9 @@ public final class SmpConfig {
     // BlueMap API uses java.awt.Color, let's just use hex strings like "#88FF0000"
     // (ARGB) or store integer RGB and float alpha). Let's use standard integer RGB,
     // and a float opacity.
-    public static String BLUEMAP_CLAIM_COLOR = "#4400FF00"; // semi-transparent green
-    public static String BLUEMAP_OP_CLAIM_COLOR = "#66FFD700"; // semi-transparent gold
-    public static String BLUEMAP_VIP_CLAIM_COLOR = "#66AA00FF"; // semi-transparent purple
+    public static String BLUEMAP_CLAIM_COLOR = "00FFFF"; // Cyan
+    public static String BLUEMAP_OP_CLAIM_COLOR = "FFD700"; // Gold
+    public static String BLUEMAP_VIP_CLAIM_COLOR = "8A2BE2"; // Purple
 
     // ---- Skills ----
     public static double SKILL_XP_EXPONENT = 1.5;
