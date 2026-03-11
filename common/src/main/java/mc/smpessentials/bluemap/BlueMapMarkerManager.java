@@ -31,16 +31,72 @@ import java.io.File;
 import java.util.*;
 import java.util.stream.Collectors;
 
+/**
+ * Manages the generation, initialization, and synchronization of BlueMap
+ * markers for QuackedSMP.
+ * 
+ * This class handles:
+ * 1. Player Homes (reading active configs and offline compressed NBT dat
+ * files).
+ * 2. Claimed Regions (drawing 2D shapes on the map corresponding to player land
+ * claims).
+ * 
+ * Notice: This class bypasses CSP issues with POIs by utilizing BlueMap's
+ * AssetStorage directly.
+ */
 public class BlueMapMarkerManager {
     private final BlueMapAPI api;
+
+    /**
+     * In-memory cache to prevent expensive, repeated NBT reads of offline player
+     * data.
+     * Maps a player's UUID to their last known home data and the file's last
+     * modified timestamp.
+     */
+    private final Map<UUID, CachedHome> homeCache = new java.util.concurrent.ConcurrentHashMap<>();
+
+    /**
+     * DTO containing parsed home data directly from an offline `.dat` file.
+     */
+    private static class CachedHome {
+        final long lastModified;
+        final String playerName;
+        final BlockPos pos;
+        final ResourceKey<Level> dim;
+
+        CachedHome(long lastModified, String playerName, BlockPos pos, ResourceKey<Level> dim) {
+            this.lastModified = lastModified;
+            this.playerName = playerName;
+            this.pos = pos;
+            this.dim = dim;
+        }
+    }
 
     public BlueMapMarkerManager(BlueMapAPI api) {
         this.api = api;
     }
 
+    private static final String HOUSE_SVG = "<svg width=\"64\" height=\"64\" viewBox=\"0 0 64 64\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\"><defs><linearGradient id=\"roofGradient\" x1=\"0%\" y1=\"0%\" x2=\"0%\" y2=\"100%\"><stop offset=\"0%\" style=\"stop-color:#FF5252;stop-opacity:1\"/><stop offset=\"100%\" style=\"stop-color:#D32F2F;stop-opacity:1\"/></linearGradient><linearGradient id=\"wallGradient\" x1=\"0%\" y1=\"0%\" x2=\"0%\" y2=\"100%\"><stop offset=\"0%\" style=\"stop-color:#F5F5F5;stop-opacity:1\"/><stop offset=\"100%\" style=\"stop-color:#E0E0E0;stop-opacity:1\"/></linearGradient><dropShadow id=\"shadow\" dx=\"0\" dy=\"2\" stdDeviation=\"2\" flood-color=\"#000000\" flood-opacity=\"0.3\"/></defs><rect x=\"12\" y=\"32\" width=\"40\" height=\"24\" fill=\"url(#wallGradient)\" stroke=\"#BDBDBD\" stroke-width=\"1\"/><path d=\"M8 32L32 12L56 32H8Z\" fill=\"url(#roofGradient)\" stroke=\"#C62828\" stroke-width=\"1\"/><rect x=\"28\" y=\"44\" width=\"8\" height=\"12\" fill=\"#5D4037\"/><circle cx=\"34\" cy=\"50\" r=\"1\" fill=\"#FFD200\"/><rect x=\"18\" y=\"38\" width=\"6\" height=\"6\" fill=\"#81D4FA\" stroke=\"#4FC3F7\" stroke-width=\"0.5\"/><rect x=\"40\" y=\"38\" width=\"6\" height=\"6\" fill=\"#81D4FA\" stroke=\"#4FC3F7\" stroke-width=\"0.5\"/><rect x=\"42\" y=\"18\" width=\"6\" height=\"8\" fill=\"#757575\"/></svg>";
+
+    /**
+     * Re-initializes SVG assets and forces an update of all tracked BlueMap marker
+     * sets based on SmpConfig settings.
+     * This iterates over all known maps managed by BlueMapAPI.
+     */
     public void updateAll() {
-        SmpUtilsMod.LOGGER.info("BlueMap Maps: " + api.getMaps().stream()
-                .map(m -> m.getId() + " (world: " + m.getWorld().getId() + ")").collect(Collectors.joining(", ")));
+        // Upload custom icons to BlueMap's Web App Asset Storage
+        for (BlueMapMap map : api.getMaps()) {
+            try {
+                if (!map.getAssetStorage().assetExists("quacksmp_house.svg")) {
+                    try (java.io.OutputStream os = map.getAssetStorage().writeAsset("quacksmp_house.svg")) {
+                        os.write(HOUSE_SVG.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+                    }
+                }
+            } catch (Exception e) {
+                SmpUtilsMod.LOGGER.error("Failed to write BlueMap quacksmp_house.svg asset for map " + map.getId(), e);
+            }
+        }
+
         if (SmpConfig.BLUEMAP_SHOW_HOMES) {
             updateHomes();
         }
@@ -49,6 +105,13 @@ public class BlueMapMarkerManager {
         }
     }
 
+    /**
+     * Reads through all active server players to find their respawn dimension and
+     * coordinates.
+     * Furthermore, probes the `world/playerdata/*.dat` folder to extract the
+     * respawn configuration
+     * of offline players to persist their home marker on the web map indefinitely.
+     */
     private void updateHomes() {
         MinecraftServer server = BlueMapIntegration.getServer();
         if (server == null)
@@ -87,6 +150,15 @@ public class BlueMapMarkerManager {
                         if (server.getPlayerList().getPlayer(uuid) != null)
                             continue;
 
+                        long lastModified = file.lastModified();
+                        CachedHome cached = homeCache.get(uuid);
+                        if (cached != null && cached.lastModified == lastModified) {
+                            if (cached.pos != null && cached.dim != null) {
+                                addHomeMarker(uuid, cached.playerName, cached.pos, cached.dim);
+                            }
+                            continue; // Skip the expensive NBT read, file hasn't changed
+                        }
+
                         CompoundTag nbt = NbtIo.readCompressed(file.toPath(), NbtAccounter.unlimitedHeap());
 
                         // Try to look up username from cache, fallback to UUID string
@@ -96,24 +168,23 @@ public class BlueMapMarkerManager {
                             playerName = profile.name();
                         }
 
-                        // 1.21.11 RespawnConfig structure: respawn -> respawn_data -> {dimension, pos:
-                        // [x, y, z]}
+                        boolean foundHome = false;
+
+                        // 1.21.11 RespawnConfig structure: respawn -> {dimension, pos: [x, y, z]}
                         var respawnOpt = nbt.getCompound("respawn");
                         if (respawnOpt.isPresent()) {
                             CompoundTag respawn = respawnOpt.get();
-                            var dataOpt = respawn.getCompound("respawn_data");
-                            if (dataOpt.isPresent()) {
-                                CompoundTag data = dataOpt.get();
-                                String dimStr = data.getString("dimension").orElse("");
-                                if (data.contains("pos")) {
-                                    int[] posArr = data.getIntArray("pos").orElse(new int[0]);
-                                    if (posArr.length >= 3) {
-                                        BlockPos pos = new BlockPos(posArr[0], posArr[1], posArr[2]);
-                                        Identifier id = Identifier.parse(dimStr);
-                                        ResourceKey<Level> dim = ResourceKey.create(
-                                                net.minecraft.core.registries.Registries.DIMENSION, id);
-                                        addHomeMarker(uuid, playerName, pos, dim);
-                                    }
+                            String dimStr = respawn.getString("dimension").orElse("");
+                            if (respawn.contains("pos")) {
+                                int[] posArr = respawn.getIntArray("pos").orElse(new int[0]);
+                                if (posArr.length >= 3) {
+                                    BlockPos pos = new BlockPos(posArr[0], posArr[1], posArr[2]);
+                                    Identifier id = Identifier.parse(dimStr);
+                                    ResourceKey<Level> dim = ResourceKey.create(
+                                            net.minecraft.core.registries.Registries.DIMENSION, id);
+                                    addHomeMarker(uuid, playerName, pos, dim);
+                                    homeCache.put(uuid, new CachedHome(lastModified, playerName, pos, dim));
+                                    foundHome = true;
                                 }
                             }
                         } else if (nbt.contains("SpawnX") && nbt.contains("SpawnY") && nbt.contains("SpawnZ")
@@ -128,6 +199,12 @@ public class BlueMapMarkerManager {
                             ResourceKey<Level> dim = ResourceKey.create(
                                     net.minecraft.core.registries.Registries.DIMENSION, id);
                             addHomeMarker(uuid, playerName, new BlockPos(x, y, z), dim);
+                            homeCache.put(uuid, new CachedHome(lastModified, playerName, new BlockPos(x, y, z), dim));
+                            foundHome = true;
+                        }
+
+                        if (!foundHome) {
+                            homeCache.put(uuid, new CachedHome(lastModified, playerName, null, null));
                         }
 
                     } catch (Exception e) {
@@ -138,6 +215,15 @@ public class BlueMapMarkerManager {
         }
     }
 
+    /**
+     * Internal utility to inject a single `POIMarker` depicting a House SVG onto
+     * the target dimension.
+     * 
+     * @param owner      The UUID of the player who owns this home.
+     * @param playerName The String name to display on the marker popup.
+     * @param pos        The BlockPos of the home (usually center of a bed).
+     * @param dimension  The resource key of the level (e.g. `minecraft:overworld`).
+     */
     private void addHomeMarker(UUID owner, String playerName, BlockPos pos, ResourceKey<Level> dimension) {
         // Find map for dimension
         String dimId = dimension.identifier().toString();
@@ -152,19 +238,23 @@ public class BlueMapMarkerManager {
         MarkerSet homesMarkerSet = mapOpt.get().getMarkerSets().computeIfAbsent("quacksmp_homes",
                 id -> MarkerSet.builder().label("Player Homes").defaultHidden(false).build());
 
+        String iconUrl = mapOpt.get().getAssetStorage().getAssetUrl("quacksmp_house.svg");
+
         POIMarker marker = POIMarker.builder()
                 .label(playerName + "'s Home")
                 .detail("<b>" + playerName + "</b>'s respawn point.")
                 .position(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5)
-                .icon("data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCA2NCA2NCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZGVmcz48bGluZWFyR3JhZGllbnQgaWQ9InJvb2ZHcmFkaWVudCIgeDE9IjAlIiB5MT0iMCUiIHgyPSIwJSIgeTI9IjEwMCUiPjxzdG9wIG9mZnNldD0iMCUiIHN0eWxlPSJzdG9wLWNvbG9yOiNGRjUyNTI7c3RvcC1vcGFjaXR5OjEiLz48c3RvcCBvZmZzZXQ9IjEwMCUiIHN0eWxlPSJzdG9wLWNvbG9yOiNEMzJGMkY7c3RvcC1vcGFjaXR5OjEiLz48L2xpbmVhckdyYWRpZW50PjxsaW5lYXJHcmFkaWVudCBpZD0id2FsbEdyYWRpZW50IiB4MT0iMCUiIHkxPSIwJSIgeDI9IjAlIiB5Mj0iMTAwJSI+PHN0b3Agb2Zmc2V0PSIwJSIgc3R5bGU9InN0b3AtY29sb3I6I0Y1RjVGNTtzdG9wLW9wYWNpdHk6MSIvPjxzdG9wIG9mZnNldD0iMTAwJSIgc3R5bGU9InN0b3AtY29sb3I6I0UwRTBFMDtzdG9wLW9wYWNpdHk6MSIvPjwvbGluZWFyR3JhZGllbnQ+PGRyb3BTaGFkb3cgaWQ9InNoYWRvdyIgZHg9IjAiIGR5PSIyIiBzdGREZXZpYXRpb249IjIiIGZsb29kLWNvbG9yPSIjMDAwMDAwIiBmbG9vZC1vcGFjaXR5PSIwLjMiLz48L2RlZnM+PHJlY3QgeD0iMTIiIHk9IjMyIiB3aWR0aD0iNDAiIGhlaWdodD0iMjQiIGZpbGw9InVybCgjd2FsbEdyYWRpZW50KSIgc3Ryb2tlPSIjQkRCREJEIiBzdHJva2Utd2lkdGg9IjEiLz48cGF0aCBkPSJNOCAzMkwzMiAxMkw1NiAzMkg4WiIgZmlsbD0idXJsKCNyb29mR3JhZGllbnQpIiBzdHJva2U9IiNDNjI4MjgiIHN0cm9rZS13aWR0aD0iMSIvPjxyZWN0IHg9IjI4IiB5PSI0NCIgd2lkdGg9IjgiIGhlaWdodD0iMTIiIGZpbGw9IiM1RDQwMzciLz48Y2lyY2xlIGN4PSIzNCIgY3k9IjUwIiByPSIxIiBmaWxsPSIjRkZEMjAwIi8+PHJlY3QgeD0iMTgiIHk9IjM4IiB3aWR0aD0iNiIgaGVpZ2h0PSI2IiBmaWxsPSIjODFENDRGQSIgc3Ryb2tlPSIjNEZDM0Y3IiBzdHJva2Utd2lkdGg9IjAuNSIvPjxyZWN0IHg9IjQwIiB5PSIzOCIgd2lkdGg9IjYiIGhlaWdodD0iNiIgZmlsbD0iIzgxRDRGQSIgc3Ryb2tlPSIjNEZDM0Y3IiBzdHJva2Utd2lkdGg9IjAuNSIvPjxyZWN0IHg9IjQyIiB5PSIxOCIgd2lkdGg9IjYiIGhlaWdodD0iOCIgZmlsbD0iIzc1NzU3NSIvPjwvc3ZnPg==",
-                        24, 24)
-                .anchor(new Vector2i(12, 12)) // Center of 24x24 icon
+                .icon(iconUrl, 16, 16)
                 .build();
 
         // Add marker. Key must be unique within the MarkerSet.
         homesMarkerSet.put(owner.toString() + "_home", marker);
     }
 
+    /**
+     * Parses the persistent claim data saved via `ClaimedSavedData` and renders
+     * the protected regions as 2D flat geometric boundaries on the surface level.
+     */
     private void updateClaims() {
         MinecraftServer server = BlueMapIntegration.getServer();
         if (server == null)
@@ -177,13 +267,6 @@ public class BlueMapMarkerManager {
         }
 
         for (ServerLevel level : server.getAllLevels()) {
-            ClaimManager mgr = ClaimManager.get(level);
-            // Since we can't easily access the raw data list without reflection or a public
-            // method,
-            // we will need to retrieve all claims. Wait, ClaimedSavedData has
-            // listClaims(level).
-            // Let's use
-            // mc.smpessentials.claims.storage.ClaimedSavedData.get(level).listClaims(level)
             var allClaims = mc.smpessentials.claims.storage.ClaimedSavedData.get(level).listClaims(level);
 
             Map<UUID, List<ClaimData>> claimsByOwner = new HashMap<>();
@@ -215,15 +298,8 @@ public class BlueMapMarkerManager {
                 Color lineColor = new Color(fillColor.getRed(), fillColor.getGreen(), fillColor.getBlue(), 1.0f); // Solid
                                                                                                                   // border
 
-                // MVP Grouping algorithm: for now, map each chunk individually to ensure
-                // correctness.
-                // Advanced polygon merging algorithm omitted for time complexity,
-                // drawing discrete ExtrudeMarkers per chunk scaling well enough.
-
-                // We will group contiguous chunks by their ChunkPos in the future.
-                // For now, render individual square regions. Wait, the user asked for named OP
-                // regions.
-                // Let's implement a simple flood-fill to group connected chunks.
+                // We group contiguous chunks together to draw them as discrete connected
+                // regions
                 List<Set<ChunkPos>> regions = findConnectedRegions(
                         claims.stream().map(c -> new ChunkPos(c.chunk())).collect(Collectors.toSet()));
 

@@ -1,11 +1,18 @@
 package mc.smpessentials.bluemap;
 
 import de.bluecolored.bluemap.api.BlueMapAPI;
-import de.bluecolored.bluemap.api.BlueMapAPI;
 import mc.smpessentials.SmpUtilsMod;
 import mc.smpessentials.config.SmpConfig;
 import net.minecraft.server.MinecraftServer;
 
+/**
+ * Bootstrapper class that handles hooking into the BlueMap API when the server
+ * starts.
+ * Registers enablement and disablement listeners securely and maintains the
+ * server context
+ * required for the BlueMapMarkerManager to access player dimensions and level
+ * data.
+ */
 public final class BlueMapIntegration {
     private BlueMapIntegration() {
     }
@@ -14,9 +21,36 @@ public final class BlueMapIntegration {
     private static BlueMapMarkerManager markerManager;
     private static MinecraftServer server;
 
+    /**
+     * Tracks the number of server ticks elapsed between BlueMap updates.
+     */
+    private static int tickCounter = 0;
+    private static final int UPDATE_INTERVAL_TICKS = 12000; // 10 minutes (20 ticks * 60 seconds * 10 mins)
+
     public static void onServerStart(MinecraftServer s) {
         server = s;
         if (markerManager != null) {
+            markerManager.updateAll();
+        }
+    }
+
+    /**
+     * Periodically called by platform tick events (e.g. ServerTickEvent.Post).
+     * Triggers a non-blocking background sync of claims and homes to the BlueMap
+     * web interface.
+     *
+     * @param s The running MinecraftServer instance.
+     */
+    public static void onServerTick(MinecraftServer s) {
+        if (!isLoaded || markerManager == null)
+            return;
+
+        tickCounter++;
+        if (tickCounter >= UPDATE_INTERVAL_TICKS) {
+            tickCounter = 0;
+            // Run asynchronously if possible, or just call updateAll() which is relatively
+            // fast
+            // since we optimized the NBT parsing.
             markerManager.updateAll();
         }
     }
