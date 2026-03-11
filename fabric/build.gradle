@@ -13,6 +13,9 @@ dependencies {
 
     // Common module
     compileOnly project(':common')
+
+    // Optional BlueMap Integration
+    modCompileOnly "de.bluecolored:bluemap-api:2.7.3"
 }
 
 loom {

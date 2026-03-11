@@ -100,6 +100,30 @@ public final class ConfigIO {
                 obj.addProperty("allow_lava_wilderness", false);
                 dirty = true;
             }
+            if (!obj.has("bluemap_enable")) {
+                obj.addProperty("bluemap_enable", true);
+                dirty = true;
+            }
+            if (!obj.has("bluemap_show_homes")) {
+                obj.addProperty("bluemap_show_homes", true);
+                dirty = true;
+            }
+            if (!obj.has("bluemap_show_claims")) {
+                obj.addProperty("bluemap_show_claims", true);
+                dirty = true;
+            }
+            if (!obj.has("bluemap_claim_color")) {
+                obj.addProperty("bluemap_claim_color", "#4400FF00");
+                dirty = true;
+            }
+            if (!obj.has("bluemap_op_claim_color")) {
+                obj.addProperty("bluemap_op_claim_color", "#66FFD700");
+                dirty = true;
+            }
+            if (!obj.has("bluemap_vip_claim_color")) {
+                obj.addProperty("bluemap_vip_claim_color", "#66AA00FF");
+                dirty = true;
+            }
 
             if (!obj.has("vips")) {
                 obj.add("vips", new com.google.gson.JsonArray());
@@ -153,6 +177,12 @@ public final class ConfigIO {
         root.addProperty("message_interval", 300);
         root.addProperty("vip_bonus_claims", 20);
         root.addProperty("allow_lava_wilderness", false);
+        root.addProperty("bluemap_enable", true);
+        root.addProperty("bluemap_show_homes", true);
+        root.addProperty("bluemap_show_claims", true);
+        root.addProperty("bluemap_claim_color", "#4400FF00");
+        root.addProperty("bluemap_op_claim_color", "#66FFD700");
+        root.addProperty("bluemap_vip_claim_color", "#66AA00FF");
 
         com.google.gson.JsonArray muteLevels = new com.google.gson.JsonArray();
         muteLevels.add(60);
@@ -308,6 +338,12 @@ public final class ConfigIO {
         root.addProperty("message_interval", SmpConfig.MESSAGE_INTERVAL);
         root.addProperty("vip_bonus_claims", SmpConfig.VIP_BONUS_CLAIMS);
         root.addProperty("allow_lava_wilderness", SmpConfig.ALLOW_LAVA_WILDERNESS);
+        root.addProperty("bluemap_enable", SmpConfig.BLUEMAP_ENABLE);
+        root.addProperty("bluemap_show_homes", SmpConfig.BLUEMAP_SHOW_HOMES);
+        root.addProperty("bluemap_show_claims", SmpConfig.BLUEMAP_SHOW_CLAIMS);
+        root.addProperty("bluemap_claim_color", SmpConfig.BLUEMAP_CLAIM_COLOR);
+        root.addProperty("bluemap_op_claim_color", SmpConfig.BLUEMAP_OP_CLAIM_COLOR);
+        root.addProperty("bluemap_vip_claim_color", SmpConfig.BLUEMAP_VIP_CLAIM_COLOR);
 
         com.google.gson.JsonArray muteLevels = new com.google.gson.JsonArray();
         for (int m : SmpConfig.MUTE_LEVELS_MINUTES)

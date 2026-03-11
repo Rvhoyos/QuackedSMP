@@ -17,6 +17,18 @@ public final class SmpConfig {
     public static java.util.List<Integer> MUTE_LEVELS_MINUTES = new java.util.ArrayList<>(
             java.util.List.of(60, 120, 240, 480, 1440));
 
+    // ---- BlueMap ----
+    public static boolean BLUEMAP_ENABLE = true;
+    public static boolean BLUEMAP_SHOW_HOMES = true;
+    public static boolean BLUEMAP_SHOW_CLAIMS = true;
+    // Format: "R,G,B,A" where color components are 0-255 (A is 0.0-1.0 or 0-255?
+    // BlueMap API uses java.awt.Color, let's just use hex strings like "#88FF0000"
+    // (ARGB) or store integer RGB and float alpha). Let's use standard integer RGB,
+    // and a float opacity.
+    public static String BLUEMAP_CLAIM_COLOR = "#4400FF00"; // semi-transparent green
+    public static String BLUEMAP_OP_CLAIM_COLOR = "#66FFD700"; // semi-transparent gold
+    public static String BLUEMAP_VIP_CLAIM_COLOR = "#66AA00FF"; // semi-transparent purple
+
     // ---- Skills ----
     public static double SKILL_XP_EXPONENT = 1.5;
     public static java.util.Map<String, Long> SKILL_COOLDOWNS = new java.util.HashMap<>();
@@ -85,6 +97,19 @@ public final class SmpConfig {
         if (root.has("allow_lava_wilderness")) {
             ALLOW_LAVA_WILDERNESS = root.get("allow_lava_wilderness").getAsBoolean();
         }
+
+        if (root.has("bluemap_enable"))
+            BLUEMAP_ENABLE = root.get("bluemap_enable").getAsBoolean();
+        if (root.has("bluemap_show_homes"))
+            BLUEMAP_SHOW_HOMES = root.get("bluemap_show_homes").getAsBoolean();
+        if (root.has("bluemap_show_claims"))
+            BLUEMAP_SHOW_CLAIMS = root.get("bluemap_show_claims").getAsBoolean();
+        if (root.has("bluemap_claim_color"))
+            BLUEMAP_CLAIM_COLOR = root.get("bluemap_claim_color").getAsString();
+        if (root.has("bluemap_op_claim_color"))
+            BLUEMAP_OP_CLAIM_COLOR = root.get("bluemap_op_claim_color").getAsString();
+        if (root.has("bluemap_vip_claim_color"))
+            BLUEMAP_VIP_CLAIM_COLOR = root.get("bluemap_vip_claim_color").getAsString();
 
         loadList(root, "vips", VIPS);
         loadList(root, "rules", RULES);

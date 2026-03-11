@@ -29,6 +29,9 @@ neoForge {
 dependencies {
     // Common module
     compileOnly project(':common')
+
+    // Optional BlueMap Integration
+    compileOnly "de.bluecolored:bluemap-api:2.7.3"
 }
 
 processResources {

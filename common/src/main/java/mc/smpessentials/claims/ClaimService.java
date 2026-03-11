@@ -44,6 +44,12 @@ public final class ClaimService {
         return false;
     }
 
+    /** Owner can set name. */
+    public static boolean setName(ServerPlayer player, ServerLevel level, ChunkPos pos, String name) {
+        var mgr = ClaimManager.get(level);
+        return mgr.setNameIfOwned(pos, player.getUUID(), name);
+    }
+
     /** Player claims for themselves OPs can still claim their own chunks. */
     public static Result claim(ServerPlayer player, ServerLevel level, ChunkPos pos) {
         // Spawn protection guard (vanilla-like square)

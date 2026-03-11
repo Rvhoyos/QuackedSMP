@@ -12,5 +12,6 @@ public final class SmpUtilsMod {
         LOGGER.info("QuackedSMP Plugin initialized");
         mc.smpessentials.config.SmpConfig.load();
         mc.smpessentials.skills.SkillEvents.init(); // Still logs init message
+        mc.smpessentials.bluemap.BlueMapIntegration.init();
     }
 }

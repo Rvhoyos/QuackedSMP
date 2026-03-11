@@ -119,6 +119,39 @@ public final class ClaimCommands {
                                             .withStyle(net.minecraft.ChatFormatting.GRAY));
                                     return 1;
                                 }))
+                        .then(Commands.literal("name")
+                                .then(Commands
+                                        .argument("claimName",
+                                                com.mojang.brigadier.arguments.StringArgumentType.string())
+                                        .executes(ctx -> {
+                                            ServerPlayer p = ctx.getSource().getPlayerOrException();
+                                            String name = com.mojang.brigadier.arguments.StringArgumentType
+                                                    .getString(ctx, "claimName");
+
+                                            boolean isVip = mc.smpessentials.config.SmpConfig.VIPS
+                                                    .contains(p.getName().getString());
+                                            boolean isOp = ((ServerLevel) p.level()).getServer().getPlayerList()
+                                                    .isOp(p.nameAndId());
+
+                                            if (!isVip && !isOp) {
+                                                ctx.getSource().sendFailure(
+                                                        Component.literal("Only VIPs and OPs can name their claims."));
+                                                return 0;
+                                            }
+
+                                            ChunkPos pos = p.chunkPosition();
+                                            ServerLevel lvl = p.level();
+
+                                            boolean success = ClaimService.setName(p, lvl, pos, name);
+                                            if (success) {
+                                                ctx.getSource().sendSystemMessage(
+                                                        Component.literal("Claim named to: " + name));
+                                            } else {
+                                                ctx.getSource()
+                                                        .sendFailure(Component.literal("You don't own this claim."));
+                                            }
+                                            return 1;
+                                        })))
                         .then(Commands.literal("info")
                                 .executes(ctx -> {
                                     ServerPlayer p = ctx.getSource().getPlayerOrException();

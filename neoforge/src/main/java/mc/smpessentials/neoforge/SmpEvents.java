@@ -29,6 +29,7 @@ public class SmpEvents {
     @SubscribeEvent
     public static void onServerStarted(ServerStartedEvent event) {
         ChatFilter.onServerStart(event.getServer());
+        mc.smpessentials.bluemap.BlueMapIntegration.onServerStart(event.getServer());
     }
 
     @SubscribeEvent
