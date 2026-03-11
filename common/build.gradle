@@ -13,4 +13,5 @@ dependencies {
     compileOnly "org.spongepowered:mixin:0.8.7"
     compileOnly "io.github.llamalad7:mixinextras-common:$rootProject.mixin_extras"
     compileOnly "com.mojang:brigadier:1.0.500"
+    compileOnly "de.bluecolored:bluemap-api:2.7.3"
 }

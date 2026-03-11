@@ -29,6 +29,7 @@ public class SmpEvents {
     @SubscribeEvent
     public static void onServerStarted(ServerStartedEvent event) {
         ChatFilter.onServerStart(event.getServer());
+        mc.smpessentials.bluemap.BlueMapIntegration.onServerStart(event.getServer());
     }
 
     @SubscribeEvent
@@ -42,6 +43,7 @@ public class SmpEvents {
     @SubscribeEvent
     public static void onServerTick(ServerTickEvent.Post event) {
         MessageScheduler.onServerTick(event.getServer());
+        mc.smpessentials.bluemap.BlueMapIntegration.onServerTick(event.getServer());
         for (ServerPlayer player : event.getServer().getPlayerList().getPlayers()) {
             TeleportScheduler.onPlayerTick(player);
         }

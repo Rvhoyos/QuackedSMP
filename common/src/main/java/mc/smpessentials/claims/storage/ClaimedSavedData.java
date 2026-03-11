@@ -73,7 +73,7 @@ public final class ClaimedSavedData extends SavedData {
         if (map.containsKey(key))
             return false;
 
-        ClaimData cd = new ClaimData(level.dimension(), key, owner, System.currentTimeMillis());
+        ClaimData cd = new ClaimData(level.dimension(), key, owner, Optional.empty(), System.currentTimeMillis());
         map.put(key, cd);
         claims.add(cd);
         claimCounts.merge(owner, 1, Integer::sum);
@@ -95,6 +95,31 @@ public final class ClaimedSavedData extends SavedData {
 
     public List<ClaimData> listClaims(ServerLevel level) {
         return dimIndex(level.dimension()).values().stream().collect(Collectors.toUnmodifiableList());
+    }
+
+    public boolean updateName(ServerLevel level, ChunkPos chunk, String name) {
+        long key = chunk.toLong();
+        var map = dimIndex(level.dimension());
+        ClaimData existing = map.get(key);
+        if (existing == null) {
+            return false;
+        }
+
+        ClaimData updated = new ClaimData(
+                existing.dimension(),
+                existing.chunk(),
+                existing.owner(),
+                Optional.ofNullable(name),
+                existing.createdAtMillis());
+
+        map.put(key, updated);
+
+        // Update the list reference
+        claims.remove(existing);
+        claims.add(updated);
+
+        setDirty();
+        return true;
     }
     // in mc.smpessentials.claims.storage.ClaimedSavedData
 

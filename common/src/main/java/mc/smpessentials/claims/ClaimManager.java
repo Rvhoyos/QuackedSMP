@@ -33,10 +33,18 @@ public final class ClaimManager {
         data.claim(level, pos, owner);
     }
 
+    public boolean setNameIfOwned(ChunkPos pos, UUID owner, String name) {
+        Optional<ClaimData> cd = data.getClaim(level, pos);
+        if (cd.isEmpty() || !cd.get().owner().equals(owner))
+            return false;
+        return data.updateName(level, pos, name);
+    }
+
     /** Owner-guarded unclaim: only removes if the same owner. */
     public boolean unclaimIfOwned(ChunkPos pos, UUID owner) {
         Optional<ClaimData> cd = data.getClaim(level, pos);
-        if (cd.isEmpty() || !cd.get().owner().equals(owner)) return false;
+        if (cd.isEmpty() || !cd.get().owner().equals(owner))
+            return false;
         return data.unclaim(level, pos);
     }
 

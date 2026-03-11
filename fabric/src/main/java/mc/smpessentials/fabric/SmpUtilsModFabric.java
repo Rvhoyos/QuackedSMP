@@ -24,6 +24,7 @@ public final class SmpUtilsModFabric implements ModInitializer {
         // 2. Server Started
         net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents.SERVER_STARTED.register(server -> {
             mc.smpessentials.chatfilter.ChatFilter.onServerStart(server);
+            mc.smpessentials.bluemap.BlueMapIntegration.onServerStart(server);
         });
 
         // 3. Player Join
@@ -35,6 +36,7 @@ public final class SmpUtilsModFabric implements ModInitializer {
         // 4. Server Tick + Player Tick processing
         net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents.END_SERVER_TICK.register(server -> {
             mc.smpessentials.events.MessageScheduler.onServerTick(server);
+            mc.smpessentials.bluemap.BlueMapIntegration.onServerTick(server);
             for (net.minecraft.server.level.ServerPlayer player : server.getPlayerList().getPlayers()) {
                 mc.smpessentials.teleport.TeleportScheduler.onPlayerTick(player);
             }
