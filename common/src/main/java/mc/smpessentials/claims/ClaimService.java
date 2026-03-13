@@ -5,7 +5,6 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.server.dedicated.DedicatedServer;
-import net.minecraft.world.level.Level;
 import net.minecraft.core.BlockPos;
 
 import java.util.Optional;
@@ -52,20 +51,38 @@ public final class ClaimService {
 
     /** Player claims for themselves OPs can still claim their own chunks. */
     public static Result claim(ServerPlayer player, ServerLevel level, ChunkPos pos) {
+        UUID me = player.getUUID();
+        // OP bypass: allow server operators to ignore the per-player MAX_PER_PLAYER cap
+        // AND bypass spawn protection.
+        boolean isOp = ((ServerLevel) player.level()).getServer().getPlayerList().isOp(player.nameAndId());
+
         // Spawn protection guard (vanilla-like square)
-        if (level.dimension() == Level.OVERWORLD) {
-            BlockPos spawn = level.getRespawnData().pos();
+        if (!isOp && level.dimension() == level.getRespawnData().dimension()) {
+            net.minecraft.world.level.storage.LevelData.RespawnData respawnData = level.getRespawnData();
+            BlockPos spawn = respawnData.pos();
             int radius = (((ServerLevel) player.level()).getServer() instanceof DedicatedServer ds)
                     ? ds.spawnProtectionRadius()
-                    : 0; // vanilla API
+                    : 0;
+
             if (radius > 0) {
-                int cx = pos.getMiddleBlockX();
-                int cz = pos.getMiddleBlockZ();
-                int dx = Math.abs(cx - spawn.getX());
-                int dz = Math.abs(cz - spawn.getZ());
-                // square, matches vanilla behavior
-                if (Math.max(dx, dz) <= radius)
+                // Inclusive chunk check: does any part of the 16x16 chunk overlap the
+                // [spawn-radius, spawn+radius] square?
+                int chunkMinX = pos.getMinBlockX();
+                int chunkMaxX = pos.getMaxBlockX();
+                int chunkMinZ = pos.getMinBlockZ();
+                int chunkMaxZ = pos.getMaxBlockZ();
+
+                int protMinX = spawn.getX() - radius;
+                int protMaxX = spawn.getX() + radius;
+                int protMinZ = spawn.getZ() - radius;
+                int protMaxZ = spawn.getZ() + radius;
+
+                boolean overlapX = Math.max(chunkMinX, protMinX) <= Math.min(chunkMaxX, protMaxX);
+                boolean overlapZ = Math.max(chunkMinZ, protMinZ) <= Math.min(chunkMaxZ, protMaxZ);
+
+                if (overlapX && overlapZ) {
                     return Result.SPAWN_PROTECTED;
+                }
             }
             // Also block exact spawn chunk for safety
             if (pos.equals(new ChunkPos(spawn)))
@@ -77,10 +94,6 @@ public final class ClaimService {
         if (mgr.isClaimed(pos))
             return Result.ALREADY_CLAIMED;
 
-        UUID me = player.getUUID();
-        // OP bypass: allow server operators to ignore the per-player MAX_PER_PLAYER
-        // cap.
-        boolean isOp = ((ServerLevel) player.level()).getServer().getPlayerList().isOp(player.nameAndId());
         int limit = mc.smpessentials.config.SmpConfig.MAX_CLAIMS;
         if (mc.smpessentials.config.SmpConfig.VIPS.contains(player.getName().getString())) {
             limit += mc.smpessentials.config.SmpConfig.VIP_BONUS_CLAIMS;
