@@ -21,10 +21,13 @@ public final class SmpUtilsModFabric implements ModInitializer {
                             environment);
                 });
 
-        // 2. Server Started
+        // 2. Server Started/Stopping
         net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents.SERVER_STARTED.register(server -> {
             mc.smpessentials.chatfilter.ChatFilter.onServerStart(server);
             mc.smpessentials.bluemap.BlueMapIntegration.onServerStart(server);
+        });
+        net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents.SERVER_STOPPING.register(server -> {
+            mc.smpessentials.commands.EndResetLogic.onServerStopping(server);
         });
 
         // 3. Player Join
