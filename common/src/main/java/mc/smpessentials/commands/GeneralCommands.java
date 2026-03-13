@@ -192,13 +192,14 @@ public class GeneralCommands {
 
         private static int resetEndWorld(CommandContext<CommandSourceStack> ctx) {
                 int result = EndResetLogic.resetWorld(ctx.getSource().getServer());
-                if (result == 1) {
+                if (result == 2) {
                         ctx.getSource().sendSuccess(() -> Component.literal(
-                                        "\u00a7aEnd dimension has been queued for reset! Region files cleared."), true);
+                                        "\u00a7eEnd dimension queued for reset. \u00a7cRestart the server whenever you're ready to regenerate the terrain."),
+                                        true);
                 } else if (result == 0) {
                         ctx.getSource().sendFailure(Component.literal("Could not find the End dimension."));
                 } else {
-                        ctx.getSource().sendFailure(Component.literal("An error occurred while clearing End files."));
+                        ctx.getSource().sendFailure(Component.literal("An error occurred while queuing End reset."));
                 }
                 return result;
         }

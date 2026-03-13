@@ -1,45 +1,66 @@
 package mc.smpessentials.commands;
 
-import net.minecraft.core.BlockPos;
-import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.dimension.end.EndDragonFight;
 import net.minecraft.world.level.storage.LevelResource;
 
-import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.boss.enderdragon.EnderDragon;
+import net.minecraft.world.entity.boss.enderdragon.EndCrystal;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Comparator;
-import java.util.List;
 
+/**
+ * Logic for resetting the End dimension.
+ * Implements a "Delayed Reset" strategy:
+ * 1. Dragon-only resets are performed live without kicking players.
+ * 2. World terrain resets are queued via a marker file and performed during server shutdown
+ *    to avoid file-lock issues and provide a seamless player experience.
+ */
 public class EndResetLogic {
 
+    /**
+     * Resets the Ender Dragon fight logic live.
+     * This method resets the internal state of the current fight instance,
+     * discards existing dragon/crystals, and triggers a respawn.
+     * 
+     * @param server The Minecraft server instance.
+     * @param activePortal Whether the exit portal should be generated in its active state.
+     * @return 1 if successful, 0 if End level not found, -1 on error.
+     */
     public static int resetDragon(MinecraftServer server, boolean activePortal) {
-        ServerLevel endLevel = server.getLevel(Level.END);
-        if (endLevel == null)
+        Level endLevel = server.getLevel(Level.END);
+        if (endLevel == null || !(endLevel instanceof ServerLevel))
             return 0;
 
-        EndDragonFight fight = endLevel.getDragonFight();
+        ServerLevel sEndLevel = (ServerLevel) endLevel;
+
+
+        // 2. Discard existing dragon and crystals and CLEAR boss bar
+        cleanUpOldFight(sEndLevel);
+        discardEndEntities(sEndLevel);
+
+        EndDragonFight fight = sEndLevel.getDragonFight();
         if (fight == null)
             return 0;
 
         try {
-            // 1. Manage the exit portal blocks
+            // 3. Manage the exit portal blocks
             invokePrivateMethod(fight, "spawnExitPortal", new Class[] { boolean.class }, new Object[] { activePortal });
 
-            // 2. Reset the internal state
+            // 4. Reset the internal state
             setPrivateField(fight, "dragonKilled", false);
             setPrivateField(fight, "previouslyKilled", false);
             setPrivateField(fight, "dragonUUID", null);
             setPrivateField(fight, "needsStateScanning", false);
             setPrivateField(fight, "respawnStage", null);
 
-            // 3. Reset crystals on spikes
+            // 5. Reset crystals on spikes
             fight.resetSpikeCrystals();
 
             return 1;
@@ -49,134 +70,106 @@ public class EndResetLogic {
         }
     }
 
+    /**
+     * Queues the End dimension for a full world reset.
+     * This marks the dimension for deletion on shutdown, clears existing entities live,
+     * and resets the global fight state in WorldData so that the next server startup
+     * begins a fresh, natural dragon fight.
+     * 
+     * @param server The Minecraft server instance.
+     * @return 2 if successfully queued, 0 if End level not found, -1 on error.
+     */
     public static int resetWorld(MinecraftServer server) {
-        ServerLevel endLevel = server.getLevel(Level.END);
-        if (endLevel == null)
+        Level endLevel = server.getLevel(Level.END);
+        if (endLevel == null || !(endLevel instanceof ServerLevel))
             return 0;
 
-        // 1. Teleport players out
-        List<ServerPlayer> playersInEnd = endLevel.players();
-        ServerLevel overworld = server.overworld();
-        BlockPos spawn = overworld.getRespawnData().pos();
-
-        for (ServerPlayer player : playersInEnd) {
-            BlockPos safe = player.adjustSpawnLocation(overworld, spawn);
-            player.teleportTo(overworld, safe.getX() + 0.5, safe.getY(), safe.getZ() + 0.5, java.util.Set.of(),
-                    player.getYRot(), player.getXRot(), false);
-            player.sendSystemMessage(Component.literal("\u00a7eThe End is being reset. Teleporting to spawn..."));
-        }
+        ServerLevel sEndLevel = (ServerLevel) endLevel;
 
         try {
-            // 2. Flush all IO and wait for completion
-            endLevel.save(null, true, false);
+            // 1. Reset Global WorldData state immediately (saved on next save)
+            resetWorldDataDragonState(server);
 
-            Object chunkSource = endLevel.getChunkSource();
-            Field chunkMapField = chunkSource.getClass().getDeclaredField("chunkMap");
-            chunkMapField.setAccessible(true);
-            Object chunkMap = chunkMapField.get(chunkSource);
+            // 2. Clear entities and boss bar live (stops the fight ticking)
+            cleanUpOldFight(sEndLevel);
+            discardEndEntities(sEndLevel);
 
-            // Wait for activeWrites to finish (AtomicInteger)
-            Field activeWritesField = chunkMap.getClass().getDeclaredField("activeChunkWrites");
-            activeWritesField.setAccessible(true);
-            java.util.concurrent.atomic.AtomicInteger activeWrites = (java.util.concurrent.atomic.AtomicInteger) activeWritesField
-                    .get(chunkMap);
+            // 3. Mark the DIM1 folder for deletion on shutdown
+            Path dim1Dir = server.getWorldPath(LevelResource.ROOT).resolve("DIM1");
+            Path marker = dim1Dir.resolve("RESET_PENDING");
+            if (!Files.exists(dim1Dir)) Files.createDirectories(dim1Dir);
+            Files.createFile(marker);
 
-            int timeout = 100; // ~5 seconds
-            while (activeWrites.get() > 0 && timeout > 0) {
-                Thread.sleep(50);
-                timeout--;
-            }
+            // 4. Trigger a live dragon fight reset in the current level too
+            resetDragon(server, true);
 
-            // 3. Force Unload all chunks
-            Field updatingMapField = chunkMap.getClass().getDeclaredField("updatingChunkMap");
-            updatingMapField.setAccessible(true);
-            it.unimi.dsi.fastutil.longs.Long2ObjectMap<?> updatingMap = (it.unimi.dsi.fastutil.longs.Long2ObjectMap<?>) updatingMapField
-                    .get(chunkMap);
-
-            Field toDropField = chunkMap.getClass().getDeclaredField("toDrop");
-            toDropField.setAccessible(true);
-            it.unimi.dsi.fastutil.longs.LongSet toDrop = (it.unimi.dsi.fastutil.longs.LongSet) toDropField
-                    .get(chunkMap);
-
-            // Add all currently loaded chunks to the drop list
-            toDrop.addAll(updatingMap.keySet());
-
-            // Process unloads until everything is out of updatingMap
-            java.lang.reflect.Method processUnloads = chunkMap.getClass().getDeclaredMethod("processUnloads",
-                    java.util.function.BooleanSupplier.class);
-            processUnloads.setAccessible(true);
-
-            // Call it until maps are empty
-            int unloadAttempts = 10;
-            while (!updatingMap.isEmpty() && unloadAttempts-- > 0) {
-                processUnloads.invoke(chunkMap, (java.util.function.BooleanSupplier) () -> true);
-                Thread.sleep(10);
-            }
-
-            // 4. Delete dimension file contents safely
-            Path worldDir = server.getWorldPath(LevelResource.ROOT);
-            Path dim1Dir = worldDir.resolve("DIM1");
-
-            if (Files.exists(dim1Dir)) {
-                // We delete contents but keep directories to avoid background IO errors
-                deleteDirectoryContents(dim1Dir.resolve("region"));
-                deleteDirectoryContents(dim1Dir.resolve("data"));
-                deleteDirectoryContents(dim1Dir.resolve("poi"));
-            }
-
-            // 5. Reset Dragon Fight state / Re-initialize
-            Class<?> dataClass = net.minecraft.world.level.dimension.end.EndDragonFight.Data.class;
-            java.lang.reflect.Constructor<?> dataConst = dataClass.getConstructors()[0];
-            Object[] dataArgs = new Object[dataConst.getParameterCount()];
-            for (int i = 0; i < dataArgs.length; i++) {
-                Class<?> pType = dataConst.getParameterTypes()[i];
-                if (pType == boolean.class)
-                    dataArgs[i] = false;
-                else if (pType == java.util.Optional.class)
-                    dataArgs[i] = java.util.Optional.empty();
-                else
-                    dataArgs[i] = null;
-            }
-            net.minecraft.world.level.dimension.end.EndDragonFight.Data emptyData = (net.minecraft.world.level.dimension.end.EndDragonFight.Data) dataConst
-                    .newInstance(dataArgs);
-
-            server.getWorldData().setEndDragonFightData(emptyData);
-
-            // Re-instantiate dragon fight in the Level
-            long worldSeed = server.getWorldData().worldGenOptions().seed();
-            EndDragonFight newFight = new EndDragonFight(endLevel, worldSeed, emptyData);
-
-            Field dragonFightField = ServerLevel.class.getDeclaredField("dragonFight");
-            dragonFightField.setAccessible(true);
-            dragonFightField.set(endLevel, newFight);
-
-            // 6. Re-activate portal precisely using Vanilla logic
-            // Force-load chunk (0,0) first to ensure generation is ready
-            endLevel.getChunkSource().getChunk(0, 0, net.minecraft.world.level.chunk.status.ChunkStatus.FULL, true);
-
-            // Instead of guessing, we use the fight's own scanning logic
-            // findExitPortal() returns BlockPatternMatch and sets the internal
-            // portalLocation field
-            Object match = invokePrivateMethod(newFight, "findExitPortal", new Class[0], new Object[0]);
-
-            if (match != null) {
-                // Vanilla pattern match sets portalLocation to the TOP bedrock block (Y+3).
-                // But spawnExitPortal/place expects the portal level (origin Y).
-                // We must shift it down by 3 to achieve perfect alignment/overlap.
-                BlockPos topPos = (BlockPos) getPrivateField(newFight, "portalLocation");
-                if (topPos != null) {
-                    setPrivateField(newFight, "portalLocation", topPos.below(3));
-                }
-            }
-
-            // Now call spawnExitPortal(true) - if still null, it will vanilla-scan the
-            // fresh chunk.
-            invokePrivateMethod(newFight, "spawnExitPortal", new Class[] { boolean.class }, new Object[] { true });
-
-            return 1;
+            return 2; // Returns "Queued for restart"
         } catch (Exception e) {
             e.printStackTrace();
             return -1;
+        }
+    }
+
+    /**
+     * Callback for server shutdown events.
+     * Checks for the presence of the RESET_PENDING marker file and deletes
+     * the End's region, data, and poi files if found.
+     * 
+     * @param server The Minecraft server instance.
+     */
+    public static void onServerStopping(MinecraftServer server) {
+        try {
+            Path dim1Dir = server.getWorldPath(LevelResource.ROOT).resolve("DIM1");
+            Path marker = dim1Dir.resolve("RESET_PENDING");
+            
+            if (Files.exists(marker)) {
+                System.out.println("[QuackedSMP] Performing scheduled End dimension reset...");
+                
+                // At this point, the server is shutting down, so we can attempt to delete files
+                deleteDirectoryContents(dim1Dir.resolve("region"));
+                deleteDirectoryContents(dim1Dir.resolve("data"));
+                deleteDirectoryContents(dim1Dir.resolve("poi"));
+                
+                Files.deleteIfExists(marker);
+                System.out.println("[QuackedSMP] End dimension reset complete.");
+            }
+        } catch (Exception e) {
+            System.err.println("[QuackedSMP] Failed to perform End reset on shutdown: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Cleans up the boss bar and fight events for the current End level.
+     */
+    private static void cleanUpOldFight(Level endLevel) {
+        if (!(endLevel instanceof ServerLevel))
+            return;
+        EndDragonFight fight = ((ServerLevel) endLevel).getDragonFight();
+        if (fight != null) {
+            try {
+                Object bossEvent = getPrivateField(fight, "dragonEvent");
+                if (bossEvent != null) {
+                    java.lang.reflect.Method removeAll = bossEvent.getClass().getMethod("removeAllPlayers");
+                    removeAll.invoke(bossEvent);
+                }
+            } catch (Exception e) {
+                // Ignore if field changed, we tried our best
+            }
+        }
+    }
+
+
+    /**
+     * Discards all dragon and crystal entities in the level.
+     */
+    private static void discardEndEntities(Level endLevel) {
+        if (!(endLevel instanceof ServerLevel))
+            return;
+        for (Entity entity : ((ServerLevel) endLevel).getAllEntities()) {
+            if (entity instanceof EnderDragon ||
+                    entity instanceof EndCrystal) {
+                entity.discard();
+            }
         }
     }
 
@@ -201,31 +194,74 @@ public class EndResetLogic {
         return method.invoke(obj, args);
     }
 
-    private static void deleteDirectoryContents(Path path) throws IOException {
+    private static boolean deleteDirectoryContents(Path path) throws IOException {
         if (!Files.exists(path))
-            return;
+            return true;
+
+        final java.util.concurrent.atomic.AtomicBoolean allDeleted = new java.util.concurrent.atomic.AtomicBoolean(
+                true);
         try (java.util.stream.Stream<Path> stream = Files.list(path)) {
             stream.sorted(Comparator.reverseOrder())
                     .forEach(p -> {
                         try {
                             if (Files.isDirectory(p)) {
-                                deleteDirectory(p); // Recursive delete for sub-dirs
+                                allDeleted.set(allDeleted.get() && deleteDirectory(p));
                             } else {
                                 Files.delete(p);
                             }
                         } catch (IOException e) {
-                            e.printStackTrace();
+                            allDeleted.set(false);
+                            System.err.println("Could not delete file: " + p.toAbsolutePath());
                         }
                     });
         }
+        return allDeleted.get();
     }
 
-    private static void deleteDirectory(Path path) throws IOException {
+    private static boolean deleteDirectory(Path path) {
         if (!Files.exists(path))
-            return;
-        Files.walk(path)
-                .sorted(Comparator.reverseOrder())
-                .map(Path::toFile)
-                .forEach(File::delete);
+            return true;
+        try {
+            Files.walk(path)
+                    .sorted(Comparator.reverseOrder())
+                    .map(Path::toFile)
+                    .forEach(f -> {
+                        if (!f.delete()) {
+                            System.err.println("Could not delete file/dir: " + f.getAbsolutePath());
+                        }
+                    });
+            return !Files.exists(path);
+        } catch (IOException e) {
+            return false;
+        }
+    }
+
+    /**
+     * Resets the global EndDragonFight.Data in the server's WorldData.
+     * This ensures that when the server restarts, it initializes a fresh fight
+     * as if the dragon had never been killed.
+     */
+    private static void resetWorldDataDragonState(MinecraftServer server) {
+        try {
+            Class<?> dataClass = net.minecraft.world.level.dimension.end.EndDragonFight.Data.class;
+            java.lang.reflect.Constructor<?> dataConst = dataClass.getConstructors()[0];
+            Object[] dataArgs = new Object[dataConst.getParameterCount()];
+            for (int i = 0; i < dataArgs.length; i++) {
+                Class<?> pType = dataConst.getParameterTypes()[i];
+                if (pType == boolean.class) {
+                    dataArgs[i] = false;
+                } else if (pType == java.util.Optional.class) {
+                    dataArgs[i] = java.util.Optional.empty();
+                } else {
+                    dataArgs[i] = null;
+                }
+            }
+            net.minecraft.world.level.dimension.end.EndDragonFight.Data emptyData = 
+                (net.minecraft.world.level.dimension.end.EndDragonFight.Data) dataConst.newInstance(dataArgs);
+
+            server.getWorldData().setEndDragonFightData(emptyData);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }
