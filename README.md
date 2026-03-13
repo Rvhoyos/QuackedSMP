@@ -15,7 +15,7 @@ QuackedSMP is a server-side utility mod for **Minecraft 1.21.11**, supporting bo
 - **Land Claims**: Chunk-based protection.
 - **Teleportation**: `/home`, `/spawn`, and `/tpa` requests with configurable warmups.
 - **Chat Management**: Anti-evasion filters, whitelists, and automated announcements.
-- **End Reset**: Live reset of the End dimension and Dragon fight without server restart.
+- **End Reset**: Reset the Dragon fight live, or queue a full dimension reset for the next restart.
 - **BlueMap Support**: Optional, seamless sync of Claims and Player Homes to the web map.
 - **Configurable**: Features are toggleable and tunable via JSON config.
 
@@ -287,7 +287,7 @@ The `caps` section defines the maximum bonus a player receives when a parent cat
 | `/tpr <player>` | Request teleport | Everyone |
 | `/tpa <player>` | Accept or deny teleport | Everyone |
 | `/smp end reset dragon` | Reset Ender Dragon fight | OP |
-| `/smp end reset world` | Live reset End dimension | OP |
+| `/smp end reset world` | Queue End dimension reset for next restart | OP |
 | `/skills` | Open skills GUI | Everyone |
 
 
