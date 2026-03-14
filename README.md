@@ -288,6 +288,7 @@ The `caps` section defines the maximum bonus a player receives when a parent cat
 | `/tpa <player>` | Accept or deny teleport | Everyone |
 | `/smp end reset dragon` | Reset Ender Dragon fight | OP |
 | `/smp end reset world` | Queue End dimension reset for next restart | OP |
+| `/punish <player>` | Wipe player inventory and all items in their claims | OP |
 | `/skills` | Open skills GUI | Everyone |
 
 

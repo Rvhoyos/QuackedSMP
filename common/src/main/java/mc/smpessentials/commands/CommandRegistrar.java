@@ -44,6 +44,7 @@ public final class CommandRegistrar {
                 mc.smpessentials.commands.GeneralCommands.register(dispatcher);
                 mc.smpessentials.teleport.TeleportCommands.register(dispatcher);
                 mc.smpessentials.commands.SkillCommands.register(dispatcher);
+                mc.smpessentials.punish.PunishCommand.register(dispatcher);
                 dispatcher.register(net.minecraft.commands.Commands.literal("sos")
                                 .requires(src -> src.getEntity() instanceof net.minecraft.server.level.ServerPlayer)
                                 .executes(ctx -> mc.smpessentials.commands.SosCommand.execute(ctx.getSource())));

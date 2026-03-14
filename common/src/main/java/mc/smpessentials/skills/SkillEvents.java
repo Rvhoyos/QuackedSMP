@@ -222,6 +222,13 @@ public final class SkillEvents {
             ServerLevel sl = (ServerLevel) sp.level();
             SkillData data = SkillData.get(sl);
             updateParentBuffs(sp, data);
+
+            // Apply queued punishments if any
+            mc.smpessentials.punish.PunishManager pm = mc.smpessentials.punish.PunishManager.get(sp.level().getServer());
+            if (pm.isPending(sp.getUUID())) {
+                pm.punish(sp);
+                sp.sendSystemMessage(net.minecraft.network.chat.Component.literal("\u00a7cYour inventory and claims were cleared while you were away due to a recently applied punishment."));
+            }
         }
     }
 

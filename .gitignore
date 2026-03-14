@@ -3,6 +3,7 @@
 **/out/
 **/bin/
 .gradle/
+.gradle-vscode/
 
 # --- Dev runtime & logs (Minecraft) ---
 **/run/
