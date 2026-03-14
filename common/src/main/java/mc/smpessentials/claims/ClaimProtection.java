@@ -11,7 +11,6 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.tags.BlockTags;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.decoration.ArmorStand;
 import net.minecraft.world.entity.decoration.HangingEntity;
@@ -33,15 +32,8 @@ public final class ClaimProtection {
     public static boolean onBlockBreak(Level level, BlockPos pos, BlockState state, Player player) {
         if (player instanceof ServerPlayer sp) {
             return ClaimAccess.canModify(sp, (ServerLevel) level, new ChunkPos(pos));
-        } else {
-            if (level instanceof ServerLevel sl && ClaimedSavedData.get(sl).isClaimed(sl, new ChunkPos(pos))) {
-                if (state.is(BlockTags.CROPS) || state.is(BlockTags.LEAVES)) {
-                    return true;
-                }
-                return false;
-            }
-            return true;
         }
+        return true;
     }
 
     public static boolean onBlockPlace(Level level, BlockPos pos, BlockState state, Entity placer) {

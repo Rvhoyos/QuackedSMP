@@ -299,6 +299,7 @@ public final class ConfigIO {
         caps.addProperty("knowledge_xp", 1.0);
         caps.addProperty("double_drop", 0.5);
         caps.addProperty("defense_armor", 10.0);
+        caps.addProperty("safe_landing", 1.0);
         sk.add("caps", caps);
 
         return sk;
@@ -403,6 +404,7 @@ public final class ConfigIO {
         caps.addProperty("knowledge_xp", SmpConfig.CAP_KNOWLEDGE_XP);
         caps.addProperty("double_drop", SmpConfig.CAP_DOUBLE_DROP);
         caps.addProperty("defense_armor", SmpConfig.CAP_DEFENSE_ARMOR);
+        caps.addProperty("safe_landing", SmpConfig.CAP_SAFE_LANDING);
         skills.add("caps", caps);
 
         root.add("skills", skills);

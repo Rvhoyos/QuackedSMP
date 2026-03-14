@@ -84,7 +84,7 @@ Abilities unlock at **Level 10** by default (configurable per skill).
 - **Damage Reduction**: Flat damage mitigation from Defense level.
 - **Leaf Blower**: Woodcutting clears surrounding leaves automatically.
 - **Auto Replant**: Farming automatically replants crops on harvest.
-- **Safe Landing**: Agility negates fall damage at high levels.
+- **Safe Landing**: Agility absorbs fall damage proportionally to level (linear scale up to cap at Level 100).
 
 
 ---
@@ -187,7 +187,7 @@ You can manage the server configuration in-game using a visual interface:
 | `skills.xp_exponent` | Double | `1.5` | Exponential factor for skill leveling. |
 | `skills.ability_unlock_levels` | Map | `10*` | Map of skill names to level required for ability unlock. Defaults: Trading (1), Defense (5), Agility (3), others (10). |
 | `skills.cooldowns` | Map | *Varies* | Base cooldowns (seconds) for abilities. |
-| `skills.caps` | Map | *See JSON* | Maximum values at Level 100 for parent buffs and double drop. |
+| `skills.caps` | Map | *See JSON* | Maximum values at Level 100 for parent buffs and per-skill passives. |
 
 ### Caps Explanation
 
@@ -199,6 +199,7 @@ The `caps` section defines the maximum bonus a player receives when a parent cat
 - **`knowledge_xp` (1.0)**: +100% XP Orb gain at Level 100.
 - **`double_drop` (0.5)**: Max 50% double drop chance (Mining/Woodcutting) at Industrial Level 100.
 - **`defense_armor` (10.0)**: Max +10 Armor Points at Defense Level 100.
+- **`safe_landing` (1.0)**: Max fraction of fall damage absorbed at Agility Level 100 (1.0 = full negation, scales linearly).
 
 ### Complete JSON Example
 
@@ -266,7 +267,8 @@ The `caps` section defines the maximum bonus a player receives when a parent cat
       "combat_damage": 1.0,
       "knowledge_xp": 1.0,
       "double_drop": 0.5,
-      "defense_armor": 10.0
+      "defense_armor": 10.0,
+      "safe_landing": 1.0
     }
   }
 }

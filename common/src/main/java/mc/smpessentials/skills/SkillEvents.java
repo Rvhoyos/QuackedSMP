@@ -8,6 +8,7 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.BlockTags;
+import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
@@ -151,11 +152,57 @@ public final class SkillEvents {
                     sp.displayClientMessage(Component.literal("\u00a7c\u2694 Bleed!"), true);
                 }
 
-                // Combat parent damage buff applied via attribute would be better,
-                // but for simplicity we don't modify the event amount here.
-                // Parent buff is handled in ActiveAbilities or a separate tick.
+                // Combat parent damage buff is applied as a persistent attribute modifier
+                // in updateParentBuffs() — no need to modify the event amount here.
             }
         }
+    }
+
+    // ========== SAFE LANDING ==========
+
+    /**
+     * Guards against re-entrant fall damage processing when we re-apply reduced damage.
+     * Set to true while the reduced-damage re-call is in flight.
+     */
+    public static final ThreadLocal<Boolean> SAFE_LANDING_GUARD = ThreadLocal.withInitial(() -> false);
+
+    /**
+     * Intercepts fall damage and absorbs a fraction proportional to Agility level.
+     * At Agility 100, absorbs up to {@code CAP_SAFE_LANDING} (default 1.0 = full negation).
+     * Scales linearly: at level 50 with default cap, absorbs 50%.
+     *
+     * <p>When partially absorbed, re-applies the reduced amount via {@code entity.hurt()}
+     * guarded by {@link #SAFE_LANDING_GUARD} to prevent infinite recursion.
+     *
+     * @return true if the original fall damage event should be cancelled (we handled it)
+     */
+    public static boolean onFallDamage(LivingEntity entity, DamageSource source, float amount) {
+        if (SAFE_LANDING_GUARD.get()) return false;
+        if (!(entity instanceof ServerPlayer sp)) return false;
+        if (!source.is(DamageTypeTags.IS_FALL)) return false;
+
+        ServerLevel sl = (ServerLevel) sp.level();
+        SkillData data = SkillData.get(sl);
+        int agiLevel = data.getLevel(sp.getUUID(), SkillType.AGILITY);
+        if (agiLevel <= 0) return false;
+
+        double reduction = SkillManager.perkScale(agiLevel, SmpConfig.CAP_SAFE_LANDING);
+        if (reduction <= 0) return false;
+
+        float reducedAmount = Math.max(0, (float) (amount * (1.0 - reduction)));
+        int pct = Math.min(100, (int) (reduction * 100));
+
+        if (reducedAmount > 0) {
+            SAFE_LANDING_GUARD.set(true);
+            try {
+                sp.hurt(source, reducedAmount);
+            } finally {
+                SAFE_LANDING_GUARD.set(false);
+            }
+        }
+        // Show AFTER re-call so Defense XP action bar message doesn't overwrite it
+        sp.displayClientMessage(Component.literal("\u00a7b\u2734 Safe Landing! -" + pct + "%"), true);
+        return true; // cancel original event
     }
 
     // ========== AGILITY (Movement) ==========
@@ -184,18 +231,6 @@ public final class SkillEvents {
                     int chunks = (int) (accum / 100);
                     awardXp(sp, data, SkillType.AGILITY, chunks);
                     accum -= chunks * 100;
-
-                    // Fall damage reduction passive
-                    int agiLevel = data.getLevel(uuid, SkillType.AGILITY);
-                    if (agiLevel > 0 && sp.fallDistance > 3) {
-                        double reduction = agiLevel * 0.005; // 0.5% per level
-                        // We can't easily modify fall damage here,
-                        // so we apply Slow Falling briefly on high falls
-                        if (sp.fallDistance > 5 && sp.getRandom().nextDouble() < reduction) {
-                            sp.addEffect(new MobEffectInstance(MobEffects.SLOW_FALLING, 20, 0, false, false));
-                            sp.displayClientMessage(Component.literal("\u00a7b\u2734 Safe Landing!"), true);
-                        }
-                    }
                 }
                 distanceAccum.put(uuid, accum);
             }

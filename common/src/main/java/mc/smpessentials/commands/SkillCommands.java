@@ -299,7 +299,7 @@ public final class SkillCommands {
             case ENCHANTING  -> null;
             case ALCHEMY     -> null;
             case TRADING     -> null;
-            case AGILITY     -> "Safe Landing: chance to negate fall damage at high levels";
+            case AGILITY     -> "Safe Landing: absorbs fall damage linearly with level (up to cap at Lv.100)";
         };
     }
 

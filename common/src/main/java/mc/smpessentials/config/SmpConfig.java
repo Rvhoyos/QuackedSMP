@@ -21,10 +21,7 @@ public final class SmpConfig {
     public static boolean BLUEMAP_ENABLE = true;
     public static boolean BLUEMAP_SHOW_HOMES = true;
     public static boolean BLUEMAP_SHOW_CLAIMS = true;
-    // Format: "R,G,B,A" where color components are 0-255 (A is 0.0-1.0 or 0-255?
-    // BlueMap API uses java.awt.Color, let's just use hex strings like "#88FF0000"
-    // (ARGB) or store integer RGB and float alpha). Let's use standard integer RGB,
-    // and a float opacity.
+    // Stored as 6-digit RGB hex strings (e.g. "00FFFF")
     public static String BLUEMAP_CLAIM_COLOR = "00FFFF"; // Cyan
     public static String BLUEMAP_OP_CLAIM_COLOR = "FFD700"; // Gold
     public static String BLUEMAP_VIP_CLAIM_COLOR = "8A2BE2"; // Purple
@@ -40,6 +37,7 @@ public final class SmpConfig {
     public static double CAP_KNOWLEDGE_XP = 1.0; // +100% xp orbs at max
     public static double CAP_DOUBLE_DROP = 0.5; // max 50% double drop chance at Industrial parent level 100
     public static double CAP_DEFENSE_ARMOR = 10.0; // max +10 armor points at Defense level 100
+    public static double CAP_SAFE_LANDING = 1.0; // max 100% fall damage absorbed at Agility level 100 (linear)
 
     /** Get cooldown in seconds for a skill's active ability. */
     public static long getSkillCooldown(SkillType skill) {
@@ -178,6 +176,8 @@ public final class SmpConfig {
                     CAP_DOUBLE_DROP = caps.get("double_drop").getAsDouble();
                 if (caps.has("defense_armor"))
                     CAP_DEFENSE_ARMOR = caps.get("defense_armor").getAsDouble();
+                if (caps.has("safe_landing"))
+                    CAP_SAFE_LANDING = caps.get("safe_landing").getAsDouble();
             }
         }
 

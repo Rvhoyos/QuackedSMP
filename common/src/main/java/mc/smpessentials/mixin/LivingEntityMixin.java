@@ -37,6 +37,13 @@ public abstract class LivingEntityMixin {
             CallbackInfoReturnable<Boolean> cir) {
         LivingEntity entity = (LivingEntity) (Object) this;
 
+        // Safe Landing: intercept fall damage before anything else.
+        // If handled, original event is cancelled; reduced damage is re-applied internally.
+        if (SkillEvents.onFallDamage(entity, source, amount)) {
+            cir.setReturnValue(false);
+            return;
+        }
+
         if (!ClaimProtection.onLivingHurt(entity, source, amount)) {
             cir.setReturnValue(false);
             return;
