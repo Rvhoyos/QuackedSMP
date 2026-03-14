@@ -297,6 +297,7 @@ public final class ConfigIO {
         caps.addProperty("nature_health", 10);
         caps.addProperty("combat_damage", 1.0);
         caps.addProperty("knowledge_xp", 1.0);
+        caps.addProperty("double_drop", 0.5);
         sk.add("caps", caps);
 
         return sk;
@@ -381,7 +382,6 @@ public final class ConfigIO {
         // Skills
         JsonObject skills = new JsonObject();
         skills.addProperty("xp_exponent", SmpConfig.SKILL_XP_EXPONENT);
-        skills.addProperty("leaderboard_size", SmpConfig.LEADERBOARD_SIZE);
 
         JsonObject cds = new JsonObject();
         for (var entry : SmpConfig.SKILL_COOLDOWNS.entrySet()) {
@@ -400,6 +400,7 @@ public final class ConfigIO {
         caps.addProperty("nature_health", SmpConfig.CAP_NATURE_HEALTH);
         caps.addProperty("combat_damage", SmpConfig.CAP_COMBAT_DAMAGE);
         caps.addProperty("knowledge_xp", SmpConfig.CAP_KNOWLEDGE_XP);
+        caps.addProperty("double_drop", SmpConfig.CAP_DOUBLE_DROP);
         skills.add("caps", caps);
 
         root.add("skills", skills);

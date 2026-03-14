@@ -337,11 +337,11 @@ public final class SkillEvents {
 
     // ========== PASSIVE HELPERS ==========
 
-    /** Double drop chance based on parent category level. */
+    /** Double drop chance based on Industrial parent level, scaled to CAP_DOUBLE_DROP. */
     private static void applyDoubleDrop(ServerPlayer sp, SkillData data, BlockState state, BlockPos pos,
             ServerLevel level) {
         int parentLevel = SkillManager.parentLevel(SkillType.Category.INDUSTRIAL, data.getTypedXpMap(sp.getUUID()));
-        double chance = SkillManager.perkScale(parentLevel, SmpConfig.CAP_INDUSTRIAL_SPEED);
+        double chance = SkillManager.perkScale(parentLevel, SmpConfig.CAP_DOUBLE_DROP);
         if (sp.getRandom().nextDouble() < chance) {
             Block.dropResources(state, level, pos, null, sp, sp.getMainHandItem());
             sp.displayClientMessage(Component.literal("\u00a7a\u26a1 Double Drop!"), true);

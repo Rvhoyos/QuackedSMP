@@ -237,7 +237,71 @@ public final class SkillCommands {
             sp.sendSystemMessage(Component.literal(
                     "\u00a7fAbility: \u00a77Unlocks at Lv." + SmpConfig.getAbilityUnlockLevel(skill)));
         }
+
+        String trigger = abilityTrigger(skill);
+        String effect = abilityEffect(skill);
+        if (trigger != null)
+            sp.sendSystemMessage(Component.literal("\u00a77Trigger: \u00a7f" + trigger));
+        if (effect != null)
+            sp.sendSystemMessage(Component.literal("\u00a77Effect:  \u00a7f" + effect));
+
+        String passive = passivePerk(skill);
+        if (passive != null)
+            sp.sendSystemMessage(Component.literal("\u00a77Passive: \u00a7f" + passive));
+
         return 1;
+    }
+
+    private static String abilityTrigger(SkillType skill) {
+        return switch (skill) {
+            case MINING     -> "Hold Pickaxe \u2192 Sneak + Drop (Q)";
+            case EXCAVATION -> "Hold Shovel \u2192 Sneak + Drop (Q)";
+            case WOODCUTTING -> "Hold Axe \u2192 Sneak + Drop (Q)";
+            case FARMING    -> "Hold Hoe \u2192 Sneak + Drop (Q)";
+            case FISHING    -> "Hold Fishing Rod \u2192 Sneak + Drop (Q)";
+            case MELEE      -> "Hold Sword \u2192 Sneak + Drop (Q)";
+            case ARCHERY    -> "Hold Bow/Crossbow \u2192 Sneak + Drop (Q)";
+            case DEFENSE    -> "Hold Shield \u2192 Sneak + Drop (Q)";
+            case ENCHANTING -> "Hold any damaged item \u2192 Sneak + Drop (Q)";
+            case ALCHEMY    -> "Look at Spawner, hold Book/Ench.Book \u2192 Sneak + Drop (Q)";
+            case TRADING    -> "Hold Emerald \u2192 Sneak + Drop (Q)";
+            case AGILITY    -> "Sprint + Jump + Sneak (tap Shift) while moving";
+        };
+    }
+
+    private static String abilityEffect(SkillType skill) {
+        long cd = SmpConfig.getSkillCooldown(skill);
+        return switch (skill) {
+            case MINING      -> "Haste V for a short duration. Cooldown: " + formatTime(cd);
+            case EXCAVATION  -> "Haste V for a short duration. Cooldown: " + formatTime(cd);
+            case WOODCUTTING -> "Chain-breaks up to 64 connected logs. Cooldown: " + formatTime(cd);
+            case FARMING     -> "Bonemeal all crops in a 5-block radius. Cooldown: " + formatTime(cd);
+            case FISHING     -> "Luck V for a short duration. Cooldown: " + formatTime(cd);
+            case MELEE       -> "Strength II + Speed II for a short duration. Cooldown: " + formatTime(cd);
+            case ARCHERY     -> "Slow Falling + Night Vision for a short duration. Cooldown: " + formatTime(cd);
+            case DEFENSE     -> "Resistance IV + Slowness IV for a short duration. Cooldown: " + formatTime(cd);
+            case ENCHANTING  -> "Repairs held item by 10% durability. Cooldown: " + formatTime(cd);
+            case ALCHEMY     -> "Silk Touch the targeted Spawner into your inventory. Cooldown: " + formatTime(cd);
+            case TRADING     -> "Hero of the Village effect (scales with level). Cooldown: " + formatTime(cd);
+            case AGILITY     -> "Velocity boost in your look direction. Cooldown: " + formatTime(cd);
+        };
+    }
+
+    private static String passivePerk(SkillType skill) {
+        return switch (skill) {
+            case MINING      -> "Double drops on ores (scales with Industrial parent level)";
+            case EXCAVATION  -> "Treasure Hunter: chance to find items in dirt/sand";
+            case WOODCUTTING -> "Double drops on logs; Leaf Blower clears leaves at Lv.20+";
+            case FARMING     -> "Auto Replant: chance to replant harvested crops";
+            case FISHING     -> null;
+            case MELEE       -> "Bleed: chance to apply Wither effect on melee hits";
+            case ARCHERY     -> "Arrow Recovery: chance to retrieve arrows from killed mobs";
+            case DEFENSE     -> "Damage Reduction: flat mitigation that scales with level";
+            case ENCHANTING  -> null;
+            case ALCHEMY     -> null;
+            case TRADING     -> null;
+            case AGILITY     -> "Safe Landing: chance to negate fall damage at high levels";
+        };
     }
 
     // ---- Admin commands ----

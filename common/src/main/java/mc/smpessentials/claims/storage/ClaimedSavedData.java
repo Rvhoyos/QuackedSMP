@@ -38,8 +38,13 @@ public final class ClaimedSavedData extends SavedData {
         rebuildIndex();
     }
 
+    /**
+     * All claim data is stored in the overworld's DataStorage so that counts
+     * are global across all dimensions. The dimension key inside each ClaimData
+     * record still scopes individual claims correctly.
+     */
     public static ClaimedSavedData get(ServerLevel level) {
-        return level.getDataStorage().computeIfAbsent(TYPE);
+        return level.getServer().overworld().getDataStorage().computeIfAbsent(TYPE);
     }
 
     private void rebuildIndex() {
@@ -125,6 +130,29 @@ public final class ClaimedSavedData extends SavedData {
 
     public int countByOwner(ServerLevel level, UUID owner) {
         return claimCounts.getOrDefault(owner, 0);
+    }
+
+    /**
+     * Transfers all claims from {@code from} to {@code to}.
+     * Returns the number of claims transferred (0 if {@code from} had none).
+     */
+    public int transferClaims(UUID from, UUID to) {
+        List<ClaimData> toTransfer = claims.stream()
+                .filter(c -> c.owner().equals(from))
+                .collect(Collectors.toList());
+        if (toTransfer.isEmpty())
+            return 0;
+        for (ClaimData old : toTransfer) {
+            ClaimData updated = new ClaimData(old.dimension(), old.chunk(), to, old.name(), old.createdAtMillis());
+            claims.remove(old);
+            claims.add(updated);
+            dimIndex(old.dimension()).put(old.chunk(), updated);
+        }
+        int count = toTransfer.size();
+        claimCounts.computeIfPresent(from, (k, v) -> v > count ? v - count : null);
+        claimCounts.merge(to, count, Integer::sum);
+        setDirty();
+        return count;
     }
 
 }

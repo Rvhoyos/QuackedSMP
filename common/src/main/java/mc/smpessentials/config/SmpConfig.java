@@ -34,10 +34,11 @@ public final class SmpConfig {
     public static int LEADERBOARD_SIZE = 10;
     public static java.util.Map<String, Long> SKILL_COOLDOWNS = new java.util.HashMap<>();
     public static java.util.Map<String, Integer> SKILL_UNLOCK_LEVELS = new java.util.HashMap<>();
-    public static double CAP_INDUSTRIAL_SPEED = 0.5; // +50% mining speed at max
+    public static double CAP_INDUSTRIAL_SPEED = 0.5; // +50% movement speed at max
     public static double CAP_NATURE_HEALTH = 10.0; // +10 hearts at max
     public static double CAP_COMBAT_DAMAGE = 1.0; // +100% damage at max
     public static double CAP_KNOWLEDGE_XP = 1.0; // +100% xp orbs at max
+    public static double CAP_DOUBLE_DROP = 0.5; // max 50% double drop chance at Industrial parent level 100
 
     /** Get cooldown in seconds for a skill's active ability. */
     public static long getSkillCooldown(SkillType skill) {
@@ -148,8 +149,6 @@ public final class SmpConfig {
             JsonObject sk = root.getAsJsonObject("skills");
             if (sk.has("xp_exponent"))
                 SKILL_XP_EXPONENT = sk.get("xp_exponent").getAsDouble();
-            if (sk.has("leaderboard_size"))
-                LEADERBOARD_SIZE = sk.get("leaderboard_size").getAsInt();
             if (sk.has("cooldowns") && sk.get("cooldowns").isJsonObject()) {
                 SKILL_COOLDOWNS.clear();
                 JsonObject cds = sk.getAsJsonObject("cooldowns");
@@ -163,6 +162,19 @@ public final class SmpConfig {
                 for (String key : unlocks.keySet()) {
                     SKILL_UNLOCK_LEVELS.put(key, unlocks.get(key).getAsInt());
                 }
+            }
+            if (sk.has("caps") && sk.get("caps").isJsonObject()) {
+                JsonObject caps = sk.getAsJsonObject("caps");
+                if (caps.has("industrial_speed"))
+                    CAP_INDUSTRIAL_SPEED = caps.get("industrial_speed").getAsDouble();
+                if (caps.has("nature_health"))
+                    CAP_NATURE_HEALTH = caps.get("nature_health").getAsDouble();
+                if (caps.has("combat_damage"))
+                    CAP_COMBAT_DAMAGE = caps.get("combat_damage").getAsDouble();
+                if (caps.has("knowledge_xp"))
+                    CAP_KNOWLEDGE_XP = caps.get("knowledge_xp").getAsDouble();
+                if (caps.has("double_drop"))
+                    CAP_DOUBLE_DROP = caps.get("double_drop").getAsDouble();
             }
         }
 

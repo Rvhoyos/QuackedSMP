@@ -113,6 +113,7 @@ Chunk-based claiming system.
 - `/claim`: Claim current chunk.
 - `/unclaim`: Unclaim current chunk.
 - `/claim map`: Visualize chunks in chat.
+- `/claim transfer <player>`: Transfer all your claims to another player.
 - `/trust <player>`: Give player permissions in all claims.
 - `/untrust <player>`: Revoke permissions.
 - `/sos`: Eject all untrusted players from claim.
@@ -186,7 +187,7 @@ You can manage the server configuration in-game using a visual interface:
 | `skills.xp_exponent` | Double | `1.5` | Exponential factor for skill leveling. |
 | `skills.ability_unlock_levels` | Map | `10*` | Map of skill names to level required for ability unlock. Defaults: Trading (1), Defense (5), Agility (3), others (10). |
 | `skills.cooldowns` | Map | *Varies* | Base cooldowns (seconds) for abilities. |
-| `skills.caps` | Map | *See JSON* | Maximum value for parent attribute buffs at Level 100. |
+| `skills.caps` | Map | *See JSON* | Maximum values at Level 100 for parent buffs and double drop. |
 
 ### Caps Explanation
 
@@ -196,6 +197,7 @@ The `caps` section defines the maximum bonus a player receives when a parent cat
 - **`nature_health` (10.0)**: +10 Hearts (+20 HP) at Level 100.
 - **`combat_damage` (1.0)**: +100% Attack Damage at Level 100.
 - **`knowledge_xp` (1.0)**: +100% XP Orb gain at Level 100.
+- **`double_drop` (0.5)**: Max 50% double drop chance (Mining/Woodcutting) at Industrial Level 100.
 
 ### Complete JSON Example
 
@@ -261,7 +263,8 @@ The `caps` section defines the maximum bonus a player receives when a parent cat
       "industrial_speed": 0.5,
       "nature_health": 10.0,
       "combat_damage": 1.0,
-      "knowledge_xp": 1.0
+      "knowledge_xp": 1.0,
+      "double_drop": 0.5
     }
   }
 }
@@ -282,6 +285,7 @@ The `caps` section defines the maximum bonus a player receives when a parent cat
 | `/rules` | View server rules | Everyone |
 | `/claim` | Claim current chunk | Everyone |
 | `/unclaim` | Unclaim current chunk | Everyone |
+| `/claim transfer <player>` | Transfer all your claims to another player | Everyone |
 | `/trust <player>` | Trust a player globally | Everyone |
 | `/untrust <player>` | Revoke trust | Everyone |
 | `/sos` | Eject strangers from claim | Everyone |
