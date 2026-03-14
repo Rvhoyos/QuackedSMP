@@ -53,8 +53,8 @@ public final class ClaimManager {
         return data.unclaim(level, pos);
     }
 
-    /** Per-level count for this owner. */
+    /** Global claim count for this owner (across all dimensions). */
     public int ownedCount(UUID owner) {
-        return data.countByOwner(level, owner);
+        return data.countByOwner(owner);
     }
 }

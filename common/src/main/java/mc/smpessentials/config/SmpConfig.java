@@ -39,6 +39,7 @@ public final class SmpConfig {
     public static double CAP_COMBAT_DAMAGE = 1.0; // +100% damage at max
     public static double CAP_KNOWLEDGE_XP = 1.0; // +100% xp orbs at max
     public static double CAP_DOUBLE_DROP = 0.5; // max 50% double drop chance at Industrial parent level 100
+    public static double CAP_DEFENSE_ARMOR = 10.0; // max +10 armor points at Defense level 100
 
     /** Get cooldown in seconds for a skill's active ability. */
     public static long getSkillCooldown(SkillType skill) {
@@ -175,6 +176,8 @@ public final class SmpConfig {
                     CAP_KNOWLEDGE_XP = caps.get("knowledge_xp").getAsDouble();
                 if (caps.has("double_drop"))
                     CAP_DOUBLE_DROP = caps.get("double_drop").getAsDouble();
+                if (caps.has("defense_armor"))
+                    CAP_DEFENSE_ARMOR = caps.get("defense_armor").getAsDouble();
             }
         }
 

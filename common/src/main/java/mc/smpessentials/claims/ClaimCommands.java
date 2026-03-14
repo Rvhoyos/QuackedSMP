@@ -225,7 +225,7 @@ public final class ClaimCommands {
                             return 1;
                         }));
 
-        // /claims (dimension-local count + current owner)
+        // /claims (global count + current chunk owner)
         dispatcher.register(
                 Commands.literal("claims")
                         .requires(src -> src.getEntity() instanceof ServerPlayer)

@@ -126,9 +126,7 @@ public final class ClaimedSavedData extends SavedData {
         setDirty();
         return true;
     }
-    // in mc.smpessentials.claims.storage.ClaimedSavedData
-
-    public int countByOwner(ServerLevel level, UUID owner) {
+    public int countByOwner(UUID owner) {
         return claimCounts.getOrDefault(owner, 0);
     }
 

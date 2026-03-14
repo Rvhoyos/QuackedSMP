@@ -232,7 +232,7 @@ public final class ConfigIO {
         msgs.addProperty("claim.spawn_protected", "You can’t claim inside spawn protection.");
         msgs.addProperty("unclaim.success", "Chunk unclaimed.");
         msgs.addProperty("unclaim.fail_ownership", "You don’t control this claim.");
-        msgs.addProperty("claim.info.owned", "You own {count} chunk(s) in this dimension.");
+        msgs.addProperty("claim.info.owned", "You own {count} chunk(s) total.");
         msgs.addProperty("claim.info.protected_by_you", "This chunk is protected by you.");
         msgs.addProperty("claim.info.protected", "This chunk is protected.");
         msgs.addProperty("claim.info.unclaimed", "Current chunk is unclaimed.");
@@ -283,13 +283,13 @@ public final class ConfigIO {
         unlocks.addProperty("woodcutting", 10);
         unlocks.addProperty("farming", 10);
         unlocks.addProperty("fishing", 10);
-        unlocks.addProperty("agility", 10);
+        unlocks.addProperty("agility", 3);
         unlocks.addProperty("melee", 10);
         unlocks.addProperty("archery", 10);
-        unlocks.addProperty("defense", 10);
+        unlocks.addProperty("defense", 5);
         unlocks.addProperty("enchanting", 10);
         unlocks.addProperty("alchemy", 10);
-        unlocks.addProperty("trading", 10);
+        unlocks.addProperty("trading", 1);
         sk.add("ability_unlock_levels", unlocks);
 
         JsonObject caps = new JsonObject();
@@ -298,6 +298,7 @@ public final class ConfigIO {
         caps.addProperty("combat_damage", 1.0);
         caps.addProperty("knowledge_xp", 1.0);
         caps.addProperty("double_drop", 0.5);
+        caps.addProperty("defense_armor", 10.0);
         sk.add("caps", caps);
 
         return sk;
@@ -401,6 +402,7 @@ public final class ConfigIO {
         caps.addProperty("combat_damage", SmpConfig.CAP_COMBAT_DAMAGE);
         caps.addProperty("knowledge_xp", SmpConfig.CAP_KNOWLEDGE_XP);
         caps.addProperty("double_drop", SmpConfig.CAP_DOUBLE_DROP);
+        caps.addProperty("defense_armor", SmpConfig.CAP_DEFENSE_ARMOR);
         skills.add("caps", caps);
 
         root.add("skills", skills);

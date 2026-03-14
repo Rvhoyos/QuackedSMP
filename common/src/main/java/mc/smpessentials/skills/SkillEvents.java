@@ -113,6 +113,14 @@ public final class SkillEvents {
             double dist = sp.distanceTo(mob);
             double bonus = dist > 30 ? 2.0 : 1.0; // distance bonus
             awardXp(sp, data, SkillType.ARCHERY, baseXp * bonus);
+
+            // Arrow Recovery passive: chance to recover an arrow
+            int archLevel = data.getLevel(sp.getUUID(), SkillType.ARCHERY);
+            double arrowChance = archLevel * 0.005; // 0.5% per level, 50% at Lv.100
+            if (sp.getRandom().nextDouble() < arrowChance) {
+                Block.popResource(sl, mob.blockPosition(), new ItemStack(Items.ARROW, 1));
+                sp.displayClientMessage(Component.literal("\u00a76\u25c6 Arrow Recovered!"), true);
+            }
         } else {
             awardXp(sp, data, SkillType.MELEE, baseXp);
         }
@@ -286,7 +294,7 @@ public final class SkillEvents {
      *
      * <ul>
      * <li><b>Industrial</b> → Movement Speed (multiplier)</li>
-     * <li><b>Nature</b> → Max Health (flat HP, up to config cap × 20 HP)</li>
+     * <li><b>Nature</b> → Max Health (flat HP; CAP_NATURE_HEALTH hearts max)</li>
      * <li><b>Combat</b> → Attack Damage (multiplier)</li>
      * <li><b>Knowledge</b> → XP multiplier (applied in awardXp, not here)</li>
      * </ul>
@@ -301,9 +309,9 @@ public final class SkillEvents {
                 "quackedsmp", "industrial_speed", speedBonus,
                 AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
 
-        // Nature → Health buff (e.g. 20 extra HP = 10 hearts at max)
+        // Nature → Health buff: CAP_NATURE_HEALTH is in hearts; * 2 converts to HP units
         int natureLevel = SkillManager.parentLevel(SkillType.Category.NATURE, xpMap);
-        double healthBonus = SkillManager.perkScale(natureLevel, SmpConfig.CAP_NATURE_HEALTH) * 20;
+        double healthBonus = SkillManager.perkScale(natureLevel, SmpConfig.CAP_NATURE_HEALTH) * 2;
         applyModifier(player, Attributes.MAX_HEALTH,
                 "quackedsmp", "nature_health", healthBonus,
                 AttributeModifier.Operation.ADD_VALUE);
@@ -314,6 +322,13 @@ public final class SkillEvents {
         applyModifier(player, Attributes.ATTACK_DAMAGE,
                 "quackedsmp", "combat_damage", damageBonus,
                 AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
+
+        // Defense sub-skill → Armor bonus (flat armor points)
+        int defenseLevel = data.getLevel(player.getUUID(), SkillType.DEFENSE);
+        double armorBonus = SkillManager.perkScale(defenseLevel, SmpConfig.CAP_DEFENSE_ARMOR);
+        applyModifier(player, Attributes.ARMOR,
+                "quackedsmp", "defense_armor", armorBonus,
+                AttributeModifier.Operation.ADD_VALUE);
     }
 
     /**

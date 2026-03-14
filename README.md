@@ -198,6 +198,7 @@ The `caps` section defines the maximum bonus a player receives when a parent cat
 - **`combat_damage` (1.0)**: +100% Attack Damage at Level 100.
 - **`knowledge_xp` (1.0)**: +100% XP Orb gain at Level 100.
 - **`double_drop` (0.5)**: Max 50% double drop chance (Mining/Woodcutting) at Industrial Level 100.
+- **`defense_armor` (10.0)**: Max +10 Armor Points at Defense Level 100.
 
 ### Complete JSON Example
 
@@ -264,7 +265,8 @@ The `caps` section defines the maximum bonus a player receives when a parent cat
       "nature_health": 10.0,
       "combat_damage": 1.0,
       "knowledge_xp": 1.0,
-      "double_drop": 0.5
+      "double_drop": 0.5,
+      "defense_armor": 10.0
     }
   }
 }

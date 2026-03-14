@@ -117,13 +117,13 @@ public final class ClaimService {
             return -1;
 
         var data = mc.smpessentials.claims.storage.ClaimedSavedData.get((ServerLevel) sender.level());
-        int senderCount = data.countByOwner((ServerLevel) sender.level(), sender.getUUID());
+        int senderCount = data.countByOwner(sender.getUUID());
         if (senderCount == 0)
             return -2;
 
         boolean isTargetOp = ((ServerLevel) sender.level()).getServer().getPlayerList().isOp(target.nameAndId());
         if (!isTargetOp) {
-            int targetCount = data.countByOwner((ServerLevel) sender.level(), target.getUUID());
+            int targetCount = data.countByOwner(target.getUUID());
             int targetLimit = mc.smpessentials.config.SmpConfig.MAX_CLAIMS;
             if (mc.smpessentials.config.SmpConfig.VIPS.contains(target.getName().getString()))
                 targetLimit += mc.smpessentials.config.SmpConfig.VIP_BONUS_CLAIMS;

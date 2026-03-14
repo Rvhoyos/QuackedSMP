@@ -19,7 +19,6 @@ import java.util.UUID;
 
 /**
  * /skills                          — concise overview of all your skills
- * /skills gui                      — open the book GUI
  * /skills view <player>            — view another player's skills
  * /skills top [page]               — overall leaderboard
  * /skills top <skillname> [page]   — per-skill leaderboard
@@ -295,8 +294,8 @@ public final class SkillCommands {
             case FARMING     -> "Auto Replant: chance to replant harvested crops";
             case FISHING     -> null;
             case MELEE       -> "Bleed: chance to apply Wither effect on melee hits";
-            case ARCHERY     -> "Arrow Recovery: chance to retrieve arrows from killed mobs";
-            case DEFENSE     -> "Damage Reduction: flat mitigation that scales with level";
+            case ARCHERY     -> "Arrow Recovery: chance to retrieve an arrow on projectile kill";
+            case DEFENSE     -> "Damage Reduction: passive armor bonus that scales with level";
             case ENCHANTING  -> null;
             case ALCHEMY     -> null;
             case TRADING     -> null;
