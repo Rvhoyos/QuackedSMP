@@ -110,7 +110,9 @@ public final class PunishManager extends SavedData {
         player.containerMenu.broadcastChanges();
         player.inventoryMenu.broadcastChanges();
 
-        // 2. Clear all containers in chunks owned by this player across ALL dimensions
+        // 2. Clear all containers in chunks owned by this player across ALL dimensions.
+        // Safety note: This filter strictly checks 'owner()'. If the punished player is 
+        // merely trusted on another player's claim, those containers are NOT cleared.
         for (ServerLevel level : server.getAllLevels()) {
             ClaimedSavedData.get(level).listClaims(level).stream()
                     .filter(claim -> claim.owner().equals(uuid))
