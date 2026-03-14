@@ -25,15 +25,26 @@ public final class SmpUtilsModFabric implements ModInitializer {
         net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents.SERVER_STARTED.register(server -> {
             mc.smpessentials.chatfilter.ChatFilter.onServerStart(server);
             mc.smpessentials.bluemap.BlueMapIntegration.onServerStart(server);
+            mc.smpessentials.keepinv.KeepInvSavedData.enforceGamerule(server);
         });
         net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents.SERVER_STOPPING.register(server -> {
             mc.smpessentials.commands.EndResetLogic.onServerStopping(server);
         });
 
-        // 3. Player Join
+        // 3. Player Join / Disconnect
         net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {
             mc.smpessentials.events.JoinMessageHandler.onPlayerJoin(handler.getPlayer());
             mc.smpessentials.skills.SkillEvents.onPlayerJoin(handler.getPlayer());
+        });
+        net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> {
+            mc.smpessentials.skills.SkillEvents.onPlayerLoggedOut(handler.getPlayer());
+        });
+
+        // 9. Keep Inventory — drop items on death for opted-out players
+        net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents.AFTER_DEATH.register((entity, source) -> {
+            if (entity instanceof net.minecraft.server.level.ServerPlayer sp) {
+                mc.smpessentials.keepinv.KeepInvSavedData.onPlayerDeath(sp);
+            }
         });
 
         // 4. Server Tick + Player Tick processing

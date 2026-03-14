@@ -11,7 +11,26 @@ public final class SkillManager {
     public static final int MAX_LEVEL = 100;
     private static final double BASE_XP = 100.0;
 
+    // Cache of cumulative XP thresholds, indexed by level.
+    // cumulativeXpCache[n] = total XP required to reach level n.
+    // Rebuilt whenever the configured XP exponent changes (e.g. after /smp reload).
+    private static double cachedExponent = Double.NaN;
+    private static long[] cumulativeXpCache = null;
+
     private SkillManager() {
+    }
+
+    private static void ensureCache() {
+        double currentExp = SmpConfig.SKILL_XP_EXPONENT;
+        if (cumulativeXpCache == null || cachedExponent != currentExp) {
+            cachedExponent = currentExp;
+            long[] cache = new long[MAX_LEVEL + 1];
+            cache[0] = 0;
+            for (int i = 1; i <= MAX_LEVEL; i++) {
+                cache[i] = cache[i - 1] + xpForLevel(i);
+            }
+            cumulativeXpCache = cache;
+        }
     }
 
     /** XP required to go from (level-1) to level. */
@@ -32,22 +51,25 @@ public final class SkillManager {
 
     /** Total cumulative XP needed to reach a given level. */
     public static long totalXpForLevel(int level) {
-        long total = 0;
-        for (int i = 1; i <= level; i++) {
-            total += xpForLevel(i);
-        }
-        return total;
+        ensureCache();
+        if (level <= 0) return 0;
+        if (level >= MAX_LEVEL) return cumulativeXpCache[MAX_LEVEL];
+        return cumulativeXpCache[level];
     }
 
-    /** Calculate a player's level from their total XP. */
+    /** Calculate a player's level from their total XP. O(log 100) via binary search. */
     public static int levelFromXp(double totalXp) {
-        long cumulative = 0;
-        for (int lvl = 1; lvl <= MAX_LEVEL; lvl++) {
-            cumulative += xpForLevel(lvl);
-            if (totalXp < cumulative)
-                return lvl - 1;
+        ensureCache();
+        if (totalXp <= 0) return 0;
+        if (totalXp >= cumulativeXpCache[MAX_LEVEL]) return MAX_LEVEL;
+        // Binary search: find the largest level where cumulativeXpCache[level] <= totalXp
+        int lo = 0, hi = MAX_LEVEL - 1;
+        while (lo < hi) {
+            int mid = (lo + hi + 1) >>> 1;
+            if (cumulativeXpCache[mid] <= (long) totalXp) lo = mid;
+            else hi = mid - 1;
         }
-        return MAX_LEVEL;
+        return lo;
     }
 
     /** XP progress within the current level as a fraction 0.0-1.0. */

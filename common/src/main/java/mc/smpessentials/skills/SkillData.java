@@ -16,17 +16,29 @@ import java.util.*;
  */
 public final class SkillData extends SavedData {
 
-    /** Per-player record: XP for each skill + cooldown timestamps. */
-    public record PlayerProfile(UUID uuid, Map<String, Double> xp, Map<String, Long> cooldowns) {
+    /** Per-player record: XP for each skill + cooldown timestamps + display name cache. */
+    public static final class PlayerProfile {
+        private final UUID uuid;
+        private String name;
+        private final Map<String, Double> xp;
+        private final Map<String, Long> cooldowns;
 
-        public PlayerProfile {
-            // Ensure maps are mutable
-            xp = new HashMap<>(xp);
-            cooldowns = new HashMap<>(cooldowns);
+        public PlayerProfile(UUID uuid, String name, Map<String, Double> xp, Map<String, Long> cooldowns) {
+            this.uuid = uuid;
+            this.name = name;
+            this.xp = new HashMap<>(xp);
+            this.cooldowns = new HashMap<>(cooldowns);
         }
+
+        public UUID uuid() { return uuid; }
+        public String name() { return name; }
+        public void setName(String name) { this.name = name; }
+        public Map<String, Double> xp() { return xp; }
+        public Map<String, Long> cooldowns() { return cooldowns; }
 
         public static final Codec<PlayerProfile> CODEC = RecordCodecBuilder.create(i -> i.group(
                 UUIDUtil.CODEC.fieldOf("uuid").forGetter(PlayerProfile::uuid),
+                Codec.STRING.optionalFieldOf("name", "").forGetter(PlayerProfile::name),
                 Codec.unboundedMap(Codec.STRING, Codec.DOUBLE).fieldOf("xp").forGetter(PlayerProfile::xp),
                 Codec.unboundedMap(Codec.STRING, Codec.LONG).fieldOf("cooldowns").forGetter(PlayerProfile::cooldowns))
                 .apply(i, PlayerProfile::new));
@@ -50,9 +62,7 @@ public final class SkillData extends SavedData {
 
     private static SkillData fromList(List<PlayerProfile> list) {
         Map<UUID, PlayerProfile> map = new HashMap<>();
-        for (PlayerProfile p : list) {
-            map.put(p.uuid(), p);
-        }
+        for (PlayerProfile p : list) map.put(p.uuid(), p);
         return new SkillData(map);
     }
 
@@ -66,7 +76,23 @@ public final class SkillData extends SavedData {
 
     private PlayerProfile getOrCreate(UUID uuid) {
         return profiles.computeIfAbsent(uuid,
-                id -> new PlayerProfile(id, new HashMap<>(), new HashMap<>()));
+                id -> new PlayerProfile(id, "", new HashMap<>(), new HashMap<>()));
+    }
+
+    /** Update cached display name for a player (call on join). */
+    public void updateName(UUID uuid, String name) {
+        PlayerProfile p = getOrCreate(uuid);
+        if (!name.equals(p.name())) {
+            p.setName(name);
+            setDirty();
+        }
+    }
+
+    /** Resolve a display name: use cached name if available, else UUID prefix. */
+    public String getDisplayName(UUID uuid) {
+        PlayerProfile p = profiles.get(uuid);
+        if (p != null && !p.name().isEmpty()) return p.name();
+        return uuid.toString().substring(0, 8) + "...";
     }
 
     /** Get all XP for a player. */
@@ -163,5 +189,51 @@ public final class SkillData extends SavedData {
     /** Check if ability is ready (not on cooldown). */
     public boolean isAbilityReady(UUID uuid, SkillType skill) {
         return getCooldownRemaining(uuid, skill) == 0;
+    }
+
+    // ---- Leaderboard ----
+
+    public record LeaderboardEntry(UUID uuid, int level) {}
+
+    /** Overall leaderboard sorted by sum of all skill levels. */
+    public List<LeaderboardEntry> getLeaderboard(int limit, int offset) {
+        return profiles.values().stream()
+                .map(p -> new LeaderboardEntry(p.uuid(), totalLevel(p)))
+                .sorted((a, b) -> Integer.compare(b.level(), a.level()))
+                .skip(offset)
+                .limit(limit)
+                .collect(java.util.stream.Collectors.toList());
+    }
+
+    /** Per-skill leaderboard sorted by level in the given skill. */
+    public List<LeaderboardEntry> getSkillLeaderboard(SkillType skill, int limit, int offset) {
+        return profiles.values().stream()
+                .map(p -> new LeaderboardEntry(p.uuid(),
+                        SkillManager.levelFromXp(p.xp().getOrDefault(skill.name(), 0.0))))
+                .sorted((a, b) -> Integer.compare(b.level(), a.level()))
+                .skip(offset)
+                .limit(limit)
+                .collect(java.util.stream.Collectors.toList());
+    }
+
+    /** Rank of a player in the overall leaderboard (1-based). */
+    public int getOverallRank(UUID uuid) {
+        int target = totalLevel(profiles.getOrDefault(uuid,
+                new PlayerProfile(uuid, "", new HashMap<>(), new HashMap<>())));
+        long rank = profiles.values().stream()
+                .filter(p -> totalLevel(p) > target)
+                .count();
+        return (int) rank + 1;
+    }
+
+    public int totalProfiles() {
+        return profiles.size();
+    }
+
+    private int totalLevel(PlayerProfile p) {
+        int sum = 0;
+        for (SkillType s : SkillType.values())
+            sum += SkillManager.levelFromXp(p.xp().getOrDefault(s.name(), 0.0));
+        return sum;
     }
 }

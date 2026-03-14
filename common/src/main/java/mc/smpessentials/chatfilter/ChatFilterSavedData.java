@@ -238,7 +238,13 @@ public final class ChatFilterSavedData extends SavedData {
 
     public boolean isMuted(java.util.UUID player) {
         Long end = mutes.get(player);
-        return end != null && end > System.currentTimeMillis();
+        if (end == null) return false;
+        if (end <= System.currentTimeMillis()) {
+            mutes.remove(player);
+            setDirty();
+            return false;
+        }
+        return true;
     }
 
     public long getMuteEnd(java.util.UUID player) {

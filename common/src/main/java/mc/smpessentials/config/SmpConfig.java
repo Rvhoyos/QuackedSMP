@@ -31,6 +31,7 @@ public final class SmpConfig {
 
     // ---- Skills ----
     public static double SKILL_XP_EXPONENT = 1.5;
+    public static int LEADERBOARD_SIZE = 10;
     public static java.util.Map<String, Long> SKILL_COOLDOWNS = new java.util.HashMap<>();
     public static java.util.Map<String, Integer> SKILL_UNLOCK_LEVELS = new java.util.HashMap<>();
     public static double CAP_INDUSTRIAL_SPEED = 0.5; // +50% mining speed at max
@@ -112,20 +113,26 @@ public final class SmpConfig {
             BLUEMAP_VIP_CLAIM_COLOR = root.get("bluemap_vip_claim_color").getAsString();
 
         loadList(root, "vips", VIPS);
-        loadList(root, "rules", RULES);
-        if (RULES.isEmpty()) {
+        if (root.has("rules")) {
+            loadList(root, "rules", RULES);
+        } else if (RULES.isEmpty()) {
             RULES.add("&e1. Be respectful.");
             RULES.add("&e2. No griefing inside claims.");
             RULES.add("&e3. Wilderness is dangerous (PvP enabled).");
             RULES.add("&e4. No cheating.");
         }
 
-        loadList(root, "periodic_messages", PERIODIC_MESSAGES);
-        if (PERIODIC_MESSAGES.isEmpty()) {
+        if (root.has("periodic_messages")) {
+            loadList(root, "periodic_messages", PERIODIC_MESSAGES);
+        } else if (PERIODIC_MESSAGES.isEmpty()) {
             PERIODIC_MESSAGES.add("&b[Tip] &fUse &a/claim &fto protect your land!");
             PERIODIC_MESSAGES.add("&b[Tip] &fSet your home by sleeping in a bed!");
             PERIODIC_MESSAGES.add("&b[Tip] &fType &a/smp help &ffor commands!");
             PERIODIC_MESSAGES.add("&b[Reminder] &fPlease respect the &6/rules&f!");
+            PERIODIC_MESSAGES.add("&b[Tip] &fUse &a/tpr <player>&f to teleport to friends!");
+            PERIODIC_MESSAGES.add("&b[Reminder] &fReport griefers to &adev@quackedmod.wiki&f!");
+            PERIODIC_MESSAGES.add("&b[Tip] &fReset the ender dragon in the &6Shogun Temple &fin the village or ask an admin to reset the end world!");
+            PERIODIC_MESSAGES.add("&b[Reminder] &fVote for us on &a[CurseForge](https://www.curseforge.com/servers/minecraft/game/quackedsmp) &fservers to help us grow! :)");
             PERIODIC_MESSAGES.add("&b[Tip] &fVisit Spawn Shops for blocks & gear! Trade items for Emeralds!");
         }
 
@@ -141,6 +148,8 @@ public final class SmpConfig {
             JsonObject sk = root.getAsJsonObject("skills");
             if (sk.has("xp_exponent"))
                 SKILL_XP_EXPONENT = sk.get("xp_exponent").getAsDouble();
+            if (sk.has("leaderboard_size"))
+                LEADERBOARD_SIZE = sk.get("leaderboard_size").getAsInt();
             if (sk.has("cooldowns") && sk.get("cooldowns").isJsonObject()) {
                 SKILL_COOLDOWNS.clear();
                 JsonObject cds = sk.getAsJsonObject("cooldowns");

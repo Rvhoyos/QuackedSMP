@@ -78,12 +78,15 @@ public final class ConfigIO {
                 pm.add("&b[Tip] &fType &a/smp help &ffor a list of commands!");
                 pm.add("&b[Reminder] &fPlease respect the &6/rules&f!");
                 pm.add("&b[Tip] &fUnlock active abilities by leveling up your &a/skills&f!");
-                pm.add("&b[Tip] &fUse &a/tpa <player>&f to teleport to friends!");
+                pm.add("&b[Tip] &fUse &a/tpr <player>&f to teleport to friends!");
                 pm.add("&b[Tip] &fStuck with an intruder? Use &a/sos &fto eject them from your claim!");
                 pm.add("&b[Tip] &fReach &aLevel 10 &fin a skill to unlock its unique Active Ability!");
                 pm.add("&b[Tip] &fUse &aSneak + Drop (Q) &fwith a tool to activate its ability!");
                 pm.add("&b[Tip] &fActivate &bDash &fby &aSprinting + Jumping + Sneaking&f!");
                 pm.add("&b[Tip] &fLeveling up skills grants passive buffs like &c+Health &fand &f+Speed!");
+                pm.add("&b[Reminder] &fReport griefers to &adev@quackedmod.wiki&f!");
+                pm.add("&b[Tip] &fReset the ender dragon in the &6Shogun Temple &fin the village or ask an admin to reset the end world!");
+                pm.add("&b[Reminder] &fVote for us on &a[CurseForge](https://www.curseforge.com/servers/minecraft/game/quackedsmp) &fservers to help us grow! :)");
                 pm.add("&b[Tip] &fVisit Spawn Shops for blocks & gear! Trade items for Emeralds!");
                 obj.add("periodic_messages", pm);
                 dirty = true;
@@ -207,12 +210,15 @@ public final class ConfigIO {
         pm.add("&b[Tip] &fType &a/smp help &ffor a list of commands!");
         pm.add("&b[Reminder] &fPlease respect the &6/rules&f!");
         pm.add("&b[Tip] &fUnlock active abilities by leveling up your &a/skills&f!");
-        pm.add("&b[Tip] &fUse &a/tpa <player>&f to teleport to friends!");
+        pm.add("&b[Tip] &fUse &a/tpr <player>&f to teleport to friends!");
         pm.add("&b[Tip] &fStuck with an intruder? Use &a/sos &fto eject them from your claim!");
         pm.add("&b[Tip] &fReach &aLevel 10 &fin a skill to unlock its unique Active Ability!");
         pm.add("&b[Tip] &fUse &aSneak + Drop (Q) &fwith a tool to activate its ability!");
         pm.add("&b[Tip] &fActivate &bDash &fby &aSprinting + Jumping + Sneaking&f!");
         pm.add("&b[Tip] &fLeveling up skills grants passive buffs like &c+Health &fand &f+Speed!");
+        pm.add("&b[Reminder] &fReport griefers to &adev@quackedmod.wiki&f!");
+        pm.add("&b[Tip] &fReset the ender dragon in the &6Shogun Temple &fin the village or ask an admin to reset the end world!");
+        pm.add("&b[Reminder] &fVote for us on &a[CurseForge](https://www.curseforge.com/servers/minecraft/game/quackedsmp) &fservers to help us grow! :)");
         pm.add("&b[Tip] &fVisit Spawn Shops for blocks & gear! Trade items for Emeralds!");
         root.add("periodic_messages", pm);
 
@@ -375,6 +381,7 @@ public final class ConfigIO {
         // Skills
         JsonObject skills = new JsonObject();
         skills.addProperty("xp_exponent", SmpConfig.SKILL_XP_EXPONENT);
+        skills.addProperty("leaderboard_size", SmpConfig.LEADERBOARD_SIZE);
 
         JsonObject cds = new JsonObject();
         for (var entry : SmpConfig.SKILL_COOLDOWNS.entrySet()) {

@@ -82,6 +82,9 @@ Abilities unlock at **Level 10** by default (configurable per skill).
 - **Treasure Hunter**: Chance to find rare items in dirt/sand.
 - **Arrow Recovery**: Chance to retrieve arrows from killed mobs.
 - **Damage Reduction**: Flat damage mitigation from Defense level.
+- **Leaf Blower**: Woodcutting clears surrounding leaves automatically.
+- **Auto Replant**: Farming automatically replants crops on harvest.
+- **Safe Landing**: Agility negates fall damage at high levels.
 
 
 ---
@@ -289,7 +292,16 @@ The `caps` section defines the maximum bonus a player receives when a parent cat
 | `/smp end reset dragon` | Reset Ender Dragon fight | OP |
 | `/smp end reset world` | Queue End dimension reset for next restart | OP |
 | `/punish <player>` | Wipe player inventory and all items in their claims | OP |
-| `/skills` | Open skills GUI | Everyone |
+| `/skills` | Concise overview of all your skill levels | Everyone |
+| `/skills <skillname>` | Detailed info for one skill | Everyone |
+| `/skills view <player>` | View another player's skills | Everyone |
+| `/skills top` | Overall leaderboard | Everyone |
+| `/skills top <skillname>` | Per-skill leaderboard | Everyone |
+| `/skills admin givexp <player> <skill> <amount>` | Give skill XP | OP |
+| `/skills admin setlevel <player> <skill> <level>` | Set skill level | OP |
+| `/keepinv` | Show your keep inventory status | Everyone |
+| `/keepinv on` | Keep items and XP on death | Everyone |
+| `/keepinv off` | Drop items and XP on death (vanilla behavior) | Everyone |
 
 
 ---

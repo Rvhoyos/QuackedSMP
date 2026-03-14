@@ -30,6 +30,7 @@ public class SmpEvents {
     public static void onServerStarted(ServerStartedEvent event) {
         ChatFilter.onServerStart(event.getServer());
         mc.smpessentials.bluemap.BlueMapIntegration.onServerStart(event.getServer());
+        mc.smpessentials.keepinv.KeepInvSavedData.enforceGamerule(event.getServer());
     }
 
     @SubscribeEvent
@@ -37,6 +38,18 @@ public class SmpEvents {
         if (event.getEntity() instanceof ServerPlayer player) {
             JoinMessageHandler.onPlayerJoin(player);
             SkillEvents.onPlayerJoin(player);
+        }
+    }
+
+    @SubscribeEvent
+    public static void onPlayerLogout(PlayerEvent.PlayerLoggedOutEvent event) {
+        SkillEvents.onPlayerLoggedOut(event.getEntity());
+    }
+
+    @SubscribeEvent
+    public static void onLivingDeath(net.neoforged.neoforge.event.entity.living.LivingDeathEvent event) {
+        if (event.getEntity() instanceof ServerPlayer sp) {
+            mc.smpessentials.keepinv.KeepInvSavedData.onPlayerDeath(sp);
         }
     }
 

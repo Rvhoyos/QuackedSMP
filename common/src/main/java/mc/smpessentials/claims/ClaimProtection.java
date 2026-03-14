@@ -115,7 +115,8 @@ public final class ClaimProtection {
         try {
             return !shouldCancelExplosion(sl, explosion);
         } catch (Exception e) {
-            return true;
+            mc.smpessentials.SmpUtilsMod.LOGGER.error("[QuackedSMP] Claim explosion check failed, denying for safety", e);
+            return false;
         }
     }
 

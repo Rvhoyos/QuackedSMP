@@ -140,6 +140,7 @@ public final class SkillEvents {
                 double bleedChance = meleeLevel * 0.005; // 0.5% per level, 50% at 100
                 if (sp.getRandom().nextDouble() < bleedChance) {
                     target.addEffect(new MobEffectInstance(MobEffects.WITHER, 60, 0)); // 3s
+                    sp.displayClientMessage(Component.literal("\u00a7c\u2694 Bleed!"), true);
                 }
 
                 // Combat parent damage buff applied via attribute would be better,
@@ -184,6 +185,7 @@ public final class SkillEvents {
                         // so we apply Slow Falling briefly on high falls
                         if (sp.fallDistance > 5 && sp.getRandom().nextDouble() < reduction) {
                             sp.addEffect(new MobEffectInstance(MobEffects.SLOW_FALLING, 20, 0, false, false));
+                            sp.displayClientMessage(Component.literal("\u00a7b\u2734 Safe Landing!"), true);
                         }
                     }
                 }
@@ -221,6 +223,7 @@ public final class SkillEvents {
         if (player instanceof ServerPlayer sp) {
             ServerLevel sl = (ServerLevel) sp.level();
             SkillData data = SkillData.get(sl);
+            data.updateName(sp.getUUID(), sp.getName().getString());
             updateParentBuffs(sp, data);
 
             // Apply queued punishments if any
@@ -340,8 +343,8 @@ public final class SkillEvents {
         int parentLevel = SkillManager.parentLevel(SkillType.Category.INDUSTRIAL, data.getTypedXpMap(sp.getUUID()));
         double chance = SkillManager.perkScale(parentLevel, SmpConfig.CAP_INDUSTRIAL_SPEED);
         if (sp.getRandom().nextDouble() < chance) {
-            // Drop an extra copy of what the block drops
             Block.dropResources(state, level, pos, null, sp, sp.getMainHandItem());
+            sp.displayClientMessage(Component.literal("\u00a7a\u26a1 Double Drop!"), true);
         }
     }
 
@@ -350,10 +353,10 @@ public final class SkillEvents {
         int excLevel = data.getLevel(sp.getUUID(), SkillType.EXCAVATION);
         double chance = excLevel * 0.003; // 0.3% per level, 30% at 100
         if (sp.getRandom().nextDouble() < chance) {
-            // Random treasure
             Item[] treasures = { Items.GOLD_NUGGET, Items.IRON_NUGGET, Items.GUNPOWDER, Items.BONE, Items.FLINT };
             Item treasure = treasures[sp.getRandom().nextInt(treasures.length)];
             Block.popResource(level, pos, new ItemStack(treasure, 1));
+            sp.displayClientMessage(Component.literal("\u00a76\u2726 Treasure!"), true);
         }
     }
 
@@ -361,9 +364,9 @@ public final class SkillEvents {
     private static void applyLeafBlower(ServerPlayer sp, SkillData data, BlockPos pos, ServerLevel level) {
         int wcLevel = data.getLevel(sp.getUUID(), SkillType.WOODCUTTING);
         if (wcLevel < 20)
-            return; // unlocks at level 20
+            return;
 
-        // Scan 3-block radius for leaves
+        int cleared = 0;
         for (int dx = -3; dx <= 3; dx++) {
             for (int dy = -3; dy <= 3; dy++) {
                 for (int dz = -3; dz <= 3; dz++) {
@@ -371,10 +374,13 @@ public final class SkillEvents {
                     BlockState leafState = level.getBlockState(leafPos);
                     if (leafState.is(BlockTags.LEAVES)) {
                         level.destroyBlock(leafPos, true, sp);
+                        cleared++;
                     }
                 }
             }
         }
+        if (cleared > 0)
+            sp.displayClientMessage(Component.literal("\u00a72\u2702 Leaves Cleared!"), true);
     }
 
     /** Farming: auto-replant crops on harvest. */
@@ -383,13 +389,12 @@ public final class SkillEvents {
         int farmLevel = data.getLevel(sp.getUUID(), SkillType.FARMING);
         double chance = farmLevel * 0.01; // 1% per level, 100% at 100
         if (sp.getRandom().nextDouble() < chance) {
-            // Schedule replant on next tick (block is being broken this tick)
             level.getServer().execute(() -> {
                 if (level.getBlockState(pos).isAir()) {
-                    // Re-place the crop at age 0
                     level.setBlockAndUpdate(pos, state.getBlock().defaultBlockState());
                 }
             });
+            sp.displayClientMessage(Component.literal("\u00a72\u21ba Replanted!"), true);
         }
     }
 
