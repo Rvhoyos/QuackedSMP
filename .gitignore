@@ -27,4 +27,5 @@
 CLAUDE.md
 .claude-decompiled/
 memory/
-
+.gradlew-vscode
+.vscode

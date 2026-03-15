@@ -38,6 +38,9 @@ public final class SkillEvents {
     private static final Map<UUID, BlockPos> lastPositions = new HashMap<>();
     // Track distance accumulator for Agility (fractional blocks)
     private static final Map<UUID, Double> distanceAccum = new HashMap<>();
+    // Ticks since last age verify prompt per player (for periodic reprompt)
+    private static final Map<UUID, Integer> agePromptTicks = new HashMap<>();
+    private static final int AGE_REPROMPT_INTERVAL = 6000; // 5 minutes
 
     private SkillEvents() {
     }
@@ -231,7 +234,7 @@ public final class SkillEvents {
         if (reducedAmount > 0) {
             SAFE_LANDING_GUARD.set(true);
             try {
-                sp.hurt(source, reducedAmount);
+                sp.hurtServer((ServerLevel) sp.level(), source, reducedAmount);
             } finally {
                 SAFE_LANDING_GUARD.set(false);
             }
@@ -291,6 +294,34 @@ public final class SkillEvents {
             ServerLevel sl = (ServerLevel) sp.level();
             mc.smpessentials.skills.ActiveAbilities.onZoomTick(sp, SkillData.get(sl));
         }
+
+        // Age verify periodic reprompt
+        tickAgeVerify(sp, uuid);
+    }
+
+    /**
+     * Called every tick per online player. Re-sends the age verification prompt
+     * every {@link #AGE_REPROMPT_INTERVAL} ticks to players who have never responded.
+     * Players who explicitly denied are not re-prompted — they can type
+     * {@code /verify confirm} if they change their mind.
+     */
+    private static void tickAgeVerify(ServerPlayer sp, UUID uuid) {
+        if (!mc.smpessentials.voicechat.VoicechatIntegration.isAvailable())
+            return;
+        mc.smpessentials.ageverify.AgeVerifyData data = mc.smpessentials.ageverify.AgeVerifyData
+                .get(sp.level().getServer());
+        // Verified or denied — no periodic action needed
+        if (data.hasAnswered(uuid)) {
+            agePromptTicks.remove(uuid);
+            return;
+        }
+        int ticks = agePromptTicks.getOrDefault(uuid, 0) + 1;
+        if (ticks >= AGE_REPROMPT_INTERVAL) {
+            sendAgeVerifyPrompt(sp);
+            agePromptTicks.put(uuid, 0);
+        } else {
+            agePromptTicks.put(uuid, ticks);
+        }
     }
 
     /**
@@ -312,6 +343,7 @@ public final class SkillEvents {
         UUID uuid = player.getUUID();
         lastPositions.remove(uuid);
         distanceAccum.remove(uuid);
+        agePromptTicks.remove(uuid);
         mc.smpessentials.skills.ActiveAbilities.clearTreeFeller(uuid);
         // Restore offhand and discard injected spyglass on disconnect so the
         // temporary item is not persisted to the player's save file.
@@ -342,7 +374,34 @@ public final class SkillEvents {
                 pm.punish(sp);
                 sp.sendSystemMessage(net.minecraft.network.chat.Component.literal("\u00a7cYour inventory and claims were cleared while you were away due to a recently applied punishment."));
             }
+
+            // Age verification prompt for voice chat
+            if (mc.smpessentials.voicechat.VoicechatIntegration.isAvailable()) {
+                mc.smpessentials.ageverify.AgeVerifyData verifyData = mc.smpessentials.ageverify.AgeVerifyData
+                        .get(sl.getServer());
+                if (!verifyData.isVerified(sp.getUUID())) {
+                    if (!verifyData.hasAnswered(sp.getUUID())) {
+                        // Never responded — show full prompt and start reprompt timer
+                        agePromptTicks.put(sp.getUUID(), 0);
+                        sendAgeVerifyPrompt(sp);
+                    } else {
+                        // Previously denied — one-time reminder per login
+                        sp.sendSystemMessage(Component.literal(
+                                "\u00a77[Voice Chat] Voice chat is currently disabled for you. Type \u00a7a/verify confirm \u00a77if you are 18+ and wish to enable it."));
+                    }
+                }
+            }
         }
+    }
+
+    private static void sendAgeVerifyPrompt(ServerPlayer sp) {
+        sp.sendSystemMessage(Component.literal(
+                "\u00a76\u00a7l[QuackedSMP]\u00a7r\u00a7f This server uses Simple Voice Chat, which is restricted to players 18+. \u00a7cLying about your age will result in a permanent ban."));
+        net.minecraft.network.chat.MutableComponent confirm = Component.literal("\u00a7a\u00a7l[ I am 18 or older ]")
+                .withStyle(s -> s.withClickEvent(new net.minecraft.network.chat.ClickEvent.RunCommand("/verify confirm")));
+        net.minecraft.network.chat.MutableComponent deny = Component.literal("  \u00a7c\u00a7l[ I am under 18 ]")
+                .withStyle(s -> s.withClickEvent(new net.minecraft.network.chat.ClickEvent.RunCommand("/verify deny")));
+        sp.sendSystemMessage(confirm.append(deny));
     }
 
     // ========== XP AWARD + ACTION BAR ==========

@@ -32,6 +32,7 @@ public final class SmpUtilsModFabric implements ModInitializer {
         net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents.SERVER_STARTED.register(server -> {
             mc.smpessentials.chatfilter.ChatFilter.onServerStart(server);
             mc.smpessentials.bluemap.BlueMapIntegration.onServerStart(server);
+            mc.smpessentials.voicechat.VoicechatIntegration.onServerStart(server);
             mc.smpessentials.keepinv.KeepInvSavedData.enforceGamerule(server);
         });
         net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents.SERVER_STOPPING.register(server -> {

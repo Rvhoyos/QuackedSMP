@@ -32,6 +32,9 @@ dependencies {
 
     // Optional BlueMap Integration
     compileOnly "de.bluecolored:bluemap-api:2.7.3"
+
+    // Optional Simple Voice Chat Integration
+    compileOnly "de.maxhenkel.voicechat:voicechat-api:2.6.0"
 }
 
 processResources {
