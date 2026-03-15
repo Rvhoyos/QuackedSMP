@@ -59,8 +59,11 @@ public class SmpEvents {
         mc.smpessentials.bluemap.BlueMapIntegration.onServerTick(event.getServer());
         for (ServerPlayer player : event.getServer().getPlayerList().getPlayers()) {
             TeleportScheduler.onPlayerTick(player);
+            SkillEvents.onPlayerTick(player);
         }
     }
+
+    // Scout Zoom activation is handled by PlayerActionMixin (common module)
 
     @SubscribeEvent
     public static void onServerChat(ServerChatEvent event) {

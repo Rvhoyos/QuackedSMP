@@ -271,6 +271,7 @@ public final class ConfigIO {
         cds.addProperty("agility", 10);
         cds.addProperty("melee", 300);
         cds.addProperty("archery", 180);
+        cds.addProperty("archery_zoom", 30);
         cds.addProperty("defense", 600);
         cds.addProperty("enchanting", 1200);
         cds.addProperty("alchemy", 600);
@@ -286,6 +287,7 @@ public final class ConfigIO {
         unlocks.addProperty("agility", 3);
         unlocks.addProperty("melee", 10);
         unlocks.addProperty("archery", 10);
+        unlocks.addProperty("archery_zoom", 5);
         unlocks.addProperty("defense", 5);
         unlocks.addProperty("enchanting", 10);
         unlocks.addProperty("alchemy", 10);

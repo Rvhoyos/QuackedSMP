@@ -54,6 +54,11 @@ public final class SkillEvents {
         if (!(level instanceof ServerLevel sl))
             return;
 
+        // Scout Zoom: cancel on block break
+        if (ActiveAbilities.isZoomActive(sp.getUUID())) {
+            ActiveAbilities.deactivateZoom(sp.getUUID(), sp);
+        }
+
         try {
             SkillData data = SkillData.get(sl);
 
@@ -96,6 +101,12 @@ public final class SkillEvents {
     public static void onLivingDeath(LivingEntity entity, DamageSource source) {
         if (entity.level().isClientSide())
             return;
+
+        // Scout Zoom: cancel on player death
+        if (entity instanceof ServerPlayer sp && ActiveAbilities.isZoomActive(sp.getUUID())) {
+            ActiveAbilities.deactivateZoom(sp.getUUID(), sp);
+        }
+
         if (!(entity instanceof Monster mob))
             return;
 
@@ -130,6 +141,11 @@ public final class SkillEvents {
     public static void onLivingHurt(LivingEntity entity, DamageSource source, float amount) {
         if (entity.level().isClientSide())
             return;
+
+        // Scout Zoom: cancel on taking damage
+        if (entity instanceof ServerPlayer victim && ActiveAbilities.isZoomActive(victim.getUUID())) {
+            ActiveAbilities.deactivateZoom(victim.getUUID(), victim);
+        }
 
         // Defense: player takes damage
         if (entity instanceof ServerPlayer victim) {
@@ -237,20 +253,38 @@ public final class SkillEvents {
         }
         lastPositions.put(uuid, current);
 
-        // Agility Dash Trigger: Sprint + Sneak (Shift)
-        // Ideally we'd use Jump, but detecting jump start server-side is tricky without
-        // mixins.
+        // Agility Dash Trigger: Sprint + Sneak while in air (not on ground).
         // Sprint + Sneak is a unique combo (normally stops sprint).
         if (sp.isSprinting() && sp.isShiftKeyDown() && !sp.onGround()) {
-            // The player is seemingly "rocket jumping" or dash-jumping
             ServerLevel sl = (ServerLevel) sp.level();
             mc.smpessentials.skills.ActiveAbilities.tryActivateDash(sp, SkillData.get(sl), uuid);
         }
+
+        // Scout Zoom tick: update glow and check expiry
+        if (mc.smpessentials.skills.ActiveAbilities.isZoomActive(uuid)) {
+            ServerLevel sl = (ServerLevel) sp.level();
+            mc.smpessentials.skills.ActiveAbilities.onZoomTick(sp, SkillData.get(sl));
+        }
+    }
+
+    /**
+     * Called by {@link mc.smpessentials.mixin.PlayerActionMixin} when the player presses
+     * sneak + F (swap-offhand key) with both hands empty, delegating to
+     * {@link ActiveAbilities#tryActivateZoom}.
+     */
+    public static void onZoomActivate(net.minecraft.server.level.ServerPlayer sp) {
+        ServerLevel sl = (ServerLevel) sp.level();
+        ActiveAbilities.tryActivateZoom(sp, SkillData.get(sl));
     }
 
     public static void onPlayerLoggedOut(Player player) {
-        lastPositions.remove(player.getUUID());
-        distanceAccum.remove(player.getUUID());
+        UUID uuid = player.getUUID();
+        lastPositions.remove(uuid);
+        distanceAccum.remove(uuid);
+        // Restore offhand and discard injected spyglass on disconnect so the
+        // temporary item is not persisted to the player's save file.
+        if (player instanceof ServerPlayer sp)
+            mc.smpessentials.skills.ActiveAbilities.deactivateZoom(uuid, sp);
     }
 
     // ========== FISHING ==========

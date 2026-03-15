@@ -145,19 +145,14 @@ public final class SkillData extends SavedData {
     // ---- Cooldown Operations ----
 
     /**
-     * Check if an ability is on cooldown. Returns remaining seconds, or 0 if ready.
+     * Core cooldown check by raw string key (e.g. "archery", "archery_zoom").
+     * baseCd is in seconds. level is the skill level used for scaling.
      */
-    public long getCooldownRemaining(UUID uuid, SkillType skill) {
+    public long getCooldownRemaining(UUID uuid, String abilityKey, long baseCd, int level) {
         PlayerProfile p = getOrCreate(uuid);
-        Long lastUsed = p.cooldowns().get(skill.name());
+        Long lastUsed = p.cooldowns().get(abilityKey);
         if (lastUsed == null)
             return 0;
-
-        // Base cooldown from config
-        double baseCd = mc.smpessentials.config.SmpConfig.getSkillCooldown(skill);
-
-        // Get level for scaling
-        int level = getLevel(uuid, skill);
 
         // Piecewise scaling:
         // Lv 0-10: Drops from 100% to 75% (2.5% per level)
@@ -166,29 +161,49 @@ public final class SkillData extends SavedData {
         if (level < 10) {
             multiplier = 1.0 - (0.025 * level);
         } else {
-            // (level - 10) goes from 0 to 90
-            // We want to drop 0.50 over 90 levels -> 0.50 / 90 = 0.005555...
             multiplier = 0.75 - ((level - 10) * 0.00555556);
         }
-
-        // Clamp min multiplier to 25% just in case
         multiplier = Math.max(0.25, multiplier);
 
         long effectiveCd = (long) (baseCd * multiplier);
         long elapsed = (System.currentTimeMillis() - lastUsed) / 1000;
-        long remaining = effectiveCd - elapsed;
-        return Math.max(0, remaining);
+        return Math.max(0, effectiveCd - elapsed);
     }
 
-    /** Start cooldown for an ability. */
+    /** Check if an ability is on cooldown. Returns remaining seconds, or 0 if ready. */
+    public long getCooldownRemaining(UUID uuid, SkillType skill) {
+        return getCooldownRemaining(uuid, skill.name(),
+                mc.smpessentials.config.SmpConfig.getSkillCooldown(skill),
+                getLevel(uuid, skill));
+    }
+
+    /** Check cooldown for a named sub-ability (e.g. "archery_zoom") on a given skill. */
+    public long getCooldownRemaining(UUID uuid, String abilityKey, SkillType skill) {
+        return getCooldownRemaining(uuid, abilityKey,
+                mc.smpessentials.config.SmpConfig.getAbilityCooldown(abilityKey),
+                getLevel(uuid, skill));
+    }
+
+    /** Start cooldown for an ability by SkillType. */
     public void setCooldown(UUID uuid, SkillType skill) {
         getOrCreate(uuid).cooldowns().put(skill.name(), System.currentTimeMillis());
+        setDirty();
+    }
+
+    /** Start cooldown for a named sub-ability (e.g. "archery_zoom"). */
+    public void setCooldown(UUID uuid, String abilityKey) {
+        getOrCreate(uuid).cooldowns().put(abilityKey, System.currentTimeMillis());
         setDirty();
     }
 
     /** Check if ability is ready (not on cooldown). */
     public boolean isAbilityReady(UUID uuid, SkillType skill) {
         return getCooldownRemaining(uuid, skill) == 0;
+    }
+
+    /** Check if a named sub-ability is ready. */
+    public boolean isAbilityReady(UUID uuid, String abilityKey, SkillType skill) {
+        return getCooldownRemaining(uuid, abilityKey, skill) == 0;
     }
 
     // ---- Leaderboard ----

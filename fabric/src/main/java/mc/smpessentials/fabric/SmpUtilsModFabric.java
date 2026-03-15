@@ -53,8 +53,11 @@ public final class SmpUtilsModFabric implements ModInitializer {
             mc.smpessentials.bluemap.BlueMapIntegration.onServerTick(server);
             for (net.minecraft.server.level.ServerPlayer player : server.getPlayerList().getPlayers()) {
                 mc.smpessentials.teleport.TeleportScheduler.onPlayerTick(player);
+                mc.smpessentials.skills.SkillEvents.onPlayerTick(player);
             }
         });
+
+        // Scout Zoom activation is handled by PlayerActionMixin (common module)
 
         // 5. Chat Decorator
         net.fabricmc.fabric.api.message.v1.ServerMessageDecoratorEvent.EVENT.register(

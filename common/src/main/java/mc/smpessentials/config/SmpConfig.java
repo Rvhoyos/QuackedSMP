@@ -44,9 +44,22 @@ public final class SmpConfig {
         return SKILL_COOLDOWNS.getOrDefault(skill.name().toLowerCase(), defaultCooldown(skill));
     }
 
+    /**
+     * Get cooldown in seconds for a named sub-ability (e.g. "archery_zoom").
+     * Falls back to 30s if not configured.
+     */
+    public static long getAbilityCooldown(String abilityKey) {
+        return SKILL_COOLDOWNS.getOrDefault(abilityKey.toLowerCase(), 30L);
+    }
+
     /** Get the minimum level required to unlock a skill's active ability. */
     public static int getAbilityUnlockLevel(SkillType skill) {
         return SKILL_UNLOCK_LEVELS.getOrDefault(skill.name().toLowerCase(), defaultUnlockLevel(skill));
+    }
+
+    /** Get the minimum level required to unlock a named sub-ability (e.g. "archery_zoom"). */
+    public static int getAbilityUnlockLevel(String abilityKey) {
+        return SKILL_UNLOCK_LEVELS.getOrDefault(abilityKey.toLowerCase(), 5);
     }
 
     private static int defaultUnlockLevel(SkillType skill) {

@@ -228,27 +228,44 @@ public final class SkillCommands {
         sp.sendSystemMessage(Component.literal(
                 "\u00a7f" + bar + " \u00a77" + (int) (progress * 100) + "%"));
 
-        if (cooldown > 0) {
-            sp.sendSystemMessage(Component.literal("\u00a7fAbility: \u00a7c\u23f1 " + formatTime(cooldown)));
-        } else if (level >= SmpConfig.getAbilityUnlockLevel(skill)) {
-            sp.sendSystemMessage(Component.literal("\u00a7fAbility: \u00a7a\u2714 Ready"));
+        if (skill == SkillType.ARCHERY) {
+            // Archery has two abilities: Sniper and Scout Zoom
+            showAbilityLine(sp, data, level, "Sniper", skill.name().toLowerCase(), skill,
+                    abilityTrigger(skill), abilityEffect(skill));
+            long zoomCd = data.getCooldownRemaining(sp.getUUID(), "archery_zoom", skill);
+            int zoomUnlock = SmpConfig.getAbilityUnlockLevel("archery_zoom");
+            String zoomCdText = formatTime(SmpConfig.getAbilityCooldown("archery_zoom"));
+            String zoomStatus = zoomCd > 0 ? "\u00a7c\u23f1 " + formatTime(zoomCd)
+                    : level >= zoomUnlock ? "\u00a7a\u2714 Ready"
+                    : "\u00a77Unlocks at Lv." + zoomUnlock;
+            sp.sendSystemMessage(Component.literal("\u00a7fScout Zoom: " + zoomStatus));
+            sp.sendSystemMessage(Component.literal("\u00a77Trigger: \u00a7fSneak + F (swap key) with both hands empty"));
+            sp.sendSystemMessage(Component.literal("\u00a77Effect:  \u00a7fSpyglass zoom + Night Vision + Slow Falling + mob glow. Cooldown: " + zoomCdText));
         } else {
-            sp.sendSystemMessage(Component.literal(
-                    "\u00a7fAbility: \u00a77Unlocks at Lv." + SmpConfig.getAbilityUnlockLevel(skill)));
+            showAbilityLine(sp, data, level, capitalize(skill.name()), skill.name().toLowerCase(), skill,
+                    abilityTrigger(skill), abilityEffect(skill));
         }
-
-        String trigger = abilityTrigger(skill);
-        String effect = abilityEffect(skill);
-        if (trigger != null)
-            sp.sendSystemMessage(Component.literal("\u00a77Trigger: \u00a7f" + trigger));
-        if (effect != null)
-            sp.sendSystemMessage(Component.literal("\u00a77Effect:  \u00a7f" + effect));
 
         String passive = passivePerk(skill);
         if (passive != null)
             sp.sendSystemMessage(Component.literal("\u00a77Passive: \u00a7f" + passive));
 
         return 1;
+    }
+
+    private static void showAbilityLine(net.minecraft.server.level.ServerPlayer sp, SkillData data,
+            int level, String abilityLabel, String abilityKey, SkillType skill,
+            String trigger, String effect) {
+        long cd = data.getCooldownRemaining(sp.getUUID(), skill);
+        int unlock = SmpConfig.getAbilityUnlockLevel(skill);
+        String status = cd > 0 ? "\u00a7c\u23f1 " + formatTime(cd)
+                : level >= unlock ? "\u00a7a\u2714 Ready"
+                : "\u00a77Unlocks at Lv." + unlock;
+        sp.sendSystemMessage(Component.literal("\u00a7f" + abilityLabel + ": " + status));
+        if (trigger != null)
+            sp.sendSystemMessage(Component.literal("\u00a77Trigger: \u00a7f" + trigger));
+        if (effect != null)
+            sp.sendSystemMessage(Component.literal("\u00a77Effect:  \u00a7f" + effect));
     }
 
     private static String abilityTrigger(SkillType skill) {
@@ -277,7 +294,7 @@ public final class SkillCommands {
             case FARMING     -> "Bonemeal all crops in a 5-block radius. Cooldown: " + formatTime(cd);
             case FISHING     -> "Luck V for a short duration. Cooldown: " + formatTime(cd);
             case MELEE       -> "Strength II + Speed II for a short duration. Cooldown: " + formatTime(cd);
-            case ARCHERY     -> "Slow Falling + Night Vision for a short duration. Cooldown: " + formatTime(cd);
+            case ARCHERY     -> "Slow Falling + Night Vision II (Lv.67+). Cooldown: " + formatTime(cd);
             case DEFENSE     -> "Resistance IV + Slowness IV for a short duration. Cooldown: " + formatTime(cd);
             case ENCHANTING  -> "Repairs held item by 10% durability. Cooldown: " + formatTime(cd);
             case ALCHEMY     -> "Silk Touch the targeted Spawner into your inventory. Cooldown: " + formatTime(cd);

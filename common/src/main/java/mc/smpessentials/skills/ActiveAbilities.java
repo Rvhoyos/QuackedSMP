@@ -26,6 +26,8 @@ import net.minecraft.core.component.DataComponents;
 import net.minecraft.world.item.component.TypedEntityData;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 
+import net.minecraft.world.entity.player.Inventory;
+
 import java.util.*;
 
 /**
@@ -39,14 +41,28 @@ import java.util.*;
  * is on cooldown, the drop is still cancelled and a cooldown message is shown.
  *
  * <p>
- * Exception: <b>Agility Dash</b> uses sprint + right-click with an empty hand
- * (no vanilla conflict since empty-hand right-click does nothing).
+ * Exception: <b>Agility Dash</b> uses sprint + sneak while in air.
+ * <b>Scout Zoom</b> uses sneak + F (swap offhand) with both hands empty.
  */
 public final class ActiveAbilities {
 
     // Track active ability durations (player UUID -> expiry time)
     private static final Map<UUID, Long> superBreakerActive = new HashMap<>();
     private static final Map<UUID, Long> treeFellerActive = new HashMap<>();
+
+    /**
+     * Immutable snapshot of the player's state at Scout Zoom activation.
+     *
+     * @param savedOffhand        the offhand item that was replaced by the spyglass
+     *                            (always {@link ItemStack#EMPTY} since activation requires both
+     *                            hands to be empty, but stored defensively)
+     * @param expiry              wall-clock ms at which zoom expires automatically
+     * @param priorSpyglassCount  number of spyglasses in the player's main inventory
+     *                            (slots 0–35) at activation; used to detect and remove any
+     *                            injected spyglass the player dragged into their inventory
+     */
+    private record ZoomState(ItemStack savedOffhand, long expiry, int priorSpyglassCount) {}
+    private static final Map<UUID, ZoomState> zoomActive = new HashMap<>();
 
     private ActiveAbilities() {
     }
@@ -347,7 +363,7 @@ public final class ActiveAbilities {
 
     /**
      * Agility Dash: boost velocity in facing direction.
-     * Triggered by sprint + right-click with empty hand.
+     * Triggered by sprint + sneak while in the air (not on ground).
      */
     public static void tryActivateDash(ServerPlayer sp, SkillData data, UUID uuid) {
         int agiLevel = data.getLevel(uuid, SkillType.AGILITY);
@@ -367,6 +383,168 @@ public final class ActiveAbilities {
         sp.setDeltaMovement(look.x * power, Math.max(look.y * power, 0.4), look.z * power);
         sp.hurtMarked = true;
         announce(sp, "Dash", 0, SoundEvents.FIREWORK_ROCKET_LAUNCH);
+    }
+
+    // ========== SCOUT ZOOM ==========
+
+    private static final String ZOOM_KEY = "archery_zoom";
+
+    /**
+     * Attempts to activate Scout Zoom for the given player.
+     *
+     * <p>Activation requires both hands to be empty (enforced upstream by
+     * {@link mc.smpessentials.mixin.PlayerActionMixin}) so {@code savedOffhand} in the
+     * resulting {@link ZoomState} will always be {@link net.minecraft.world.item.ItemStack#EMPTY}.
+     * The field is retained for defensive correctness in case the precondition changes.
+     *
+     * <p>Effects scale with Archery level:
+     * <ul>
+     *   <li>Duration: 10 s base + 0.25 s/level (up to 35 s at level 100)</li>
+     *   <li>Night Vision: amplifier 0 below level 67, amplifier 1 at 67+</li>
+     *   <li>Glow cone range: 30 blocks (levels 1–33), 60 (34–66), 100 (67–100)</li>
+     * </ul>
+     *
+     * <p>No-ops silently if the player has not reached the unlock level.
+     * Displays a cooldown message (actionbar) if the ability is on cooldown.
+     */
+    public static void tryActivateZoom(ServerPlayer sp, SkillData data) {
+        UUID uuid = sp.getUUID();
+        int archLevel = data.getLevel(uuid, SkillType.ARCHERY);
+        if (archLevel < SmpConfig.getAbilityUnlockLevel(ZOOM_KEY))
+            return;
+
+        if (!data.isAbilityReady(uuid, ZOOM_KEY, SkillType.ARCHERY)) {
+            long remaining = data.getCooldownRemaining(uuid, ZOOM_KEY, SkillType.ARCHERY);
+            sp.displayClientMessage(Component.literal(
+                    "\u00a7cScout Zoom on cooldown! \u00a77(" + formatTime(remaining) + ")"), true);
+            return;
+        }
+
+        // Duration: 10s base, +0.25s per level → 35s at level 100
+        int durationTicks = (int) ((10 + archLevel * 0.25) * 20);
+        long expiryMs = System.currentTimeMillis() + (durationTicks * 50L);
+
+        // Snapshot how many spyglasses are in the main inventory RIGHT NOW, before we
+        // inject one into the offhand. Any count above this after activation means the
+        // player dragged the injected spyglass into their inventory.
+        int priorSpyglassCount = countSpyglassesInMainInventory(sp);
+
+        // Save current offhand and inject spyglass
+        ItemStack savedOffhand = sp.getOffhandItem().copy();
+        sp.setItemSlot(net.minecraft.world.entity.EquipmentSlot.OFFHAND, new ItemStack(Items.SPYGLASS));
+        sp.inventoryMenu.sendAllDataToRemote();
+
+        // Night Vision: level I below 67, level II at 67+
+        int nvAmp = archLevel >= 67 ? 1 : 0;
+        sp.addEffect(new MobEffectInstance(MobEffects.NIGHT_VISION, durationTicks, nvAmp, false, false));
+        sp.addEffect(new MobEffectInstance(MobEffects.SLOW_FALLING, durationTicks, 0, false, false));
+
+        zoomActive.put(uuid, new ZoomState(savedOffhand, expiryMs, priorSpyglassCount));
+        data.setCooldown(uuid, ZOOM_KEY);
+
+        announce(sp, "Scout Zoom", durationTicks / 20, SoundEvents.SPYGLASS_USE);
+    }
+
+    /**
+     * Deactivates Scout Zoom for the given player and restores their offhand.
+     *
+     * <p>Safe to call even when zoom is not active — no-ops if the player has no
+     * active zoom state. Also safe to call during player logout before inventory
+     * is saved, ensuring the temporary spyglass is never persisted.
+     *
+     * <p>The offhand is only cleared if it still holds the injected spyglass
+     * (item == {@link Items#SPYGLASS}, count == 1). This guards against overwriting
+     * an item the player independently placed in their offhand during zoom.
+     *
+     * <p><b>Known edge case:</b> if the player manually drags a real spyglass into
+     * their offhand slot while zoom is active, that spyglass will be silently
+     * discarded on deactivation because the check cannot distinguish it from the
+     * injected one. This requires deliberate inventory manipulation mid-zoom and
+     * is considered acceptable.
+     */
+    public static void deactivateZoom(UUID uuid, ServerPlayer sp) {
+        ZoomState state = zoomActive.remove(uuid);
+        if (state == null) return;
+
+        ItemStack current = sp.getOffhandItem();
+        if (current.getItem() == Items.SPYGLASS && current.getCount() == 1) {
+            // Normal case: spyglass still in offhand — clear it and restore saved item.
+            sp.setItemSlot(net.minecraft.world.entity.EquipmentSlot.OFFHAND, state.savedOffhand());
+            sp.inventoryMenu.sendAllDataToRemote();
+        } else {
+            // Spyglass was dragged to main inventory (or dropped to world).
+            // Remove any excess spyglasses that appeared since activation.
+            removeExcessSpyglasses(sp, state.priorSpyglassCount());
+        }
+    }
+
+    /**
+     * Called every server tick for players with active Scout Zoom.
+     *
+     * <p>Responsibilities:
+     * <ol>
+     *   <li>Expire zoom when the duration timer elapses.</li>
+     *   <li>Deactivate if the player switches to a hotbar slot that has an item
+     *       (main hand becomes non-empty), since they can no longer hold the spyglass.</li>
+     *   <li>Apply the {@link net.minecraft.world.effect.MobEffects#GLOWING Glowing} effect
+     *       (40 ticks) to living entities within the look cone in front of the player.
+     *       Range and cone angle scale with Archery level.</li>
+     * </ol>
+     */
+    public static void onZoomTick(ServerPlayer sp, SkillData data) {
+        UUID uuid = sp.getUUID();
+        ZoomState state = zoomActive.get(uuid);
+        if (state == null) return;
+
+        // Expire on timer
+        if (System.currentTimeMillis() > state.expiry()) {
+            deactivateZoom(uuid, sp);
+            sp.displayClientMessage(Component.literal("\u00a77Scout Zoom ended."), true);
+            return;
+        }
+
+        // Deactivate if player switched to a hotbar slot with an item
+        if (!sp.getMainHandItem().isEmpty()) {
+            deactivateZoom(uuid, sp);
+            sp.displayClientMessage(Component.literal("\u00a77Scout Zoom ended."), true);
+            return;
+        }
+
+        // Deactivate if spyglass was dragged out of offhand (to inventory or dropped).
+        // deactivateZoom() handles inventory cleanup via removeExcessSpyglasses().
+        ItemStack offhand = sp.getOffhandItem();
+        if (!(offhand.getItem() == Items.SPYGLASS && offhand.getCount() == 1)) {
+            deactivateZoom(uuid, sp);
+            sp.displayClientMessage(Component.literal("\u00a77Scout Zoom ended."), true);
+            return;
+        }
+
+        // Apply Glowing to mobs in look cone — range scales with Archery level
+        int archLevel = data.getLevel(uuid, SkillType.ARCHERY);
+        double range = archLevel <= 33 ? 30 : archLevel <= 66 ? 60 : 100;
+
+        ServerLevel sl = (ServerLevel) sp.level();
+        Vec3 eye = sp.getEyePosition();
+        Vec3 look = sp.getLookAngle();
+
+        sl.getEntitiesOfClass(net.minecraft.world.entity.LivingEntity.class,
+                sp.getBoundingBox().inflate(range),
+                e -> e != sp && !(e instanceof net.minecraft.world.entity.player.Player))
+            .stream()
+            .filter(e -> {
+                Vec3 toEntity = e.position().subtract(eye).normalize();
+                return toEntity.dot(look) > 0.85; // ~32° cone
+            })
+            .forEach(e -> e.addEffect(new MobEffectInstance(MobEffects.GLOWING, 40, 0, false, false)));
+    }
+
+    /**
+     * Returns {@code true} if the given player currently has Scout Zoom active.
+     * Used by the player tick and event handlers to skip the zoom pipeline for
+     * players who have not activated it.
+     */
+    public static boolean isZoomActive(UUID uuid) {
+        return zoomActive.containsKey(uuid);
     }
 
     // ========== KNOWLEDGE ABILITIES ==========
@@ -398,6 +576,45 @@ public final class ActiveAbilities {
         announce(sp, "Arcane Infusion", "Repaired 10%", SoundEvents.ENCHANTMENT_TABLE_USE);
         resyncHand(sp);
         return true;
+    }
+
+    // ========== SCOUT ZOOM HELPERS ==========
+
+    /**
+     * Counts spyglasses across main inventory slots 0–{@link Inventory#INVENTORY_SIZE}-1
+     * (does NOT include the offhand slot). Used to detect duplication when the player
+     * drags the injected spyglass out of the offhand.
+     */
+    private static int countSpyglassesInMainInventory(ServerPlayer sp) {
+        Inventory inv = sp.getInventory();
+        int count = 0;
+        for (int i = 0; i < Inventory.INVENTORY_SIZE; i++) {
+            if (inv.getItem(i).getItem() == Items.SPYGLASS) {
+                count += inv.getItem(i).getCount();
+            }
+        }
+        return count;
+    }
+
+    /**
+     * Removes spyglasses from the player's main inventory until the count is back to
+     * {@code priorCount}. Slots are scanned front-to-back (hotbar first).
+     *
+     * <p>No-ops if the current count is already {@code <= priorCount} (e.g. the player
+     * dropped the spyglass to the world instead of moving it to inventory).
+     */
+    private static void removeExcessSpyglasses(ServerPlayer sp, int priorCount) {
+        int toRemove = countSpyglassesInMainInventory(sp) - priorCount;
+        if (toRemove <= 0) return;
+
+        Inventory inv = sp.getInventory();
+        for (int i = 0; i < Inventory.INVENTORY_SIZE && toRemove > 0; i++) {
+            if (inv.getItem(i).getItem() == Items.SPYGLASS) {
+                inv.setItem(i, ItemStack.EMPTY);
+                toRemove--;
+            }
+        }
+        sp.inventoryMenu.sendAllDataToRemote();
     }
 
     // ========== HELPERS ==========

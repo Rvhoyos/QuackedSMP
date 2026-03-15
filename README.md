@@ -54,6 +54,7 @@ Abilities unlock at **Level 10** by default (configurable per skill).
 **Triggering Abilities:**
 - **Tool Abilities**: Hold tool + Sneak + Drop Item (Q). Item drop is cancelled.
 - **Dash**: Sprint + Jump + Sneak (Tap Shift) while moving.
+- **Scout Zoom**: Sneak + F (swap offhand key) with **both hands empty**. Press F again to cancel early.
 
 > [!NOTE] 
 > **Simultaneous Activation**: If you hold a damaged tool (e.g., Pickaxe) and use **Sneak + Drop**, both the tool ability (Super Breaker) and the repair ability (Arcane Infusion) can trigger at the same time!
@@ -67,6 +68,7 @@ Abilities unlock at **Level 10** by default (configurable per skill).
 | **Fishing** | Master Angler | Luck V for 30s | 3m 45s -> 1m 15s |
 | **Melee** | Berzerk | Strength II + Speed II | 3m 45s -> 1m 15s |
 | **Archery** | Sniper | Slow Falling + Night Vision | 2m 15s -> 45s |
+| **Archery** | Scout Zoom | Spyglass zoom + Night Vision + Slow Falling + mob glow in cone. Night Vision II at Lv.67+. Glow range scales 30/60/100 blocks by tier | 30s (configurable) |
 | **Defense** | Juggernaut | Resistance IV + Slowness IV | 7m 30s -> 2m 30s |
 | **Enchanting** | Arcane Infusion | Repairs held item by 10% | 15m -> 5m |
 | **Alchemy** | Philosopher's Touch | Silk Touch Spawner (Sneak+Q on Spawner) | 7m 30s -> 2m 30s |
@@ -185,7 +187,7 @@ You can manage the server configuration in-game using a visual interface:
 | `welcome_message` | String | *See JSON* | Join message. |
 | `periodic_messages` | List | *See JSON* | Periodic broadcast messages. |
 | `skills.xp_exponent` | Double | `1.5` | Exponential factor for skill leveling. |
-| `skills.ability_unlock_levels` | Map | `10*` | Map of skill names to level required for ability unlock. Defaults: Trading (1), Defense (5), Agility (3), others (10). |
+| `skills.ability_unlock_levels` | Map | `10*` | Map of skill names to level required for ability unlock. Defaults: Trading (1), Defense (5), Agility (3), `archery_zoom` (5), others (10). |
 | `skills.cooldowns` | Map | *Varies* | Base cooldowns (seconds) for abilities. |
 | `skills.caps` | Map | *See JSON* | Maximum values at Level 100 for parent buffs and per-skill passives. |
 
@@ -251,6 +253,7 @@ The `caps` section defines the maximum bonus a player receives when a parent cat
       "agility": 10,
       "melee": 300,
       "archery": 180,
+      "archery_zoom": 30,
       "defense": 600,
       "enchanting": 1200,
       "alchemy": 600,
@@ -259,7 +262,8 @@ The `caps` section defines the maximum bonus a player receives when a parent cat
     "ability_unlock_levels": {
       "trading": 1,
       "defense": 5,
-      "agility": 3
+      "agility": 3,
+      "archery_zoom": 5
     },
     "caps": {
       "industrial_speed": 0.5,
