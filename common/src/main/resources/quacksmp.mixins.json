@@ -16,7 +16,8 @@
     "AbstractContainerMenuMixin",
     "LivingEntityMixin",
     "ExplosionMixin",
-    "BlockItemMixin"
+    "BlockItemMixin",
+    "PlayerActionMixin"
   ],
   "injectors": {
     "defaultRequire": 1

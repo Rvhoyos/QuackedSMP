@@ -130,7 +130,7 @@ public final class TeleportCommands {
 
                 // Notify acceptee immediately
                 String telMsg = SmpConfig.MESSAGES.getOrDefault("tpa.teleporting_requester",
-                                "Request accepted. Teleporting {player} in 5 seconds...");
+                                "Request accepted. Teleporting {player} in " + SmpConfig.TP_WARMUP + " seconds...");
                 target.displayClientMessage(
                                 Component.literal(telMsg.replace("{player}", requester.getName().getString())),
                                 false);

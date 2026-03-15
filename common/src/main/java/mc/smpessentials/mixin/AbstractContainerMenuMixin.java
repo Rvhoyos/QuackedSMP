@@ -12,6 +12,15 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+/**
+ * Intercepts all container slot clicks to route interactions with the
+ * in-game configuration GUI ({@link mc.smpessentials.config.ConfigGui}).
+ *
+ * <p>When the open container is a {@link ChestMenu} backed by a
+ * {@link mc.smpessentials.config.ConfigMenuContainer}, vanilla slot logic is
+ * cancelled entirely (preventing item movement) and the click is delegated to
+ * {@code ConfigGui.onClick} to handle button presses.
+ */
 @Mixin(AbstractContainerMenu.class)
 public class AbstractContainerMenuMixin {
 

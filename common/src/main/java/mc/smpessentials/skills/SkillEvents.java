@@ -8,6 +8,7 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.BlockTags;
+import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
@@ -47,11 +48,22 @@ public final class SkillEvents {
 
     // ========== BLOCK BREAK (Mining, Excavation, Woodcutting, Farming) ==========
 
+    /**
+     * Called when a player breaks a block. Awards XP for Mining, Excavation,
+     * Woodcutting, and Farming based on block type. Also cancels Scout Zoom if
+     * active, and forwards log breaks to {@link ActiveAbilities#onLogBreak} for
+     * Tree Feller chain-breaking.
+     */
     public static void onBlockBreak(Level level, BlockPos pos, BlockState state, Player player) {
         if (!(player instanceof ServerPlayer sp))
             return;
         if (!(level instanceof ServerLevel sl))
             return;
+
+        // Scout Zoom: cancel on block break
+        if (ActiveAbilities.isZoomActive(sp.getUUID())) {
+            ActiveAbilities.deactivateZoom(sp.getUUID(), sp);
+        }
 
         try {
             SkillData data = SkillData.get(sl);
@@ -92,9 +104,21 @@ public final class SkillEvents {
 
     // ========== COMBAT (Melee, Archery, Defense) ==========
 
+    /**
+     * Called when a living entity dies. Awards Melee or Archery XP to the killing
+     * player depending on whether the hit was direct (melee) or indirect (projectile).
+     * The Arrow Recovery passive may trigger on projectile kills. Also cancels Scout
+     * Zoom if the dying entity is a player.
+     */
     public static void onLivingDeath(LivingEntity entity, DamageSource source) {
         if (entity.level().isClientSide())
             return;
+
+        // Scout Zoom: cancel on player death
+        if (entity instanceof ServerPlayer sp && ActiveAbilities.isZoomActive(sp.getUUID())) {
+            ActiveAbilities.deactivateZoom(sp.getUUID(), sp);
+        }
+
         if (!(entity instanceof Monster mob))
             return;
 
@@ -113,17 +137,38 @@ public final class SkillEvents {
             double dist = sp.distanceTo(mob);
             double bonus = dist > 30 ? 2.0 : 1.0; // distance bonus
             awardXp(sp, data, SkillType.ARCHERY, baseXp * bonus);
+
+            // Arrow Recovery passive: chance to recover an arrow
+            int archLevel = data.getLevel(sp.getUUID(), SkillType.ARCHERY);
+            double arrowChance = archLevel * 0.005; // 0.5% per level, 50% at Lv.100
+            if (sp.getRandom().nextDouble() < arrowChance) {
+                Block.popResource(sl, mob.blockPosition(), new ItemStack(Items.ARROW, 1));
+                sp.displayClientMessage(Component.literal("\u00a76\u25c6 Arrow Recovered!"), true);
+            }
         } else {
             awardXp(sp, data, SkillType.MELEE, baseXp);
         }
     }
 
+    /**
+     * Called when a living entity takes damage. Awards Defense XP to players hit
+     * by a living attacker (excludes environmental sources such as cactus, fire,
+     * and drowning). Triggers the Bleed passive for melee attacks by players.
+     * Also cancels Scout Zoom if the hurt entity is a player with zoom active.
+     */
     public static void onLivingHurt(LivingEntity entity, DamageSource source, float amount) {
         if (entity.level().isClientSide())
             return;
 
-        // Defense: player takes damage
-        if (entity instanceof ServerPlayer victim) {
+        // Scout Zoom: cancel on taking damage
+        if (entity instanceof ServerPlayer victim && ActiveAbilities.isZoomActive(victim.getUUID())) {
+            ActiveAbilities.deactivateZoom(victim.getUUID(), victim);
+        }
+
+        // Defense: player takes damage from a living attacker (mob or player).
+        // Environmental sources (cactus, fire, drowning, fall, lava) are excluded
+        // to prevent passive XP farming.
+        if (entity instanceof ServerPlayer victim && source.getEntity() instanceof LivingEntity) {
             ServerLevel sl = (ServerLevel) victim.level();
             SkillData data = SkillData.get(sl);
             double xp = Math.max(1, Math.floor(amount)); // 1 XP per half-heart
@@ -140,17 +185,70 @@ public final class SkillEvents {
                 double bleedChance = meleeLevel * 0.005; // 0.5% per level, 50% at 100
                 if (sp.getRandom().nextDouble() < bleedChance) {
                     target.addEffect(new MobEffectInstance(MobEffects.WITHER, 60, 0)); // 3s
+                    sp.displayClientMessage(Component.literal("\u00a7c\u2694 Bleed!"), true);
                 }
 
-                // Combat parent damage buff applied via attribute would be better,
-                // but for simplicity we don't modify the event amount here.
-                // Parent buff is handled in ActiveAbilities or a separate tick.
+                // Combat parent damage buff is applied as a persistent attribute modifier
+                // in updateParentBuffs() — no need to modify the event amount here.
             }
         }
     }
 
+    // ========== SAFE LANDING ==========
+
+    /**
+     * Guards against re-entrant fall damage processing when we re-apply reduced damage.
+     * Set to true while the reduced-damage re-call is in flight.
+     */
+    public static final ThreadLocal<Boolean> SAFE_LANDING_GUARD = ThreadLocal.withInitial(() -> false);
+
+    /**
+     * Intercepts fall damage and absorbs a fraction proportional to Agility level.
+     * At Agility 100, absorbs up to {@code CAP_SAFE_LANDING} (default 1.0 = full negation).
+     * Scales linearly: at level 50 with default cap, absorbs 50%.
+     *
+     * <p>When partially absorbed, re-applies the reduced amount via {@code entity.hurt()}
+     * guarded by {@link #SAFE_LANDING_GUARD} to prevent infinite recursion.
+     *
+     * @return true if the original fall damage event should be cancelled (we handled it)
+     */
+    public static boolean onFallDamage(LivingEntity entity, DamageSource source, float amount) {
+        if (SAFE_LANDING_GUARD.get()) return false;
+        if (!(entity instanceof ServerPlayer sp)) return false;
+        if (!source.is(DamageTypeTags.IS_FALL)) return false;
+
+        ServerLevel sl = (ServerLevel) sp.level();
+        SkillData data = SkillData.get(sl);
+        int agiLevel = data.getLevel(sp.getUUID(), SkillType.AGILITY);
+        if (agiLevel <= 0) return false;
+
+        double reduction = SkillManager.perkScale(agiLevel, SmpConfig.CAP_SAFE_LANDING);
+        if (reduction <= 0) return false;
+
+        float reducedAmount = Math.max(0, (float) (amount * (1.0 - reduction)));
+        int pct = Math.min(100, (int) (reduction * 100));
+
+        if (reducedAmount > 0) {
+            SAFE_LANDING_GUARD.set(true);
+            try {
+                sp.hurt(source, reducedAmount);
+            } finally {
+                SAFE_LANDING_GUARD.set(false);
+            }
+        }
+        // Show AFTER re-call so Defense XP action bar message doesn't overwrite it
+        sp.displayClientMessage(Component.literal("\u00a7b\u2734 Safe Landing! -" + pct + "%"), true);
+        return true; // cancel original event
+    }
+
     // ========== AGILITY (Movement) ==========
 
+    /**
+     * Called every server tick for each player. Handles Agility XP accumulation
+     * from horizontal movement (1 XP per 100 blocks walked), Dash trigger detection
+     * (sprint + sneak while airborne), and Scout Zoom per-tick updates (glow cone
+     * application and expiry check).
+     */
     public static void onPlayerTick(Player player) {
         if (!(player instanceof ServerPlayer sp))
             return;
@@ -175,37 +273,50 @@ public final class SkillEvents {
                     int chunks = (int) (accum / 100);
                     awardXp(sp, data, SkillType.AGILITY, chunks);
                     accum -= chunks * 100;
-
-                    // Fall damage reduction passive
-                    int agiLevel = data.getLevel(uuid, SkillType.AGILITY);
-                    if (agiLevel > 0 && sp.fallDistance > 3) {
-                        double reduction = agiLevel * 0.005; // 0.5% per level
-                        // We can't easily modify fall damage here,
-                        // so we apply Slow Falling briefly on high falls
-                        if (sp.fallDistance > 5 && sp.getRandom().nextDouble() < reduction) {
-                            sp.addEffect(new MobEffectInstance(MobEffects.SLOW_FALLING, 20, 0, false, false));
-                        }
-                    }
                 }
                 distanceAccum.put(uuid, accum);
             }
         }
         lastPositions.put(uuid, current);
 
-        // Agility Dash Trigger: Sprint + Sneak (Shift)
-        // Ideally we'd use Jump, but detecting jump start server-side is tricky without
-        // mixins.
+        // Agility Dash Trigger: Sprint + Sneak while in air (not on ground).
         // Sprint + Sneak is a unique combo (normally stops sprint).
         if (sp.isSprinting() && sp.isShiftKeyDown() && !sp.onGround()) {
-            // The player is seemingly "rocket jumping" or dash-jumping
             ServerLevel sl = (ServerLevel) sp.level();
             mc.smpessentials.skills.ActiveAbilities.tryActivateDash(sp, SkillData.get(sl), uuid);
         }
+
+        // Scout Zoom tick: update glow and check expiry
+        if (mc.smpessentials.skills.ActiveAbilities.isZoomActive(uuid)) {
+            ServerLevel sl = (ServerLevel) sp.level();
+            mc.smpessentials.skills.ActiveAbilities.onZoomTick(sp, SkillData.get(sl));
+        }
     }
 
+    /**
+     * Called by {@link mc.smpessentials.mixin.PlayerActionMixin} when the player presses
+     * sneak + F (swap-offhand key) with both hands empty, delegating to
+     * {@link ActiveAbilities#tryActivateZoom}.
+     */
+    public static void onZoomActivate(net.minecraft.server.level.ServerPlayer sp) {
+        ServerLevel sl = (ServerLevel) sp.level();
+        ActiveAbilities.tryActivateZoom(sp, SkillData.get(sl));
+    }
+
+    /**
+     * Called when a player disconnects. Cleans up per-player state: movement
+     * accumulators, Tree Feller timer, and Scout Zoom (restoring the offhand
+     * to prevent the injected spyglass from being persisted).
+     */
     public static void onPlayerLoggedOut(Player player) {
-        lastPositions.remove(player.getUUID());
-        distanceAccum.remove(player.getUUID());
+        UUID uuid = player.getUUID();
+        lastPositions.remove(uuid);
+        distanceAccum.remove(uuid);
+        mc.smpessentials.skills.ActiveAbilities.clearTreeFeller(uuid);
+        // Restore offhand and discard injected spyglass on disconnect so the
+        // temporary item is not persisted to the player's save file.
+        if (player instanceof ServerPlayer sp)
+            mc.smpessentials.skills.ActiveAbilities.deactivateZoom(uuid, sp);
     }
 
     // ========== FISHING ==========
@@ -214,14 +325,23 @@ public final class SkillEvents {
     // The mixin injects into FishingHook.retrieve() and awards 15 XP on catch.
 
     /**
-     * Register listener for player join to apply parent buffs on login.
-     * Also applies Knowledge XP multiplier context for future awards.
+     * Called when a player joins the server. Updates the cached display name,
+     * applies parent buff attribute modifiers based on current skill levels,
+     * and executes any queued punishments.
      */
     public static void onPlayerJoin(Player player) {
         if (player instanceof ServerPlayer sp) {
             ServerLevel sl = (ServerLevel) sp.level();
             SkillData data = SkillData.get(sl);
+            data.updateName(sp.getUUID(), sp.getName().getString());
             updateParentBuffs(sp, data);
+
+            // Apply queued punishments if any
+            mc.smpessentials.punish.PunishManager pm = mc.smpessentials.punish.PunishManager.get(sp.level().getServer());
+            if (pm.isPending(sp.getUUID())) {
+                pm.punish(sp);
+                sp.sendSystemMessage(net.minecraft.network.chat.Component.literal("\u00a7cYour inventory and claims were cleared while you were away due to a recently applied punishment."));
+            }
         }
     }
 
@@ -276,7 +396,7 @@ public final class SkillEvents {
      *
      * <ul>
      * <li><b>Industrial</b> → Movement Speed (multiplier)</li>
-     * <li><b>Nature</b> → Max Health (flat HP, up to config cap × 20 HP)</li>
+     * <li><b>Nature</b> → Max Health (flat HP; CAP_NATURE_HEALTH hearts max)</li>
      * <li><b>Combat</b> → Attack Damage (multiplier)</li>
      * <li><b>Knowledge</b> → XP multiplier (applied in awardXp, not here)</li>
      * </ul>
@@ -291,9 +411,9 @@ public final class SkillEvents {
                 "quackedsmp", "industrial_speed", speedBonus,
                 AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
 
-        // Nature → Health buff (e.g. 20 extra HP = 10 hearts at max)
+        // Nature → Health buff: CAP_NATURE_HEALTH is in hearts; * 2 converts to HP units
         int natureLevel = SkillManager.parentLevel(SkillType.Category.NATURE, xpMap);
-        double healthBonus = SkillManager.perkScale(natureLevel, SmpConfig.CAP_NATURE_HEALTH) * 20;
+        double healthBonus = SkillManager.perkScale(natureLevel, SmpConfig.CAP_NATURE_HEALTH) * 2;
         applyModifier(player, Attributes.MAX_HEALTH,
                 "quackedsmp", "nature_health", healthBonus,
                 AttributeModifier.Operation.ADD_VALUE);
@@ -304,6 +424,13 @@ public final class SkillEvents {
         applyModifier(player, Attributes.ATTACK_DAMAGE,
                 "quackedsmp", "combat_damage", damageBonus,
                 AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
+
+        // Defense sub-skill → Armor bonus (flat armor points)
+        int defenseLevel = data.getLevel(player.getUUID(), SkillType.DEFENSE);
+        double armorBonus = SkillManager.perkScale(defenseLevel, SmpConfig.CAP_DEFENSE_ARMOR);
+        applyModifier(player, Attributes.ARMOR,
+                "quackedsmp", "defense_armor", armorBonus,
+                AttributeModifier.Operation.ADD_VALUE);
     }
 
     /**
@@ -327,14 +454,14 @@ public final class SkillEvents {
 
     // ========== PASSIVE HELPERS ==========
 
-    /** Double drop chance based on parent category level. */
+    /** Double drop chance based on Industrial parent level, scaled to CAP_DOUBLE_DROP. */
     private static void applyDoubleDrop(ServerPlayer sp, SkillData data, BlockState state, BlockPos pos,
             ServerLevel level) {
         int parentLevel = SkillManager.parentLevel(SkillType.Category.INDUSTRIAL, data.getTypedXpMap(sp.getUUID()));
-        double chance = SkillManager.perkScale(parentLevel, SmpConfig.CAP_INDUSTRIAL_SPEED);
+        double chance = SkillManager.perkScale(parentLevel, SmpConfig.CAP_DOUBLE_DROP);
         if (sp.getRandom().nextDouble() < chance) {
-            // Drop an extra copy of what the block drops
             Block.dropResources(state, level, pos, null, sp, sp.getMainHandItem());
+            sp.displayClientMessage(Component.literal("\u00a7a\u26a1 Double Drop!"), true);
         }
     }
 
@@ -343,10 +470,10 @@ public final class SkillEvents {
         int excLevel = data.getLevel(sp.getUUID(), SkillType.EXCAVATION);
         double chance = excLevel * 0.003; // 0.3% per level, 30% at 100
         if (sp.getRandom().nextDouble() < chance) {
-            // Random treasure
             Item[] treasures = { Items.GOLD_NUGGET, Items.IRON_NUGGET, Items.GUNPOWDER, Items.BONE, Items.FLINT };
             Item treasure = treasures[sp.getRandom().nextInt(treasures.length)];
             Block.popResource(level, pos, new ItemStack(treasure, 1));
+            sp.displayClientMessage(Component.literal("\u00a76\u2726 Treasure!"), true);
         }
     }
 
@@ -354,9 +481,9 @@ public final class SkillEvents {
     private static void applyLeafBlower(ServerPlayer sp, SkillData data, BlockPos pos, ServerLevel level) {
         int wcLevel = data.getLevel(sp.getUUID(), SkillType.WOODCUTTING);
         if (wcLevel < 20)
-            return; // unlocks at level 20
+            return;
 
-        // Scan 3-block radius for leaves
+        int cleared = 0;
         for (int dx = -3; dx <= 3; dx++) {
             for (int dy = -3; dy <= 3; dy++) {
                 for (int dz = -3; dz <= 3; dz++) {
@@ -364,10 +491,13 @@ public final class SkillEvents {
                     BlockState leafState = level.getBlockState(leafPos);
                     if (leafState.is(BlockTags.LEAVES)) {
                         level.destroyBlock(leafPos, true, sp);
+                        cleared++;
                     }
                 }
             }
         }
+        if (cleared > 0)
+            sp.displayClientMessage(Component.literal("\u00a72\u2702 Leaves Cleared!"), true);
     }
 
     /** Farming: auto-replant crops on harvest. */
@@ -376,13 +506,12 @@ public final class SkillEvents {
         int farmLevel = data.getLevel(sp.getUUID(), SkillType.FARMING);
         double chance = farmLevel * 0.01; // 1% per level, 100% at 100
         if (sp.getRandom().nextDouble() < chance) {
-            // Schedule replant on next tick (block is being broken this tick)
             level.getServer().execute(() -> {
                 if (level.getBlockState(pos).isAir()) {
-                    // Re-place the crop at age 0
                     level.setBlockAndUpdate(pos, state.getBlock().defaultBlockState());
                 }
             });
+            sp.displayClientMessage(Component.literal("\u00a72\u21ba Replanted!"), true);
         }
     }
 

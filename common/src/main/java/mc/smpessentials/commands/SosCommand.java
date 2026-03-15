@@ -15,10 +15,26 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.Optional;
 
+/**
+ * Implements the {@code /sos} command.
+ *
+ * <p>Iterates every online player and teleports any untrusted player who is currently
+ * standing inside a chunk owned by the command caller to that player's own respawn
+ * point (or world spawn as a fallback).  OPs and spectators are never ejected.
+ *
+ * <p>Performance note: iterates the online player list ({@code O(N)} players) rather
+ * than the claim list ({@code O(M)} claims) because {@code N} is expected to be much
+ * smaller.
+ */
 public final class SosCommand {
     private SosCommand() {
     }
 
+    /**
+     * Ejects all untrusted players from the caller's claims.
+     *
+     * @return 1 always (even if no one was ejected).
+     */
     public static int execute(CommandSourceStack source) {
         if (!(source.getEntity() instanceof ServerPlayer caller)) {
             source.sendFailure(Component.literal("Only players can use /sos."));

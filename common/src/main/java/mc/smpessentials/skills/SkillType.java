@@ -44,6 +44,10 @@ public enum SkillType {
         private final String displayName;
         private final String color; // §-code
         private final String symbol;
+        // Lazily populated on first call — SkillType enum constants are not yet
+        // initialised when Category constants are constructed, so we cannot
+        // populate this in the constructor.
+        private SkillType[] skills;
 
         Category(String displayName, String color, String symbol) {
             this.displayName = displayName;
@@ -63,10 +67,18 @@ public enum SkillType {
             return symbol;
         }
 
+        /**
+         * Returns the sub-skills that belong to this category.
+         * The result is computed once and cached; subsequent calls return the
+         * same array instance.
+         */
         public SkillType[] skills() {
-            return java.util.Arrays.stream(SkillType.values())
-                    .filter(s -> s.category == this)
-                    .toArray(SkillType[]::new);
+            if (skills == null) {
+                skills = java.util.Arrays.stream(SkillType.values())
+                        .filter(s -> s.category == this)
+                        .toArray(SkillType[]::new);
+            }
+            return skills;
         }
     }
 }

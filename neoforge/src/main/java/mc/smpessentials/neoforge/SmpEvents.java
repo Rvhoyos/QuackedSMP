@@ -17,8 +17,17 @@ import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 import net.neoforged.neoforge.event.level.BlockEvent;
 import net.neoforged.neoforge.event.server.ServerStartedEvent;
+import net.neoforged.neoforge.event.server.ServerStoppingEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 
+/**
+ * NeoForge event hub for QuackedSMP.
+ *
+ * <p>Every method is a static {@link SubscribeEvent} handler registered via
+ * {@code NeoForge.EVENT_BUS.register(SmpEvents.class)} in
+ * {@link mc.smpessentials.neoforge.SmpUtilsModNeoForge}. Each handler delegates
+ * immediately to the platform-agnostic common module; no game logic lives here.
+ */
 public class SmpEvents {
 
     @SubscribeEvent
@@ -30,6 +39,12 @@ public class SmpEvents {
     public static void onServerStarted(ServerStartedEvent event) {
         ChatFilter.onServerStart(event.getServer());
         mc.smpessentials.bluemap.BlueMapIntegration.onServerStart(event.getServer());
+        mc.smpessentials.keepinv.KeepInvSavedData.enforceGamerule(event.getServer());
+    }
+
+    @SubscribeEvent
+    public static void onServerStopping(ServerStoppingEvent event) {
+        mc.smpessentials.commands.EndResetLogic.onServerStopping(event.getServer());
     }
 
     @SubscribeEvent
@@ -37,6 +52,24 @@ public class SmpEvents {
         if (event.getEntity() instanceof ServerPlayer player) {
             JoinMessageHandler.onPlayerJoin(player);
             SkillEvents.onPlayerJoin(player);
+            mc.smpessentials.punish.PunishManager pm =
+                    mc.smpessentials.punish.PunishManager.get(((net.minecraft.server.level.ServerLevel) player.level()).getServer());
+            if (pm.isPending(player.getUUID())) {
+                pm.punish(player);
+            }
+        }
+    }
+
+    @SubscribeEvent
+    public static void onPlayerLogout(PlayerEvent.PlayerLoggedOutEvent event) {
+        SkillEvents.onPlayerLoggedOut(event.getEntity());
+        mc.smpessentials.teleport.TeleportService.clearForPlayer(event.getEntity().getUUID());
+    }
+
+    @SubscribeEvent
+    public static void onLivingDeath(net.neoforged.neoforge.event.entity.living.LivingDeathEvent event) {
+        if (event.getEntity() instanceof ServerPlayer sp) {
+            mc.smpessentials.keepinv.KeepInvSavedData.onPlayerDeath(sp);
         }
     }
 
@@ -46,8 +79,11 @@ public class SmpEvents {
         mc.smpessentials.bluemap.BlueMapIntegration.onServerTick(event.getServer());
         for (ServerPlayer player : event.getServer().getPlayerList().getPlayers()) {
             TeleportScheduler.onPlayerTick(player);
+            SkillEvents.onPlayerTick(player);
         }
     }
+
+    // Scout Zoom activation is handled by PlayerActionMixin (common module)
 
     @SubscribeEvent
     public static void onServerChat(ServerChatEvent event) {

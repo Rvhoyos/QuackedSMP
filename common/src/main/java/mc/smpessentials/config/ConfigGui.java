@@ -51,23 +51,35 @@ public class ConfigGui {
     private static final int SLOT_MSG_INTERVAL_PLUS = 17;
 
     // Row 2: Global Skill Settings
+    private static final int SLOT_CAP_SAFE_LANDING_MINUS = 18;
+    private static final int SLOT_CAP_SAFE_LANDING_DISPLAY = 19;
+    private static final int SLOT_CAP_SAFE_LANDING_PLUS = 20;
+
     private static final int SLOT_XP_EXPONENT_MINUS = 22;
     private static final int SLOT_XP_EXPONENT_DISPLAY = 23;
     private static final int SLOT_XP_EXPONENT_PLUS = 24;
 
-    // Row 3: Skill Caps I
+    // Row 3: Skill Caps I (Speed, Double Drop, Health)
     private static final int SLOT_CAP_SPEED_MINUS = 27;
     private static final int SLOT_CAP_SPEED_DISPLAY = 28;
     private static final int SLOT_CAP_SPEED_PLUS = 29;
+
+    private static final int SLOT_CAP_DOUBLE_DROP_MINUS = 30;
+    private static final int SLOT_CAP_DOUBLE_DROP_DISPLAY = 31;
+    private static final int SLOT_CAP_DOUBLE_DROP_PLUS = 32;
 
     private static final int SLOT_CAP_HEALTH_MINUS = 33;
     private static final int SLOT_CAP_HEALTH_DISPLAY = 34;
     private static final int SLOT_CAP_HEALTH_PLUS = 35;
 
-    // Row 4: Skill Caps II
+    // Row 4: Skill Caps II (Damage, Defense Armor, XP)
     private static final int SLOT_CAP_DAMAGE_MINUS = 36;
     private static final int SLOT_CAP_DAMAGE_DISPLAY = 37;
     private static final int SLOT_CAP_DAMAGE_PLUS = 38;
+
+    private static final int SLOT_CAP_DEFENSE_ARMOR_MINUS = 39;
+    private static final int SLOT_CAP_DEFENSE_ARMOR_DISPLAY = 40;
+    private static final int SLOT_CAP_DEFENSE_ARMOR_PLUS = 41;
 
     private static final int SLOT_CAP_XP_MINUS = 42;
     private static final int SLOT_CAP_XP_DISPLAY = 43;
@@ -126,6 +138,19 @@ public class ConfigGui {
         container.setItem(SLOT_MSG_INTERVAL_PLUS, createActionItem(Items.GREEN_CONCRETE, "\u00a7a+60s Interval"));
 
         // --- Row 2: Global Skill Settings ---
+        container.setItem(SLOT_CAP_SAFE_LANDING_MINUS, createActionItem(Items.RED_STAINED_GLASS, "\u00a7c-0.1 Absorption"));
+
+        List<String> safeLandingLore = new ArrayList<>();
+        safeLandingLore.add("\u00a77Applies to: \u00a7fAgility");
+        safeLandingLore.add("\u00a77Effect at Level 100:");
+        safeLandingLore.add("\u00a7b-" + Math.min(100, (int) (SmpConfig.CAP_SAFE_LANDING * 100)) + "% Fall Damage");
+        safeLandingLore.add("\u00a77Scales linearly with level.");
+
+        container.setItem(SLOT_CAP_SAFE_LANDING_DISPLAY, createInfoItem(Items.FEATHER, "Cap: Safe Landing",
+                String.format("%.1f", SmpConfig.CAP_SAFE_LANDING), safeLandingLore));
+
+        container.setItem(SLOT_CAP_SAFE_LANDING_PLUS, createActionItem(Items.GREEN_STAINED_GLASS, "\u00a7a+0.1 Absorption"));
+
         container.setItem(SLOT_XP_EXPONENT_MINUS, createActionItem(Items.RED_CONCRETE, "\u00a7c-0.1 Exponent"));
 
         List<String> expLore = new ArrayList<>();
@@ -150,6 +175,18 @@ public class ConfigGui {
                 String.format("%.1f", SmpConfig.CAP_INDUSTRIAL_SPEED), speedLore));
 
         container.setItem(SLOT_CAP_SPEED_PLUS, createActionItem(Items.GREEN_STAINED_GLASS, "\u00a7a+0.1 Speed"));
+
+        container.setItem(SLOT_CAP_DOUBLE_DROP_MINUS, createActionItem(Items.RED_STAINED_GLASS, "\u00a7c-0.05 Double Drop"));
+
+        List<String> doubleDropLore = new ArrayList<>();
+        doubleDropLore.add("\u00a77Applies to: \u00a7fMining, Woodcutting");
+        doubleDropLore.add("\u00a77Effect at Industrial Level 100:");
+        doubleDropLore.add("\u00a76+" + (int) (SmpConfig.CAP_DOUBLE_DROP * 100) + "% Double Drop Chance");
+
+        container.setItem(SLOT_CAP_DOUBLE_DROP_DISPLAY, createInfoItem(Items.DIAMOND, "Cap: Double Drop",
+                String.format("%.2f", SmpConfig.CAP_DOUBLE_DROP), doubleDropLore));
+
+        container.setItem(SLOT_CAP_DOUBLE_DROP_PLUS, createActionItem(Items.GREEN_STAINED_GLASS, "\u00a7a+0.05 Double Drop"));
 
         container.setItem(SLOT_CAP_HEALTH_MINUS, createActionItem(Items.RED_STAINED_GLASS, "\u00a7c-1.0 Health"));
 
@@ -176,12 +213,24 @@ public class ConfigGui {
 
         container.setItem(SLOT_CAP_DAMAGE_PLUS, createActionItem(Items.GREEN_STAINED_GLASS, "\u00a7a+0.1 Damage"));
 
+        container.setItem(SLOT_CAP_DEFENSE_ARMOR_MINUS, createActionItem(Items.RED_STAINED_GLASS, "\u00a7c-1.0 Armor"));
+
+        List<String> defArmorLore = new ArrayList<>();
+        defArmorLore.add("\u00a77Applies to: \u00a7fDefense");
+        defArmorLore.add("\u00a77Effect at Defense Level 100:");
+        defArmorLore.add("\u00a77+" + (int) SmpConfig.CAP_DEFENSE_ARMOR + " Armor Points");
+
+        container.setItem(SLOT_CAP_DEFENSE_ARMOR_DISPLAY, createInfoItem(Items.IRON_CHESTPLATE, "Cap: Defense Armor",
+                String.format("%.1f", SmpConfig.CAP_DEFENSE_ARMOR), defArmorLore));
+
+        container.setItem(SLOT_CAP_DEFENSE_ARMOR_PLUS, createActionItem(Items.GREEN_STAINED_GLASS, "\u00a7a+1.0 Armor"));
+
         container.setItem(SLOT_CAP_XP_MINUS, createActionItem(Items.RED_STAINED_GLASS, "\u00a7c-0.1 XP Mult"));
 
         List<String> xpLore = new ArrayList<>();
         xpLore.add("\u00a77Applies to: \u00a7fEnchanting, Alchemy, Trading");
         xpLore.add("\u00a77Effect at Level 100:");
-        xpLore.add("\u00a7af+" + (int) (SmpConfig.CAP_KNOWLEDGE_XP * 100) + "% XP Orbs Dropped");
+        xpLore.add("\u00a7a+" + (int) (SmpConfig.CAP_KNOWLEDGE_XP * 100) + "% XP Orbs Dropped");
 
         container.setItem(SLOT_CAP_XP_DISPLAY, createInfoItem(Items.EXPERIENCE_BOTTLE, "Cap: XP Multiplier",
                 String.format("%.1f", SmpConfig.CAP_KNOWLEDGE_XP), xpLore));
@@ -250,11 +299,17 @@ public class ConfigGui {
             refresh = true;
         }
         // Row 2
-        else if (slotId == SLOT_XP_EXPONENT_MINUS) {
+        else if (slotId == SLOT_CAP_SAFE_LANDING_MINUS) {
+            SmpConfig.CAP_SAFE_LANDING = Math.max(0.0, SmpConfig.CAP_SAFE_LANDING - 0.1);
+            refresh = true;
+        } else if (slotId == SLOT_CAP_SAFE_LANDING_PLUS) {
+            SmpConfig.CAP_SAFE_LANDING = Math.min(1.0, SmpConfig.CAP_SAFE_LANDING + 0.1);
+            refresh = true;
+        } else if (slotId == SLOT_XP_EXPONENT_MINUS) {
             SmpConfig.SKILL_XP_EXPONENT = Math.max(1.0, SmpConfig.SKILL_XP_EXPONENT - 0.1);
             refresh = true;
         } else if (slotId == SLOT_XP_EXPONENT_PLUS) {
-            SmpConfig.SKILL_XP_EXPONENT += 0.1;
+            SmpConfig.SKILL_XP_EXPONENT = Math.min(4.0, SmpConfig.SKILL_XP_EXPONENT + 0.1);
             refresh = true;
         }
         // Row 3
@@ -262,13 +317,19 @@ public class ConfigGui {
             SmpConfig.CAP_INDUSTRIAL_SPEED = Math.max(0.0, SmpConfig.CAP_INDUSTRIAL_SPEED - 0.1);
             refresh = true;
         } else if (slotId == SLOT_CAP_SPEED_PLUS) {
-            SmpConfig.CAP_INDUSTRIAL_SPEED += 0.1;
+            SmpConfig.CAP_INDUSTRIAL_SPEED = Math.min(2.0, SmpConfig.CAP_INDUSTRIAL_SPEED + 0.1);
+            refresh = true;
+        } else if (slotId == SLOT_CAP_DOUBLE_DROP_MINUS) {
+            SmpConfig.CAP_DOUBLE_DROP = Math.max(0.0, SmpConfig.CAP_DOUBLE_DROP - 0.05);
+            refresh = true;
+        } else if (slotId == SLOT_CAP_DOUBLE_DROP_PLUS) {
+            SmpConfig.CAP_DOUBLE_DROP = Math.min(1.0, SmpConfig.CAP_DOUBLE_DROP + 0.05);
             refresh = true;
         } else if (slotId == SLOT_CAP_HEALTH_MINUS) {
             SmpConfig.CAP_NATURE_HEALTH = Math.max(0.0, SmpConfig.CAP_NATURE_HEALTH - 1.0);
             refresh = true;
         } else if (slotId == SLOT_CAP_HEALTH_PLUS) {
-            SmpConfig.CAP_NATURE_HEALTH += 1.0;
+            SmpConfig.CAP_NATURE_HEALTH = Math.min(40.0, SmpConfig.CAP_NATURE_HEALTH + 1.0);
             refresh = true;
         }
         // Row 4
@@ -276,13 +337,19 @@ public class ConfigGui {
             SmpConfig.CAP_COMBAT_DAMAGE = Math.max(0.0, SmpConfig.CAP_COMBAT_DAMAGE - 0.1);
             refresh = true;
         } else if (slotId == SLOT_CAP_DAMAGE_PLUS) {
-            SmpConfig.CAP_COMBAT_DAMAGE += 0.1;
+            SmpConfig.CAP_COMBAT_DAMAGE = Math.min(5.0, SmpConfig.CAP_COMBAT_DAMAGE + 0.1);
+            refresh = true;
+        } else if (slotId == SLOT_CAP_DEFENSE_ARMOR_MINUS) {
+            SmpConfig.CAP_DEFENSE_ARMOR = Math.max(0.0, SmpConfig.CAP_DEFENSE_ARMOR - 1.0);
+            refresh = true;
+        } else if (slotId == SLOT_CAP_DEFENSE_ARMOR_PLUS) {
+            SmpConfig.CAP_DEFENSE_ARMOR = Math.min(20.0, SmpConfig.CAP_DEFENSE_ARMOR + 1.0);
             refresh = true;
         } else if (slotId == SLOT_CAP_XP_MINUS) {
             SmpConfig.CAP_KNOWLEDGE_XP = Math.max(0.0, SmpConfig.CAP_KNOWLEDGE_XP - 0.1);
             refresh = true;
         } else if (slotId == SLOT_CAP_XP_PLUS) {
-            SmpConfig.CAP_KNOWLEDGE_XP += 0.1;
+            SmpConfig.CAP_KNOWLEDGE_XP = Math.min(5.0, SmpConfig.CAP_KNOWLEDGE_XP + 0.1);
             refresh = true;
         }
         // Row 5

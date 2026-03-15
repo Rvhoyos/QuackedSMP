@@ -3,6 +3,7 @@
 **/out/
 **/bin/
 .gradle/
+.gradle-vscode/
 
 # --- Dev runtime & logs (Minecraft) ---
 **/run/
@@ -21,4 +22,9 @@
 # --- OS cruft (harmless to ignore anywhere) ---
 **/.DS_Store
 **/Thumbs.db
+
+# --- Claude Code ---
+CLAUDE.md
+.claude-decompiled/
+memory/
 

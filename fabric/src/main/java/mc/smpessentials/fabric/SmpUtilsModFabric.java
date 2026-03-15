@@ -4,6 +4,13 @@ import net.fabricmc.api.ModInitializer;
 
 import mc.smpessentials.SmpUtilsMod;
 
+/**
+ * Fabric mod entrypoint for QuackedSMP.
+ *
+ * <p>Runs common initialisation via {@link mc.smpessentials.SmpUtilsMod#init()} and
+ * wires all Fabric API event callbacks that delegate to the platform-agnostic common module.
+ * All game logic lives in {@code common}; this class is intentionally thin.
+ */
 public final class SmpUtilsModFabric implements ModInitializer {
     @Override
     public void onInitialize() {
@@ -25,15 +32,33 @@ public final class SmpUtilsModFabric implements ModInitializer {
         net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents.SERVER_STARTED.register(server -> {
             mc.smpessentials.chatfilter.ChatFilter.onServerStart(server);
             mc.smpessentials.bluemap.BlueMapIntegration.onServerStart(server);
+            mc.smpessentials.keepinv.KeepInvSavedData.enforceGamerule(server);
         });
         net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents.SERVER_STOPPING.register(server -> {
             mc.smpessentials.commands.EndResetLogic.onServerStopping(server);
         });
 
-        // 3. Player Join
+        // 3. Player Join / Disconnect
         net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {
-            mc.smpessentials.events.JoinMessageHandler.onPlayerJoin(handler.getPlayer());
-            mc.smpessentials.skills.SkillEvents.onPlayerJoin(handler.getPlayer());
+            net.minecraft.server.level.ServerPlayer player = handler.getPlayer();
+            mc.smpessentials.events.JoinMessageHandler.onPlayerJoin(player);
+            mc.smpessentials.skills.SkillEvents.onPlayerJoin(player);
+            mc.smpessentials.punish.PunishManager pm =
+                    mc.smpessentials.punish.PunishManager.get(server);
+            if (pm.isPending(player.getUUID())) {
+                pm.punish(player);
+            }
+        });
+        net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> {
+            mc.smpessentials.skills.SkillEvents.onPlayerLoggedOut(handler.getPlayer());
+            mc.smpessentials.teleport.TeleportService.clearForPlayer(handler.getPlayer().getUUID());
+        });
+
+        // 9. Keep Inventory — drop items on death for opted-out players
+        net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents.AFTER_DEATH.register((entity, source) -> {
+            if (entity instanceof net.minecraft.server.level.ServerPlayer sp) {
+                mc.smpessentials.keepinv.KeepInvSavedData.onPlayerDeath(sp);
+            }
         });
 
         // 4. Server Tick + Player Tick processing
@@ -42,8 +67,11 @@ public final class SmpUtilsModFabric implements ModInitializer {
             mc.smpessentials.bluemap.BlueMapIntegration.onServerTick(server);
             for (net.minecraft.server.level.ServerPlayer player : server.getPlayerList().getPlayers()) {
                 mc.smpessentials.teleport.TeleportScheduler.onPlayerTick(player);
+                mc.smpessentials.skills.SkillEvents.onPlayerTick(player);
             }
         });
+
+        // Scout Zoom activation is handled by PlayerActionMixin (common module)
 
         // 5. Chat Decorator
         net.fabricmc.fabric.api.message.v1.ServerMessageDecoratorEvent.EVENT.register(

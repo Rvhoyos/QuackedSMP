@@ -8,7 +8,23 @@ import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 
+/**
+ * Registers miscellaneous operator and utility commands under the {@code /smp} prefix,
+ * plus standalone {@code /mute} and {@code /unmute}.
+ *
+ * <ul>
+ *   <li>{@code /smp reload} — hot-reload {@code quackedsmp.json} and chat-filter rules (OP).</li>
+ *   <li>{@code /smp config} — open the in-game config GUI (OP).</li>
+ *   <li>{@code /smp config reset} — reset config to factory defaults (OP).</li>
+ *   <li>{@code /smp end reset dragon} — respawn the Ender Dragon live without a world reset (OP).</li>
+ *   <li>{@code /smp end reset world} — queue a full End-dimension reset on next server restart (OP).</li>
+ *   <li>{@code /smp help} — print the command reference to the player's chat.</li>
+ *   <li>{@code /mute <player> <minutes>} — mute a player for a fixed duration (OP).</li>
+ *   <li>{@code /unmute <player>} — remove an active mute (OP).</li>
+ * </ul>
+ */
 public class GeneralCommands {
+        /** Registers all commands provided by this class with the given dispatcher. */
         public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
                 dispatcher.register(Commands.literal("smp")
                                 .then(Commands.literal("reload")

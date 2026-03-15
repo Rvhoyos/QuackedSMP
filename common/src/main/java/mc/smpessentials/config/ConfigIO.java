@@ -78,12 +78,15 @@ public final class ConfigIO {
                 pm.add("&b[Tip] &fType &a/smp help &ffor a list of commands!");
                 pm.add("&b[Reminder] &fPlease respect the &6/rules&f!");
                 pm.add("&b[Tip] &fUnlock active abilities by leveling up your &a/skills&f!");
-                pm.add("&b[Tip] &fUse &a/tpa <player>&f to teleport to friends!");
+                pm.add("&b[Tip] &fUse &a/tpr <player>&f to teleport to friends!");
                 pm.add("&b[Tip] &fStuck with an intruder? Use &a/sos &fto eject them from your claim!");
                 pm.add("&b[Tip] &fReach &aLevel 10 &fin a skill to unlock its unique Active Ability!");
                 pm.add("&b[Tip] &fUse &aSneak + Drop (Q) &fwith a tool to activate its ability!");
                 pm.add("&b[Tip] &fActivate &bDash &fby &aSprinting + Jumping + Sneaking&f!");
                 pm.add("&b[Tip] &fLeveling up skills grants passive buffs like &c+Health &fand &f+Speed!");
+                pm.add("&b[Reminder] &fReport griefers to &adev@quackedmod.wiki&f!");
+                pm.add("&b[Tip] &fReset the ender dragon in the &6Shogun Temple &fin the village or ask an admin to reset the end world!");
+                pm.add("&b[Reminder] &fVote for us on &a[CurseForge](https://www.curseforge.com/servers/minecraft/game/quackedsmp) &fservers to help us grow! :)");
                 pm.add("&b[Tip] &fVisit Spawn Shops for blocks & gear! Trade items for Emeralds!");
                 obj.add("periodic_messages", pm);
                 dirty = true;
@@ -207,12 +210,15 @@ public final class ConfigIO {
         pm.add("&b[Tip] &fType &a/smp help &ffor a list of commands!");
         pm.add("&b[Reminder] &fPlease respect the &6/rules&f!");
         pm.add("&b[Tip] &fUnlock active abilities by leveling up your &a/skills&f!");
-        pm.add("&b[Tip] &fUse &a/tpa <player>&f to teleport to friends!");
+        pm.add("&b[Tip] &fUse &a/tpr <player>&f to teleport to friends!");
         pm.add("&b[Tip] &fStuck with an intruder? Use &a/sos &fto eject them from your claim!");
         pm.add("&b[Tip] &fReach &aLevel 10 &fin a skill to unlock its unique Active Ability!");
         pm.add("&b[Tip] &fUse &aSneak + Drop (Q) &fwith a tool to activate its ability!");
         pm.add("&b[Tip] &fActivate &bDash &fby &aSprinting + Jumping + Sneaking&f!");
         pm.add("&b[Tip] &fLeveling up skills grants passive buffs like &c+Health &fand &f+Speed!");
+        pm.add("&b[Reminder] &fReport griefers to &adev@quackedmod.wiki&f!");
+        pm.add("&b[Tip] &fReset the ender dragon in the &6Shogun Temple &fin the village or ask an admin to reset the end world!");
+        pm.add("&b[Reminder] &fVote for us on &a[CurseForge](https://www.curseforge.com/servers/minecraft/game/quackedsmp) &fservers to help us grow! :)");
         pm.add("&b[Tip] &fVisit Spawn Shops for blocks & gear! Trade items for Emeralds!");
         root.add("periodic_messages", pm);
 
@@ -226,7 +232,7 @@ public final class ConfigIO {
         msgs.addProperty("claim.spawn_protected", "You can’t claim inside spawn protection.");
         msgs.addProperty("unclaim.success", "Chunk unclaimed.");
         msgs.addProperty("unclaim.fail_ownership", "You don’t control this claim.");
-        msgs.addProperty("claim.info.owned", "You own {count} chunk(s) in this dimension.");
+        msgs.addProperty("claim.info.owned", "You own {count} chunk(s) total.");
         msgs.addProperty("claim.info.protected_by_you", "This chunk is protected by you.");
         msgs.addProperty("claim.info.protected", "This chunk is protected.");
         msgs.addProperty("claim.info.unclaimed", "Current chunk is unclaimed.");
@@ -265,6 +271,7 @@ public final class ConfigIO {
         cds.addProperty("agility", 10);
         cds.addProperty("melee", 300);
         cds.addProperty("archery", 180);
+        cds.addProperty("archery_zoom", 30);
         cds.addProperty("defense", 600);
         cds.addProperty("enchanting", 1200);
         cds.addProperty("alchemy", 600);
@@ -277,13 +284,14 @@ public final class ConfigIO {
         unlocks.addProperty("woodcutting", 10);
         unlocks.addProperty("farming", 10);
         unlocks.addProperty("fishing", 10);
-        unlocks.addProperty("agility", 10);
+        unlocks.addProperty("agility", 3);
         unlocks.addProperty("melee", 10);
         unlocks.addProperty("archery", 10);
-        unlocks.addProperty("defense", 10);
+        unlocks.addProperty("archery_zoom", 5);
+        unlocks.addProperty("defense", 5);
         unlocks.addProperty("enchanting", 10);
         unlocks.addProperty("alchemy", 10);
-        unlocks.addProperty("trading", 10);
+        unlocks.addProperty("trading", 1);
         sk.add("ability_unlock_levels", unlocks);
 
         JsonObject caps = new JsonObject();
@@ -291,6 +299,9 @@ public final class ConfigIO {
         caps.addProperty("nature_health", 10);
         caps.addProperty("combat_damage", 1.0);
         caps.addProperty("knowledge_xp", 1.0);
+        caps.addProperty("double_drop", 0.5);
+        caps.addProperty("defense_armor", 10.0);
+        caps.addProperty("safe_landing", 1.0);
         sk.add("caps", caps);
 
         return sk;
@@ -393,6 +404,9 @@ public final class ConfigIO {
         caps.addProperty("nature_health", SmpConfig.CAP_NATURE_HEALTH);
         caps.addProperty("combat_damage", SmpConfig.CAP_COMBAT_DAMAGE);
         caps.addProperty("knowledge_xp", SmpConfig.CAP_KNOWLEDGE_XP);
+        caps.addProperty("double_drop", SmpConfig.CAP_DOUBLE_DROP);
+        caps.addProperty("defense_armor", SmpConfig.CAP_DEFENSE_ARMOR);
+        caps.addProperty("safe_landing", SmpConfig.CAP_SAFE_LANDING);
         skills.add("caps", caps);
 
         root.add("skills", skills);

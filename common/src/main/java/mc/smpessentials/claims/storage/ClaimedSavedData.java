@@ -38,8 +38,13 @@ public final class ClaimedSavedData extends SavedData {
         rebuildIndex();
     }
 
+    /**
+     * All claim data is stored in the overworld's DataStorage so that counts
+     * are global across all dimensions. The dimension key inside each ClaimData
+     * record still scopes individual claims correctly.
+     */
     public static ClaimedSavedData get(ServerLevel level) {
-        return level.getDataStorage().computeIfAbsent(TYPE);
+        return level.getServer().overworld().getDataStorage().computeIfAbsent(TYPE);
     }
 
     private void rebuildIndex() {
@@ -55,18 +60,26 @@ public final class ClaimedSavedData extends SavedData {
         return indexByDim.computeIfAbsent(dim, k -> new Long2ObjectOpenHashMap<>());
     }
 
+    /** Returns {@code true} if {@code chunk} in {@code level}'s dimension is claimed. */
     public boolean isClaimed(ServerLevel level, ChunkPos chunk) {
         return dimIndex(level.dimension()).containsKey(chunk.toLong());
     }
 
+    /** Returns the {@link ClaimData} for {@code chunk} in {@code level}'s dimension, or empty. */
     public Optional<ClaimData> getClaim(ServerLevel level, ChunkPos chunk) {
         return Optional.ofNullable(dimIndex(level.dimension()).get(chunk.toLong()));
     }
 
+    /** Convenience overload: looks up the claim for the chunk containing {@code pos}. */
     public Optional<ClaimData> getClaimAt(ServerLevel level, BlockPos pos) {
         return getClaim(level, new ChunkPos(pos));
     }
 
+    /**
+     * Claims {@code chunk} in {@code level}'s dimension for {@code owner}.
+     *
+     * @return {@code true} if the claim was created; {@code false} if already claimed.
+     */
     public boolean claim(ServerLevel level, ChunkPos chunk, UUID owner) {
         long key = chunk.toLong();
         var map = dimIndex(level.dimension());
@@ -81,6 +94,11 @@ public final class ClaimedSavedData extends SavedData {
         return true;
     }
 
+    /**
+     * Removes the claim for {@code chunk} in {@code level}'s dimension regardless of owner.
+     *
+     * @return {@code true} if the claim existed and was removed; {@code false} if unclaimed.
+     */
     public boolean unclaim(ServerLevel level, ChunkPos chunk) {
         long key = chunk.toLong();
         var map = dimIndex(level.dimension());
@@ -93,10 +111,17 @@ public final class ClaimedSavedData extends SavedData {
         return true;
     }
 
+    /** Returns an unmodifiable snapshot of all claims in {@code level}'s dimension. */
     public List<ClaimData> listClaims(ServerLevel level) {
         return dimIndex(level.dimension()).values().stream().collect(Collectors.toUnmodifiableList());
     }
 
+    /**
+     * Sets or clears the display name of the claim at {@code chunk}.
+     *
+     * @param name the new name, or {@code null} to clear it.
+     * @return {@code true} if the claim existed and was updated; {@code false} if unclaimed.
+     */
     public boolean updateName(ServerLevel level, ChunkPos chunk, String name) {
         long key = chunk.toLong();
         var map = dimIndex(level.dimension());
@@ -121,10 +146,31 @@ public final class ClaimedSavedData extends SavedData {
         setDirty();
         return true;
     }
-    // in mc.smpessentials.claims.storage.ClaimedSavedData
-
-    public int countByOwner(ServerLevel level, UUID owner) {
+    public int countByOwner(UUID owner) {
         return claimCounts.getOrDefault(owner, 0);
+    }
+
+    /**
+     * Transfers all claims from {@code from} to {@code to}.
+     * Returns the number of claims transferred (0 if {@code from} had none).
+     */
+    public int transferClaims(UUID from, UUID to) {
+        List<ClaimData> toTransfer = claims.stream()
+                .filter(c -> c.owner().equals(from))
+                .collect(Collectors.toList());
+        if (toTransfer.isEmpty())
+            return 0;
+        for (ClaimData old : toTransfer) {
+            ClaimData updated = new ClaimData(old.dimension(), old.chunk(), to, old.name(), old.createdAtMillis());
+            claims.remove(old);
+            claims.add(updated);
+            dimIndex(old.dimension()).put(old.chunk(), updated);
+        }
+        int count = toTransfer.size();
+        claimCounts.computeIfPresent(from, (k, v) -> v > count ? v - count : null);
+        claimCounts.merge(to, count, Integer::sum);
+        setDirty();
+        return count;
     }
 
 }

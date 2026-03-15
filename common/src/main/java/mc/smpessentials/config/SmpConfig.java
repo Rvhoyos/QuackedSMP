@@ -21,31 +21,45 @@ public final class SmpConfig {
     public static boolean BLUEMAP_ENABLE = true;
     public static boolean BLUEMAP_SHOW_HOMES = true;
     public static boolean BLUEMAP_SHOW_CLAIMS = true;
-    // Format: "R,G,B,A" where color components are 0-255 (A is 0.0-1.0 or 0-255?
-    // BlueMap API uses java.awt.Color, let's just use hex strings like "#88FF0000"
-    // (ARGB) or store integer RGB and float alpha). Let's use standard integer RGB,
-    // and a float opacity.
+    // Stored as 6-digit RGB hex strings (e.g. "00FFFF")
     public static String BLUEMAP_CLAIM_COLOR = "00FFFF"; // Cyan
     public static String BLUEMAP_OP_CLAIM_COLOR = "FFD700"; // Gold
     public static String BLUEMAP_VIP_CLAIM_COLOR = "8A2BE2"; // Purple
 
     // ---- Skills ----
     public static double SKILL_XP_EXPONENT = 1.5;
+    public static int LEADERBOARD_SIZE = 10;
     public static java.util.Map<String, Long> SKILL_COOLDOWNS = new java.util.HashMap<>();
     public static java.util.Map<String, Integer> SKILL_UNLOCK_LEVELS = new java.util.HashMap<>();
-    public static double CAP_INDUSTRIAL_SPEED = 0.5; // +50% mining speed at max
+    public static double CAP_INDUSTRIAL_SPEED = 0.5; // +50% movement speed at max
     public static double CAP_NATURE_HEALTH = 10.0; // +10 hearts at max
     public static double CAP_COMBAT_DAMAGE = 1.0; // +100% damage at max
     public static double CAP_KNOWLEDGE_XP = 1.0; // +100% xp orbs at max
+    public static double CAP_DOUBLE_DROP = 0.5; // max 50% double drop chance at Industrial parent level 100
+    public static double CAP_DEFENSE_ARMOR = 10.0; // max +10 armor points at Defense level 100
+    public static double CAP_SAFE_LANDING = 1.0; // max 100% fall damage absorbed at Agility level 100 (linear)
 
     /** Get cooldown in seconds for a skill's active ability. */
     public static long getSkillCooldown(SkillType skill) {
         return SKILL_COOLDOWNS.getOrDefault(skill.name().toLowerCase(), defaultCooldown(skill));
     }
 
+    /**
+     * Get cooldown in seconds for a named sub-ability (e.g. "archery_zoom").
+     * Falls back to 30s if not configured.
+     */
+    public static long getAbilityCooldown(String abilityKey) {
+        return SKILL_COOLDOWNS.getOrDefault(abilityKey.toLowerCase(), 30L);
+    }
+
     /** Get the minimum level required to unlock a skill's active ability. */
     public static int getAbilityUnlockLevel(SkillType skill) {
         return SKILL_UNLOCK_LEVELS.getOrDefault(skill.name().toLowerCase(), defaultUnlockLevel(skill));
+    }
+
+    /** Get the minimum level required to unlock a named sub-ability (e.g. "archery_zoom"). */
+    public static int getAbilityUnlockLevel(String abilityKey) {
+        return SKILL_UNLOCK_LEVELS.getOrDefault(abilityKey.toLowerCase(), 5);
     }
 
     private static int defaultUnlockLevel(SkillType skill) {
@@ -112,24 +126,31 @@ public final class SmpConfig {
             BLUEMAP_VIP_CLAIM_COLOR = root.get("bluemap_vip_claim_color").getAsString();
 
         loadList(root, "vips", VIPS);
-        loadList(root, "rules", RULES);
-        if (RULES.isEmpty()) {
+        if (root.has("rules")) {
+            loadList(root, "rules", RULES);
+        } else if (RULES.isEmpty()) {
             RULES.add("&e1. Be respectful.");
             RULES.add("&e2. No griefing inside claims.");
             RULES.add("&e3. Wilderness is dangerous (PvP enabled).");
             RULES.add("&e4. No cheating.");
         }
 
-        loadList(root, "periodic_messages", PERIODIC_MESSAGES);
-        if (PERIODIC_MESSAGES.isEmpty()) {
+        if (root.has("periodic_messages")) {
+            loadList(root, "periodic_messages", PERIODIC_MESSAGES);
+        } else if (PERIODIC_MESSAGES.isEmpty()) {
             PERIODIC_MESSAGES.add("&b[Tip] &fUse &a/claim &fto protect your land!");
             PERIODIC_MESSAGES.add("&b[Tip] &fSet your home by sleeping in a bed!");
             PERIODIC_MESSAGES.add("&b[Tip] &fType &a/smp help &ffor commands!");
             PERIODIC_MESSAGES.add("&b[Reminder] &fPlease respect the &6/rules&f!");
+            PERIODIC_MESSAGES.add("&b[Tip] &fUse &a/tpr <player>&f to teleport to friends!");
+            PERIODIC_MESSAGES.add("&b[Reminder] &fReport griefers to &adev@quackedmod.wiki&f!");
+            PERIODIC_MESSAGES.add("&b[Tip] &fReset the ender dragon in the &6Shogun Temple &fin the village or ask an admin to reset the end world!");
+            PERIODIC_MESSAGES.add("&b[Reminder] &fVote for us on &a[CurseForge](https://www.curseforge.com/servers/minecraft/game/quackedsmp) &fservers to help us grow! :)");
             PERIODIC_MESSAGES.add("&b[Tip] &fVisit Spawn Shops for blocks & gear! Trade items for Emeralds!");
         }
 
         if (root.has("messages") && root.get("messages").isJsonObject()) {
+            MESSAGES.clear();
             JsonObject msgs = root.getAsJsonObject("messages");
             for (String key : msgs.keySet()) {
                 MESSAGES.put(key, msgs.get(key).getAsString());
@@ -154,6 +175,23 @@ public final class SmpConfig {
                 for (String key : unlocks.keySet()) {
                     SKILL_UNLOCK_LEVELS.put(key, unlocks.get(key).getAsInt());
                 }
+            }
+            if (sk.has("caps") && sk.get("caps").isJsonObject()) {
+                JsonObject caps = sk.getAsJsonObject("caps");
+                if (caps.has("industrial_speed"))
+                    CAP_INDUSTRIAL_SPEED = caps.get("industrial_speed").getAsDouble();
+                if (caps.has("nature_health"))
+                    CAP_NATURE_HEALTH = caps.get("nature_health").getAsDouble();
+                if (caps.has("combat_damage"))
+                    CAP_COMBAT_DAMAGE = caps.get("combat_damage").getAsDouble();
+                if (caps.has("knowledge_xp"))
+                    CAP_KNOWLEDGE_XP = caps.get("knowledge_xp").getAsDouble();
+                if (caps.has("double_drop"))
+                    CAP_DOUBLE_DROP = caps.get("double_drop").getAsDouble();
+                if (caps.has("defense_armor"))
+                    CAP_DEFENSE_ARMOR = caps.get("defense_armor").getAsDouble();
+                if (caps.has("safe_landing"))
+                    CAP_SAFE_LANDING = caps.get("safe_landing").getAsDouble();
             }
         }
 

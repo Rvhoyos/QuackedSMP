@@ -54,6 +54,7 @@ Abilities unlock at **Level 10** by default (configurable per skill).
 **Triggering Abilities:**
 - **Tool Abilities**: Hold tool + Sneak + Drop Item (Q). Item drop is cancelled.
 - **Dash**: Sprint + Jump + Sneak (Tap Shift) while moving.
+- **Scout Zoom**: Sneak + F (swap offhand key) with **both hands empty**. Press F again to cancel early.
 
 > [!NOTE] 
 > **Simultaneous Activation**: If you hold a damaged tool (e.g., Pickaxe) and use **Sneak + Drop**, both the tool ability (Super Breaker) and the repair ability (Arcane Infusion) can trigger at the same time!
@@ -67,6 +68,7 @@ Abilities unlock at **Level 10** by default (configurable per skill).
 | **Fishing** | Master Angler | Luck V for 30s | 3m 45s -> 1m 15s |
 | **Melee** | Berzerk | Strength II + Speed II | 3m 45s -> 1m 15s |
 | **Archery** | Sniper | Slow Falling + Night Vision | 2m 15s -> 45s |
+| **Archery** | Scout Zoom | Spyglass zoom + Night Vision + Slow Falling + mob glow in cone. Night Vision II at Lv.67+. Glow range scales 30/60/100 blocks by tier | 30s (configurable) |
 | **Defense** | Juggernaut | Resistance IV + Slowness IV | 7m 30s -> 2m 30s |
 | **Enchanting** | Arcane Infusion | Repairs held item by 10% | 15m -> 5m |
 | **Alchemy** | Philosopher's Touch | Silk Touch Spawner (Sneak+Q on Spawner) | 7m 30s -> 2m 30s |
@@ -82,6 +84,9 @@ Abilities unlock at **Level 10** by default (configurable per skill).
 - **Treasure Hunter**: Chance to find rare items in dirt/sand.
 - **Arrow Recovery**: Chance to retrieve arrows from killed mobs.
 - **Damage Reduction**: Flat damage mitigation from Defense level.
+- **Leaf Blower**: Woodcutting clears surrounding leaves automatically.
+- **Auto Replant**: Farming automatically replants crops on harvest.
+- **Safe Landing**: Agility absorbs fall damage proportionally to level (linear scale up to cap at Level 100).
 
 
 ---
@@ -110,6 +115,7 @@ Chunk-based claiming system.
 - `/claim`: Claim current chunk.
 - `/unclaim`: Unclaim current chunk.
 - `/claim map`: Visualize chunks in chat.
+- `/claim transfer <player>`: Transfer all your claims to another player.
 - `/trust <player>`: Give player permissions in all claims.
 - `/untrust <player>`: Revoke permissions.
 - `/sos`: Eject all untrusted players from claim.
@@ -181,9 +187,9 @@ You can manage the server configuration in-game using a visual interface:
 | `welcome_message` | String | *See JSON* | Join message. |
 | `periodic_messages` | List | *See JSON* | Periodic broadcast messages. |
 | `skills.xp_exponent` | Double | `1.5` | Exponential factor for skill leveling. |
-| `skills.ability_unlock_levels` | Map | `10*` | Map of skill names to level required for ability unlock. Defaults: Trading (1), Defense (5), Agility (3), others (10). |
+| `skills.ability_unlock_levels` | Map | `10*` | Map of skill names to level required for ability unlock. Defaults: Trading (1), Defense (5), Agility (3), `archery_zoom` (5), others (10). |
 | `skills.cooldowns` | Map | *Varies* | Base cooldowns (seconds) for abilities. |
-| `skills.caps` | Map | *See JSON* | Maximum value for parent attribute buffs at Level 100. |
+| `skills.caps` | Map | *See JSON* | Maximum values at Level 100 for parent buffs and per-skill passives. |
 
 ### Caps Explanation
 
@@ -193,6 +199,9 @@ The `caps` section defines the maximum bonus a player receives when a parent cat
 - **`nature_health` (10.0)**: +10 Hearts (+20 HP) at Level 100.
 - **`combat_damage` (1.0)**: +100% Attack Damage at Level 100.
 - **`knowledge_xp` (1.0)**: +100% XP Orb gain at Level 100.
+- **`double_drop` (0.5)**: Max 50% double drop chance (Mining/Woodcutting) at Industrial Level 100.
+- **`defense_armor` (10.0)**: Max +10 Armor Points at Defense Level 100.
+- **`safe_landing` (1.0)**: Max fraction of fall damage absorbed at Agility Level 100 (1.0 = full negation, scales linearly).
 
 ### Complete JSON Example
 
@@ -244,6 +253,7 @@ The `caps` section defines the maximum bonus a player receives when a parent cat
       "agility": 10,
       "melee": 300,
       "archery": 180,
+      "archery_zoom": 30,
       "defense": 600,
       "enchanting": 1200,
       "alchemy": 600,
@@ -252,13 +262,17 @@ The `caps` section defines the maximum bonus a player receives when a parent cat
     "ability_unlock_levels": {
       "trading": 1,
       "defense": 5,
-      "agility": 3
+      "agility": 3,
+      "archery_zoom": 5
     },
     "caps": {
       "industrial_speed": 0.5,
       "nature_health": 10.0,
       "combat_damage": 1.0,
-      "knowledge_xp": 1.0
+      "knowledge_xp": 1.0,
+      "double_drop": 0.5,
+      "defense_armor": 10.0,
+      "safe_landing": 1.0
     }
   }
 }
@@ -279,8 +293,14 @@ The `caps` section defines the maximum bonus a player receives when a parent cat
 | `/rules` | View server rules | Everyone |
 | `/claim` | Claim current chunk | Everyone |
 | `/unclaim` | Unclaim current chunk | Everyone |
+| `/claims` | Show owned chunk count and current chunk owner | Everyone |
+| `/claim info` | Show owned count vs. your claim limit | Everyone |
+| `/claim map` | Visualize nearby chunks in chat | Everyone |
+| `/claim name <name>` | Set a display name for the current claim (used by BlueMap integration) | VIP / OP |
+| `/claim transfer <player>` | Transfer all your claims to another player | Everyone |
 | `/trust <player>` | Trust a player globally | Everyone |
 | `/untrust <player>` | Revoke trust | Everyone |
+| `/trustlist` | List all players you currently trust | Everyone |
 | `/sos` | Eject strangers from claim | Everyone |
 | `/home` | Teleport to bed/spawn | Everyone |
 | `/spawn` | Teleport to world spawn | Everyone |
@@ -288,7 +308,17 @@ The `caps` section defines the maximum bonus a player receives when a parent cat
 | `/tpa <player>` | Accept or deny teleport | Everyone |
 | `/smp end reset dragon` | Reset Ender Dragon fight | OP |
 | `/smp end reset world` | Queue End dimension reset for next restart | OP |
-| `/skills` | Open skills GUI | Everyone |
+| `/punish <player>` | Wipe player inventory and all items in their claims | OP |
+| `/skills` | Concise overview of all your skill levels | Everyone |
+| `/skills <skillname>` | Detailed info for one skill | Everyone |
+| `/skills view <player>` | View another player's skills | Everyone |
+| `/skills top` | Overall leaderboard | Everyone |
+| `/skills top <skillname>` | Per-skill leaderboard | Everyone |
+| `/skills admin givexp <player> <skill> <amount>` | Give skill XP | OP |
+| `/skills admin setlevel <player> <skill> <level>` | Set skill level | OP |
+| `/keepinv` | Show your keep inventory status | Everyone |
+| `/keepinv on` | Keep items and XP on death | Everyone |
+| `/keepinv off` | Drop items and XP on death (vanilla behavior) | Everyone |
 
 
 ---
