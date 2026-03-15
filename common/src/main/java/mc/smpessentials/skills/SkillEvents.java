@@ -48,6 +48,12 @@ public final class SkillEvents {
 
     // ========== BLOCK BREAK (Mining, Excavation, Woodcutting, Farming) ==========
 
+    /**
+     * Called when a player breaks a block. Awards XP for Mining, Excavation,
+     * Woodcutting, and Farming based on block type. Also cancels Scout Zoom if
+     * active, and forwards log breaks to {@link ActiveAbilities#onLogBreak} for
+     * Tree Feller chain-breaking.
+     */
     public static void onBlockBreak(Level level, BlockPos pos, BlockState state, Player player) {
         if (!(player instanceof ServerPlayer sp))
             return;
@@ -98,6 +104,12 @@ public final class SkillEvents {
 
     // ========== COMBAT (Melee, Archery, Defense) ==========
 
+    /**
+     * Called when a living entity dies. Awards Melee or Archery XP to the killing
+     * player depending on whether the hit was direct (melee) or indirect (projectile).
+     * The Arrow Recovery passive may trigger on projectile kills. Also cancels Scout
+     * Zoom if the dying entity is a player.
+     */
     public static void onLivingDeath(LivingEntity entity, DamageSource source) {
         if (entity.level().isClientSide())
             return;
@@ -138,6 +150,12 @@ public final class SkillEvents {
         }
     }
 
+    /**
+     * Called when a living entity takes damage. Awards Defense XP to players hit
+     * by a living attacker (excludes environmental sources such as cactus, fire,
+     * and drowning). Triggers the Bleed passive for melee attacks by players.
+     * Also cancels Scout Zoom if the hurt entity is a player with zoom active.
+     */
     public static void onLivingHurt(LivingEntity entity, DamageSource source, float amount) {
         if (entity.level().isClientSide())
             return;
@@ -147,8 +165,10 @@ public final class SkillEvents {
             ActiveAbilities.deactivateZoom(victim.getUUID(), victim);
         }
 
-        // Defense: player takes damage
-        if (entity instanceof ServerPlayer victim) {
+        // Defense: player takes damage from a living attacker (mob or player).
+        // Environmental sources (cactus, fire, drowning, fall, lava) are excluded
+        // to prevent passive XP farming.
+        if (entity instanceof ServerPlayer victim && source.getEntity() instanceof LivingEntity) {
             ServerLevel sl = (ServerLevel) victim.level();
             SkillData data = SkillData.get(sl);
             double xp = Math.max(1, Math.floor(amount)); // 1 XP per half-heart
@@ -223,6 +243,12 @@ public final class SkillEvents {
 
     // ========== AGILITY (Movement) ==========
 
+    /**
+     * Called every server tick for each player. Handles Agility XP accumulation
+     * from horizontal movement (1 XP per 100 blocks walked), Dash trigger detection
+     * (sprint + sneak while airborne), and Scout Zoom per-tick updates (glow cone
+     * application and expiry check).
+     */
     public static void onPlayerTick(Player player) {
         if (!(player instanceof ServerPlayer sp))
             return;
@@ -277,10 +303,16 @@ public final class SkillEvents {
         ActiveAbilities.tryActivateZoom(sp, SkillData.get(sl));
     }
 
+    /**
+     * Called when a player disconnects. Cleans up per-player state: movement
+     * accumulators, Tree Feller timer, and Scout Zoom (restoring the offhand
+     * to prevent the injected spyglass from being persisted).
+     */
     public static void onPlayerLoggedOut(Player player) {
         UUID uuid = player.getUUID();
         lastPositions.remove(uuid);
         distanceAccum.remove(uuid);
+        mc.smpessentials.skills.ActiveAbilities.clearTreeFeller(uuid);
         // Restore offhand and discard injected spyglass on disconnect so the
         // temporary item is not persisted to the player's save file.
         if (player instanceof ServerPlayer sp)
@@ -293,8 +325,9 @@ public final class SkillEvents {
     // The mixin injects into FishingHook.retrieve() and awards 15 XP on catch.
 
     /**
-     * Register listener for player join to apply parent buffs on login.
-     * Also applies Knowledge XP multiplier context for future awards.
+     * Called when a player joins the server. Updates the cached display name,
+     * applies parent buff attribute modifiers based on current skill levels,
+     * and executes any queued punishments.
      */
     public static void onPlayerJoin(Player player) {
         if (player instanceof ServerPlayer sp) {

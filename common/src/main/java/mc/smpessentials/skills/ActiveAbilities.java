@@ -46,8 +46,7 @@ import java.util.*;
  */
 public final class ActiveAbilities {
 
-    // Track active ability durations (player UUID -> expiry time)
-    private static final Map<UUID, Long> superBreakerActive = new HashMap<>();
+    // Track active ability durations (player UUID -> expiry time ms)
     private static final Map<UUID, Long> treeFellerActive = new HashMap<>();
 
     /**
@@ -163,7 +162,6 @@ public final class ActiveAbilities {
         switch (skill) {
             case MINING -> {
                 sp.addEffect(new MobEffectInstance(MobEffects.HASTE, durationTicks, 4, false, false));
-                superBreakerActive.put(uuid, System.currentTimeMillis() + (durationTicks * 50L));
                 announce(sp, name, durationTicks / 20, SoundEvents.ANVIL_LAND);
                 resyncHand(sp);
             }
@@ -537,6 +535,14 @@ public final class ActiveAbilities {
     }
 
     /**
+     * Called on player logout to discard any active Tree Feller state.
+     * Prevents stale UUID entries from accumulating in the map.
+     */
+    public static void clearTreeFeller(UUID uuid) {
+        treeFellerActive.remove(uuid);
+    }
+
+    /**
      * Returns {@code true} if the given player currently has Scout Zoom active.
      * Used by the player tick and event handlers to skip the zoom pipeline for
      * players who have not activated it.
@@ -712,7 +718,7 @@ public final class ActiveAbilities {
         resyncHand(sp);
 
         // Particles/Sound
-        sp.level().playSound(null, pos, SoundEvents.ZOMBIE_VILLAGER_CONVERTED, SoundSource.PLAYERS, 1.0f, 1.0f);
+        sp.level().playSound(sp, pos, SoundEvents.ZOMBIE_VILLAGER_CONVERTED, SoundSource.PLAYERS, 1.0f, 1.0f);
 
         return true;
     }

@@ -256,8 +256,8 @@ public final class SkillCommands {
     private static void showAbilityLine(net.minecraft.server.level.ServerPlayer sp, SkillData data,
             int level, String abilityLabel, String abilityKey, SkillType skill,
             String trigger, String effect) {
-        long cd = data.getCooldownRemaining(sp.getUUID(), skill);
-        int unlock = SmpConfig.getAbilityUnlockLevel(skill);
+        long cd = data.getCooldownRemaining(sp.getUUID(), abilityKey, skill);
+        int unlock = SmpConfig.getAbilityUnlockLevel(abilityKey);
         String status = cd > 0 ? "\u00a7c\u23f1 " + formatTime(cd)
                 : level >= unlock ? "\u00a7a\u2714 Ready"
                 : "\u00a77Unlocks at Lv." + unlock;

@@ -8,6 +8,15 @@ import mc.smpessentials.claims.storage.ClaimedSavedData;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.ChunkPos;
 
+/**
+ * Thin wrapper around {@link ClaimedSavedData} that scopes all operations to a single
+ * {@link ServerLevel}.
+ *
+ * <p>Callers obtain an instance via {@link #get(ServerLevel)}.  Internally, all data is
+ * stored in the overworld's {@code DataStorage} (see {@link ClaimedSavedData#get}), so
+ * claim counts are accurate across dimensions even though each {@code ClaimManager}
+ * instance filters by level.
+ */
 public final class ClaimManager {
     private final ClaimedSavedData data;
     private final ServerLevel level;
@@ -17,6 +26,10 @@ public final class ClaimManager {
         this.level = level;
     }
 
+    /**
+     * Creates a {@code ClaimManager} scoped to {@code level}.
+     * The underlying {@link ClaimedSavedData} is always the global overworld store.
+     */
     public static ClaimManager get(ServerLevel level) {
         return new ClaimManager(ClaimedSavedData.get(level), level);
     }

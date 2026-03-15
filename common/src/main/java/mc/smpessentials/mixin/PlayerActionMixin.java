@@ -16,7 +16,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.util.UUID;
 
 /**
- * Two responsibilities:
+ * Three responsibilities:
  *
  * <p><b>1. Scout Zoom activation/deactivation</b> — intercepts
  * {@code SWAP_ITEM_WITH_OFFHAND} (F key). Sneak + F with both hands empty
@@ -27,6 +27,11 @@ import java.util.UUID;
  * preventing the player from dragging, shift-clicking, or dropping the injected
  * spyglass. Without this, the item can be moved into the player's inventory and
  * duplicated on the next activation.
+ *
+ * <p><b>3. Scout Zoom external-container cancellation</b> — when the player opens
+ * any container other than their own inventory (chest, furnace, crafting table, etc.)
+ * while zoom is active, zoom is automatically deactivated so the spyglass is cleaned
+ * up and normal interaction proceeds.
  *
  * <p><b>Thread note</b>: Both {@code handlePlayerAction} and
  * {@code handleContainerClick} call {@code PacketUtils.ensureRunningOnSameThread}
@@ -87,11 +92,21 @@ public abstract class PlayerActionMixin {
         MinecraftServer server = ((ServerLevel) player.level()).getServer();
         if (!server.isSameThread()) return;
 
-        if (mc.smpessentials.skills.ActiveAbilities.isZoomActive(player.getUUID())
-                && packet.containerId() == InventoryMenu.CONTAINER_ID
-                && packet.slotNum() == InventoryMenu.SHIELD_SLOT) {
-            player.inventoryMenu.sendAllDataToRemote(); // revert any client-side cursor desync
-            ci.cancel();
+        if (!mc.smpessentials.skills.ActiveAbilities.isZoomActive(player.getUUID())) return;
+
+        if (packet.containerId() == InventoryMenu.CONTAINER_ID) {
+            // Player's own inventory — block the offhand slot only.
+            if (packet.slotNum() == InventoryMenu.SHIELD_SLOT) {
+                player.inventoryMenu.sendAllDataToRemote(); // revert any client-side cursor desync
+                ci.cancel();
+            }
+        } else {
+            // Player clicked inside an external container (chest, furnace, crafting table,
+            // etc.) while zoom is active. Cancel zoom so the spyglass is cleaned up and
+            // the player can interact normally.
+            mc.smpessentials.skills.ActiveAbilities.deactivateZoom(player.getUUID(), player);
+            player.displayClientMessage(
+                    net.minecraft.network.chat.Component.literal("\u00a77Scout Zoom ended."), true);
         }
     }
 }

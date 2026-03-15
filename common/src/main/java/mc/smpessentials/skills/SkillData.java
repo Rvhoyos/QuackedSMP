@@ -241,6 +241,7 @@ public final class SkillData extends SavedData {
         return (int) rank + 1;
     }
 
+    /** Returns the total number of player profiles stored (i.e. players who have ever logged in). */
     public int totalProfiles() {
         return profiles.size();
     }

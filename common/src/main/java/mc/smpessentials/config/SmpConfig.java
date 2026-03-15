@@ -150,6 +150,7 @@ public final class SmpConfig {
         }
 
         if (root.has("messages") && root.get("messages").isJsonObject()) {
+            MESSAGES.clear();
             JsonObject msgs = root.getAsJsonObject("messages");
             for (String key : msgs.keySet()) {
                 MESSAGES.put(key, msgs.get(key).getAsString());

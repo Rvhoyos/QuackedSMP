@@ -4,6 +4,13 @@ import net.fabricmc.api.ModInitializer;
 
 import mc.smpessentials.SmpUtilsMod;
 
+/**
+ * Fabric mod entrypoint for QuackedSMP.
+ *
+ * <p>Runs common initialisation via {@link mc.smpessentials.SmpUtilsMod#init()} and
+ * wires all Fabric API event callbacks that delegate to the platform-agnostic common module.
+ * All game logic lives in {@code common}; this class is intentionally thin.
+ */
 public final class SmpUtilsModFabric implements ModInitializer {
     @Override
     public void onInitialize() {
@@ -33,11 +40,18 @@ public final class SmpUtilsModFabric implements ModInitializer {
 
         // 3. Player Join / Disconnect
         net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {
-            mc.smpessentials.events.JoinMessageHandler.onPlayerJoin(handler.getPlayer());
-            mc.smpessentials.skills.SkillEvents.onPlayerJoin(handler.getPlayer());
+            net.minecraft.server.level.ServerPlayer player = handler.getPlayer();
+            mc.smpessentials.events.JoinMessageHandler.onPlayerJoin(player);
+            mc.smpessentials.skills.SkillEvents.onPlayerJoin(player);
+            mc.smpessentials.punish.PunishManager pm =
+                    mc.smpessentials.punish.PunishManager.get(server);
+            if (pm.isPending(player.getUUID())) {
+                pm.punish(player);
+            }
         });
         net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> {
             mc.smpessentials.skills.SkillEvents.onPlayerLoggedOut(handler.getPlayer());
+            mc.smpessentials.teleport.TeleportService.clearForPlayer(handler.getPlayer().getUUID());
         });
 
         // 9. Keep Inventory — drop items on death for opted-out players

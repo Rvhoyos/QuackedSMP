@@ -45,7 +45,7 @@ public final class SkillManager {
         }
 
         // Lv 11+: Standard exponential curve
-        // Formula: 100 * (level^1.5)
+        // Formula: 100 * (level ^ xp_exponent), default exponent = 1.5
         return (long) Math.floor(BASE_XP * Math.pow(level, SmpConfig.SKILL_XP_EXPONENT));
     }
 

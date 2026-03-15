@@ -37,8 +37,17 @@ public final class WhitelistSavedData extends SavedData {
         this.byOwner = byOwner;
     }
 
+    /**
+     * Retrieves the server-wide whitelist from the overworld's DataStorage, matching
+     * the same global store used by {@link mc.smpessentials.claims.storage.ClaimedSavedData}.
+     * Using per-dimension storage here would cause trust granted in one dimension to be
+     * invisible when a claim in another dimension is accessed.
+     *
+     * @param level Any loaded ServerLevel; only used to reach the server instance.
+     * @return The singleton WhitelistSavedData for this server.
+     */
     public static WhitelistSavedData get(ServerLevel level) {
-        return level.getDataStorage().computeIfAbsent(TYPE);
+        return level.getServer().overworld().getDataStorage().computeIfAbsent(TYPE);
     }
 
     public boolean isTrusted(UUID owner, UUID actor) {

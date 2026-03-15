@@ -10,6 +10,14 @@ import net.minecraft.core.BlockPos;
 import java.util.Optional;
 import java.util.UUID;
 
+/**
+ * High-level claim operations invoked by command handlers.
+ *
+ * <p>This class owns all business rules (spawn-protection guard, per-player cap, VIP bonus,
+ * OP bypass) and delegates raw persistence to {@link ClaimManager} /
+ * {@link mc.smpessentials.claims.storage.ClaimedSavedData}.  Command classes should call
+ * methods here rather than touching storage directly.
+ */
 public final class ClaimService {
     private ClaimService() {
     }
@@ -17,6 +25,7 @@ public final class ClaimService {
     /** Limit configured in SmpConfig. */
     // public static final int MAX_PER_PLAYER = 50; // moved to config
 
+    /** Returns the UUID of the owner of the chunk at {@code pos}, or empty if unclaimed. */
     public static Optional<UUID> getOwner(ServerLevel level, ChunkPos pos) {
         return ClaimManager.get(level).get(pos).map(ClaimData::owner);
     }

@@ -22,13 +22,34 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.damagesource.DamageSource;
 
+/**
+ * Entry point for all claim-protection event checks.
+ *
+ * <p>Every method is called from a mixin or platform event handler and returns a
+ * {@code boolean} (or {@link InteractionResult}) that the caller uses to cancel
+ * or allow the vanilla action.  No game logic beyond the protection decision lives here;
+ * persistence is handled by {@link mc.smpessentials.claims.storage.ClaimedSavedData}
+ * and access decisions by {@link ClaimAccess}.
+ *
+ * <p>Return-value convention used by callers:
+ * <ul>
+ *   <li>{@code true}  — allow the action to proceed.</li>
+ *   <li>{@code false} — cancel / deny the action.</li>
+ * </ul>
+ */
 public final class ClaimProtection {
     private ClaimProtection() {
     }
 
+    /** Reserved for future initialisation; currently a no-op. */
     public static void init() {
     }
 
+    /**
+     * Called before a player breaks a block.
+     *
+     * @return {@code true} if the break is allowed, {@code false} to cancel it.
+     */
     public static boolean onBlockBreak(Level level, BlockPos pos, BlockState state, Player player) {
         if (player instanceof ServerPlayer sp) {
             return ClaimAccess.canModify(sp, (ServerLevel) level, new ChunkPos(pos));
@@ -36,6 +57,20 @@ public final class ClaimProtection {
         return true;
     }
 
+    /**
+     * Called before a block is placed.
+     *
+     * <p>For player placers: delegates to {@link ClaimAccess#canModify} on claimed chunks;
+     * additionally blocks lava placement in the wilderness when
+     * {@link mc.smpessentials.config.SmpConfig#ALLOW_LAVA_WILDERNESS} is false.
+     *
+     * <p>For non-player placers (pistons, dispensers, mob block-placement): allows
+     * natural mob behaviours (sheep, foxes, turtles, bees, villagers, falling blocks,
+     * growable blocks, sugar cane, cactus) while blocking fire, lava, snow, and
+     * unrecognised foreign block placements inside claims.
+     *
+     * @return {@code true} to allow the placement, {@code false} to cancel it.
+     */
     public static boolean onBlockPlace(Level level, BlockPos pos, BlockState state, Entity placer) {
         if (placer instanceof ServerPlayer sp) {
             ServerLevel sl = (ServerLevel) level;
@@ -94,6 +129,12 @@ public final class ClaimProtection {
         }
     }
 
+    /**
+     * Called when a player right-clicks a block (open chest, use lever, etc.).
+     *
+     * @return {@link InteractionResult#FAIL} to deny the interaction inside a claim the
+     *         player cannot modify; {@link InteractionResult#PASS} otherwise.
+     */
     public static InteractionResult onRightClickBlock(Player player, BlockPos pos) {
         if (!(player instanceof ServerPlayer sp))
             return InteractionResult.PASS;
@@ -101,6 +142,14 @@ public final class ClaimProtection {
                 : InteractionResult.FAIL;
     }
 
+    /**
+     * Called before an explosion is processed.
+     *
+     * <p>Cancels the explosion (returns {@code false}) if its blast radius overlaps any
+     * claimed chunk. Errors during the check are logged and default to denial for safety.
+     *
+     * @return {@code true} to allow the explosion, {@code false} to cancel it.
+     */
     public static boolean onExplosionPre(Level level, Explosion explosion) {
         if (!(level instanceof ServerLevel sl))
             return true;
@@ -112,6 +161,14 @@ public final class ClaimProtection {
         }
     }
 
+    /**
+     * Called when a player right-clicks (interacts with) an entity.
+     *
+     * <p>Only protects entities for which {@link #isProtectedEntity} returns {@code true}
+     * (animals, armor stands, hanging entities, villagers — not monsters or players).
+     *
+     * @return {@code true} to allow the interaction, {@code false} to deny it.
+     */
     public static boolean onInteractEntity(Player player, Entity entity) {
         if (!(player instanceof ServerPlayer sp))
             return true;
@@ -121,6 +178,16 @@ public final class ClaimProtection {
         return true;
     }
 
+    /**
+     * Called at the head of {@code LivingEntity.hurtServer} via mixin.
+     *
+     * <p>PvP policy: a player is safe from PvP damage while standing in a chunk they can
+     * modify (i.e., their own claim or a claim they are trusted in). Attacks on strangers
+     * inside claimed land are allowed. Non-player entities that are {@link #isProtectedEntity
+     * protected} are also shielded from player attacks inside claims.
+     *
+     * @return {@code true} to let the damage proceed, {@code false} to cancel it.
+     */
     public static boolean onLivingHurt(LivingEntity entity, DamageSource source, float amount) {
         if (entity.level().isClientSide())
             return true;

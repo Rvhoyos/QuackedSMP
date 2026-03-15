@@ -10,10 +10,22 @@ import net.minecraft.world.phys.Vec3;
 
 import java.util.Set;
 
+/**
+ * Implements the {@code /home} command.
+ *
+ * <p>Teleports the player to their respawn point (bed or respawn anchor) after the
+ * configured warmup period managed by {@link mc.smpessentials.teleport.TeleportScheduler}.
+ * If no respawn point is set, falls back to the world's main spawn.
+ */
 public final class HomeCommand {
     private HomeCommand() {
     }
 
+    /**
+     * Schedules a teleport to the player's respawn point, or world spawn as a fallback.
+     *
+     * @return 1 on success, 0 if the source is not a player.
+     */
     public static int execute(CommandSourceStack source) {
         // Safety: registration already ensures this is a player, but keep a cheap
         // check.

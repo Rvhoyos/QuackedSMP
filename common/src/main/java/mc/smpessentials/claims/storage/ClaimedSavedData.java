@@ -60,18 +60,26 @@ public final class ClaimedSavedData extends SavedData {
         return indexByDim.computeIfAbsent(dim, k -> new Long2ObjectOpenHashMap<>());
     }
 
+    /** Returns {@code true} if {@code chunk} in {@code level}'s dimension is claimed. */
     public boolean isClaimed(ServerLevel level, ChunkPos chunk) {
         return dimIndex(level.dimension()).containsKey(chunk.toLong());
     }
 
+    /** Returns the {@link ClaimData} for {@code chunk} in {@code level}'s dimension, or empty. */
     public Optional<ClaimData> getClaim(ServerLevel level, ChunkPos chunk) {
         return Optional.ofNullable(dimIndex(level.dimension()).get(chunk.toLong()));
     }
 
+    /** Convenience overload: looks up the claim for the chunk containing {@code pos}. */
     public Optional<ClaimData> getClaimAt(ServerLevel level, BlockPos pos) {
         return getClaim(level, new ChunkPos(pos));
     }
 
+    /**
+     * Claims {@code chunk} in {@code level}'s dimension for {@code owner}.
+     *
+     * @return {@code true} if the claim was created; {@code false} if already claimed.
+     */
     public boolean claim(ServerLevel level, ChunkPos chunk, UUID owner) {
         long key = chunk.toLong();
         var map = dimIndex(level.dimension());
@@ -86,6 +94,11 @@ public final class ClaimedSavedData extends SavedData {
         return true;
     }
 
+    /**
+     * Removes the claim for {@code chunk} in {@code level}'s dimension regardless of owner.
+     *
+     * @return {@code true} if the claim existed and was removed; {@code false} if unclaimed.
+     */
     public boolean unclaim(ServerLevel level, ChunkPos chunk) {
         long key = chunk.toLong();
         var map = dimIndex(level.dimension());
@@ -98,10 +111,17 @@ public final class ClaimedSavedData extends SavedData {
         return true;
     }
 
+    /** Returns an unmodifiable snapshot of all claims in {@code level}'s dimension. */
     public List<ClaimData> listClaims(ServerLevel level) {
         return dimIndex(level.dimension()).values().stream().collect(Collectors.toUnmodifiableList());
     }
 
+    /**
+     * Sets or clears the display name of the claim at {@code chunk}.
+     *
+     * @param name the new name, or {@code null} to clear it.
+     * @return {@code true} if the claim existed and was updated; {@code false} if unclaimed.
+     */
     public boolean updateName(ServerLevel level, ChunkPos chunk, String name) {
         long key = chunk.toLong();
         var map = dimIndex(level.dimension());

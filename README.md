@@ -293,9 +293,14 @@ The `caps` section defines the maximum bonus a player receives when a parent cat
 | `/rules` | View server rules | Everyone |
 | `/claim` | Claim current chunk | Everyone |
 | `/unclaim` | Unclaim current chunk | Everyone |
+| `/claims` | Show owned chunk count and current chunk owner | Everyone |
+| `/claim info` | Show owned count vs. your claim limit | Everyone |
+| `/claim map` | Visualize nearby chunks in chat | Everyone |
+| `/claim name <name>` | Set a display name for the current claim (used by BlueMap integration) | VIP / OP |
 | `/claim transfer <player>` | Transfer all your claims to another player | Everyone |
 | `/trust <player>` | Trust a player globally | Everyone |
 | `/untrust <player>` | Revoke trust | Everyone |
+| `/trustlist` | List all players you currently trust | Everyone |
 | `/sos` | Eject strangers from claim | Everyone |
 | `/home` | Teleport to bed/spawn | Everyone |
 | `/spawn` | Teleport to world spawn | Everyone |

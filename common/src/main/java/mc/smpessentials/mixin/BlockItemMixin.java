@@ -9,6 +9,11 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+/**
+ * Intercepts {@link BlockItem#place(BlockPlaceContext)} to enforce claim
+ * protection. If the target position is inside another player's claim and the
+ * placer is not trusted, the placement is cancelled with {@code FAIL}.
+ */
 @Mixin(BlockItem.class)
 public abstract class BlockItemMixin {
     @Inject(method = "place", at = @At("HEAD"), cancellable = true)
