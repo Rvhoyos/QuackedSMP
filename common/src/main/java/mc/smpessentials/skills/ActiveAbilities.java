@@ -258,11 +258,13 @@ public final class ActiveAbilities {
                 for (int dy = -2; dy <= 2; dy++) {
                     BlockPos pos = center.offset(dx, dy, dz);
                     BlockState state = level.getBlockState(pos);
-                    if (state.is(net.minecraft.tags.BlockTags.CROPS)) {
-                        if (net.minecraft.world.item.BoneMealItem.growCrop(
-                                new ItemStack(Items.BONE_MEAL), level, pos)) {
-                            bonemealed++;
+                    if (state.is(net.minecraft.tags.BlockTags.CROPS)
+                            && state.getBlock() instanceof net.minecraft.world.level.block.BonemealableBlock bonemealable
+                            && bonemealable.isValidBonemealTarget(level, pos, state)) {
+                        if (bonemealable.isBonemealSuccess(level, level.random, pos, state)) {
+                            bonemealable.performBonemeal(level, level.random, pos, state);
                         }
+                        bonemealed++;
                     }
                 }
             }

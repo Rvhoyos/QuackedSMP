@@ -103,6 +103,10 @@ public final class ConfigIO {
                 obj.addProperty("allow_lava_wilderness", false);
                 dirty = true;
             }
+            if (!obj.has("voicechat_enable")) {
+                obj.addProperty("voicechat_enable", true);
+                dirty = true;
+            }
             if (!obj.has("bluemap_enable")) {
                 obj.addProperty("bluemap_enable", true);
                 dirty = true;
@@ -180,6 +184,7 @@ public final class ConfigIO {
         root.addProperty("message_interval", 300);
         root.addProperty("vip_bonus_claims", 20);
         root.addProperty("allow_lava_wilderness", false);
+        root.addProperty("voicechat_enable", true);
         root.addProperty("bluemap_enable", true);
         root.addProperty("bluemap_show_homes", true);
         root.addProperty("bluemap_show_claims", true);
@@ -349,6 +354,7 @@ public final class ConfigIO {
         root.addProperty("message_interval", SmpConfig.MESSAGE_INTERVAL);
         root.addProperty("vip_bonus_claims", SmpConfig.VIP_BONUS_CLAIMS);
         root.addProperty("allow_lava_wilderness", SmpConfig.ALLOW_LAVA_WILDERNESS);
+        root.addProperty("voicechat_enable", SmpConfig.VOICECHAT_ENABLE);
         root.addProperty("bluemap_enable", SmpConfig.BLUEMAP_ENABLE);
         root.addProperty("bluemap_show_homes", SmpConfig.BLUEMAP_SHOW_HOMES);
         root.addProperty("bluemap_show_claims", SmpConfig.BLUEMAP_SHOW_CLAIMS);

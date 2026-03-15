@@ -18,6 +18,9 @@
   "entrypoints": {
     "main": [
       "mc.smpessentials.fabric.SmpUtilsModFabric"
+    ],
+    "voicechat:plugin": [
+      "mc.smpessentials.voicechat.QuackedVoicechatPlugin"
     ]
   },
   "mixins": [

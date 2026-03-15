@@ -17,6 +17,7 @@ QuackedSMP is a server-side utility mod for **Minecraft 1.21.11**, supporting bo
 - **Chat Management**: Anti-evasion filters, whitelists, and automated announcements.
 - **End Reset**: Reset the Dragon fight live, or queue a full dimension reset for the next restart.
 - **BlueMap Support**: Optional, seamless sync of Claims and Player Homes to the web map.
+- **Simple Voice Chat Integration**: Optional 18+ age-gate for Simple Voice Chat. Unverified players cannot speak or hear others until they confirm their age.
 - **Configurable**: Features are toggleable and tunable via JSON config.
 
 ---
@@ -178,6 +179,7 @@ You can manage the server configuration in-game using a visual interface:
 | `tp_warmup` | Integer | `5` | Seconds to stand still before teleporting. |
 | `message_interval` | Integer | `300` | Seconds between periodic announcements. |
 | `allow_lava_wilderness`| Boolean | `false` | If true, allows placing lava outside claims. |
+| `voicechat_enable` | Boolean | `true` | Enable the Simple Voice Chat age-gate integration. Requires Simple Voice Chat to be installed. |
 | `bluemap_show_homes` | Boolean | `true` | Show player beds on map. |
 | `bluemap_show_claims`| Boolean | `true` | Show claimed regions on map. |
 | `bluemap_claim_color`| String | `00FFFF` | Hex color of claims. |
@@ -319,7 +321,25 @@ The `caps` section defines the maximum bonus a player receives when a parent cat
 | `/keepinv` | Show your keep inventory status | Everyone |
 | `/keepinv on` | Keep items and XP on death | Everyone |
 | `/keepinv off` | Drop items and XP on death (vanilla behavior) | Everyone |
+| `/verify confirm` | Confirm you are 18+ and enable Simple Voice Chat | Everyone |
+| `/verify deny` | Decline; voice chat remains disabled | Everyone |
 
+
+---
+
+## Simple Voice Chat Integration
+
+Requires [Simple Voice Chat](https://modrinth.com/plugin/simple-voice-chat) to be installed on the server. Clients must also have the mod installed to use voice chat, but it is **not required** to join the server.
+
+When enabled (`voicechat_enable: true`), all voice chat audio is age-gated:
+
+- On first join, players receive a clickable prompt to confirm or deny their age.
+- Players who **confirm** (18+) can speak and hear others normally.
+- Players who **deny** or ignore the prompt cannot speak or be heard until they verify.
+- Unverified players are re-prompted every **5 minutes** until they respond.
+- Denied players see a one-time reminder on each login and can verify at any time with `/verify confirm`.
+
+> **Note:** This is a trust-based system. Lying about your age may result in a ban at server admin discretion.
 
 ---
 

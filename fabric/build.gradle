@@ -16,6 +16,9 @@ dependencies {
 
     // Optional BlueMap Integration
     modCompileOnly "de.bluecolored:bluemap-api:2.7.3"
+
+    // Optional Simple Voice Chat Integration
+    modCompileOnly "de.maxhenkel.voicechat:voicechat-api:2.6.0"
 }
 
 loom {

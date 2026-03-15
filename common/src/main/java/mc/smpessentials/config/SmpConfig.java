@@ -17,6 +17,9 @@ public final class SmpConfig {
     public static java.util.List<Integer> MUTE_LEVELS_MINUTES = new java.util.ArrayList<>(
             java.util.List.of(60, 120, 240, 480, 1440));
 
+    // ---- Voice Chat ----
+    public static boolean VOICECHAT_ENABLE = true;
+
     // ---- BlueMap ----
     public static boolean BLUEMAP_ENABLE = true;
     public static boolean BLUEMAP_SHOW_HOMES = true;
@@ -111,6 +114,9 @@ public final class SmpConfig {
         if (root.has("allow_lava_wilderness")) {
             ALLOW_LAVA_WILDERNESS = root.get("allow_lava_wilderness").getAsBoolean();
         }
+
+        if (root.has("voicechat_enable"))
+            VOICECHAT_ENABLE = root.get("voicechat_enable").getAsBoolean();
 
         if (root.has("bluemap_enable"))
             BLUEMAP_ENABLE = root.get("bluemap_enable").getAsBoolean();

@@ -39,6 +39,7 @@ public class SmpEvents {
     public static void onServerStarted(ServerStartedEvent event) {
         ChatFilter.onServerStart(event.getServer());
         mc.smpessentials.bluemap.BlueMapIntegration.onServerStart(event.getServer());
+        mc.smpessentials.voicechat.VoicechatIntegration.onServerStart(event.getServer());
         mc.smpessentials.keepinv.KeepInvSavedData.enforceGamerule(event.getServer());
     }
 

@@ -14,4 +14,5 @@ dependencies {
     compileOnly "io.github.llamalad7:mixinextras-common:$rootProject.mixin_extras"
     compileOnly "com.mojang:brigadier:1.0.500"
     compileOnly "de.bluecolored:bluemap-api:2.7.3"
+    compileOnly "de.maxhenkel.voicechat:voicechat-api:2.6.0"
 }

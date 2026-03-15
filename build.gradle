@@ -30,6 +30,10 @@ allprojects {
             name = 'BlueMap'
             url = 'https://repo.bluecolored.de/releases'
         }
+        maven {
+            name = 'MaxHenkel'
+            url = 'https://maven.maxhenkel.de/repository/public'
+        }
     }
 }
 

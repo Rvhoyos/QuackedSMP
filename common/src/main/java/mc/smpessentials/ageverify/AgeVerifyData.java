@@ -1,0 +1,82 @@
+package mc.smpessentials.ageverify;
+
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
+import net.minecraft.core.UUIDUtil;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.util.datafix.DataFixTypes;
+import net.minecraft.world.level.saveddata.SavedData;
+import net.minecraft.world.level.saveddata.SavedDataType;
+
+import java.util.*;
+
+/**
+ * Persists per-player age verification responses server-side via {@link SavedData}.
+ *
+ * <p>Three states exist per player:
+ * <ul>
+ *   <li><b>Unverified</b> (absent from both sets) — prompted on join and re-prompted every
+ *       5 minutes until a response is given.</li>
+ *   <li><b>Verified</b> — confirmed 18+; Simple Voice Chat is fully enabled.</li>
+ *   <li><b>Denied</b> — explicitly declined; voice chat disabled. A one-time reminder is sent
+ *       on each login. Players can change their response at any time via {@code /verify confirm}.</li>
+ * </ul>
+ *
+ * <p>Stored in the overworld data folder as {@code quackedsmp_ageverify}.
+ */
+public final class AgeVerifyData extends SavedData {
+
+    private final Set<UUID> verified = new HashSet<>();
+    private final Set<UUID> denied = new HashSet<>();
+
+    public static final Codec<AgeVerifyData> CODEC = RecordCodecBuilder.create(i -> i.group(
+            UUIDUtil.CODEC.listOf().fieldOf("verified").forGetter(d -> List.copyOf(d.verified)),
+            UUIDUtil.CODEC.listOf().fieldOf("denied").forGetter(d -> List.copyOf(d.denied)))
+            .apply(i, AgeVerifyData::fromLists));
+
+    public static final SavedDataType<AgeVerifyData> TYPE = new SavedDataType<>(
+            "quackedsmp_ageverify",
+            AgeVerifyData::new,
+            CODEC,
+            DataFixTypes.LEVEL);
+
+    private AgeVerifyData() {
+    }
+
+    /** Codec deserialisation constructor — called by {@link #CODEC} when loading saved data. */
+    private static AgeVerifyData fromLists(List<UUID> verifiedList, List<UUID> deniedList) {
+        AgeVerifyData d = new AgeVerifyData();
+        d.verified.addAll(verifiedList);
+        d.denied.addAll(deniedList);
+        return d;
+    }
+
+    /** Returns the singleton instance for the running server, creating it if absent. */
+    public static AgeVerifyData get(MinecraftServer server) {
+        return server.overworld().getDataStorage().computeIfAbsent(TYPE);
+    }
+
+    /** Returns {@code true} if the player has given any response (confirm or deny). */
+    public boolean hasAnswered(UUID uuid) {
+        return verified.contains(uuid) || denied.contains(uuid);
+    }
+
+    /** Returns {@code true} if the player confirmed they are 18 or older. */
+    public boolean isVerified(UUID uuid) {
+        return verified.contains(uuid);
+    }
+
+    /** Marks the player as age-verified, removing any prior denial. */
+    public void setVerified(UUID uuid) {
+        verified.add(uuid);
+        denied.remove(uuid);
+        setDirty();
+    }
+
+    /** Marks the player as having declined, removing any prior verification. */
+    public void setDenied(UUID uuid) {
+        denied.add(uuid);
+        verified.remove(uuid);
+        setDirty();
+    }
+}

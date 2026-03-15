@@ -13,5 +13,6 @@ public final class SmpUtilsMod {
         mc.smpessentials.config.SmpConfig.load();
         mc.smpessentials.skills.SkillEvents.init(); // Still logs init message
         mc.smpessentials.bluemap.BlueMapIntegration.init();
+        mc.smpessentials.voicechat.VoicechatIntegration.init();
     }
 }
