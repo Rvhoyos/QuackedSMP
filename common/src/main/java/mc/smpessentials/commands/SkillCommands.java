@@ -294,7 +294,7 @@ public final class SkillCommands {
             case FARMING     -> "Bonemeal all crops in a 5-block radius. Cooldown: " + formatTime(cd);
             case FISHING     -> "Luck V for a short duration. Cooldown: " + formatTime(cd);
             case MELEE       -> "Strength II + Speed II for a short duration. Cooldown: " + formatTime(cd);
-            case ARCHERY     -> "Slow Falling + Night Vision II (Lv.67+). Cooldown: " + formatTime(cd);
+            case ARCHERY     -> "Slow Falling + Night Vision I. Cooldown: " + formatTime(cd);
             case DEFENSE     -> "Resistance IV + Slowness IV for a short duration. Cooldown: " + formatTime(cd);
             case ENCHANTING  -> "Repairs held item by 10% durability. Cooldown: " + formatTime(cd);
             case ALCHEMY     -> "Silk Touch the targeted Spawner into your inventory. Cooldown: " + formatTime(cd);

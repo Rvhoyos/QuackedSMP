@@ -26,4 +26,5 @@
 # --- Claude Code ---
 CLAUDE.md
 .claude-decompiled/
+memory/
 

@@ -453,14 +453,11 @@ public final class ActiveAbilities {
      * is saved, ensuring the temporary spyglass is never persisted.
      *
      * <p>The offhand is only cleared if it still holds the injected spyglass
-     * (item == {@link Items#SPYGLASS}, count == 1). This guards against overwriting
-     * an item the player independently placed in their offhand during zoom.
-     *
-     * <p><b>Known edge case:</b> if the player manually drags a real spyglass into
-     * their offhand slot while zoom is active, that spyglass will be silently
-     * discarded on deactivation because the check cannot distinguish it from the
-     * injected one. This requires deliberate inventory manipulation mid-zoom and
-     * is considered acceptable.
+     * (item == {@link Items#SPYGLASS}, count == 1). This is the normal path —
+     * {@link mc.smpessentials.mixin.PlayerActionMixin} blocks all GUI interactions
+     * with the offhand slot while zoom is active, so the spyglass cannot be moved
+     * via normal inventory UI. The {@code else} branch handles admin commands or
+     * creative-mode manipulation that bypass the packet-level lock.
      */
     public static void deactivateZoom(UUID uuid, ServerPlayer sp) {
         ZoomState state = zoomActive.remove(uuid);
@@ -472,8 +469,9 @@ public final class ActiveAbilities {
             sp.setItemSlot(net.minecraft.world.entity.EquipmentSlot.OFFHAND, state.savedOffhand());
             sp.inventoryMenu.sendAllDataToRemote();
         } else {
-            // Spyglass was dragged to main inventory (or dropped to world).
-            // Remove any excess spyglasses that appeared since activation.
+            // Spyglass was removed by an admin command or creative-mode slot edit
+            // that bypasses the packet-level GUI lock. Remove any excess spyglasses
+            // that appeared since activation as a last-resort cleanup.
             removeExcessSpyglasses(sp, state.priorSpyglassCount());
         }
     }
