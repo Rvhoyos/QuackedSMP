@@ -34,9 +34,14 @@ public final class SmpUtilsModFabric implements ModInitializer {
             mc.smpessentials.bluemap.BlueMapIntegration.onServerStart(server);
             mc.smpessentials.voicechat.VoicechatIntegration.onServerStart(server);
             mc.smpessentials.keepinv.KeepInvSavedData.enforceGamerule(server);
+            mc.smpessentials.dims.DimManager.restoreAll(server);
         });
         net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents.SERVER_STOPPING.register(server -> {
             mc.smpessentials.commands.EndResetLogic.onServerStopping(server);
+        });
+        // SERVER_STOPPED fires after level.dat is written — safe to patch it here.
+        net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents.SERVER_STOPPED.register(server -> {
+            mc.smpessentials.dims.DimManager.scrubLevelDat(server);
         });
 
         // 3. Player Join / Disconnect
@@ -69,6 +74,7 @@ public final class SmpUtilsModFabric implements ModInitializer {
             for (net.minecraft.server.level.ServerPlayer player : server.getPlayerList().getPlayers()) {
                 mc.smpessentials.teleport.TeleportScheduler.onPlayerTick(player);
                 mc.smpessentials.skills.SkillEvents.onPlayerTick(player);
+                mc.smpessentials.dims.EtherFallthrough.tick(player);
             }
         });
 
@@ -89,6 +95,9 @@ public final class SmpUtilsModFabric implements ModInitializer {
 
         // 7. Right Click Block
         net.fabricmc.fabric.api.event.player.UseBlockCallback.EVENT.register((p, world, hand, hitResult) -> {
+            net.minecraft.world.InteractionResult portal =
+                    mc.smpessentials.dims.CustomPortalActivator.onRightClickBlock(p, world, hand, hitResult.getBlockPos(), hitResult.getDirection());
+            if (portal != net.minecraft.world.InteractionResult.PASS) return portal;
             return mc.smpessentials.claims.ClaimProtection.onRightClickBlock(p, hitResult.getBlockPos());
         });
 

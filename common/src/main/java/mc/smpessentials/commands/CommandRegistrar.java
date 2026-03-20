@@ -47,6 +47,8 @@ public final class CommandRegistrar {
                 mc.smpessentials.punish.PunishCommand.register(dispatcher);
                 mc.smpessentials.keepinv.KeepInvCommand.register(dispatcher);
                 mc.smpessentials.ageverify.AgeVerifyCommand.register(dispatcher);
+                mc.smpessentials.commands.VipCommand.register(dispatcher);
+                mc.smpessentials.dims.DimCommands.register(dispatcher);
                 dispatcher.register(net.minecraft.commands.Commands.literal("sos")
                                 .requires(src -> src.getEntity() instanceof net.minecraft.server.level.ServerPlayer)
                                 .executes(ctx -> mc.smpessentials.commands.SosCommand.execute(ctx.getSource())));

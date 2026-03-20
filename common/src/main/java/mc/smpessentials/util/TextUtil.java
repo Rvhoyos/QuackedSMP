@@ -25,7 +25,7 @@ public final class TextUtil {
      * OR just use the legacy character '§' if the server supports it (it usually
      * does for back-compat).
      */
-    private static final Pattern LINK_PATTERN = Pattern.compile("\\[(.*?)\\]\\((.*?)\\)");
+    private static final Pattern LINK_PATTERN = Pattern.compile("\\[([^\\]]+)\\]\\(([^)]+)\\)");
 
     /**
      * Replaces & color codes and parses Markdown-style links: [Text](URL).

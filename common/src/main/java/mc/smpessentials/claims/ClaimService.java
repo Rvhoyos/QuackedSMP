@@ -107,7 +107,6 @@ public final class ClaimService {
         if (mc.smpessentials.config.SmpConfig.VIPS.contains(player.getName().getString())) {
             limit += mc.smpessentials.config.SmpConfig.VIP_BONUS_CLAIMS;
         }
-
         if (!isOp && ownedCount(level, me) >= limit)
             return Result.REACHED_CAP;
 
@@ -118,7 +117,12 @@ public final class ClaimService {
     /**
      * Transfers all of {@code sender}'s claims to {@code target}.
      *
-     * @return number of claims transferred, or a negative code:
+     * <p>The transfer is blocked if it would cause {@code target} to exceed their personal
+     * claim limit (base + VIP bonus if applicable). This prevents abuse where players
+     * transfer claims to an alt, re-claim up to their limit, and repeat to accumulate
+     * more land than the limit intends. OPs have no cap and can always receive claims.
+     *
+     * @return number of claims transferred, or a negative error code:
      *         -1 = same player, -2 = sender has no claims, -3 = would exceed target's limit
      */
     public static int transfer(ServerPlayer sender, ServerPlayer target) {
@@ -129,6 +133,7 @@ public final class ClaimService {
         int senderCount = data.countByOwner(sender.getUUID());
         if (senderCount == 0)
             return -2;
+
 
         boolean isTargetOp = ((ServerLevel) sender.level()).getServer().getPlayerList().isOp(target.nameAndId());
         if (!isTargetOp) {

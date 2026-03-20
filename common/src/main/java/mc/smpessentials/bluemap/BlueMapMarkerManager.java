@@ -8,6 +8,7 @@ import de.bluecolored.bluemap.api.markers.HtmlMarker;
 import de.bluecolored.bluemap.api.math.Color;
 import de.bluecolored.bluemap.api.math.Shape;
 import de.bluecolored.bluemap.api.BlueMapMap;
+import net.minecraft.world.level.border.WorldBorder;
 import mc.smpessentials.config.SmpConfig;
 import mc.smpessentials.SmpUtilsMod;
 import mc.smpessentials.claims.ClaimManager;
@@ -102,6 +103,9 @@ public class BlueMapMarkerManager {
         }
         if (SmpConfig.BLUEMAP_SHOW_CLAIMS) {
             updateClaims();
+        }
+        if (SmpConfig.BLUEMAP_SHOW_WORLDBORDER) {
+            updateWorldBorder();
         }
     }
 
@@ -462,10 +466,59 @@ public class BlueMapMarkerManager {
         return new Color(255, 0, 0, 0.5f); // fallback red
     }
 
+    private void updateWorldBorder() {
+        MinecraftServer server = BlueMapIntegration.getServer();
+        if (server == null) return;
+
+        ServerLevel overworld = server.getLevel(net.minecraft.world.level.Level.OVERWORLD);
+        if (overworld == null) return;
+
+        WorldBorder border = overworld.getWorldBorder();
+
+        // Skip if the border is at the default unlimited size — no border has been set
+        if (border.getSize() >= 5.9E7) {
+            for (BlueMapMap map : api.getMaps())
+                map.getMarkerSets().remove("quacksmp_worldborder");
+            return;
+        }
+
+        double minX = border.getMinX();
+        double maxX = border.getMaxX();
+        double minZ = border.getMinZ();
+        double maxZ = border.getMaxZ();
+
+        Shape borderShape = new Shape(
+                new Vector2d(minX, minZ),
+                new Vector2d(maxX, minZ),
+                new Vector2d(maxX, maxZ),
+                new Vector2d(minX, maxZ));
+
+        String overworldId = net.minecraft.world.level.Level.OVERWORLD.identifier().toString();
+        for (BlueMapMap map : api.getMaps()) {
+            if (!map.getWorld().getId().endsWith("#" + overworldId)) continue;
+
+            MarkerSet markerSet = map.getMarkerSets().computeIfAbsent("quacksmp_worldborder",
+                    id -> MarkerSet.builder().label("World Border").defaultHidden(false).build());
+            markerSet.getMarkers().clear();
+
+            ShapeMarker marker = ShapeMarker.builder()
+                    .label("World Border")
+                    .shape(borderShape, 70)
+                    .fillColor(new Color(0, 0, 0, 0.0f))
+                    .lineColor(parseColor(SmpConfig.BLUEMAP_WORLDBORDER_COLOR))
+                    .lineWidth(3)
+                    .depthTestEnabled(false)
+                    .build();
+
+            markerSet.put("world_border", marker);
+        }
+    }
+
     public void cleanup() {
         for (BlueMapMap map : api.getMaps()) {
             map.getMarkerSets().remove("quacksmp_homes");
             map.getMarkerSets().remove("quacksmp_claims");
+            map.getMarkerSets().remove("quacksmp_worldborder");
         }
     }
 }

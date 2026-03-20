@@ -24,6 +24,8 @@ public final class SmpConfig {
     public static boolean BLUEMAP_ENABLE = true;
     public static boolean BLUEMAP_SHOW_HOMES = true;
     public static boolean BLUEMAP_SHOW_CLAIMS = true;
+    public static boolean BLUEMAP_SHOW_WORLDBORDER = true;
+    public static String BLUEMAP_WORLDBORDER_COLOR = "FF3C3C";
     // Stored as 6-digit RGB hex strings (e.g. "00FFFF")
     public static String BLUEMAP_CLAIM_COLOR = "00FFFF"; // Cyan
     public static String BLUEMAP_OP_CLAIM_COLOR = "FFD700"; // Gold
@@ -111,6 +113,7 @@ public final class SmpConfig {
         if (root.has("vip_bonus_claims")) {
             VIP_BONUS_CLAIMS = root.get("vip_bonus_claims").getAsInt();
         }
+
         if (root.has("allow_lava_wilderness")) {
             ALLOW_LAVA_WILDERNESS = root.get("allow_lava_wilderness").getAsBoolean();
         }
@@ -124,6 +127,10 @@ public final class SmpConfig {
             BLUEMAP_SHOW_HOMES = root.get("bluemap_show_homes").getAsBoolean();
         if (root.has("bluemap_show_claims"))
             BLUEMAP_SHOW_CLAIMS = root.get("bluemap_show_claims").getAsBoolean();
+        if (root.has("bluemap_show_worldborder"))
+            BLUEMAP_SHOW_WORLDBORDER = root.get("bluemap_show_worldborder").getAsBoolean();
+        if (root.has("bluemap_worldborder_color"))
+            BLUEMAP_WORLDBORDER_COLOR = root.get("bluemap_worldborder_color").getAsString();
         if (root.has("bluemap_claim_color"))
             BLUEMAP_CLAIM_COLOR = root.get("bluemap_claim_color").getAsString();
         if (root.has("bluemap_op_claim_color"))
@@ -135,24 +142,37 @@ public final class SmpConfig {
         if (root.has("rules")) {
             loadList(root, "rules", RULES);
         } else if (RULES.isEmpty()) {
-            RULES.add("&e1. Be respectful.");
-            RULES.add("&e2. No griefing inside claims.");
-            RULES.add("&e3. Wilderness is dangerous (PvP enabled).");
-            RULES.add("&e4. No cheating.");
+            RULES.add("&e1. Be respectful. 2. No GRIEFING. 3. No cheating.");
+            RULES.add("&e4. Voice chat is strictly 18+. Falsely verifying your age will result in a ban.");
+            RULES.add("&e5. Do not attempt to bypass the chat filter or use slurs.");
+            RULES.add("&e6. Found a bug or exploit? Report it to dev@quackedmod.wiki for a reward!");
+            RULES.add("&e7. Build bases FAR from spawn. Use the RTP portal!");
+            RULES.add("&e8. Spawn's communal area is for cool builds to show off!");
         }
 
         if (root.has("periodic_messages")) {
             loadList(root, "periodic_messages", PERIODIC_MESSAGES);
         } else if (PERIODIC_MESSAGES.isEmpty()) {
             PERIODIC_MESSAGES.add("&b[Tip] &fUse &a/claim &fto protect your land!");
-            PERIODIC_MESSAGES.add("&b[Tip] &fSet your home by sleeping in a bed!");
-            PERIODIC_MESSAGES.add("&b[Tip] &fType &a/smp help &ffor commands!");
-            PERIODIC_MESSAGES.add("&b[Reminder] &fPlease respect the &6/rules&f!");
+            PERIODIC_MESSAGES.add("&b[Tip] &fSleep in a bed to set your &a/home&f location!");
+            PERIODIC_MESSAGES.add("&b[Tip] &fType &a/smp help &ffor a list of commands!");
+            PERIODIC_MESSAGES.add("&b[Tip] &fPlease respect the &6/rules&f!");
+            PERIODIC_MESSAGES.add("&b[Tip] &fUnlock active abilities by leveling up your &a/skills&f!");
             PERIODIC_MESSAGES.add("&b[Tip] &fUse &a/tpr <player>&f to teleport to friends!");
-            PERIODIC_MESSAGES.add("&b[Reminder] &fReport griefers to &adev@quackedmod.wiki&f!");
+            PERIODIC_MESSAGES.add("&b[Tip] &fStuck with an intruder? Use &a/sos &fto eject them from your claim!");
+            PERIODIC_MESSAGES.add("&b[Tip] &fReach &aLevel 10 &fin a skill to unlock its unique Active Ability!");
+            PERIODIC_MESSAGES.add("&b[Tip] &fUse &aSneak + Drop (Q) &fwith a tool to activate its ability!");
+            PERIODIC_MESSAGES.add("&b[Tip] &fActivate &bDash &fby &aSprinting + Jumping + Sneaking&f!");
+            PERIODIC_MESSAGES.add("&b[Tip] &fLeveling up skills grants passive buffs like &c+Health &fand &f+Speed!");
+            PERIODIC_MESSAGES.add("&b[Tip] &fReport griefers to &adev@quackedmod.wiki&f!");
             PERIODIC_MESSAGES.add("&b[Tip] &fReset the ender dragon in the &6Shogun Temple &fin the village or ask an admin to reset the end world!");
-            PERIODIC_MESSAGES.add("&b[Reminder] &fVote for us on &a[CurseForge](https://www.curseforge.com/servers/minecraft/game/quackedsmp) &fservers to help us grow! :)");
             PERIODIC_MESSAGES.add("&b[Tip] &fVisit Spawn Shops for blocks & gear! Trade items for Emeralds!");
+            PERIODIC_MESSAGES.add("&b[Tip] &fKeep Inventory is ON by default! If you prefer a challenge, type &a/keepinv off&f to drop your items on death.");
+            PERIODIC_MESSAGES.add("&b[Tip] &fNot sure where a claim ends? Use &a/claim map&f to visualize nearby chunk borders in chat!");
+            PERIODIC_MESSAGES.add("&b[Tip] &fBuilding with friends? Use &a/trust <player>&f to give them permission to safely build in your claims!");
+            PERIODIC_MESSAGES.add("&b[Tip] &fWe have proximity voice chat! If you're 18+, type &a/verify confirm&f to enable it and start talking!");
+            PERIODIC_MESSAGES.add("&b[Tip] &fWant to see who has the highest skills? Type &a/skills top&f to view the server leaderboards!");
+            PERIODIC_MESSAGES.add("&b[Tip] &fCheck out our live web-map! You can see your &a/home&f and even name your claims using &a/claim name <name>&f!");
         }
 
         if (root.has("messages") && root.get("messages").isJsonObject()) {

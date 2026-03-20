@@ -17,6 +17,7 @@ import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 import net.neoforged.neoforge.event.level.BlockEvent;
 import net.neoforged.neoforge.event.server.ServerStartedEvent;
+import net.neoforged.neoforge.event.server.ServerStoppedEvent;
 import net.neoforged.neoforge.event.server.ServerStoppingEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 
@@ -41,11 +42,17 @@ public class SmpEvents {
         mc.smpessentials.bluemap.BlueMapIntegration.onServerStart(event.getServer());
         mc.smpessentials.voicechat.VoicechatIntegration.onServerStart(event.getServer());
         mc.smpessentials.keepinv.KeepInvSavedData.enforceGamerule(event.getServer());
+        mc.smpessentials.dims.DimManager.restoreAll(event.getServer());
     }
 
     @SubscribeEvent
     public static void onServerStopping(ServerStoppingEvent event) {
         mc.smpessentials.commands.EndResetLogic.onServerStopping(event.getServer());
+    }
+
+    @SubscribeEvent
+    public static void onServerStopped(ServerStoppedEvent event) {
+        mc.smpessentials.dims.DimManager.scrubLevelDat(event.getServer());
     }
 
     @SubscribeEvent
@@ -81,6 +88,7 @@ public class SmpEvents {
         for (ServerPlayer player : event.getServer().getPlayerList().getPlayers()) {
             TeleportScheduler.onPlayerTick(player);
             SkillEvents.onPlayerTick(player);
+            mc.smpessentials.dims.EtherFallthrough.tick(player);
         }
     }
 
@@ -114,6 +122,12 @@ public class SmpEvents {
     @SubscribeEvent
     public static void onRightClickBlock(PlayerInteractEvent.RightClickBlock event) {
         if (event.getEntity() instanceof ServerPlayer player) {
+            InteractionResult portal = mc.smpessentials.dims.CustomPortalActivator.onRightClickBlock(
+                    player, event.getLevel(), event.getHand(), event.getPos(), event.getFace());
+            if (portal == InteractionResult.SUCCESS) {
+                event.setCanceled(true);
+                return;
+            }
             if (ClaimProtection.onRightClickBlock(player, event.getPos()) == InteractionResult.FAIL) {
                 event.setCanceled(true);
             }
