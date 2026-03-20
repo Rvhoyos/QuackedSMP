@@ -24,6 +24,8 @@ public final class SmpConfig {
     public static boolean BLUEMAP_ENABLE = true;
     public static boolean BLUEMAP_SHOW_HOMES = true;
     public static boolean BLUEMAP_SHOW_CLAIMS = true;
+    public static boolean BLUEMAP_SHOW_WORLDBORDER = true;
+    public static String BLUEMAP_WORLDBORDER_COLOR = "FF3C3C";
     // Stored as 6-digit RGB hex strings (e.g. "00FFFF")
     public static String BLUEMAP_CLAIM_COLOR = "00FFFF"; // Cyan
     public static String BLUEMAP_OP_CLAIM_COLOR = "FFD700"; // Gold
@@ -125,6 +127,10 @@ public final class SmpConfig {
             BLUEMAP_SHOW_HOMES = root.get("bluemap_show_homes").getAsBoolean();
         if (root.has("bluemap_show_claims"))
             BLUEMAP_SHOW_CLAIMS = root.get("bluemap_show_claims").getAsBoolean();
+        if (root.has("bluemap_show_worldborder"))
+            BLUEMAP_SHOW_WORLDBORDER = root.get("bluemap_show_worldborder").getAsBoolean();
+        if (root.has("bluemap_worldborder_color"))
+            BLUEMAP_WORLDBORDER_COLOR = root.get("bluemap_worldborder_color").getAsString();
         if (root.has("bluemap_claim_color"))
             BLUEMAP_CLAIM_COLOR = root.get("bluemap_claim_color").getAsString();
         if (root.has("bluemap_op_claim_color"))

@@ -31,6 +31,10 @@ public class GeneralCommands {
                                                 .requires(s -> net.minecraft.commands.Commands.LEVEL_GAMEMASTERS
                                                                 .check(s.permissions())) // OP only
                                                 .executes(GeneralCommands::reloadConfig))
+                                .then(Commands.literal("bluemap")
+                                                .requires(s -> net.minecraft.commands.Commands.LEVEL_GAMEMASTERS
+                                                                .check(s.permissions()))
+                                                .executes(GeneralCommands::forceBlueMapUpdate))
                                 .then(Commands.literal("config")
                                                 .requires(s -> net.minecraft.commands.Commands.LEVEL_GAMEMASTERS
                                                                 .check(s.permissions())) // OP only
@@ -134,6 +138,17 @@ public class GeneralCommands {
                 src.sendSystemMessage(Component.literal("/rules").withStyle(cmd)
                                 .append(Component.literal(" - Read the server rules").withStyle(desc)));
 
+                return 1;
+        }
+
+        private static int forceBlueMapUpdate(CommandContext<CommandSourceStack> ctx) {
+                var mgr = mc.smpessentials.bluemap.BlueMapIntegration.getMarkerManager();
+                if (mgr == null) {
+                        ctx.getSource().sendFailure(Component.literal("BlueMap is not loaded."));
+                        return 0;
+                }
+                mgr.updateAll();
+                ctx.getSource().sendSuccess(() -> Component.literal("BlueMap markers refreshed."), true);
                 return 1;
         }
 

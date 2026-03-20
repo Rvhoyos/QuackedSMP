@@ -186,6 +186,8 @@ You can manage the server configuration in-game using a visual interface:
 | `bluemap_claim_color`| String | `00FFFF` | Hex color of claims. |
 | `bluemap_op_claim_color`| String | `FFD700` | Hex color of OP claims. |
 | `bluemap_vip_claim_color`| String| `8A2BE2` | Hex color of VIP claims. |
+| `bluemap_show_worldborder`| Boolean | `true` | Show world border outline on map. |
+| `bluemap_worldborder_color`| String | `FF3C3C` | Hex color of the world border line. |
 | `mute_levels_minutes` | List | `[60,...]` | Mute durations (mins) for progressive bans (Tier 1-5). |
 | `welcome_message` | String | *See JSON* | Join message. |
 | `periodic_messages` | List | *See JSON* | Periodic broadcast messages. |
@@ -387,6 +389,7 @@ One block type can only be wired to one dimension at a time. Reassigning it will
 | :--- | :--- | :--- |
 | `/smp help` | List top-level commands | Everyone |
 | `/smp reload` | Reload configuration | OP |
+| `/smp bluemap` | Force-refresh all BlueMap markers immediately | OP |
 | `/smp config` | Open configuration GUI | OP |
 | `/smp config reset` | Factory reset config | OP |
 | `/mute <player> <mins>` | Mute a player | OP |

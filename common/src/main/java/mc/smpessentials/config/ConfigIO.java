@@ -138,6 +138,14 @@ public final class ConfigIO {
                 obj.addProperty("bluemap_vip_claim_color", "8A2BE2");
                 dirty = true;
             }
+            if (!obj.has("bluemap_show_worldborder")) {
+                obj.addProperty("bluemap_show_worldborder", true);
+                dirty = true;
+            }
+            if (!obj.has("bluemap_worldborder_color")) {
+                obj.addProperty("bluemap_worldborder_color", "FF3C3C");
+                dirty = true;
+            }
 
             if (!obj.has("vips")) {
                 obj.add("vips", new com.google.gson.JsonArray());
@@ -375,6 +383,8 @@ public final class ConfigIO {
         root.addProperty("bluemap_claim_color", SmpConfig.BLUEMAP_CLAIM_COLOR);
         root.addProperty("bluemap_op_claim_color", SmpConfig.BLUEMAP_OP_CLAIM_COLOR);
         root.addProperty("bluemap_vip_claim_color", SmpConfig.BLUEMAP_VIP_CLAIM_COLOR);
+        root.addProperty("bluemap_show_worldborder", SmpConfig.BLUEMAP_SHOW_WORLDBORDER);
+        root.addProperty("bluemap_worldborder_color", SmpConfig.BLUEMAP_WORLDBORDER_COLOR);
 
         com.google.gson.JsonArray muteLevels = new com.google.gson.JsonArray();
         for (int m : SmpConfig.MUTE_LEVELS_MINUTES)
