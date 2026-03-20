@@ -64,10 +64,12 @@ public final class ConfigIO {
             }
             if (!obj.has("rules")) {
                 com.google.gson.JsonArray r = new com.google.gson.JsonArray();
-                r.add("&e1. Be respectful.");
-                r.add("&e2. No griefing inside claims.");
-                r.add("&e3. Wilderness is dangerous (PvP enabled).");
-                r.add("&e4. No cheating.");
+                r.add("&e1. Be respectful. 2. No GRIEFING. 3. No cheating.");
+                r.add("&e4. Voice chat is strictly 18+. Falsely verifying your age will result in a ban.");
+                r.add("&e5. Do not attempt to bypass the chat filter or use slurs.");
+                r.add("&e6. Found a bug or exploit? Report it to dev@quackedmod.wiki for a reward!");
+                r.add("&e7. Build bases FAR from spawn. Use the RTP portal!");
+                r.add("&e8. Spawn's communal area is for cool builds to show off!");
                 obj.add("rules", r);
                 dirty = true;
             }
@@ -76,7 +78,7 @@ public final class ConfigIO {
                 pm.add("&b[Tip] &fUse &a/claim &fto protect your land!");
                 pm.add("&b[Tip] &fSleep in a bed to set your &a/home&f location!");
                 pm.add("&b[Tip] &fType &a/smp help &ffor a list of commands!");
-                pm.add("&b[Reminder] &fPlease respect the &6/rules&f!");
+                pm.add("&b[Tip] &fPlease respect the &6/rules&f!");
                 pm.add("&b[Tip] &fUnlock active abilities by leveling up your &a/skills&f!");
                 pm.add("&b[Tip] &fUse &a/tpr <player>&f to teleport to friends!");
                 pm.add("&b[Tip] &fStuck with an intruder? Use &a/sos &fto eject them from your claim!");
@@ -84,10 +86,15 @@ public final class ConfigIO {
                 pm.add("&b[Tip] &fUse &aSneak + Drop (Q) &fwith a tool to activate its ability!");
                 pm.add("&b[Tip] &fActivate &bDash &fby &aSprinting + Jumping + Sneaking&f!");
                 pm.add("&b[Tip] &fLeveling up skills grants passive buffs like &c+Health &fand &f+Speed!");
-                pm.add("&b[Reminder] &fReport griefers to &adev@quackedmod.wiki&f!");
+                pm.add("&b[Tip] &fReport griefers to &adev@quackedmod.wiki&f!");
                 pm.add("&b[Tip] &fReset the ender dragon in the &6Shogun Temple &fin the village or ask an admin to reset the end world!");
-                pm.add("&b[Reminder] &fVote for us on &a[CurseForge](https://www.curseforge.com/servers/minecraft/game/quackedsmp) &fservers to help us grow! :)");
                 pm.add("&b[Tip] &fVisit Spawn Shops for blocks & gear! Trade items for Emeralds!");
+                pm.add("&b[Tip] &fKeep Inventory is ON by default! If you prefer a challenge, type &a/keepinv off&f to drop your items on death.");
+                pm.add("&b[Tip] &fNot sure where a claim ends? Use &a/claim map&f to visualize nearby chunk borders in chat!");
+                pm.add("&b[Tip] &fBuilding with friends? Use &a/trust <player>&f to give them permission to safely build in your claims!");
+                pm.add("&b[Tip] &fWe have proximity voice chat! If you're 18+, type &a/verify confirm&f to enable it and start talking!");
+                pm.add("&b[Tip] &fWant to see who has the highest skills? Type &a/skills top&f to view the server leaderboards!");
+                pm.add("&b[Tip] &fCheck out our live web-map! You can see your &a/home&f and even name your claims using &a/claim name <name>&f!");
                 obj.add("periodic_messages", pm);
                 dirty = true;
             }
@@ -203,17 +210,19 @@ public final class ConfigIO {
         root.add("vips", new com.google.gson.JsonArray());
 
         com.google.gson.JsonArray rules = new com.google.gson.JsonArray();
-        rules.add("&e1. Be respectful.");
-        rules.add("&e2. No griefing inside claims.");
-        rules.add("&e3. Wilderness is dangerous (PvP enabled).");
-        rules.add("&e4. No cheating.");
+        rules.add("&e1. Be respectful. 2. No GRIEFING. 3. No cheating.");
+        rules.add("&e4. Voice chat is strictly 18+. Falsely verifying your age will result in a ban.");
+        rules.add("&e5. Do not attempt to bypass the chat filter or use slurs.");
+        rules.add("&e6. Found a bug or exploit? Report it to dev@quackedmod.wiki for a reward!");
+        rules.add("&e7. Build bases FAR from spawn. Use the RTP portal!");
+        rules.add("&e8. Spawn's communal area is for cool builds to show off!");
         root.add("rules", rules);
 
         com.google.gson.JsonArray pm = new com.google.gson.JsonArray();
         pm.add("&b[Tip] &fUse &a/claim &fto protect your land!");
         pm.add("&b[Tip] &fSleep in a bed to set your &a/home&f location!");
         pm.add("&b[Tip] &fType &a/smp help &ffor a list of commands!");
-        pm.add("&b[Reminder] &fPlease respect the &6/rules&f!");
+        pm.add("&b[Tip] &fPlease respect the &6/rules&f!");
         pm.add("&b[Tip] &fUnlock active abilities by leveling up your &a/skills&f!");
         pm.add("&b[Tip] &fUse &a/tpr <player>&f to teleport to friends!");
         pm.add("&b[Tip] &fStuck with an intruder? Use &a/sos &fto eject them from your claim!");
@@ -221,10 +230,15 @@ public final class ConfigIO {
         pm.add("&b[Tip] &fUse &aSneak + Drop (Q) &fwith a tool to activate its ability!");
         pm.add("&b[Tip] &fActivate &bDash &fby &aSprinting + Jumping + Sneaking&f!");
         pm.add("&b[Tip] &fLeveling up skills grants passive buffs like &c+Health &fand &f+Speed!");
-        pm.add("&b[Reminder] &fReport griefers to &adev@quackedmod.wiki&f!");
+        pm.add("&b[Tip] &fReport griefers to &adev@quackedmod.wiki&f!");
         pm.add("&b[Tip] &fReset the ender dragon in the &6Shogun Temple &fin the village or ask an admin to reset the end world!");
-        pm.add("&b[Reminder] &fVote for us on &a[CurseForge](https://www.curseforge.com/servers/minecraft/game/quackedsmp) &fservers to help us grow! :)");
         pm.add("&b[Tip] &fVisit Spawn Shops for blocks & gear! Trade items for Emeralds!");
+        pm.add("&b[Tip] &fKeep Inventory is ON by default! If you prefer a challenge, type &a/keepinv off&f to drop your items on death.");
+        pm.add("&b[Tip] &fNot sure where a claim ends? Use &a/claim map&f to visualize nearby chunk borders in chat!");
+        pm.add("&b[Tip] &fBuilding with friends? Use &a/trust <player>&f to give them permission to safely build in your claims!");
+        pm.add("&b[Tip] &fWe have proximity voice chat! If you're 18+, type &a/verify confirm&f to enable it and start talking!");
+        pm.add("&b[Tip] &fWant to see who has the highest skills? Type &a/skills top&f to view the server leaderboards!");
+        pm.add("&b[Tip] &fCheck out our live web-map! You can see your &a/home&f and even name your claims using &a/claim name <name>&f!");
         root.add("periodic_messages", pm);
 
         root.add("chatfilter", defaultChatFilterJson());

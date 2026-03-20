@@ -119,37 +119,20 @@ public class GeneralCommands {
                                 Component.literal("== QuackedSMP Commands ==").withStyle(title,
                                                 net.minecraft.ChatFormatting.BOLD));
 
-                src.sendSystemMessage(Component.literal("/home").withStyle(cmd)
-                                .append(Component.literal(" - Teleport to bed/spawn").withStyle(desc)));
-                src.sendSystemMessage(Component.literal("/spawn").withStyle(cmd)
-                                .append(Component.literal(" - Teleport to world spawn").withStyle(desc)));
-                src.sendSystemMessage(Component.literal("/tpr <player>").withStyle(cmd)
-                                .append(Component.literal(" - Request teleport").withStyle(desc)));
-                src.sendSystemMessage(Component.literal("/tpa accept/deny").withStyle(cmd)
-                                .append(Component.literal(" - Accept or deny request").withStyle(desc)));
                 src.sendSystemMessage(Component.literal("/claim").withStyle(cmd)
-                                .append(Component.literal(" - Claim current chunk").withStyle(desc)));
-                src.sendSystemMessage(Component.literal("/unclaim").withStyle(cmd)
-                                .append(Component.literal(" - Unclaim current chunk").withStyle(desc)));
-                src.sendSystemMessage(Component.literal("/claim map").withStyle(cmd)
-                                .append(Component.literal(" - View nearby claims").withStyle(desc)));
-                src.sendSystemMessage(Component.literal("/claim info").withStyle(cmd)
-                                .append(Component.literal(" - View claim usage").withStyle(desc)));
+                                .append(Component.literal(" - Claim current chunk to protect it").withStyle(desc)));
                 src.sendSystemMessage(Component.literal("/trust <player>").withStyle(cmd)
-                                .append(Component.literal(" - Trust player globally").withStyle(desc)));
-                src.sendSystemMessage(Component.literal("/untrust <player>").withStyle(cmd)
-                                .append(Component.literal(" - Revoke trust").withStyle(desc)));
-                src.sendSystemMessage(Component.literal("/trustlist").withStyle(cmd)
-                                .append(Component.literal(" - List trusted players").withStyle(desc)));
-                src.sendSystemMessage(Component.literal("/claims").withStyle(cmd)
-                                .append(Component.literal(" - View claim count (VIPs get bonus!)").withStyle(desc)));
-                src.sendSystemMessage(Component.literal("/rules").withStyle(cmd)
-                                .append(Component.literal(" - Read server rules").withStyle(desc)));
+                                .append(Component.literal(" - Give friend permission in claims").withStyle(desc)));
+                src.sendSystemMessage(Component.literal("/tpr <player>").withStyle(cmd)
+                                .append(Component.literal(" - Request teleport to friend").withStyle(desc)));
                 src.sendSystemMessage(Component.literal("/skills").withStyle(cmd)
-                                .append(Component.literal(" - View your skill levels").withStyle(desc)));
-                src.sendSystemMessage(Component.literal("/sos").withStyle(cmd)
-                                .append(Component.literal(" - Eject untrusted players in your claims")
-                                                .withStyle(desc)));
+                                .append(Component.literal(" - View your RPG skill progression").withStyle(desc)));
+                src.sendSystemMessage(Component.literal("/keepinv on/off").withStyle(cmd)
+                                .append(Component.literal(" - Toggle keeping items on death").withStyle(desc)));
+                src.sendSystemMessage(Component.literal("/verify confirm").withStyle(cmd)
+                                .append(Component.literal(" - Enable proximity voice chat").withStyle(desc)));
+                src.sendSystemMessage(Component.literal("/rules").withStyle(cmd)
+                                .append(Component.literal(" - Read the server rules").withStyle(desc)));
 
                 return 1;
         }

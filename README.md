@@ -15,6 +15,7 @@ QuackedSMP is a server-side utility mod for **Minecraft 1.21.11**, supporting bo
 - **Land Claims**: Chunk-based protection.
 - **Teleportation**: `/home`, `/spawn`, and `/tpa` requests with configurable warmups.
 - **Chat Management**: Anti-evasion filters, whitelists, and automated announcements.
+- **Custom Dimensions**: Create, delete, and manage runtime dimensions with custom terrain and biomes. Includes a custom portal system.
 - **End Reset**: Reset the Dragon fight live, or queue a full dimension reset for the next restart.
 - **BlueMap Support**: Optional, seamless sync of Claims and Player Homes to the web map.
 - **Simple Voice Chat Integration**: Optional 18+ age-gate for Simple Voice Chat. Unverified players cannot speak or hear others until they confirm their age.
@@ -282,6 +283,104 @@ The `caps` section defines the maximum bonus a player receives when a parent cat
 
 ---
 
+## Custom Dimensions (`/dim`)
+
+Create, manage, and teleport to runtime dimensions without datapacks or restarts. All custom dimensions persist across server restarts automatically.
+
+### Generator Types
+
+| Type | Terrain | Default Biomes |
+| :--- | :--- | :--- |
+| `overworld` | Standard overworld noise | Full vanilla overworld biome set |
+| `ether` | Floating islands (fall through the void to return to the overworld). All portals share one central spawn island with a single return portal. | Full vanilla overworld biome set |
+| `nether` | Vanilla nether | Vanilla nether biomes |
+| `end` | Vanilla end | Vanilla end biomes |
+
+### Sub-Parameters
+
+`overworld` and `ether` accept optional sub-parameters to customise biome placement and terrain.
+
+#### `biomes` — Custom biome list
+
+```
+/dim create <id> overworld biomes <biome1[:weight]> [biome2[:weight]] ...
+/dim create <id> ether    biomes <biome1[:weight]> [biome2[:weight]] ...
+```
+
+Specifies which biomes appear in the dimension and how much of the world each one covers.
+
+- **Weight** controls coverage share — only the ratio between weights matters. `plains:1 desert:1` and `plains:7 desert:7` produce identical 50/50 distributions.
+- **Single biome** — the entire dimension uses that one biome exclusively.
+- **No biomes specified** — uses the full vanilla biome set for that type.
+
+Biomes are placed using the world's noise-based climate system. The weights translate directly to how much area each biome occupies — higher weight means more of the world. Biome content (mob spawns, structures, weather, surface decoration) is completely vanilla once placed.
+
+**Examples:**
+```
+# All desert, no other biomes
+/dim create quacksmp:desert_world overworld biomes minecraft:desert
+
+# Mostly plains, some forest, rare mushroom fields (roughly 50% / 40% / 10%)
+/dim create quacksmp:mixed overworld biomes minecraft:plains:5 minecraft:forest:4 minecraft:mushroom_fields:1
+
+# Floating jungle islands
+/dim create quacksmp:sky_jungle ether biomes minecraft:jungle
+```
+
+#### `flat` — Flat terrain (`overworld` only)
+
+```
+/dim create <id> overworld flat <block:height> [block:height] ...
+```
+
+Generates flat terrain. Layers are listed **bottom to top**. Each layer is a block ID followed by `:height` (number of layers of that block).
+
+**Examples:**
+```
+# Classic superflat: 1 bedrock, 2 dirt, 1 grass
+/dim create quacksmp:flatworld overworld flat minecraft:bedrock:1 minecraft:dirt:2 minecraft:grass_block:1
+
+# Stone platform with a grass top
+/dim create quacksmp:arena overworld flat minecraft:stone:10 minecraft:grass_block:1
+```
+
+### Portal System
+
+Custom portals can be wired to a dimension using any block as the frame material instead of obsidian.
+
+1. **Wire a block to a dimension:**
+   ```
+   /dim setportal <dim_id> <block_id>
+   ```
+   The first custom dim created is automatically assigned `minecraft:glowstone` as its frame block (if glowstone isn't already claimed by another dim). All other dims must be assigned manually.
+2. **Build a portal frame** using that block (same shape as a nether portal, 2–21 wide, 3–21 tall) in any vanilla dimension.
+3. **Activate it** by right-clicking the frame with a water bucket — the portal fills with nether portal blocks.
+4. **Travel is bidirectional** — stepping through from the destination returns you to the overworld.
+
+**Return portals are placed automatically.** On first entry through a portal, a matching return portal is generated inside the destination dimension at the same XZ coordinates. Each overworld portal links to its own return portal — two portals at different locations will each have a dedicated return portal near where they land. Ether dimensions are an exception: all portals lead to one shared floating island with a single return portal.
+
+One block type can only be wired to one dimension at a time. Reassigning it will automatically unwire the previous dimension.
+
+### Commands
+
+| Command | Description | Permission |
+| :--- | :--- | :--- |
+| `/dim create <id> overworld [biomes [...] \| flat <layers>]` | Create overworld dimension | OP |
+| `/dim create <id> ether [biomes [...]]` | Create floating-islands dimension | OP |
+| `/dim create <id> nether` | Create nether dimension | OP |
+| `/dim create <id> end` | Create end dimension | OP |
+| `/dim delete <id>` | Delete a custom dimension (evicts players first) | OP |
+| `/dim list` | List all active dimensions | Everyone |
+| `/dim tp <id>` | Teleport yourself to a dimension | OP |
+| `/dim tp <player> <id>` | Teleport a player to a dimension | OP |
+| `/dim setportal <dim_id> <block_id>` | Wire a block type as portal frame for a dimension | OP |
+
+> **Note:** Vanilla dimensions (`minecraft:overworld`, `minecraft:the_nether`, `minecraft:the_end`) cannot be deleted.
+
+> **Datapack dimensions:** `/dim delete` also works on dimensions registered via datapacks — not just ones created with `/dim create`. It will remove the dimension from the active session, delete its chunk data, and delete the datapack JSON file so it does not re-register on restart. Modded biomes and entity spawns from other mods are fully supported — biomes are resolved from the live registry at runtime.
+
+---
+
 ## Command Reference
 
 | Command | Description | Permission |
@@ -310,6 +409,9 @@ The `caps` section defines the maximum bonus a player receives when a parent cat
 | `/tpa <player>` | Accept or deny teleport | Everyone |
 | `/smp end reset dragon` | Reset Ender Dragon fight | OP |
 | `/smp end reset world` | Queue End dimension reset for next restart | OP |
+| `/vip add <player>` | Grant VIP status to a player | OP |
+| `/vip remove <player>` | Revoke VIP status from a player | OP |
+| `/vip list` | List all current VIPs | OP |
 | `/punish <player>` | Wipe player inventory and all items in their claims | OP |
 | `/skills` | Concise overview of all your skill levels | Everyone |
 | `/skills <skillname>` | Detailed info for one skill | Everyone |
@@ -323,6 +425,12 @@ The `caps` section defines the maximum bonus a player receives when a parent cat
 | `/keepinv off` | Drop items and XP on death (vanilla behavior) | Everyone |
 | `/verify confirm` | Confirm you are 18+ and enable Simple Voice Chat | Everyone |
 | `/verify deny` | Decline; voice chat remains disabled | Everyone |
+| `/dim create <id> <type> [sub-params]` | Create a custom dimension | OP |
+| `/dim delete <id>` | Delete a custom dimension | OP |
+| `/dim list` | List all active dimensions | Everyone |
+| `/dim tp <id>` | Teleport self to dimension | OP |
+| `/dim tp <player> <id>` | Teleport player to dimension | OP |
+| `/dim setportal <dim_id> <block_id>` | Wire a portal frame block to a dimension | OP |
 
 
 ---
