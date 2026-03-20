@@ -173,6 +173,7 @@ public final class SmpConfig {
             PERIODIC_MESSAGES.add("&b[Tip] &fWe have proximity voice chat! If you're 18+, type &a/verify confirm&f to enable it and start talking!");
             PERIODIC_MESSAGES.add("&b[Tip] &fWant to see who has the highest skills? Type &a/skills top&f to view the server leaderboards!");
             PERIODIC_MESSAGES.add("&b[Tip] &fCheck out our live web-map! You can see your &a/home&f and even name your claims using &a/claim name <name>&f!");
+            PERIODIC_MESSAGES.add("&b[Tip] &fGet our recommended modpack for &ashaders&f, &aminimap&f, &avoice chat &fand more! [&bDownload Here](https://www.curseforge.com/minecraft/modpacks/play-quackedmod-wiki)");
         }
 
         if (root.has("messages") && root.get("messages").isJsonObject()) {
