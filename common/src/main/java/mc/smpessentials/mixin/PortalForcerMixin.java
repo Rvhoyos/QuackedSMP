@@ -28,16 +28,38 @@ public abstract class PortalForcerMixin {
     @Inject(method = "createPortal", at = @At("HEAD"), cancellable = true)
     private void onCreatePortal(BlockPos pos, Direction.Axis axis,
                                 CallbackInfoReturnable<Optional<BlockUtil.FoundRectangle>> cir) {
-        if (!this.level.dimension().equals(Level.OVERWORLD)) return;
+        // ---- Spawn protection (overworld only) ----
+        if (this.level.dimension().equals(Level.OVERWORLD)) {
+            MinecraftServer server = this.level.getServer();
+            int radius = server instanceof DedicatedServer ds ? ds.spawnProtectionRadius() : 0;
+            if (radius > 0) {
+                BlockPos spawn = this.level.getRespawnData().pos();
+                if (Math.abs(pos.getX() - spawn.getX()) <= radius
+                        && Math.abs(pos.getZ() - spawn.getZ()) <= radius) {
+                    cir.setReturnValue(Optional.empty());
+                    return;
+                }
+            }
+        }
 
-        MinecraftServer server = this.level.getServer();
-        int radius = server instanceof DedicatedServer ds ? ds.spawnProtectionRadius() : 0;
-        if (radius <= 0) return;
-
-        BlockPos spawn = this.level.getRespawnData().pos();
-        if (Math.abs(pos.getX() - spawn.getX()) <= radius
-                && Math.abs(pos.getZ() - spawn.getZ()) <= radius) {
-            cir.setReturnValue(Optional.empty());
+        // ---- Claim protection (all dimensions) ----
+        // Block auto-generation if the target chunk is claimed by someone other than
+        // the travelling player (and the player is not trusted in that claim).
+        java.util.UUID playerUuid = mc.smpessentials.claims.PortalEntityCapture.get();
+        if (playerUuid != null) {
+            net.minecraft.world.level.ChunkPos chunkPos = new net.minecraft.world.level.ChunkPos(pos);
+            mc.smpessentials.claims.storage.ClaimedSavedData claims =
+                    mc.smpessentials.claims.storage.ClaimedSavedData.get(this.level);
+            claims.getClaim(this.level, chunkPos).ifPresent(claimData -> {
+                java.util.UUID owner = claimData.owner();
+                if (!owner.equals(playerUuid)) {
+                    mc.smpessentials.claims.storage.WhitelistSavedData whitelist =
+                            mc.smpessentials.claims.storage.WhitelistSavedData.get(this.level);
+                    if (!whitelist.isTrusted(owner, playerUuid)) {
+                        cir.setReturnValue(Optional.empty());
+                    }
+                }
+            });
         }
     }
 }
