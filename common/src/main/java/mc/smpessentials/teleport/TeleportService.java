@@ -54,6 +54,12 @@ public final class TeleportService {
         return Optional.of(r.requester());
     }
 
+    public static synchronized long getRemainingCooldownMs(UUID requester, long nowMs) {
+        Long until = requesterCooldownUntil.get(requester);
+        if (until == null || until <= nowMs) return 0L;
+        return until - nowMs;
+    }
+
     public static synchronized void clearForPlayer(UUID playerId) {
         requesterHasPending.remove(playerId);
         requesterCooldownUntil.remove(playerId);

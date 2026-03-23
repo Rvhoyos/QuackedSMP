@@ -76,6 +76,14 @@ public abstract class NetherPortalBlockMixin {
     @Inject(method = "getPortalDestination", at = @At("HEAD"), cancellable = true)
     private void onGetPortalDestination(ServerLevel level, Entity entity, BlockPos pos,
                                          CallbackInfoReturnable<TeleportTransition> cir) {
+        // Capture the triggering player UUID so PortalForcerMixin can check claim trust.
+        // Cleared for non-player entities (mobs, vehicles) so the forcer skips the check.
+        if (entity instanceof net.minecraft.server.level.ServerPlayer sp) {
+            mc.smpessentials.claims.PortalEntityCapture.set(sp.getUUID());
+        } else {
+            mc.smpessentials.claims.PortalEntityCapture.clear();
+        }
+
         Block frameBlock = findFrameBlock(level, pos);
         if (frameBlock == null || frameBlock == Blocks.OBSIDIAN) return;
 

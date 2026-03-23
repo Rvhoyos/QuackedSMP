@@ -52,7 +52,11 @@ public final class ClaimProtection {
      */
     public static boolean onBlockBreak(Level level, BlockPos pos, BlockState state, Player player) {
         if (player instanceof ServerPlayer sp) {
-            return ClaimAccess.canModify(sp, (ServerLevel) level, new ChunkPos(pos));
+            boolean allowed = ClaimAccess.canModify(sp, (ServerLevel) level, new ChunkPos(pos));
+            if (!allowed)
+                sp.displayClientMessage(
+                        net.minecraft.network.chat.Component.literal("\u00a7cThis area is protected by a land claim."), true);
+            return allowed;
         }
         return true;
     }
@@ -76,10 +80,16 @@ public final class ClaimProtection {
             ServerLevel sl = (ServerLevel) level;
             ChunkPos cp = new ChunkPos(pos);
             if (ClaimedSavedData.get(sl).isClaimed(sl, cp)) {
-                return ClaimAccess.canModify(sp, sl, cp);
+                boolean allowed = ClaimAccess.canModify(sp, sl, cp);
+                if (!allowed)
+                    sp.displayClientMessage(
+                            net.minecraft.network.chat.Component.literal("\u00a7cThis area is protected by a land claim."), true);
+                return allowed;
             } else {
                 if (state.getFluidState().getType() == net.minecraft.world.level.material.Fluids.LAVA) {
                     if (!mc.smpessentials.config.SmpConfig.ALLOW_LAVA_WILDERNESS) {
+                        sp.displayClientMessage(
+                                net.minecraft.network.chat.Component.literal("\u00a7cLava placement is disabled in the wilderness."), true);
                         return false;
                     }
                 }
@@ -138,8 +148,11 @@ public final class ClaimProtection {
     public static InteractionResult onRightClickBlock(Player player, BlockPos pos) {
         if (!(player instanceof ServerPlayer sp))
             return InteractionResult.PASS;
-        return ClaimAccess.canModify(sp, (ServerLevel) sp.level(), new ChunkPos(pos)) ? InteractionResult.PASS
-                : InteractionResult.FAIL;
+        boolean allowed = ClaimAccess.canModify(sp, (ServerLevel) sp.level(), new ChunkPos(pos));
+        if (!allowed)
+            sp.displayClientMessage(
+                    net.minecraft.network.chat.Component.literal("\u00a7cThis area is protected by a land claim."), true);
+        return allowed ? InteractionResult.PASS : InteractionResult.FAIL;
     }
 
     /**
@@ -173,6 +186,8 @@ public final class ClaimProtection {
         if (!(player instanceof ServerPlayer sp))
             return true;
         if (isProtectedEntity(entity) && !canInteractEntity(sp, entity)) {
+            sp.displayClientMessage(
+                    net.minecraft.network.chat.Component.literal("\u00a7cThis entity is protected by a land claim."), true);
             return false;
         }
         return true;
