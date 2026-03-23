@@ -29,18 +29,13 @@ public final class TeleportScheduler {
     public static void schedule(ServerPlayer player, Runnable action) {
         // Cancel existing if any (resets timer)
         if (pending.remove(player.getUUID()) != null) {
-            player.displayClientMessage(Component.literal("Rescheduling teleport..."), true);
+            player.displayClientMessage(Component.literal("\u00a7eTeleport rescheduled."), true);
         }
 
         long ticks = mc.smpessentials.config.SmpConfig.TP_WARMUP * 20L;
         long targetTime = ((net.minecraft.server.level.ServerLevel) player.level()).getGameTime() + ticks;
         PendingTeleport p = new PendingTeleport(player.getUUID(), action, player.position(), targetTime);
         pending.put(player.getUUID(), p);
-
-        player.displayClientMessage(
-                Component.literal(
-                        "Teleporting in " + mc.smpessentials.config.SmpConfig.TP_WARMUP + " seconds... Don't move!"),
-                false);
     }
 
     private static void cancel(ServerPlayer player, String reason) {
@@ -62,15 +57,16 @@ public final class TeleportScheduler {
         }
 
         // 2. Check Time
-        // Ensure we are on the same level/time reference? (Player might change dims?)
-        // If player changed dims, pos check usually fails or throws. Safe to assume
-        // cancellation if level mismatch.
-        // Simple check:
-        if (player.level().getGameTime() >= p.scheduledTick) {
-            // Execute!
+        long gameTime = player.level().getGameTime();
+        if (gameTime >= p.scheduledTick) {
             pending.remove(player.getUUID());
             p.action.run();
-            // Sound effect?
+        } else {
+            // Live countdown on action bar (refreshed every tick so it stays visible)
+            long ticksLeft = p.scheduledTick - gameTime;
+            long secsLeft = Math.max(1, (ticksLeft + 19) / 20);
+            player.displayClientMessage(
+                    Component.literal("\u00a7eTeleporting in \u00a7f" + secsLeft + "s\u00a7e... Don't move!"), true);
         }
     }
 

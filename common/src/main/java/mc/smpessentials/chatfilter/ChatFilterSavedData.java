@@ -251,6 +251,11 @@ public final class ChatFilterSavedData extends SavedData {
         return mutes.getOrDefault(player, 0L);
     }
 
+    /** Returns the current violation record for the player, or null if none. */
+    public ViolationData getViolation(java.util.UUID player) {
+        return violations.get(player);
+    }
+
     /**
      * Records a strike.
      * Logic:

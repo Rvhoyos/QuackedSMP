@@ -56,11 +56,12 @@ public final class TeleportCommands {
                                                                                         SmpConfig.MESSAGES.getOrDefault(
                                                                                                         "tpr.self",
                                                                                                         "Cannot request teleport to self.")));
-                                                                case IN_COOLDOWN ->
+                                                                case IN_COOLDOWN -> {
+                                                                        long remaining = TeleportService.getRemainingCooldownMs(requester.getUUID(), now);
+                                                                        int secs = Math.max(1, (int) (remaining / 1000));
                                                                         src.sendFailure(Component.literal(
-                                                                                        SmpConfig.MESSAGES.getOrDefault(
-                                                                                                        "tpr.cooldown",
-                                                                                                        "A request was sent recently. Please wait.")));
+                                                                                        "A request was sent recently. Please wait " + secs + "s."));
+                                                                }
                                                                 case ALREADY_PENDING ->
                                                                         src.sendFailure(
                                                                                         Component.literal(

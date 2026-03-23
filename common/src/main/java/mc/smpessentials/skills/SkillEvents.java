@@ -444,6 +444,9 @@ public final class SkillEvents {
 
             // Recalculate parent buff attribute modifiers on level change
             updateParentBuffs(player, data);
+
+            // Announce any abilities or passives unlocked at this level
+            checkAbilityDiscovery(player, skill, oldLevel, newLevel);
         }
     }
 
@@ -651,5 +654,125 @@ public final class SkillEvents {
         if (name == null || name.isEmpty())
             return name;
         return name.charAt(0) + name.substring(1).toLowerCase();
+    }
+
+    // ========== ABILITY DISCOVERY ==========
+
+    /**
+     * Called on every level-up. Shows a countdown teaser toward the next ability
+     * unlock while the player is still below the threshold, and a celebratory
+     * announcement when the threshold is crossed.
+     *
+     * <p>All unlock levels are read from {@link SmpConfig} so changing them in
+     * config automatically adjusts the teaser countdown without touching this code.
+     */
+    private static void checkAbilityDiscovery(ServerPlayer player, SkillType skill, int oldLevel, int newLevel) {
+        int unlockLevel = SmpConfig.getAbilityUnlockLevel(skill);
+
+        if (newLevel >= unlockLevel && oldLevel < unlockLevel) {
+            // ---- Crossed the unlock threshold ----
+            announceAbilityUnlock(player, abilityName(skill), abilityTrigger(skill), false);
+
+            // Archery: also announce Arrow Recovery passive
+            if (skill == SkillType.ARCHERY) {
+                player.sendSystemMessage(Component.literal(
+                        "\u00a77Passive: \u00a7eArrow Recovery \u00a77\u2014 projectile kills have a "
+                        + "chance to return an arrow (0.5%/level)"));
+            }
+        } else if (newLevel < unlockLevel) {
+            // ---- Still working toward unlock ----
+            int left = unlockLevel - newLevel;
+            announceAbilityProgress(player, abilityName(skill), abilityTrigger(skill), left);
+        }
+
+        // Archery: Scout Zoom has its own separate unlock level key
+        if (skill == SkillType.ARCHERY) {
+            int zoomUnlock = SmpConfig.getAbilityUnlockLevel("archery_zoom");
+            if (newLevel >= zoomUnlock && oldLevel < zoomUnlock) {
+                announceAbilityUnlock(player, "Scout Zoom",
+                        "Sneak + Swap Offhand (F) with empty hands \u2014 spyglass zoom + enemy glow", false);
+            } else if (newLevel < zoomUnlock) {
+                int left = zoomUnlock - newLevel;
+                announceAbilityProgress(player, "Scout Zoom",
+                        "Sneak + Swap Offhand (F) with empty hands", left);
+            }
+        }
+
+        // Woodcutting: Leaf Blower passive at level 20 (fixed threshold)
+        if (skill == SkillType.WOODCUTTING) {
+            if (newLevel >= 20 && oldLevel < 20) {
+                announceAbilityUnlock(player, "Leaf Blower",
+                        "Leaves decay instantly around any log you chop", true);
+            } else if (newLevel < 20) {
+                int left = 20 - newLevel;
+                announcePassiveProgress(player, "Leaf Blower", left);
+            }
+        }
+    }
+
+    /** Celebratory unlock announcement — gold star + challenge-complete sound. */
+    private static void announceAbilityUnlock(ServerPlayer player, String name, String trigger, boolean isPassive) {
+        String prefix = isPassive
+                ? "\u00a7a\u00a7l\u2605 Passive Unlocked! \u00a7r"
+                : "\u00a76\u00a7l\u2605 Ability Unlocked! \u00a7r";
+        player.sendSystemMessage(Component.literal(
+                prefix + "\u00a7e" + name + " \u00a77\u2014 " + trigger));
+        player.playSound(net.minecraft.sounds.SoundEvents.UI_TOAST_CHALLENGE_COMPLETE, 1.0f, 1.2f);
+    }
+
+    /** Muted progress teaser shown on every level-up before an active ability unlocks. */
+    private static void announceAbilityProgress(ServerPlayer player, String name, String trigger, int levelsLeft) {
+        String msg;
+        if (levelsLeft == 1) {
+            msg = "\u00a7e\u25c6 1 more level\u00a7e until \u00a76" + name + "\u00a7e unlocks! \u00a77(" + trigger + ")";
+        } else {
+            msg = "\u00a78\u25c6 \u00a77" + levelsLeft + " levels until \u00a7e" + name + " \u00a77unlocks \u00a78(\u00a77" + trigger + "\u00a78)";
+        }
+        player.sendSystemMessage(Component.literal(msg));
+    }
+
+    /** Muted progress teaser for passive abilities with a fixed unlock threshold. */
+    private static void announcePassiveProgress(ServerPlayer player, String name, int levelsLeft) {
+        String msg;
+        if (levelsLeft == 1) {
+            msg = "\u00a7e\u25c6 1 more level\u00a7e until passive \u00a72" + name + "\u00a7e unlocks!";
+        } else {
+            msg = "\u00a78\u25c6 \u00a77" + levelsLeft + " levels until passive \u00a72" + name + " \u00a77unlocks";
+        }
+        player.sendSystemMessage(Component.literal(msg));
+    }
+
+    private static String abilityName(SkillType skill) {
+        return switch (skill) {
+            case MINING     -> "Super Breaker";
+            case EXCAVATION -> "Giga Drill";
+            case WOODCUTTING-> "Tree Feller";
+            case FARMING    -> "Green Terra";
+            case FISHING    -> "Master Angler";
+            case AGILITY    -> "Dash";
+            case MELEE      -> "Berzerk";
+            case ARCHERY    -> "Sniper";
+            case DEFENSE    -> "Juggernaut";
+            case ENCHANTING -> "Arcane Infusion";
+            case ALCHEMY    -> "Philosopher's Touch";
+            case TRADING    -> "Tycoon's Charm";
+        };
+    }
+
+    private static String abilityTrigger(SkillType skill) {
+        return switch (skill) {
+            case AGILITY    -> "Sprint + Sneak while airborne";
+            case MINING     -> "Hold a pickaxe \u2192 Sneak + Q";
+            case EXCAVATION -> "Hold a shovel \u2192 Sneak + Q";
+            case WOODCUTTING-> "Hold an axe \u2192 Sneak + Q";
+            case FARMING    -> "Hold a hoe \u2192 Sneak + Q";
+            case FISHING    -> "Hold a fishing rod \u2192 Sneak + Q";
+            case MELEE      -> "Hold a sword \u2192 Sneak + Q";
+            case ARCHERY    -> "Hold a bow or crossbow \u2192 Sneak + Q";
+            case DEFENSE    -> "Hold a shield \u2192 Sneak + Q";
+            case ENCHANTING -> "Hold a damaged item \u2192 Sneak + Q";
+            case ALCHEMY    -> "Hold a book \u2192 Sneak + Q (aim at a spawner)";
+            case TRADING    -> "Hold an emerald \u2192 Sneak + Q";
+        };
     }
 }

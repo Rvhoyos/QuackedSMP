@@ -96,8 +96,7 @@ public final class ChatFilter {
         // 1. Check if Muted
         if (player != null && data.isMuted(player.getUUID())) {
             long remaining = data.getMuteEnd(player.getUUID()) - System.currentTimeMillis();
-            long mins = Math.max(1, remaining / 60000L);
-            player.sendSystemMessage(Component.literal("\u00a7cYou are muted for " + mins + " more minute(s)."));
+            player.sendSystemMessage(Component.literal("\u00a7c" + formatMuteRemaining(remaining)));
             return Component.empty();
         }
 
@@ -116,33 +115,38 @@ public final class ChatFilter {
                     // Trigger Auto-Mute
                     data.mute(player.getUUID(), muteDuration);
                     long durationMins = muteDuration / 60000L;
+                    ChatFilterSavedData.ViolationData vd = data.getViolation(player.getUUID());
+                    int muteNumber = vd != null ? vd.tier() : 1; // tier was incremented after this mute
 
-                    // Notify player
-                    player.sendSystemMessage(
-                            Component.literal("\u00a7c\u00a7l[ChatFilter] \u00a7eYou have been auto-muted for "
-                                    + durationMins + " minutes due to repeated violations."));
+                    // Notify player with tier info
+                    player.sendSystemMessage(Component.literal(
+                            "\u00a7c\u00a7l[Chat Filter] \u00a7eYou have been muted for \u00a7f" + durationMins
+                                    + " minutes \u00a7edue to repeated violations. \u00a77(Mute #" + muteNumber + ")"));
 
-                    // Notify OPs
+                    // Notify OPs with actual message that triggered the mute
                     String alert = "\u00a7c[Filter] \u00a7e" + player.getName().getString()
-                            + " \u00a77was auto-muted for " + durationMins + "m due to Chat Filter violations.";
-                    // Just broadcast the mute
+                            + " \u00a77muted for \u00a7f" + durationMins + "m \u00a77(mute #" + muteNumber
+                            + "). Last message: \u00a7f\"" + raw + "\"";
                     for (ServerPlayer op : server.getPlayerList().getPlayers()) {
                         if (op.level().getServer().getPlayerList().isOp(op.nameAndId())) {
                             op.sendSystemMessage(Component.literal(alert));
                         }
                     }
                 } else {
-                    // Standard warning
-                    // (We don't need strikes count here as data.addStrike manages it internally,
-                    // but maybe we should show warnings)
+                    // Standard warning — show strike count
+                    ChatFilterSavedData.ViolationData vd = data.getViolation(player.getUUID());
+                    int strikeCount = vd != null ? vd.count() : 1;
+                    player.sendSystemMessage(Component.literal(
+                            "\u00a7c[Chat Filter] \u00a7eWatch your language! \u00a77(Strike " + strikeCount + "/3 — 3 strikes = mute)"));
+
+                    // Notify OPs with the actual message
                     String alert = "\u00a7c[Filter] \u00a7e" + player.getName().getString()
-                            + ": \u00a7f" + raw;
+                            + " \u00a77(strike " + strikeCount + "/3): \u00a7f\"" + raw + "\"";
                     for (ServerPlayer op : server.getPlayerList().getPlayers()) {
                         if (op.level().getServer().getPlayerList().isOp(op.nameAndId())) {
                             op.sendSystemMessage(Component.literal(alert));
                         }
                     }
-                    player.sendSystemMessage(Component.literal("\u00a7cDo not use that language!"));
                 }
             }
             return maskedComponent;
@@ -308,5 +312,17 @@ public final class ChatFilter {
      */
     public static String normalizeAggressive(String s) {
         return squash(normalizeLeet(s));
+    }
+
+    private static String formatMuteRemaining(long remainingMs) {
+        if (remainingMs < 60_000L) {
+            int secs = Math.max(1, (int) (remainingMs / 1000L));
+            return "You are muted for " + secs + " more second(s).";
+        }
+        long mins = remainingMs / 60_000L;
+        long secs = (remainingMs % 60_000L) / 1000L;
+        if (secs > 0)
+            return "You are muted for " + mins + "m " + secs + "s more.";
+        return "You are muted for " + mins + " more minute(s).";
     }
 }

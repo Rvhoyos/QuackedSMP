@@ -76,6 +76,8 @@ public final class ActiveAbilities {
             net.minecraft.world.entity.item.ItemEntity entity) {
         if (!(player instanceof ServerPlayer sp))
             return false;
+        if (sp.isCreative())
+            return false;
         if (!sp.isShiftKeyDown())
             return false;
 
@@ -366,6 +368,8 @@ public final class ActiveAbilities {
      * Triggered by sprint + sneak while in the air (not on ground).
      */
     public static void tryActivateDash(ServerPlayer sp, SkillData data, UUID uuid) {
+        if (sp.isCreative())
+            return;
         int agiLevel = data.getLevel(uuid, SkillType.AGILITY);
         if (agiLevel < SmpConfig.getAbilityUnlockLevel(SkillType.AGILITY))
             return;
@@ -408,6 +412,8 @@ public final class ActiveAbilities {
      * Displays a cooldown message (actionbar) if the ability is on cooldown.
      */
     public static void tryActivateZoom(ServerPlayer sp, SkillData data) {
+        if (sp.isCreative())
+            return;
         UUID uuid = sp.getUUID();
         int archLevel = data.getLevel(uuid, SkillType.ARCHERY);
         if (archLevel < SmpConfig.getAbilityUnlockLevel(ZOOM_KEY))
