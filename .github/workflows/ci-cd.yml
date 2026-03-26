@@ -66,8 +66,7 @@ jobs:
     steps:
       - name: Promote to Production (Run Script)
         run: |
-           chmod +x /home/ubuntu/mcserver/promote-to-prod.sh
-           /home/ubuntu/mcserver/promote-to-prod.sh
+           sudo /usr/local/sbin/promote-to-prod.sh
 
 
 

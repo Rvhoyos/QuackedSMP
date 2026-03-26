@@ -55,6 +55,16 @@ public final class BlueMapIntegration {
         }
     }
 
+    /**
+     * Called once at mod startup. Checks {@link SmpConfig#BLUEMAP_ENABLE} and, if set,
+     * hooks into the BlueMap API via {@link BlueMapAPI#onEnable}/{@link BlueMapAPI#onDisable}.
+     *
+     * <p><b>Hot-toggle not supported.</b> The {@code bluemap_enable} config flag is only
+     * read here, at startup. Changing it at runtime (e.g. via the admin dashboard) updates
+     * the in-memory value but has no effect because the BlueMap API callbacks are registered
+     * once and cannot be unregistered. A server restart is required for the toggle to take
+     * effect.
+     */
     public static void init() {
         if (!SmpConfig.BLUEMAP_ENABLE) {
             SmpUtilsMod.LOGGER.info("BlueMap integration is disabled in config.");

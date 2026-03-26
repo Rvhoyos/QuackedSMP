@@ -26,7 +26,7 @@ public final class ChatFilterCommands {
                 CommandDispatcher<CommandSourceStack> dispatcher = (CommandDispatcher<CommandSourceStack>) rawDispatcher;
 
                 dispatcher.register(Commands.literal("chatfilter")
-                                .requires(CommandRegistrar::isOp)
+                                .requires(src -> mc.smpessentials.config.SmpConfig.CHATFILTER_ENABLED && CommandRegistrar.isOp(src))
 
                                 // --- add (greedyString for phrase support) ---
                                 .then(Commands.literal("add")

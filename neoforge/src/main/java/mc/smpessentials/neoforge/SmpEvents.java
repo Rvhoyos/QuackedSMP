@@ -43,11 +43,16 @@ public class SmpEvents {
         mc.smpessentials.voicechat.VoicechatIntegration.onServerStart(event.getServer());
         mc.smpessentials.keepinv.KeepInvSavedData.enforceGamerule(event.getServer());
         mc.smpessentials.dims.DimManager.restoreAll(event.getServer());
+        mc.smpessentials.dashboard.DashboardManager.onServerStart(event.getServer());
+        mc.smpessentials.votifier.VoteHandler.init(event.getServer());
+        mc.smpessentials.votifier.VotifierListener.start();
     }
 
     @SubscribeEvent
     public static void onServerStopping(ServerStoppingEvent event) {
         mc.smpessentials.commands.EndResetLogic.onServerStopping(event.getServer());
+        mc.smpessentials.dashboard.DashboardManager.onServerStop();
+        mc.smpessentials.votifier.VotifierListener.stop();
     }
 
     @SubscribeEvent
@@ -65,6 +70,8 @@ public class SmpEvents {
             if (pm.isPending(player.getUUID())) {
                 pm.punish(player);
             }
+            mc.smpessentials.dashboard.DashboardManager.broadcastPlayerJoin(player.getGameProfile().name());
+            mc.smpessentials.votifier.VoteHandler.onPlayerJoin(player);
         }
     }
 
@@ -72,6 +79,7 @@ public class SmpEvents {
     public static void onPlayerLogout(PlayerEvent.PlayerLoggedOutEvent event) {
         SkillEvents.onPlayerLoggedOut(event.getEntity());
         mc.smpessentials.teleport.TeleportService.clearForPlayer(event.getEntity().getUUID());
+        mc.smpessentials.dashboard.DashboardManager.broadcastPlayerLeave(event.getEntity().getGameProfile().name());
     }
 
     @SubscribeEvent
@@ -98,14 +106,18 @@ public class SmpEvents {
     public static void onServerChat(ServerChatEvent event) {
         Component decorated = ChatFilter.onDecorate(event.getPlayer(), event.getMessage());
         if (decorated != null) {
-            // Check if it was cancelled by being empty (muted logic in common returns
-            // Component.empty())
+            // Muted: ChatFilter returns Component.empty() for blocked messages
             if (decorated.getString().isEmpty() && !event.getMessage().getString().isEmpty()) {
                 event.setCanceled(true);
-            } else {
-                event.setMessage(decorated);
+                return; // don't forward blocked messages to the dashboard or Discord
             }
+            event.setMessage(decorated);
         }
+        // Broadcast the final message (decorated if filtered, original if not)
+        String finalMessage = decorated != null ? decorated.getString() : event.getMessage().getString();
+        mc.smpessentials.dashboard.DashboardManager.broadcastChat(
+                event.getPlayer().getGameProfile().name(),
+                finalMessage);
     }
 
     @SubscribeEvent

@@ -78,6 +78,7 @@ public final class ChatFilter {
      * Returns the modified component, or null if it was deleted (e.g. muted).
      */
     public static Component onDecorate(ServerPlayer player, Component component) {
+        if (!mc.smpessentials.config.SmpConfig.CHATFILTER_ENABLED) return component;
         if (component == null)
             return component;
 
@@ -244,6 +245,7 @@ public final class ChatFilter {
      * Returns the masked version of the input.
      */
     public static String filterText(String text, ChatFilterSavedData data) {
+        if (!mc.smpessentials.config.SmpConfig.CHATFILTER_ENABLED) return text;
         String masked = maskTokens(text, data);
         return maskPhrases(masked, data);
     }

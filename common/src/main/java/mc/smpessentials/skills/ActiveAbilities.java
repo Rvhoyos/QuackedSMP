@@ -74,6 +74,7 @@ public final class ActiveAbilities {
      */
     public static boolean onPlayerDropItem(net.minecraft.world.entity.player.Player player,
             net.minecraft.world.entity.item.ItemEntity entity) {
+        if (!mc.smpessentials.config.SmpConfig.SKILLS_ENABLED) return false;
         if (!(player instanceof ServerPlayer sp))
             return false;
         if (sp.isCreative())
@@ -130,8 +131,11 @@ public final class ActiveAbilities {
         }
 
         if (handled) {
-            // Cancel the drop and return the item to the player
-            sp.getInventory().add(entity.getItem());
+            // Cancel the drop and return the item to the player.
+            // If the inventory is full, drop it to the world rather than losing it silently.
+            if (!sp.getInventory().add(entity.getItem())) {
+                sp.drop(entity.getItem(), false);
+            }
             return true;
         }
 

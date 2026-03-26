@@ -19,6 +19,9 @@ dependencies {
 
     // Optional Simple Voice Chat Integration
     modCompileOnly "de.maxhenkel.voicechat:voicechat-api:2.6.0"
+
+    // Spark profiler API (compileOnly — runtime provided by the Spark mod)
+    compileOnly "me.lucko:spark-api:0.1-SNAPSHOT"
 }
 
 loom {

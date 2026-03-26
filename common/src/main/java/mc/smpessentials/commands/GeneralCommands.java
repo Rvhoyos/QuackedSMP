@@ -50,7 +50,17 @@ public class GeneralCommands {
                                                                 .then(Commands.literal("world")
                                                                                 .executes(GeneralCommands::resetEndWorld))))
                                 .then(Commands.literal("help")
-                                                .executes(GeneralCommands::sendHelp)));
+                                                .executes(GeneralCommands::sendHelp))
+                                .then(Commands.literal("admin")
+                                                .requires(s -> net.minecraft.commands.Commands.LEVEL_GAMEMASTERS.check(s.permissions()))
+                                                .then(Commands.literal("setpassword")
+                                                                .then(Commands.argument("password",
+                                                                                com.mojang.brigadier.arguments.StringArgumentType.string())
+                                                                                .executes(GeneralCommands::setAdminPassword)))
+                                                .then(Commands.literal("enable")
+                                                                .executes(GeneralCommands::enableAdminPanel))
+                                                .then(Commands.literal("disable")
+                                                                .executes(GeneralCommands::disableAdminPanel))));
 
                 dispatcher.register(Commands.literal("mute")
                                 .requires(s -> net.minecraft.commands.Commands.LEVEL_GAMEMASTERS.check(s.permissions()))
@@ -155,6 +165,7 @@ public class GeneralCommands {
         private static int reloadConfig(CommandContext<CommandSourceStack> ctx) {
                 try {
                         SmpConfig.load();
+                        mc.smpessentials.votifier.VotifierListener.restart();
                         var res = mc.smpessentials.chatfilter.ChatFilterConfig
                                         .mergeFromConfig(ctx.getSource().getServer());
                         ctx.getSource().sendSuccess(() -> Component.literal("QuackedSMP config reloaded!"), true);
@@ -202,6 +213,40 @@ public class GeneralCommands {
                         ctx.getSource().sendFailure(Component.literal("An error occurred while resetting the dragon."));
                 }
                 return result;
+        }
+
+        private static int setAdminPassword(CommandContext<CommandSourceStack> ctx) {
+                try {
+                        String password = com.mojang.brigadier.arguments.StringArgumentType.getString(ctx, "password");
+                        if (password.length() < 8) {
+                                ctx.getSource().sendFailure(Component.literal("Password must be at least 8 characters."));
+                                return 0;
+                        }
+                        mc.smpessentials.config.SmpConfig.ADMIN_ENABLED = true;
+                        mc.smpessentials.dashboard.AdminAuth.setPassword(password);
+                        mc.smpessentials.dashboard.AdminAuth.clearSessions();
+                        ctx.getSource().sendSuccess(
+                                        () -> Component.literal("\u00a7aAdmin panel enabled and password updated. All sessions invalidated."),
+                                        true);
+                        return 1;
+                } catch (Exception e) {
+                        ctx.getSource().sendFailure(Component.literal("Failed to set password: " + e.getMessage()));
+                        return 0;
+                }
+        }
+
+        private static int enableAdminPanel(CommandContext<CommandSourceStack> ctx) {
+                mc.smpessentials.config.SmpConfig.ADMIN_ENABLED = true;
+                mc.smpessentials.config.ConfigIO.save();
+                ctx.getSource().sendSuccess(() -> Component.literal("\u00a7aAdmin panel enabled."), true);
+                return 1;
+        }
+
+        private static int disableAdminPanel(CommandContext<CommandSourceStack> ctx) {
+                mc.smpessentials.config.SmpConfig.ADMIN_ENABLED = false;
+                mc.smpessentials.config.ConfigIO.save();
+                ctx.getSource().sendSuccess(() -> Component.literal("\u00a7cAdmin panel disabled."), true);
+                return 1;
         }
 
         private static int resetEndWorld(CommandContext<CommandSourceStack> ctx) {

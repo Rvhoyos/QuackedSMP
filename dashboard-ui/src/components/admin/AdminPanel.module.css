@@ -1,0 +1,121 @@
+.panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
+  border-top:    3px solid var(--mc-stone-light);
+  border-left:   3px solid var(--mc-stone-light);
+  border-bottom: 3px solid var(--mc-stone-dark);
+  border-right:  3px solid var(--mc-stone-dark);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+  animation: slideUp 180ms ease;
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Tab header — dark stone bar ── */
+.header {
+  display: flex;
+  align-items: stretch;
+  justify-content: space-between;
+  height: 44px;
+  background: #1A1A1A;
+  border-bottom: 3px solid var(--mc-wood-dark);
+  flex-shrink: 0;
+}
+
+.tabs {
+  display: flex;
+  gap: 0;
+  align-items: stretch;
+}
+
+/* Tab buttons */
+.tab {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0 16px;
+  font-family: var(--font-pixel);
+  font-size: 7px;
+  letter-spacing: 0px;
+  border: none;
+  border-right: 1px solid #2A2A2A;
+  background: #1A1A1A;
+  color: #666;
+  cursor: pointer;
+  transition: background var(--t-fast), color var(--t-fast);
+  white-space: nowrap;
+  text-shadow: 1px 1px 0 rgba(0,0,0,0.5);
+  position: relative;
+}
+
+.tab:hover {
+  background: #2A2A2A;
+  color: #CCCCCC;
+}
+
+/* Active tab: wood accent + highlight */
+.tabActive {
+  background: var(--mc-wood-dark);
+  color: #FFFFFF;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.5);
+}
+
+.tabActive::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--mc-wood-light);
+}
+
+.tabActive:hover {
+  background: var(--mc-wood);
+}
+
+.tabIcon {
+  display: flex;
+  align-items: center;
+  image-rendering: pixelated;
+  opacity: 0.9;
+}
+
+/* Sign out button */
+.logout {
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  margin: 8px;
+  font-family: var(--font-pixel);
+  font-size: 6px;
+  letter-spacing: 0.3px;
+  background: rgba(243,139,168,0.1);
+  border-top:    1px solid rgba(243,139,168,0.25);
+  border-left:   1px solid rgba(243,139,168,0.25);
+  border-bottom: 1px solid rgba(243,139,168,0.5);
+  border-right:  1px solid rgba(243,139,168,0.5);
+  color: var(--red);
+  cursor: pointer;
+  transition: background var(--t-fast);
+  text-shadow: 1px 1px 0 rgba(0,0,0,0.4);
+}
+
+.logout:hover {
+  background: rgba(243,139,168,0.2);
+}
+
+.body {
+  flex: 1;
+  overflow: hidden;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--mc-panel);
+}

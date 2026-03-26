@@ -14,8 +14,31 @@ public final class SmpConfig {
     public static int VIP_BONUS_CLAIMS = 20;
     public static boolean ALLOW_LAVA_WILDERNESS = false;
     public static java.util.Map<String, String> MESSAGES = new java.util.HashMap<>();
+
+    // ---- Feature toggles ----
+    public static boolean CLAIMS_ENABLED = true;
+    public static boolean SKILLS_ENABLED = true;
+    public static boolean CHATFILTER_ENABLED = true;
     public static java.util.List<Integer> MUTE_LEVELS_MINUTES = new java.util.ArrayList<>(
             java.util.List.of(60, 120, 240, 480, 1440));
+
+    // ---- Votifier ----
+    public static boolean VOTIFIER_ENABLED = false;
+    public static int VOTIFIER_PORT = 8192;
+    public static String VOTIFIER_TOKEN = "";
+    public static String VOTE_BROADCAST = "&6\u2736 {player} &ejust voted for the server! Thanks for the support!";
+    public static java.util.List<String> VOTE_REWARDS = new java.util.ArrayList<>();
+
+    // ---- Dashboard ----
+    public static boolean DASHBOARD_ENABLED = true;
+    public static int DASHBOARD_PORT = 8125;
+    public static boolean ADMIN_ENABLED = false;
+    public static String ADMIN_PASSWORD_HASH = "";
+
+    // ---- Discord Webhook ----
+    public static String DISCORD_WEBHOOK_URL = "";
+    public static boolean DISCORD_JOIN_LEAVE = true;
+    public static boolean DISCORD_CHAT = true;
 
     // ---- Voice Chat ----
     public static boolean VOICECHAT_ENABLE = true;
@@ -33,7 +56,6 @@ public final class SmpConfig {
 
     // ---- Skills ----
     public static double SKILL_XP_EXPONENT = 1.5;
-    public static int LEADERBOARD_SIZE = 10;
     public static java.util.Map<String, Long> SKILL_COOLDOWNS = new java.util.HashMap<>();
     public static java.util.Map<String, Integer> SKILL_UNLOCK_LEVELS = new java.util.HashMap<>();
     public static double CAP_INDUSTRIAL_SPEED = 0.5; // +50% movement speed at max
@@ -116,6 +138,37 @@ public final class SmpConfig {
 
         if (root.has("allow_lava_wilderness")) {
             ALLOW_LAVA_WILDERNESS = root.get("allow_lava_wilderness").getAsBoolean();
+        }
+
+        if (root.has("claims_enabled"))     CLAIMS_ENABLED     = root.get("claims_enabled").getAsBoolean();
+        if (root.has("skills_enabled"))     SKILLS_ENABLED     = root.get("skills_enabled").getAsBoolean();
+        if (root.has("chatfilter_enabled")) CHATFILTER_ENABLED = root.get("chatfilter_enabled").getAsBoolean();
+
+        if (root.has("votifier") && root.get("votifier").isJsonObject()) {
+            JsonObject vt = root.getAsJsonObject("votifier");
+            if (vt.has("enabled")) VOTIFIER_ENABLED = vt.get("enabled").getAsBoolean();
+            if (vt.has("port"))    VOTIFIER_PORT    = vt.get("port").getAsInt();
+            if (vt.has("token"))   VOTIFIER_TOKEN   = vt.get("token").getAsString();
+            if (vt.has("broadcast")) VOTE_BROADCAST = vt.get("broadcast").getAsString();
+            if (vt.has("rewards") && vt.get("rewards").isJsonArray()) {
+                VOTE_REWARDS.clear();
+                for (var el : vt.getAsJsonArray("rewards")) VOTE_REWARDS.add(el.getAsString());
+            }
+        }
+
+        if (root.has("dashboard") && root.get("dashboard").isJsonObject()) {
+            JsonObject db = root.getAsJsonObject("dashboard");
+            if (db.has("enabled"))        DASHBOARD_ENABLED    = db.get("enabled").getAsBoolean();
+            if (db.has("port"))           DASHBOARD_PORT       = db.get("port").getAsInt();
+            if (db.has("admin_enabled"))  ADMIN_ENABLED        = db.get("admin_enabled").getAsBoolean();
+            if (db.has("admin_password_hash")) ADMIN_PASSWORD_HASH = db.get("admin_password_hash").getAsString();
+        }
+
+        if (root.has("discord") && root.get("discord").isJsonObject()) {
+            JsonObject dc = root.getAsJsonObject("discord");
+            if (dc.has("webhook_url"))  DISCORD_WEBHOOK_URL = dc.get("webhook_url").getAsString();
+            if (dc.has("join_leave"))   DISCORD_JOIN_LEAVE  = dc.get("join_leave").getAsBoolean();
+            if (dc.has("chat"))         DISCORD_CHAT        = dc.get("chat").getAsBoolean();
         }
 
         if (root.has("voicechat_enable"))

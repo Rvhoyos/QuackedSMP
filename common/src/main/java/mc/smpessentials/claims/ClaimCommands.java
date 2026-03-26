@@ -38,7 +38,7 @@ public final class ClaimCommands {
         // /claim
         dispatcher.register(
                 Commands.literal("claim")
-                        .requires(src -> src.getEntity() instanceof ServerPlayer)
+                        .requires(src -> mc.smpessentials.config.SmpConfig.CLAIMS_ENABLED && src.getEntity() instanceof ServerPlayer)
                         .executes(ctx -> {
                             ServerPlayer p = ctx.getSource().getPlayerOrException(); // may throw, Brigadier allows it
                             ServerLevel lvl = p.level();
@@ -226,7 +226,7 @@ public final class ClaimCommands {
         // /unclaim
         dispatcher.register(
                 Commands.literal("unclaim")
-                        .requires(src -> src.getEntity() instanceof ServerPlayer)
+                        .requires(src -> mc.smpessentials.config.SmpConfig.CLAIMS_ENABLED && src.getEntity() instanceof ServerPlayer)
                         .executes(ctx -> {
                             ServerPlayer p = ctx.getSource().getPlayerOrException();
                             ServerLevel lvl = p.level();
@@ -244,7 +244,7 @@ public final class ClaimCommands {
         // /claims (global count + current chunk owner)
         dispatcher.register(
                 Commands.literal("claims")
-                        .requires(src -> src.getEntity() instanceof ServerPlayer)
+                        .requires(src -> mc.smpessentials.config.SmpConfig.CLAIMS_ENABLED && src.getEntity() instanceof ServerPlayer)
                         .executes(ctx -> {
                             ServerPlayer p = ctx.getSource().getPlayerOrException();
                             ServerLevel lvl = p.level();

@@ -23,6 +23,10 @@
 **/.DS_Store
 **/Thumbs.db
 
+# --- Dashboard UI ---
+dashboard-ui/node_modules/
+dashboard-ui/dist/
+
 # --- Claude Code ---
 CLAUDE.md
 .claude-decompiled/

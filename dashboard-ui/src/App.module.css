@@ -1,0 +1,206 @@
+.layout {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 100vh;
+}
+
+/* ── Header — wood plank bar ── */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  height: 56px;
+  background: var(--mc-wood);
+  background-image: repeating-linear-gradient(
+    90deg,
+    transparent 0px, transparent 47px,
+    rgba(0,0,0,0.13) 47px, rgba(0,0,0,0.13) 50px
+  );
+  border-bottom: 3px solid var(--mc-wood-dark);
+  flex-shrink: 0;
+  box-shadow: 0 3px 12px rgba(0,0,0,0.5);
+}
+
+/* ── Brand ── */
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.brandIcon {
+  display: flex;
+  align-items: center;
+  image-rendering: pixelated;
+  filter: drop-shadow(2px 3px 0 rgba(0,0,0,0.5));
+}
+
+.brandText {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.brandName {
+  font-family: var(--font-pixel);
+  font-size: 10px;
+  color: #FFFFFF;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.6);
+  line-height: 1;
+  letter-spacing: 0px;
+}
+
+.brandSub {
+  font-family: var(--font-pixel);
+  font-size: 6px;
+  color: var(--mc-wood-light);
+  text-shadow: 1px 1px 0 rgba(0,0,0,0.5);
+  letter-spacing: 0.5px;
+}
+
+/* ── Right side ── */
+.headerRight {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.playerCount {
+  font-family: var(--font-pixel);
+  font-size: 7px;
+  color: var(--green);
+  text-shadow: 1px 1px 0 rgba(0,0,0,0.6);
+  letter-spacing: 0.5px;
+}
+
+/* ── Minecraft stone button ── */
+.navTab {
+  padding: 7px 16px;
+  background: var(--mc-stone);
+  border-top:    2px solid var(--mc-stone-light);
+  border-left:   2px solid var(--mc-stone-light);
+  border-bottom: 2px solid #222;
+  border-right:  2px solid #222;
+  font-family: var(--font-pixel);
+  font-size: 7px;
+  color: #E0E0E0;
+  text-shadow: 1px 1px 0 rgba(0,0,0,0.5);
+  cursor: pointer;
+  transition: background var(--t-fast), color var(--t-fast);
+  white-space: nowrap;
+  letter-spacing: 0px;
+}
+
+.navTab:hover {
+  background: #6E6E6E;
+  color: #FFFF55;
+}
+
+.navTab:active {
+  border-top-color:    #222;
+  border-left-color:   #222;
+  border-bottom-color: var(--mc-stone-light);
+  border-right-color:  var(--mc-stone-light);
+  transform: translate(1px, 1px);
+}
+
+.navTabActive {
+  background: #4E6E3E;
+  color: #AAFFAA;
+  border-top-color:    #7A9A60;
+  border-left-color:   #7A9A60;
+  border-bottom-color: #1A3010;
+  border-right-color:  #1A3010;
+}
+
+.navTabActive:hover {
+  background: #5A7E48;
+  color: #CCFFCC;
+}
+
+/* ── WS status pill ── */
+.wsDot {
+  font-family: var(--font-pixel);
+  font-size: 6px;
+  padding: 5px 10px;
+  letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border-top:    2px solid var(--mc-stone-light);
+  border-left:   2px solid var(--mc-stone-light);
+  border-bottom: 2px solid #222;
+  border-right:  2px solid #222;
+}
+
+.wsDot::before {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.open {
+  background: #1A3020;
+  color: var(--green);
+}
+.open::before {
+  background: var(--green);
+  box-shadow: 0 0 6px var(--green);
+}
+
+.connecting {
+  background: #2A2010;
+  color: var(--yellow);
+}
+.connecting::before {
+  background: var(--yellow);
+  animation: pulse 1.2s infinite;
+}
+
+.closed {
+  background: #2A1010;
+  color: var(--red);
+}
+.closed::before {
+  background: var(--red);
+  animation: pulse 1.2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.2; }
+}
+
+/* ── Main layout ── */
+.main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+  padding: var(--s-5) var(--s-6);
+  overflow: hidden;
+  min-height: 0;
+}
+
+.content {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 380px;
+  gap: var(--s-4);
+  min-height: 0;
+}
+
+@media (max-width: 900px) {
+  .content { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 600px) {
+  .header { padding: 0 12px; }
+  .main   { padding: var(--s-3) var(--s-3); gap: var(--s-3); }
+  .brandName { font-size: 8px; }
+}

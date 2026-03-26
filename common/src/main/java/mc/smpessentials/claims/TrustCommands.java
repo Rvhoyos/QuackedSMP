@@ -36,7 +36,7 @@ public final class TrustCommands {
         // /trust <player>
         dispatcher.register(
                 Commands.literal("trust")
-                        .requires(src -> src.getEntity() instanceof ServerPlayer)
+                        .requires(src -> mc.smpessentials.config.SmpConfig.CLAIMS_ENABLED && src.getEntity() instanceof ServerPlayer)
                         .then(Commands.argument("player", EntityArgument.player())
                                 .executes(ctx -> {
                                     ServerPlayer self = ctx.getSource().getPlayerOrException();
@@ -57,7 +57,7 @@ public final class TrustCommands {
         // /untrust <player>
         dispatcher.register(
                 Commands.literal("untrust")
-                        .requires(src -> src.getEntity() instanceof ServerPlayer)
+                        .requires(src -> mc.smpessentials.config.SmpConfig.CLAIMS_ENABLED && src.getEntity() instanceof ServerPlayer)
                         .then(Commands.argument("player", EntityArgument.player())
                                 .executes(ctx -> {
                                     ServerPlayer self = ctx.getSource().getPlayerOrException();
@@ -79,7 +79,7 @@ public final class TrustCommands {
         // /trustlist
         dispatcher.register(
                 Commands.literal("trustlist")
-                        .requires(src -> src.getEntity() instanceof ServerPlayer)
+                        .requires(src -> mc.smpessentials.config.SmpConfig.CLAIMS_ENABLED && src.getEntity() instanceof ServerPlayer)
                         .executes(ctx -> {
                             ServerPlayer self = ctx.getSource().getPlayerOrException();
                             ServerLevel level = (ServerLevel) self.level();

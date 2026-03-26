@@ -3,7 +3,7 @@ set -e
 # Arguments
 BUILD_DIR=$1
 
-STAGING_PATH="/home/ubuntu/mcserver/staging-server"
+STAGING_PATH="/home/ubuntu/mcserver/staging"
 SERVICE_NAME="mc-staging"
 
 echo "Starting Staging Deployment..."
