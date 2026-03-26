@@ -7,7 +7,7 @@
 
 # QuackedSMP
 
-QuackedSMP is a server-side mod for **Minecraft 1.21.11** (Fabric + NeoForge) built around a **built-in browser admin panel**. Drop the JAR, start the server, open a browser. No external tools, no plugins, no config file editing required.
+QuackedSMP is a server-side mod for **Minecraft 1.21.11** (Fabric + NeoForge) with a **browser-based admin panel included**. Drop the JAR, start the server, open a browser. No external tools, no plugins, no config file editing required.
 
 Every feature is modular and toggleable from the panel. Use all of it, or just the parts you want. Claims, skills, chat filter, custom dimensions, Discord webhooks, BlueMap, Votifier: each one can be switched on or off independently without touching a file.
 

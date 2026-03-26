@@ -67,9 +67,13 @@ export default function MetricsPanel({ tps, cpu, mspt, online, sys }) {
 
   const heapUsed  = sys?.heapUsed  ?? null
   const heapMax   = sys?.heapMax   ?? null
+  const ramTotal  = sys?.ramTotal  ?? null
+  const ramFree   = sys?.ramFree   ?? null
+  const ramUsed   = (ramTotal != null && ramFree != null) ? ramTotal - ramFree : null
   const diskTotal = sys?.diskTotal ?? null
   const diskUsable = sys?.diskUsable ?? null
   const diskUsed  = (diskTotal != null && diskUsable != null) ? diskTotal - diskUsable : null
+  const ramPct    = (ramUsed != null && ramTotal != null && ramTotal > 0) ? ramUsed / ramTotal : null
   const heapPct   = (heapUsed != null && heapMax != null && heapMax > 0) ? heapUsed / heapMax : null
   const diskPct   = (diskUsed != null && diskTotal != null && diskTotal > 0) ? diskUsed / diskTotal : null
 
@@ -161,23 +165,24 @@ export default function MetricsPanel({ tps, cpu, mspt, online, sys }) {
           </span>
           <span className={styles.cardLabel}>RAM</span>
         </div>
-        <div className={styles.cardPrimary} style={{ color: ramColor(heapUsed, heapMax) }}>
-          {fmtBytes(heapUsed)}
+        <div className={styles.cardPrimary} style={{ color: ramColor(ramUsed, ramTotal) }}>
+          {fmtBytes(ramUsed)}
         </div>
         <div className={styles.bar}>
           <div
             className={styles.barFill}
             style={{
-              width: heapPct != null ? `${(heapPct * 100).toFixed(1)}%` : '0%',
-              background: ramColor(heapUsed, heapMax),
+              width: ramPct != null ? `${(ramPct * 100).toFixed(1)}%` : '0%',
+              background: ramColor(ramUsed, ramTotal),
             }}
           />
         </div>
         <div className={styles.cardSub}>
-          <SubStat label="max" value={fmtBytes(heapMax)} />
-          {heapPct != null && <SubStat label="used" value={`${(heapPct * 100).toFixed(0)}%`} color={ramColor(heapUsed, heapMax)} />}
+          <SubStat label="total" value={fmtBytes(ramTotal)} />
+          {ramPct != null && <SubStat label="used" value={`${(ramPct * 100).toFixed(0)}%`} color={ramColor(ramUsed, ramTotal)} />}
+          {heapUsed != null && <SubStat label="heap" value={`${fmtBytes(heapUsed)} / ${fmtBytes(heapMax)}`} />}
         </div>
-        <div className={styles.cardWindow}>JVM heap</div>
+        <div className={styles.cardWindow}>system RAM</div>
       </div>
 
       {/* Disk */}
