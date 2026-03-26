@@ -465,6 +465,96 @@ export function IconFurnace({ size = 20 }) {
   )
 }
 
+export function IconPortal({ size = 18 }) {
+  return (
+    <svg viewBox="0 0 16 16" width={size} height={size} shapeRendering="crispEdges">
+      {/* Obsidian frame */}
+      {px(3,  0, 10, 2, '#1A0A2E')}
+      {px(3, 14, 10, 2, '#1A0A2E')}
+      {px(0,  2,  3, 12, '#1A0A2E')}
+      {px(13, 2,  3, 12, '#1A0A2E')}
+      {/* Frame edge highlight */}
+      {px(3, 0, 10, 1, '#2D1B4E')}
+      {px(0, 2,  1, 12, '#2D1B4E')}
+      {/* Portal interior */}
+      {px(3, 2, 10, 12, '#5B1A8C')}
+      {px(4, 3,  8, 10, '#7A2DB5')}
+      {px(5, 4,  6,  8, '#8E3FD4')}
+      {/* Bright core */}
+      {px(6, 5, 4, 6, '#A855F7')}
+      {px(7, 6, 2, 4, '#C084FC')}
+      {/* Shimmer flecks */}
+      {px(4, 5, 1, 1, '#C084FC')}
+      {px(10, 9, 1, 1, '#C084FC')}
+      {px(5, 11, 1, 1, '#A855F7')}
+    </svg>
+  )
+}
+
+export function IconSkills({ size = 18 }) {
+  return (
+    <svg viewBox="0 0 16 16" width={size} height={size} shapeRendering="crispEdges">
+      {/* Star body */}
+      {px(7, 0, 2, 3, '#A855F7')}
+      {px(4, 1, 2, 2, '#7C3AED')}
+      {px(10, 1, 2, 2, '#7C3AED')}
+      {px(0, 5, 16, 3, '#A855F7')}
+      {px(2, 4, 12, 2, '#A855F7')}
+      {px(3, 3, 10, 1, '#8B2FE6')}
+      {/* Bottom points */}
+      {px(4, 9, 3, 6, '#A855F7')}
+      {px(9, 9, 3, 6, '#A855F7')}
+      {px(3, 10, 2, 4, '#8B2FE6')}
+      {px(11, 10, 2, 4, '#8B2FE6')}
+      {/* Bright center */}
+      {px(5, 5, 6, 4, '#C084FC')}
+      {px(6, 4, 4, 1, '#C084FC')}
+      {px(6, 4, 2, 1, '#E0AAFF')}
+    </svg>
+  )
+}
+
+export function IconFlag({ size = 18 }) {
+  return (
+    <svg viewBox="0 0 16 16" width={size} height={size} shapeRendering="crispEdges">
+      {/* Pole */}
+      {px(3, 0, 2, 16, '#888')}
+      {px(3, 0, 1, 16, '#AAA')}
+      {/* Flag */}
+      {px(5, 1, 8, 1, '#4CAF50')}
+      {px(5, 2, 9, 1, '#66BB6A')}
+      {px(5, 3, 9, 1, '#66BB6A')}
+      {px(5, 4, 9, 1, '#66BB6A')}
+      {px(5, 5, 8, 1, '#66BB6A')}
+      {px(5, 6, 7, 1, '#4CAF50')}
+      {/* Diagonal tip */}
+      {px(13, 2, 1, 1, '#388E3C')}
+      {px(14, 3, 1, 2, '#388E3C')}
+      {px(13, 5, 1, 1, '#388E3C')}
+    </svg>
+  )
+}
+
+export function IconChatFilter({ size = 18 }) {
+  return (
+    <svg viewBox="0 0 16 16" width={size} height={size} shapeRendering="crispEdges">
+      {/* Chat bubble */}
+      {px(1, 1, 14, 10, '#555')}
+      {px(0, 2, 16, 8, '#555')}
+      {/* Bubble tail */}
+      {px(3, 11, 3, 1, '#555')}
+      {px(3, 12, 2, 1, '#555')}
+      {px(3, 13, 1, 1, '#555')}
+      {/* X mark */}
+      {px(4, 3, 2, 2, '#FF5555')}
+      {px(8, 3, 2, 2, '#FF5555')}
+      {px(6, 5, 2, 2, '#FF5555')}
+      {px(4, 7, 2, 2, '#FF5555')}
+      {px(8, 7, 2, 2, '#FF5555')}
+    </svg>
+  )
+}
+
 export function IconSign({ size = 20 }) {
   return (
     <svg viewBox="0 0 16 16" width={size} height={size} shapeRendering="crispEdges">

@@ -19,6 +19,8 @@ import net.minecraft.server.level.ServerPlayer;
  *   <li>{@code /smp end reset dragon} — respawn the Ender Dragon live without a world reset (OP).</li>
  *   <li>{@code /smp end reset world} — queue a full End-dimension reset on next server restart (OP).</li>
  *   <li>{@code /smp help} — print the command reference to the player's chat.</li>
+ *   <li>{@code /smp admin setpassword <password>} — set or update the admin panel password; also
+ *       enables the panel if it was disabled. Min 8 characters. Invalidates all active sessions (OP).</li>
  *   <li>{@code /mute <player> <minutes>} — mute a player for a fixed duration (OP).</li>
  *   <li>{@code /unmute <player>} — remove an active mute (OP).</li>
  * </ul>
@@ -56,11 +58,7 @@ public class GeneralCommands {
                                                 .then(Commands.literal("setpassword")
                                                                 .then(Commands.argument("password",
                                                                                 com.mojang.brigadier.arguments.StringArgumentType.string())
-                                                                                .executes(GeneralCommands::setAdminPassword)))
-                                                .then(Commands.literal("enable")
-                                                                .executes(GeneralCommands::enableAdminPanel))
-                                                .then(Commands.literal("disable")
-                                                                .executes(GeneralCommands::disableAdminPanel))));
+                                                                                .executes(GeneralCommands::setAdminPassword)))));
 
                 dispatcher.register(Commands.literal("mute")
                                 .requires(s -> net.minecraft.commands.Commands.LEVEL_GAMEMASTERS.check(s.permissions()))
@@ -215,6 +213,11 @@ public class GeneralCommands {
                 return result;
         }
 
+        /**
+         * Sets or updates the admin panel password and enables the panel.
+         * This is the only in-game way to enable the admin panel — there is no separate enable command.
+         * Requires OP. Min 8 characters. Invalidates all active sessions on success.
+         */
         private static int setAdminPassword(CommandContext<CommandSourceStack> ctx) {
                 try {
                         String password = com.mojang.brigadier.arguments.StringArgumentType.getString(ctx, "password");
@@ -235,19 +238,6 @@ public class GeneralCommands {
                 }
         }
 
-        private static int enableAdminPanel(CommandContext<CommandSourceStack> ctx) {
-                mc.smpessentials.config.SmpConfig.ADMIN_ENABLED = true;
-                mc.smpessentials.config.ConfigIO.save();
-                ctx.getSource().sendSuccess(() -> Component.literal("\u00a7aAdmin panel enabled."), true);
-                return 1;
-        }
-
-        private static int disableAdminPanel(CommandContext<CommandSourceStack> ctx) {
-                mc.smpessentials.config.SmpConfig.ADMIN_ENABLED = false;
-                mc.smpessentials.config.ConfigIO.save();
-                ctx.getSource().sendSuccess(() -> Component.literal("\u00a7cAdmin panel disabled."), true);
-                return 1;
-        }
 
         private static int resetEndWorld(CommandContext<CommandSourceStack> ctx) {
                 int result = EndResetLogic.resetWorld(ctx.getSource().getServer());

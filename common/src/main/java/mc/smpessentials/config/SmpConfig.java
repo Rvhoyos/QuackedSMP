@@ -34,6 +34,7 @@ public final class SmpConfig {
     public static int DASHBOARD_PORT = 8125;
     public static boolean ADMIN_ENABLED = false;
     public static String ADMIN_PASSWORD_HASH = "";
+    public static String SERVER_NAME = "";
 
     // ---- Discord Webhook ----
     public static String DISCORD_WEBHOOK_URL = "";
@@ -162,6 +163,7 @@ public final class SmpConfig {
             if (db.has("port"))           DASHBOARD_PORT       = db.get("port").getAsInt();
             if (db.has("admin_enabled"))  ADMIN_ENABLED        = db.get("admin_enabled").getAsBoolean();
             if (db.has("admin_password_hash")) ADMIN_PASSWORD_HASH = db.get("admin_password_hash").getAsString();
+            if (db.has("server_name"))    SERVER_NAME          = db.get("server_name").getAsString();
         }
 
         if (root.has("discord") && root.get("discord").isJsonObject()) {

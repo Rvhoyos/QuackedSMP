@@ -54,7 +54,7 @@ public final class DashboardServer extends Thread {
         this.port = port;
     }
 
-    /** Register a route that returns a JSON string (GET-only, no body/headers needed). */
+    /** Register a route that returns a JSON string regardless of method, body, or headers. */
     public void addRoute(String path, Supplier<String> handler) {
         routes.put(path, (m, h, b) -> handler.get());
     }
@@ -97,10 +97,11 @@ public final class DashboardServer extends Thread {
 
             String[] parts = requestLine.split(" ", 3);
             if (parts.length < 2) { socket.close(); return; }
-            String method = parts[0];
-            String path   = parts[1];
+            String method      = parts[0];
+            String path        = parts[1];
             int q = path.indexOf('?');
-            if (q != -1) path = path.substring(0, q);
+            String queryString = "";
+            if (q != -1) { queryString = path.substring(q + 1); path = path.substring(0, q); }
 
             // --- Read headers (all of them, lowercase keys) ---
             Map<String, String> headers = new LinkedHashMap<>();
@@ -128,6 +129,9 @@ public final class DashboardServer extends Thread {
                 byte[] bodyBytes = in.readNBytes(contentLength);
                 body = new String(bodyBytes, StandardCharsets.UTF_8);
             }
+
+            // Expose query string to route handlers via pseudo-header
+            headers.put("x-query-string", queryString);
 
             if (isUpgrade && wsKey != null) {
                 handleWebSocket(socket, wsKey);
@@ -312,6 +316,7 @@ public final class DashboardServer extends Thread {
         }
     }
 
+    /** Shuts down the executor, closes the server socket, and disconnects all WebSocket clients. */
     public void shutdown() {
         executor.shutdown();
         try { if (serverSocket != null) serverSocket.close(); } catch (IOException ignored) {}

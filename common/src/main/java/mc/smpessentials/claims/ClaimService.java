@@ -22,9 +22,6 @@ public final class ClaimService {
     private ClaimService() {
     }
 
-    /** Limit configured in SmpConfig. */
-    // public static final int MAX_PER_PLAYER = 50; // moved to config
-
     /** Returns the UUID of the owner of the chunk at {@code pos}, or empty if unclaimed. */
     public static Optional<UUID> getOwner(ServerLevel level, ChunkPos pos) {
         return ClaimManager.get(level).get(pos).map(ClaimData::owner);
@@ -58,7 +55,7 @@ public final class ClaimService {
         return mgr.setNameIfOwned(pos, player.getUUID(), name);
     }
 
-    /** Player claims for themselves OPs can still claim their own chunks. */
+    /** Claims the chunk at {@code pos} for {@code player}. OPs bypass the per-player cap and spawn protection. */
     public static Result claim(ServerPlayer player, ServerLevel level, ChunkPos pos) {
         UUID me = player.getUUID();
         // OP bypass: allow server operators to ignore the per-player MAX_PER_PLAYER cap

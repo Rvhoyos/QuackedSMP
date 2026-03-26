@@ -182,6 +182,7 @@ public final class ConfigIO {
                 JsonObject db = obj.getAsJsonObject("dashboard");
                 if (!db.has("admin_enabled"))       { db.addProperty("admin_enabled", false);       dirty = true; }
                 if (!db.has("admin_password_hash")) { db.addProperty("admin_password_hash", "");    dirty = true; }
+                if (!db.has("server_name"))         { db.addProperty("server_name", "");             dirty = true; }
             }
             if (!obj.has("discord") || !obj.get("discord").isJsonObject()) {
                 JsonObject dc = new JsonObject();
@@ -256,6 +257,7 @@ public final class ConfigIO {
         dashboard.addProperty("port", 8125);
         dashboard.addProperty("admin_enabled", false);
         dashboard.addProperty("admin_password_hash", "");
+        dashboard.addProperty("server_name", "");
         root.add("dashboard", dashboard);
 
         JsonObject discord = new JsonObject();
@@ -460,6 +462,7 @@ public final class ConfigIO {
         dbSave.addProperty("port", SmpConfig.DASHBOARD_PORT);
         dbSave.addProperty("admin_enabled", SmpConfig.ADMIN_ENABLED);
         dbSave.addProperty("admin_password_hash", SmpConfig.ADMIN_PASSWORD_HASH);
+        dbSave.addProperty("server_name", SmpConfig.SERVER_NAME);
         root.add("dashboard", dbSave);
 
         JsonObject dcSave = new JsonObject();

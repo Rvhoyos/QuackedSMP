@@ -11,7 +11,7 @@ const FEATURES = [
   },
   {
     name: 'Skills',
-    desc: '12 RPG skills — Mining, Farming, Fishing, Combat and more. XP scales with a configurable exponent. Active abilities unlock at key levels.',
+    desc: '12 RPG skills: Mining, Farming, Fishing, Combat and more. XP scales with a configurable exponent. Active abilities unlock at key levels.',
     tag: 'skills',
     configKey: 'skills_enabled',
     toggleable: true,
@@ -30,7 +30,7 @@ const FEATURES = [
   },
   {
     name: 'Custom Dimensions',
-    desc: 'Create and manage custom world dimensions in-game. Includes the Ether — a sky-islands dimension.',
+    desc: 'Create and manage custom world dimensions in-game. Includes the Ether, a sky-islands dimension.',
     tag: 'dims',
   },
   {
@@ -38,6 +38,9 @@ const FEATURES = [
     desc: 'Webhook integration. Relays in-game join/leave events and chat messages to a Discord channel.',
     tag: 'discord',
     configKey: 'discord_enabled',
+    toggleable: true,
+    disableOnly: true,
+    disablePayload: { discord_webhook_url: '' },
   },
   {
     name: 'Simple Voice Chat',
@@ -49,7 +52,7 @@ const FEATURES = [
   },
   {
     name: 'Votifier',
-    desc: 'NuVotifier v2 listener. Randomized reward commands on vote. Offline vote queuing — rewards delivered on next login.',
+    desc: 'NuVotifier v2 listener. Randomized reward commands on vote. Queued rewards are delivered on next login if the player is offline.',
     tag: 'votifier',
     configKey: 'votifier_enabled',
     toggleable: true,
@@ -70,7 +73,7 @@ const FEATURES = [
   },
   {
     name: 'Dashboard',
-    desc: 'Public metrics dashboard — live player count, TPS, memory, activity feed, and live chat.',
+    desc: 'Public metrics dashboard. Live player count, TPS, memory, activity feed, and live chat.',
     tag: 'dashboard',
   },
 ]
@@ -112,11 +115,13 @@ export default function FeatureShowcase({ token, onExpired }) {
     setOverrides(o => ({ ...o, [key]: next }))
     setToggling(t => ({ ...t, [key]: true }))
 
+    const payload = (feature.disablePayload && !next) ? feature.disablePayload : { [key]: next }
+
     try {
       const res = await fetch('/api/admin/config', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json', ...authHeaders(token) },
-        body:    JSON.stringify({ [key]: next }),
+        body:    JSON.stringify(payload),
       })
       if (res.status === 401 || res.status === 403) { onExpired?.(); return }
       if (!res.ok) {
@@ -162,7 +167,7 @@ function FeatureCard({ feature, active, canToggle, toggling, onToggle }) {
       {feature.restartRequired && (
         <div className={styles.restartNote}>Restart required to apply changes</div>
       )}
-      {canToggle && (
+      {canToggle && (active || !feature.disableOnly) && (
         <button
           className={`${styles.toggle} ${active ? styles.toggleOff : styles.toggleOn}`}
           onClick={onToggle}

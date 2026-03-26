@@ -54,8 +54,14 @@ public final class VotifierListener {
     public static void start() {
         if (!SmpConfig.VOTIFIER_ENABLED) return;
         if (SmpConfig.VOTIFIER_TOKEN.isBlank()) {
-            SmpUtilsMod.LOGGER.warn("[Votifier] No token configured — listener will not start. Set votifier.token in config.");
-            return;
+            String generated = new BigInteger(128, RANDOM).toString(16);
+            SmpConfig.VOTIFIER_TOKEN = generated;
+            mc.smpessentials.config.ConfigIO.save();
+            SmpUtilsMod.LOGGER.info("[Votifier] ============================================================");
+            SmpUtilsMod.LOGGER.info("[Votifier] No token found — generated a new token and saved to config.");
+            SmpUtilsMod.LOGGER.info("[Votifier] Token: {}", generated);
+            SmpUtilsMod.LOGGER.info("[Votifier] Use this token when registering on voting sites.");
+            SmpUtilsMod.LOGGER.info("[Votifier] ============================================================");
         }
         if (running.getAndSet(true)) return;
 

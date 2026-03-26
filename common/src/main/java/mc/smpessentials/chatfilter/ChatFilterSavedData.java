@@ -21,7 +21,7 @@ public final class ChatFilterSavedData extends SavedData {
     private static final Codec<List<String>> STRING_LIST = Codec.list(Codec.STRING);
 
     /**
-     * Codec for the entire data object; persists both blocked words and whitelist.
+     * Codec for the entire data object; persists blocked words, whitelist, mutes, and violations.
      */
     public static final Codec<ChatFilterSavedData> CODEC = RecordCodecBuilder.create(instance -> instance.group(
             STRING_LIST.optionalFieldOf("words", List.of()).forGetter(d -> d.toList()),
@@ -134,6 +134,7 @@ public final class ChatFilterSavedData extends SavedData {
         return changed;
     }
 
+    /** Returns true if the normalized token is in the blocked word set. */
     public boolean containsNormalized(String normalizedToken) {
         return words.contains(normalizedToken);
     }
@@ -226,16 +227,19 @@ public final class ChatFilterSavedData extends SavedData {
     }
     // ---- Mute & Strike Logic ----
 
+    /** Mutes {@code player} for {@code durationMillis} milliseconds from now. */
     public void mute(java.util.UUID player, long durationMillis) {
         mutes.put(player, System.currentTimeMillis() + durationMillis);
         setDirty();
     }
 
+    /** Removes an active mute for {@code player} immediately. */
     public void unmute(java.util.UUID player) {
         mutes.remove(player);
         setDirty();
     }
 
+    /** Returns true if {@code player} has an active (non-expired) mute. Cleans up expired entries. */
     public boolean isMuted(java.util.UUID player) {
         Long end = mutes.get(player);
         if (end == null) return false;
@@ -247,8 +251,14 @@ public final class ChatFilterSavedData extends SavedData {
         return true;
     }
 
+    /** Returns the mute expiry timestamp (ms since epoch) for {@code player}, or 0 if not muted. */
     public long getMuteEnd(java.util.UUID player) {
         return mutes.getOrDefault(player, 0L);
+    }
+
+    /** Returns an unmodifiable snapshot of active mutes (UUID to expiry timestamp ms). */
+    public java.util.Map<java.util.UUID, Long> mutesSnapshot() {
+        return java.util.Map.copyOf(mutes);
     }
 
     /** Returns the current violation record for the player, or null if none. */

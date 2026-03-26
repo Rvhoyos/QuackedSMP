@@ -4,14 +4,22 @@ import PlayersPanel from './PlayersPanel'
 import CommandsPanel from './CommandsPanel'
 import ConfigEditor from './ConfigEditor'
 import FeatureShowcase from './FeatureShowcase'
-import { IconPlayerHead, IconCommandBlock, IconChest, IconBookshelf } from './MinecraftIcons'
+import DimsPanel from './DimsPanel'
+import SkillsPanel from './SkillsPanel'
+import ClaimsPanel from './ClaimsPanel'
+import ChatFilterPanel from './ChatFilterPanel'
+import { IconPlayerHead, IconCommandBlock, IconChest, IconBookshelf, IconPortal, IconSkills, IconFlag, IconChatFilter } from './MinecraftIcons'
 import styles from './AdminPanel.module.css'
 
 const TABS = [
-  { id: 'players',  label: 'Players',  Icon: IconPlayerHead },
-  { id: 'commands', label: 'Commands', Icon: IconCommandBlock },
-  { id: 'config',   label: 'Config',   Icon: IconChest },
-  { id: 'features', label: 'Showcase', Icon: IconBookshelf },
+  { id: 'players',    label: 'Players',     Icon: IconPlayerHead },
+  { id: 'commands',   label: 'Commands',    Icon: IconCommandBlock },
+  { id: 'dims',       label: 'Dimensions',  Icon: IconPortal },
+  { id: 'skills',     label: 'Skills',      Icon: IconSkills },
+  { id: 'claims',     label: 'Claims',      Icon: IconFlag },
+  { id: 'chatfilter', label: 'Chat Filter', Icon: IconChatFilter },
+  { id: 'config',     label: 'Config',      Icon: IconChest },
+  { id: 'features',   label: 'Showcase',    Icon: IconBookshelf },
 ]
 
 const TOKEN_KEY = 'quack_admin_token'
@@ -61,10 +69,14 @@ export default function AdminPanel({ health }) {
       </div>
 
       <div className={styles.body}>
-        {activeTab === 'players'  && <PlayersPanel token={token} onExpired={logout} />}
-        {activeTab === 'commands' && <CommandsPanel token={token} onExpired={logout} />}
-        {activeTab === 'config'   && <ConfigEditor token={token} onExpired={logout} />}
-        {activeTab === 'features' && <FeatureShowcase token={token} onExpired={logout} />}
+        {activeTab === 'players'    && <PlayersPanel token={token} onExpired={logout} />}
+        {activeTab === 'commands'   && <CommandsPanel token={token} onExpired={logout} />}
+        {activeTab === 'dims'       && <DimsPanel token={token} onExpired={logout} />}
+        {activeTab === 'skills'     && <SkillsPanel token={token} onExpired={logout} />}
+        {activeTab === 'claims'     && <ClaimsPanel token={token} onExpired={logout} />}
+        {activeTab === 'chatfilter' && <ChatFilterPanel token={token} onExpired={logout} />}
+        {activeTab === 'config'     && <ConfigEditor token={token} onExpired={logout} />}
+        {activeTab === 'features'   && <FeatureShowcase token={token} onExpired={logout} />}
       </div>
     </div>
   )

@@ -4,6 +4,9 @@ import mc.smpessentials.SmpUtilsMod;
 import mc.smpessentials.config.SmpConfig;
 import net.minecraft.server.MinecraftServer;
 
+import java.lang.management.ManagementFactory;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Locale;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -27,6 +30,7 @@ public final class DashboardManager {
 
     // ── Lifecycle ──────────────────────────────────────────────────────────────
 
+    /** Detects Spark at startup. Call once before {@link #onServerStart}. */
     public static void init() {
         try {
             Class.forName("me.lucko.spark.api.SparkProvider");
@@ -37,6 +41,7 @@ public final class DashboardManager {
         }
     }
 
+    /** Starts the dashboard HTTP/WebSocket server if enabled in config. */
     public static void onServerStart(MinecraftServer srv) {
         mcServer = srv;
         if (!SmpConfig.DASHBOARD_ENABLED) {
@@ -46,6 +51,7 @@ public final class DashboardManager {
         start(SmpConfig.DASHBOARD_PORT);
     }
 
+    /** Stops the dashboard server and clears the server reference. */
     public static void onServerStop() {
         stop();
         mcServer = null;
@@ -88,9 +94,26 @@ public final class DashboardManager {
             int     online      = mcServer != null ? mcServer.getPlayerList().getPlayerCount() : 0;
             boolean adminOn     = SmpConfig.ADMIN_ENABLED;
             boolean hasPassword = !SmpConfig.ADMIN_PASSWORD_HASH.isBlank();
+            String  serverName  = SmpConfig.SERVER_NAME;
             return String.format(
-                    "{\"status\":\"ok\",\"online\":%d,\"adminEnabled\":%b,\"hasPassword\":%b}",
-                    online, adminOn, hasPassword);
+                    "{\"status\":\"ok\",\"online\":%d,\"adminEnabled\":%b,\"hasPassword\":%b,\"serverName\":\"%s\"}",
+                    online, adminOn, hasPassword, jsonEscape(serverName));
+        });
+        s.addRoute("/api/metrics", () -> {
+            Runtime rt       = Runtime.getRuntime();
+            long heapUsed    = rt.totalMemory() - rt.freeMemory();
+            long heapMax     = rt.maxMemory();
+            long diskTotal   = 0, diskUsable = 0;
+            try {
+                java.nio.file.FileStore fs = Files.getFileStore(Path.of(".").toAbsolutePath());
+                diskTotal  = fs.getTotalSpace();
+                diskUsable = fs.getUsableSpace();
+            } catch (Exception ignored) {}
+            long uptimeMs = ManagementFactory.getRuntimeMXBean().getUptime();
+            int  threads  = ManagementFactory.getThreadMXBean().getThreadCount();
+            return String.format(Locale.US,
+                    "{\"heapUsed\":%d,\"heapMax\":%d,\"diskTotal\":%d,\"diskUsable\":%d,\"uptimeMs\":%d,\"threads\":%d}",
+                    heapUsed, heapMax, diskTotal, diskUsable, uptimeMs, threads);
         });
         s.addRoute("/api/spark/tps",  SparkMetrics::getTpsJson);
         s.addRoute("/api/spark/cpu",  SparkMetrics::getCpuJson);
@@ -110,6 +133,48 @@ public final class DashboardManager {
                         : AdminHandler.handleConfigPost(m, h, b));
         s.addRoute("/api/admin/setop",
                 (m, h, b) -> AdminHandler.handleSetOp(m, h, b, mcServer));
+        s.addRoute("/api/admin/dims",
+                (m, h, b) -> AdminHandler.handleDimsGet(m, h, b, mcServer));
+        s.addRoute("/api/admin/dims/create",
+                (m, h, b) -> AdminHandler.handleDimCreate(m, h, b, mcServer));
+        s.addRoute("/api/admin/dims/delete",
+                (m, h, b) -> AdminHandler.handleDimDelete(m, h, b, mcServer));
+        s.addRoute("/api/admin/dims/setportal",
+                (m, h, b) -> AdminHandler.handleDimSetPortal(m, h, b, mcServer));
+        s.addRoute("/api/admin/blocks",
+                (m, h, b) -> AdminHandler.handleBlocksGet(m, h, b));
+        s.addRoute("/api/admin/biomes",
+                (m, h, b) -> AdminHandler.handleBiomesGet(m, h, b, mcServer));
+
+        // Skills leaderboard (public)
+        s.addRoute("/api/skills/leaderboard",
+                (m, h, b) -> AdminHandler.handleSkillsLeaderboard(m, h, b, mcServer));
+
+        // Skills admin
+        s.addRoute("/api/admin/skills/players",
+                (m, h, b) -> AdminHandler.handleSkillsPlayers(m, h, b, mcServer));
+        s.addRoute("/api/admin/skills",
+                (m, h, b) -> AdminHandler.handleSkillsGet(m, h, b, mcServer));
+        s.addRoute("/api/admin/skills/set",
+                (m, h, b) -> AdminHandler.handleSkillsSet(m, h, b, mcServer));
+
+        // Claims overview
+        s.addRoute("/api/admin/claims",
+                (m, h, b) -> AdminHandler.handleClaimsGet(m, h, b, mcServer));
+        s.addRoute("/api/admin/claims/unclaim",
+                (m, h, b) -> AdminHandler.handleClaimsUnclaim(m, h, b, mcServer));
+
+        // Chat filter management
+        s.addRoute("/api/admin/chatfilter",
+                (m, h, b) -> AdminHandler.handleChatFilterGet(m, h, b, mcServer));
+        s.addRoute("/api/admin/chatfilter/add",
+                (m, h, b) -> AdminHandler.handleChatFilterAdd(m, h, b, mcServer));
+        s.addRoute("/api/admin/chatfilter/remove",
+                (m, h, b) -> AdminHandler.handleChatFilterRemove(m, h, b, mcServer));
+        s.addRoute("/api/admin/chatfilter/mutes",
+                (m, h, b) -> AdminHandler.handleChatFilterMutes(m, h, b, mcServer));
+        s.addRoute("/api/admin/chatfilter/unmute",
+                (m, h, b) -> AdminHandler.handleChatFilterUnmute(m, h, b, mcServer));
     }
 
     // ── Scheduled ─────────────────────────────────────────────────────────────
@@ -126,6 +191,7 @@ public final class DashboardManager {
 
     // ── Event broadcast ────────────────────────────────────────────────────────
 
+    /** Broadcasts a player_join event to WebSocket clients and forwards to Discord. */
     public static void broadcastPlayerJoin(String playerName) {
         broadcast(String.format(Locale.US,
                 "{\"type\":\"player_join\",\"player\":\"%s\",\"timestamp\":%d}",
@@ -133,6 +199,7 @@ public final class DashboardManager {
         DiscordWebhook.sendJoin(playerName);
     }
 
+    /** Broadcasts a player_leave event to WebSocket clients and forwards to Discord. */
     public static void broadcastPlayerLeave(String playerName) {
         broadcast(String.format(Locale.US,
                 "{\"type\":\"player_leave\",\"player\":\"%s\",\"timestamp\":%d}",
@@ -140,6 +207,7 @@ public final class DashboardManager {
         DiscordWebhook.sendLeave(playerName);
     }
 
+    /** Broadcasts a chat event to WebSocket clients and forwards to Discord. */
     public static void broadcastChat(String playerName, String message) {
         broadcast(String.format(Locale.US,
                 "{\"type\":\"chat\",\"player\":\"%s\",\"message\":\"%s\",\"timestamp\":%d}",

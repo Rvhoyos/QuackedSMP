@@ -22,10 +22,10 @@ async function sendSetOp(name, uuid, level, token) {
 }
 
 const OP_LEVELS = [
-  { level: 1, label: 'L1 — Spawn protection bypass',     desc: 'Bypass spawn protection only. Minimal trust.' },
-  { level: 2, label: 'L2 — Game commands',               desc: '/give, /tp, /gamemode, /time, /weather, command blocks. Standard trusted member.' },
-  { level: 3, label: 'L3 — Moderation',                  desc: '/ban, /kick, /op, /deop, /whitelist. Moderator level.' },
-  { level: 4, label: 'L4 — Full admin',                  desc: '/stop, bypass player limit. Owner level.' },
+  { level: 1, label: 'L1: Spawn protection bypass',     desc: 'Bypass spawn protection only. Minimal trust.' },
+  { level: 2, label: 'L2: Game commands',               desc: '/give, /tp, /gamemode, /time, /weather, command blocks. Standard trusted member.' },
+  { level: 3, label: 'L3: Moderation',                  desc: '/ban, /kick, /op, /deop, /whitelist. Moderator level.' },
+  { level: 4, label: 'L4: Full admin',                  desc: '/stop, bypass player limit. Owner level.' },
 ]
 
 function dimShort(dim) {

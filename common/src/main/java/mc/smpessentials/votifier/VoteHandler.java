@@ -37,7 +37,7 @@ public final class VoteHandler {
                 broadcast(srv, vote);
             } else {
                 VoteQueueData.get(srv).queue(vote.username());
-                SmpUtilsMod.LOGGER.info("[Votifier] {} is offline — vote queued", vote.username());
+                SmpUtilsMod.LOGGER.info("[Votifier] {} is offline, vote queued", vote.username());
             }
         });
     }

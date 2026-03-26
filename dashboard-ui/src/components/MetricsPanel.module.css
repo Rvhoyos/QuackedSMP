@@ -1,11 +1,12 @@
 .grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: var(--s-3);
   flex-shrink: 0;
 }
 
-@media (max-width: 900px) { .grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 900px) { .grid { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 700px) { .grid { grid-template-columns: repeat(2, 1fr); } }
 @media (max-width: 480px) { .grid { grid-template-columns: 1fr 1fr; gap: var(--s-2); } }
 
 /* ── Card — inventory slot ── */
@@ -101,6 +102,20 @@
   font-weight: 600;
   color: var(--subtext1);
   transition: color var(--t-fast);
+}
+
+/* ── Progress bar ── */
+.bar {
+  height: 4px;
+  background: rgba(255,255,255,0.07);
+  overflow: hidden;
+  margin-top: 2px;
+}
+
+.barFill {
+  height: 100%;
+  transition: width 0.6s ease, background 0.3s ease;
+  min-width: 2px;
 }
 
 /* ── Window label ── */

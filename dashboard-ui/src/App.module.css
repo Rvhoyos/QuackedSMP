@@ -7,9 +7,9 @@
 
 /* ── Header — wood plank bar ── */
 .header {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
   align-items: center;
-  justify-content: space-between;
   padding: 0 24px;
   height: 56px;
   background: var(--mc-wood);
@@ -24,6 +24,16 @@
 }
 
 /* ── Brand ── */
+.brandLink {
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+}
+
+.brandLink:hover .brandIcon {
+  filter: drop-shadow(2px 3px 0 rgba(0,0,0,0.5)) brightness(1.2);
+}
+
 .brand {
   display: flex;
   align-items: center;
@@ -60,11 +70,28 @@
   letter-spacing: 0.5px;
 }
 
+/* ── Center — server name ── */
+.headerCenter {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.serverName {
+  font-family: var(--font-pixel);
+  font-size: 10px;
+  color: #FFFF55;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.6);
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
 /* ── Right side ── */
 .headerRight {
   display: flex;
   align-items: center;
   gap: 12px;
+  justify-self: end;
 }
 
 .playerCount {

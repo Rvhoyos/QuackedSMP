@@ -32,7 +32,7 @@ const TABS = [
     id: 'general', label: 'General',
     keys: [
       'max_claims', 'vip_bonus_claims', 'allow_lava_wilderness', 'vips',
-      'tp_warmup', 'mute_levels_minutes', 'admin_enabled', 'dashboard_port',
+      'tp_warmup', 'mute_levels_minutes', 'admin_enabled', 'dashboard_port', 'server_name',
     ],
   },
   {
@@ -188,13 +188,13 @@ function GeneralTab({ draft, patch }) {
       </Group>
 
       <Group icon={<IconPlayerHead />} title="VIP Players" accent="yellow">
-        <StackedRow label="VIP List" hint="Players granted VIP bonus claims — one name per entry">
+        <StackedRow label="VIP List" hint="Players with VIP bonus claims, one name per entry">
           <ListEditor value={draft.vips} onChange={v => patch('vips', v)} placeholder="PlayerName" />
         </StackedRow>
       </Group>
 
       <Group icon={<IconEnderPearl />} title="Teleport" accent="teal">
-        <Row label="Warmup Duration" hint="Seconds before the teleport fires — movement cancels it">
+        <Row label="Warmup Duration" hint="Seconds before teleport fires. Moving cancels it.">
           <NumInput value={draft.tp_warmup} onChange={v => patch('tp_warmup', v)} suffix="s" />
         </Row>
       </Group>
@@ -206,10 +206,13 @@ function GeneralTab({ draft, patch }) {
       </Group>
 
       <Group icon={<IconChest />} title="Admin Panel" accent="red">
-        <Row label="Panel Enabled" hint="Disabling locks you out — re-enable with /smp admin enable in-game">
+        <Row label="Server Name" hint="Shown in the dashboard header. Leave blank to hide.">
+          <TextInput value={draft.server_name} onChange={v => patch('server_name', v)} placeholder="My SMP" />
+        </Row>
+        <Row label="Panel Enabled" hint="Disabling locks you out. Re-enable with /smp admin setpassword in-game.">
           <Toggle value={draft.admin_enabled} onChange={v => patch('admin_enabled', v)} />
         </Row>
-        <Row label="Dashboard Port" hint="Port the dashboard listens on — requires server restart">
+        <Row label="Dashboard Port" hint="Port the dashboard listens on. Requires restart to change.">
           <NumInput value={draft.dashboard_port} onChange={v => patch('dashboard_port', v)} />
         </Row>
         <div className={styles.note}>Password changes: <code>/smp admin setpassword</code> in-game</div>
@@ -338,7 +341,7 @@ function ChatTab({ draft, patch }) {
       </Group>
 
       <Group icon={<IconClock />} title="Periodic Tips" accent="yellow">
-        <StackedRow label="Tip Messages" hint="Broadcast in rotation — supports & color codes">
+        <StackedRow label="Tip Messages" hint="Broadcast in rotation. Supports & color codes.">
           <ListEditor
             value={draft.periodic_messages}
             onChange={v => patch('periodic_messages', v)}
@@ -348,7 +351,7 @@ function ChatTab({ draft, patch }) {
       </Group>
 
       <Group icon={<IconBookQuill />} title="Server Rules" accent="peach">
-        <StackedRow label="Rules" hint="Shown with /rules — supports & color codes">
+        <StackedRow label="Rules" hint="Shown with /rules. Supports & color codes.">
           <ListEditor
             value={draft.rules}
             onChange={v => patch('rules', v)}
@@ -382,29 +385,29 @@ function IntegrationsTab({ draft, patch }) {
       </Group>
 
       <Group icon={<IconVoiceChat />} title="Simple Voice Chat" accent="teal">
-        <Row label="Enabled" hint="Enable Simple Voice Chat mod integration — requires the mod to be installed">
+        <Row label="Enabled" hint="Requires Simple Voice Chat mod on the server.">
           <Toggle value={draft.voicechat_enable} onChange={v => patch('voicechat_enable', v)} />
         </Row>
       </Group>
 
       <Group icon={<IconBallot />} title="Votifier" accent="peach">
-        <Row label="Enabled" hint="NuVotifier v2 listener — receives votes from listing sites">
+        <Row label="Enabled" hint="Receives votes from listing sites via NuVotifier v2.">
           <Toggle value={draft.votifier_enabled} onChange={v => patch('votifier_enabled', v)} />
         </Row>
-        <Row label="Port" hint="NuVotifier listen port — listener restarts automatically on save">
+        <Row label="Port" hint="Votifier listen port. Restarts automatically on save.">
           <NumInput value={draft.votifier_port} onChange={v => patch('votifier_port', v)} />
         </Row>
-        <StackedRow label="Token" hint="NuVotifier v2 HMAC token — must match your listing site setup">
-          <SecretInput
+        <StackedRow label="Token" hint="Auto-generated on first start. Copy into your voting site when registering.">
+          <TextInput
             value={draft.votifier_token}
             onChange={v => patch('votifier_token', v)}
-            placeholder="your-votifier-token"
+            placeholder="auto-generated on first start"
           />
         </StackedRow>
-        <StackedRow label="Vote Broadcast" hint="Sent on vote — {player} = voter's name, supports & color codes">
+        <StackedRow label="Vote Broadcast" hint="Sent on vote. {player} = voter name. Supports & color codes.">
           <TextInput value={draft.vote_broadcast} onChange={v => patch('vote_broadcast', v)} />
         </StackedRow>
-        <StackedRow label="Vote Reward Commands" hint="Run on every vote — {player} = voter. One command per entry.">
+        <StackedRow label="Vote Reward Commands" hint="Run on every vote. {player} = voter name. One command per entry.">
           <ListEditor
             value={draft.vote_rewards}
             onChange={v => patch('vote_rewards', v)}
@@ -456,7 +459,7 @@ function SkillsTab({ draft, patch }) {
   return (
     <>
       <Group icon={<IconXPOrb />} title="XP Scaling" accent="mauve">
-        <Row label="XP Exponent" hint="Higher = slower level scaling. Default 1.5 — change carefully">
+        <Row label="XP Exponent" hint="Higher = slower level scaling. Default 1.5, change carefully.">
           <NumInput value={draft.skill_xp_exponent} step={0.05} onChange={v => patch('skill_xp_exponent', v)} />
         </Row>
       </Group>

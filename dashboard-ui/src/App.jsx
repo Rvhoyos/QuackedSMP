@@ -3,19 +3,22 @@ import MetricsPanel from './components/MetricsPanel'
 import EventFeed from './components/EventFeed'
 import ChatPanel from './components/ChatPanel'
 import AdminPanel from './components/admin/AdminPanel'
+import SkillsLeaderboard from './components/SkillsLeaderboard'
 import { IconDuck } from './components/admin/MinecraftIcons'
 import styles from './App.module.css'
 
 const MAX_EVENTS = 150
 
 export default function App() {
-  const [health,   setHealth]   = useState(null)
-  const [tps,      setTps]      = useState(null)
-  const [cpu,      setCpu]      = useState(null)
-  const [mspt,     setMspt]     = useState(null)
-  const [events,   setEvents]   = useState([])
-  const [wsStatus, setWsStatus] = useState('connecting')
-  const [view,     setView]     = useState('dashboard') // 'dashboard' | 'admin'
+  const [health,      setHealth]      = useState(null)
+  const [tps,         setTps]         = useState(null)
+  const [cpu,         setCpu]         = useState(null)
+  const [mspt,        setMspt]        = useState(null)
+  const [sysMetrics,  setSysMetrics]  = useState(null)
+  const [leaderboard, setLeaderboard] = useState(null)
+  const [events,      setEvents]      = useState([])
+  const [wsStatus,    setWsStatus]    = useState('connecting')
+  const [view,        setView]        = useState('dashboard') // 'dashboard' | 'admin'
 
   const wsRef    = useRef(null)
   const retryRef = useRef(null)
@@ -27,15 +30,25 @@ export default function App() {
 
   const pollMetrics = useCallback(async () => {
     try {
-      const [cpuRes, msptRes] = await Promise.all([
+      const [cpuRes, msptRes, sysRes] = await Promise.all([
         fetch('/api/spark/cpu'),
         fetch('/api/spark/tick'),
+        fetch('/api/metrics'),
       ])
       const cpuData  = await cpuRes.json()
       const msptData = await msptRes.json()
+      const sysData  = await sysRes.json()
       if (!cpuData.error)  setCpu(cpuData)
       if (!msptData.error) setMspt(msptData)
+      setSysMetrics(sysData)
     } catch { /* server may be starting */ }
+  }, [])
+
+  const pollLeaderboard = useCallback(async () => {
+    try {
+      const r = await fetch('/api/skills/leaderboard')
+      if (r.ok) { const d = await r.json(); if (!d.error) setLeaderboard(d) }
+    } catch { /* ignore */ }
   }, [])
 
   const openWebSocket = useCallback(() => {
@@ -67,17 +80,21 @@ export default function App() {
       setHealth(data)
       openWebSocket()
       pollMetrics()
+      pollLeaderboard()
     } catch {
       retryRef.current = setTimeout(bootstrap, 5000)
     }
-  }, [openWebSocket, pollMetrics])
+  }, [openWebSocket, pollMetrics, pollLeaderboard])
 
+  const lbRef = useRef(null)
   useEffect(() => {
     bootstrap()
     pollRef.current = setInterval(pollMetrics, 15_000)
+    lbRef.current   = setInterval(pollLeaderboard, 60_000)
     return () => {
       clearTimeout(retryRef.current)
       clearInterval(pollRef.current)
+      clearInterval(lbRef.current)
       wsRef.current?.close()
     }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
@@ -85,12 +102,19 @@ export default function App() {
   return (
     <div className={styles.layout}>
       <header className={styles.header}>
-        <div className={styles.brand}>
-          <span className={styles.brandIcon}><IconDuck size={36} /></span>
-          <div className={styles.brandText}>
-            <span className={styles.brandName}>QuackedSMP</span>
-            <span className={styles.brandSub}>Dashboard</span>
+        <a href="https://quackedmod.wiki" className={styles.brandLink} target="_blank" rel="noopener noreferrer">
+          <div className={styles.brand}>
+            <span className={styles.brandIcon}><IconDuck size={36} /></span>
+            <div className={styles.brandText}>
+              <span className={styles.brandName}>QuackedSMP</span>
+              <span className={styles.brandSub}>made by quackedmod</span>
+            </div>
           </div>
+        </a>
+        <div className={styles.headerCenter}>
+          {health?.serverName && (
+            <span className={styles.serverName}>{health.serverName}</span>
+          )}
         </div>
         <div className={styles.headerRight}>
           <span className={styles.playerCount}>
@@ -114,11 +138,12 @@ export default function App() {
         </main>
       ) : (
         <main className={styles.main}>
-          <MetricsPanel tps={tps} cpu={cpu} mspt={mspt} online={health?.online ?? null} />
+          <MetricsPanel tps={tps} cpu={cpu} mspt={mspt} online={health?.online ?? null} sys={sysMetrics} />
           <div className={styles.content}>
             <EventFeed events={events} />
             <ChatPanel events={events} />
           </div>
+          <SkillsLeaderboard data={leaderboard} />
         </main>
       )}
     </div>

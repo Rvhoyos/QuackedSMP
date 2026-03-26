@@ -17,8 +17,10 @@ import java.util.concurrent.ConcurrentHashMap;
  *
  * <p>Hash format stored in config: {@code pbkdf2:<iterations>:<base64-salt>:<base64-hash>}
  *
- * <p>Auth is bypassed entirely when {@code SmpConfig.ADMIN_PASSWORD_HASH} is blank —
- * meaning the operator edited the config directly and is inherently trusted.
+ * <p>Auth is bypassed entirely when {@code SmpConfig.ADMIN_PASSWORD_HASH} is blank.
+ * This only occurs when an operator has manually set {@code admin_enabled=true} in the JSON
+ * config without a password — a deliberate advanced-user choice. In-game, the only way to
+ * enable the panel is {@code /smp admin setpassword}, which always sets a password atomically.
  */
 public final class AdminAuth {
 
