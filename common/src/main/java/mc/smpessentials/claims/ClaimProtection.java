@@ -51,6 +51,7 @@ public final class ClaimProtection {
      * @return {@code true} if the break is allowed, {@code false} to cancel it.
      */
     public static boolean onBlockBreak(Level level, BlockPos pos, BlockState state, Player player) {
+        if (!mc.smpessentials.config.SmpConfig.CLAIMS_ENABLED) return true;
         if (player instanceof ServerPlayer sp) {
             boolean allowed = ClaimAccess.canModify(sp, (ServerLevel) level, new ChunkPos(pos));
             if (!allowed)
@@ -76,6 +77,7 @@ public final class ClaimProtection {
      * @return {@code true} to allow the placement, {@code false} to cancel it.
      */
     public static boolean onBlockPlace(Level level, BlockPos pos, BlockState state, Entity placer) {
+        if (!mc.smpessentials.config.SmpConfig.CLAIMS_ENABLED) return true;
         if (placer instanceof ServerPlayer sp) {
             ServerLevel sl = (ServerLevel) level;
             ChunkPos cp = new ChunkPos(pos);
@@ -146,6 +148,7 @@ public final class ClaimProtection {
      *         player cannot modify; {@link InteractionResult#PASS} otherwise.
      */
     public static InteractionResult onRightClickBlock(Player player, BlockPos pos) {
+        if (!mc.smpessentials.config.SmpConfig.CLAIMS_ENABLED) return InteractionResult.PASS;
         if (!(player instanceof ServerPlayer sp))
             return InteractionResult.PASS;
         boolean allowed = ClaimAccess.canModify(sp, (ServerLevel) sp.level(), new ChunkPos(pos));
@@ -164,6 +167,7 @@ public final class ClaimProtection {
      * @return {@code true} to allow the explosion, {@code false} to cancel it.
      */
     public static boolean onExplosionPre(Level level, Explosion explosion) {
+        if (!mc.smpessentials.config.SmpConfig.CLAIMS_ENABLED) return true;
         if (!(level instanceof ServerLevel sl))
             return true;
         try {
@@ -183,6 +187,7 @@ public final class ClaimProtection {
      * @return {@code true} to allow the interaction, {@code false} to deny it.
      */
     public static boolean onInteractEntity(Player player, Entity entity) {
+        if (!mc.smpessentials.config.SmpConfig.CLAIMS_ENABLED) return true;
         if (!(player instanceof ServerPlayer sp))
             return true;
         if (isProtectedEntity(entity) && !canInteractEntity(sp, entity)) {
@@ -204,6 +209,7 @@ public final class ClaimProtection {
      * @return {@code true} to let the damage proceed, {@code false} to cancel it.
      */
     public static boolean onLivingHurt(LivingEntity entity, DamageSource source, float amount) {
+        if (!mc.smpessentials.config.SmpConfig.CLAIMS_ENABLED) return true;
         if (entity.level().isClientSide())
             return true;
         Entity attackerEntity = source.getEntity();

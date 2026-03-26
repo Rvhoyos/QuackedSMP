@@ -1,0 +1,93 @@
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  /* Catppuccin Mocha base */
+  --crust:    #11111b;
+  --mantle:   #181825;
+  --base:     #1e1e2e;
+  --surface0: #313244;
+  --surface1: #45475a;
+  --surface2: #585b70;
+  --overlay0: #6c7086;
+  --overlay1: #7f849c;
+  --subtext1: #bac2de;
+  --subtext0: #a6adc8;
+  --text:     #cdd6f4;
+
+  --blue:   #89b4fa;
+  --green:  #a6e3a1;
+  --red:    #f38ba8;
+  --yellow: #f9e2af;
+  --teal:   #94e2d5;
+  --sky:    #89dceb;
+  --peach:  #fab387;
+  --mauve:  #cba6f7;
+  --pink:   #f5c2e7;
+
+  /* Spacing */
+  --s-1: 4px;  --s-2: 8px;   --s-3: 12px;
+  --s-4: 16px; --s-5: 20px;  --s-6: 24px;
+  --s-8: 32px; --s-10: 40px;
+
+  /* Fonts */
+  --font-sans:  'Inter', 'Segoe UI', system-ui, sans-serif;
+  --font-mono:  'JetBrains Mono', 'Cascadia Code', 'Consolas', monospace;
+  --font-pixel: 'Press Start 2P', 'Courier New', monospace;
+
+  /* Radii */
+  --r-sm: 3px;
+  --r-md: 4px;
+  --r-lg: 4px;
+
+  /* Transitions */
+  --t-fast: 80ms ease;
+  --t-base: 140ms ease;
+
+  /* ── Minecraft UI palette ── */
+  --mc-wood:       #9A6B2E;
+  --mc-wood-light: #C8973A;
+  --mc-wood-dark:  #5A3A10;
+  --mc-stone:      #5A5A5A;
+  --mc-stone-light:#888888;
+  --mc-stone-dark: #1A1A1A;
+  --mc-slot:       #141414;
+  --mc-panel:      #2A2A2A;
+}
+
+html, body, #root {
+  height: 100%;
+}
+
+body {
+  background: var(--crust);
+  /* Subtle 16×16 pixel grid — the Minecraft block grid */
+  background-image:
+    linear-gradient(rgba(255,255,255,0.018) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.018) 1px, transparent 1px);
+  background-size: 16px 16px;
+  color: var(--text);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Minecraft panel border mixin ── */
+/* Apply to any container to get the classic MC GUI bevel */
+.mc-panel {
+  border-top:    3px solid var(--mc-stone-light);
+  border-left:   3px solid var(--mc-stone-light);
+  border-bottom: 3px solid var(--mc-stone-dark);
+  border-right:  3px solid var(--mc-stone-dark);
+  border-radius: 2px;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--mc-stone); border-radius: 0; }
+::-webkit-scrollbar-thumb:hover { background: var(--mc-stone-light); }

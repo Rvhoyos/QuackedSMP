@@ -1,0 +1,129 @@
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--s-3);
+  flex-shrink: 0;
+}
+
+@media (max-width: 900px) { .grid { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 700px) { .grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 480px) { .grid { grid-template-columns: 1fr 1fr; gap: var(--s-2); } }
+
+/* ── Card — inventory slot ── */
+.card {
+  /* Sunken inventory slot: dark border on top/left, light on bottom/right */
+  background: var(--mc-slot);
+  border-top:    3px solid var(--mc-stone-dark);
+  border-left:   3px solid var(--mc-stone-dark);
+  border-bottom: 3px solid var(--mc-stone-light);
+  border-right:  3px solid var(--mc-stone-light);
+  padding: 14px 14px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  position: relative;
+  transition: filter var(--t-base);
+}
+
+.card:hover {
+  filter: brightness(1.08);
+}
+
+/* ── Top row: icon + label ── */
+.cardTop {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cardIcon {
+  display: flex;
+  align-items: center;
+  image-rendering: pixelated;
+  flex-shrink: 0;
+  opacity: 0.9;
+}
+
+.cardLabel {
+  font-family: var(--font-pixel);
+  font-size: 7px;
+  letter-spacing: 0.5px;
+  color: #888;
+  text-shadow: 1px 1px 0 rgba(0,0,0,0.5);
+  text-transform: uppercase;
+}
+
+/* ── Primary value ── */
+.cardPrimary {
+  font-family: var(--font-mono);
+  font-size: 32px;
+  font-weight: 700;
+  letter-spacing: -1px;
+  line-height: 1;
+  transition: color var(--t-fast);
+  display: flex;
+  align-items: baseline;
+  gap: 3px;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.5);
+}
+
+.cardUnit {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--overlay0);
+  letter-spacing: 0;
+}
+
+/* ── Sub stats ── */
+.cardSub {
+  display: flex;
+  gap: var(--s-3);
+  flex-wrap: wrap;
+  margin-top: 2px;
+}
+
+.subStat {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.subLabel {
+  font-family: var(--font-pixel);
+  font-size: 6px;
+  letter-spacing: 0.3px;
+  color: #555;
+  text-transform: uppercase;
+}
+
+.subValue {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--subtext1);
+  transition: color var(--t-fast);
+}
+
+/* ── Progress bar ── */
+.bar {
+  height: 4px;
+  background: rgba(255,255,255,0.07);
+  overflow: hidden;
+  margin-top: 2px;
+}
+
+.barFill {
+  height: 100%;
+  transition: width 0.6s ease, background 0.3s ease;
+  min-width: 2px;
+}
+
+/* ── Window label ── */
+.cardWindow {
+  margin-top: auto;
+  font-family: var(--font-pixel);
+  font-size: 5px;
+  color: #444;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}

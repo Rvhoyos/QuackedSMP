@@ -4,6 +4,50 @@ plugins {
     id 'com.gradleup.shadow' version '8.3.6' apply false
 }
 
+// ── Dashboard UI build task ──────────────────────────────────────────────────
+// Run: ./gradlew npmBuild
+// Requires Node.js + npm. Builds the React UI and copies it into the common
+// module's resources so it gets bundled into the mod JAR.
+// Built assets are committed to git — CI does NOT need Node.js.
+
+def dashboardUiDir  = rootProject.file('dashboard-ui')
+def dashboardOutDir = rootProject.file('common/src/main/resources/dashboard')
+def isWindows       = System.getProperty('os.name').toLowerCase().contains('windows')
+def npmCmd          = isWindows ? ['cmd', '/c', 'npm'] : ['npm']
+
+tasks.register('npmInstall', Exec) {
+    group       = 'dashboard'
+    description = 'Installs dashboard-ui npm dependencies'
+    workingDir  dashboardUiDir
+    commandLine(*npmCmd, 'ci')
+    inputs.file  "$dashboardUiDir/package.json"
+    inputs.file  "$dashboardUiDir/package-lock.json"
+    outputs.dir  "$dashboardUiDir/node_modules"
+    onlyIf { dashboardUiDir.exists() }
+}
+
+tasks.register('npmBuild', Exec) {
+    group       = 'dashboard'
+    description = 'Builds the React dashboard UI and copies it into common resources'
+    dependsOn   'npmInstall'
+    workingDir  dashboardUiDir
+    commandLine(*npmCmd, 'run', 'build')
+
+    // Never cache — dist/ is outside build/ so clean doesn't wipe it,
+    // and Gradle's fingerprinting would silently skip the task on source changes.
+    outputs.upToDateWhen { false }
+
+    onlyIf { dashboardUiDir.exists() }
+
+    doLast {
+        project.sync {
+            from   "$dashboardUiDir/dist"
+            into   dashboardOutDir
+        }
+        logger.lifecycle "[Dashboard] UI built → common/src/main/resources/dashboard/"
+    }
+}
+
 allprojects {
     group = rootProject.maven_group
     version = rootProject.mod_version
@@ -33,6 +77,10 @@ allprojects {
         maven {
             name = 'MaxHenkel'
             url = 'https://maven.maxhenkel.de/repository/public'
+        }
+        maven {
+            name = 'Lucko'
+            url = 'https://repo.lucko.me/'
         }
     }
 }

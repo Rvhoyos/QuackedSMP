@@ -35,9 +35,14 @@ public final class SmpUtilsModFabric implements ModInitializer {
             mc.smpessentials.voicechat.VoicechatIntegration.onServerStart(server);
             mc.smpessentials.keepinv.KeepInvSavedData.enforceGamerule(server);
             mc.smpessentials.dims.DimManager.restoreAll(server);
+            mc.smpessentials.dashboard.DashboardManager.onServerStart(server);
+            mc.smpessentials.votifier.VoteHandler.init(server);
+            mc.smpessentials.votifier.VotifierListener.start();
         });
         net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents.SERVER_STOPPING.register(server -> {
             mc.smpessentials.commands.EndResetLogic.onServerStopping(server);
+            mc.smpessentials.dashboard.DashboardManager.onServerStop();
+            mc.smpessentials.votifier.VotifierListener.stop();
         });
         // SERVER_STOPPED fires after level.dat is written — safe to patch it here.
         net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents.SERVER_STOPPED.register(server -> {
@@ -54,10 +59,14 @@ public final class SmpUtilsModFabric implements ModInitializer {
             if (pm.isPending(player.getUUID())) {
                 pm.punish(player);
             }
+            mc.smpessentials.dashboard.DashboardManager.broadcastPlayerJoin(player.getGameProfile().name());
+            mc.smpessentials.votifier.VoteHandler.onPlayerJoin(player);
         });
         net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> {
-            mc.smpessentials.skills.SkillEvents.onPlayerLoggedOut(handler.getPlayer());
-            mc.smpessentials.teleport.TeleportService.clearForPlayer(handler.getPlayer().getUUID());
+            net.minecraft.server.level.ServerPlayer player = handler.getPlayer();
+            mc.smpessentials.skills.SkillEvents.onPlayerLoggedOut(player);
+            mc.smpessentials.teleport.TeleportService.clearForPlayer(player.getUUID());
+            mc.smpessentials.dashboard.DashboardManager.broadcastPlayerLeave(player.getGameProfile().name());
         });
 
         // 9. Keep Inventory — drop items on death for opted-out players
@@ -83,6 +92,10 @@ public final class SmpUtilsModFabric implements ModInitializer {
         // 5. Chat Decorator
         net.fabricmc.fabric.api.message.v1.ServerMessageDecoratorEvent.EVENT.register(
                 net.fabricmc.fabric.api.message.v1.ServerMessageDecoratorEvent.STYLING_PHASE, (sender, message) -> {
+                    if (sender != null) {
+                        mc.smpessentials.dashboard.DashboardManager.broadcastChat(
+                                sender.getGameProfile().name(), message.getString());
+                    }
                     return mc.smpessentials.chatfilter.ChatFilter.onDecorate(sender, message);
                 });
 

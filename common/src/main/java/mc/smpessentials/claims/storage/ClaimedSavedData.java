@@ -146,8 +146,33 @@ public final class ClaimedSavedData extends SavedData {
         setDirty();
         return true;
     }
+    /** Returns the total number of claims owned by {@code owner} across all dimensions. */
     public int countByOwner(UUID owner) {
         return claimCounts.getOrDefault(owner, 0);
+    }
+
+    /** Returns an unmodifiable snapshot of claim counts per owner UUID. */
+    public Map<UUID, Integer> claimCountsSnapshot() {
+        return Map.copyOf(claimCounts);
+    }
+
+    /**
+     * Removes all claims owned by {@code owner}.
+     * Returns the number of claims removed.
+     */
+    public int removeAllByOwner(UUID owner) {
+        List<ClaimData> toRemove = claims.stream()
+                .filter(c -> c.owner().equals(owner))
+                .collect(Collectors.toList());
+        if (toRemove.isEmpty())
+            return 0;
+        for (ClaimData c : toRemove) {
+            claims.remove(c);
+            dimIndex(c.dimension()).remove(c.chunk());
+        }
+        claimCounts.remove(owner);
+        setDirty();
+        return toRemove.size();
     }
 
     /**

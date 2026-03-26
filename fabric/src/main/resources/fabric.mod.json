@@ -3,16 +3,16 @@
   "id": "quacksmp",
   "version": "${version}",
   "name": "QuackSMP",
-  "description": "Comprehensive server-side utility mod featuring claims, RPG skills, and chat management for 1.21.11.",
+  "description": "Server-side mod with a built-in browser admin panel. Every feature is modular, enable only what you want. Includes claims, RPG skills, custom dimensions, chat filter, Discord, Votifier, and more. No config editing required.",
   "authors": [
-    "Rvhoyos"
+    "Monte_Carlo_Simulations"
   ],
   "contact": {
     "homepage": "https://www.curseforge.com/minecraft/mc-mods/quackedsmp",
     "sources": "https://github.com/Rvhoyos/QuackedSMP",
     "issues": "https://github.com/Rvhoyos/QuackedSMP/issues"
   },
-  "license": "Apache-2.0",
+  "license": "ARR",
   "icon": "assets/quacksmp/icon.png",
   "environment": "*",
   "entrypoints": {

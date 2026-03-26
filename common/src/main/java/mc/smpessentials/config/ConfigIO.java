@@ -24,8 +24,9 @@ public final class ConfigIO {
     }
 
     /**
-     * Ensures a file exists and returns its parsed JSON; writes a minimal default
-     * if missing or empty.
+     * Reads and returns the config JSON, creating a full-default file if it is absent or empty.
+     * Also backfills any keys that were added in later versions (forward-compat) and rewrites
+     * the file when anything was backfilled, so the file stays in sync with the current schema.
      */
     public static JsonObject readOrCreate() {
         Path p = path();
@@ -155,6 +156,42 @@ public final class ConfigIO {
                 obj.add("skills", defaultSkillsJson());
                 dirty = true;
             }
+            if (!obj.has("votifier") || !obj.get("votifier").isJsonObject()) {
+                JsonObject vt = new JsonObject();
+                vt.addProperty("enabled", false);
+                vt.addProperty("port", 8192);
+                vt.addProperty("token", "");
+                vt.addProperty("broadcast", "&6\u2736 {player} &ejust voted for the server! Thanks for the support!");
+                com.google.gson.JsonArray defRewards = new com.google.gson.JsonArray();
+                defRewards.add("give {player} diamond 2");
+                defRewards.add("give {player} emerald 5");
+                defRewards.add("give {player} gold_ingot 10");
+                vt.add("rewards", defRewards);
+                obj.add("votifier", vt);
+                dirty = true;
+            }
+            if (!obj.has("dashboard") || !obj.get("dashboard").isJsonObject()) {
+                JsonObject db = new JsonObject();
+                db.addProperty("enabled", true);
+                db.addProperty("port", 8125);
+                db.addProperty("admin_enabled", false);
+                db.addProperty("admin_password_hash", "");
+                obj.add("dashboard", db);
+                dirty = true;
+            } else {
+                JsonObject db = obj.getAsJsonObject("dashboard");
+                if (!db.has("admin_enabled"))       { db.addProperty("admin_enabled", false);       dirty = true; }
+                if (!db.has("admin_password_hash")) { db.addProperty("admin_password_hash", "");    dirty = true; }
+                if (!db.has("server_name"))         { db.addProperty("server_name", "");             dirty = true; }
+            }
+            if (!obj.has("discord") || !obj.get("discord").isJsonObject()) {
+                JsonObject dc = new JsonObject();
+                dc.addProperty("webhook_url", "");
+                dc.addProperty("join_leave", true);
+                dc.addProperty("chat", true);
+                obj.add("discord", dc);
+                dirty = true;
+            }
             if (!obj.has("mute_levels_minutes")) {
                 com.google.gson.JsonArray ml = new com.google.gson.JsonArray();
                 ml.add(60);
@@ -199,6 +236,36 @@ public final class ConfigIO {
         root.addProperty("message_interval", 300);
         root.addProperty("vip_bonus_claims", 20);
         root.addProperty("allow_lava_wilderness", false);
+        root.addProperty("claims_enabled", true);
+        root.addProperty("skills_enabled", true);
+        root.addProperty("chatfilter_enabled", true);
+
+        JsonObject votifier = new JsonObject();
+        votifier.addProperty("enabled", false);
+        votifier.addProperty("port", 8192);
+        votifier.addProperty("token", "");
+        votifier.addProperty("broadcast", "&6\u2736 {player} &ejust voted for the server! Thanks for the support!");
+        com.google.gson.JsonArray defaultRewards = new com.google.gson.JsonArray();
+        defaultRewards.add("give {player} diamond 2");
+        defaultRewards.add("give {player} emerald 5");
+        defaultRewards.add("give {player} gold_ingot 10");
+        votifier.add("rewards", defaultRewards);
+        root.add("votifier", votifier);
+
+        JsonObject dashboard = new JsonObject();
+        dashboard.addProperty("enabled", true);
+        dashboard.addProperty("port", 8125);
+        dashboard.addProperty("admin_enabled", false);
+        dashboard.addProperty("admin_password_hash", "");
+        dashboard.addProperty("server_name", "");
+        root.add("dashboard", dashboard);
+
+        JsonObject discord = new JsonObject();
+        discord.addProperty("webhook_url", "");
+        discord.addProperty("join_leave", true);
+        discord.addProperty("chat", true);
+        root.add("discord", discord);
+
         root.addProperty("voicechat_enable", true);
         root.addProperty("bluemap_enable", true);
         root.addProperty("bluemap_show_homes", true);
@@ -376,6 +443,34 @@ public final class ConfigIO {
         root.addProperty("message_interval", SmpConfig.MESSAGE_INTERVAL);
         root.addProperty("vip_bonus_claims", SmpConfig.VIP_BONUS_CLAIMS);
         root.addProperty("allow_lava_wilderness", SmpConfig.ALLOW_LAVA_WILDERNESS);
+        root.addProperty("claims_enabled", SmpConfig.CLAIMS_ENABLED);
+        root.addProperty("skills_enabled", SmpConfig.SKILLS_ENABLED);
+        root.addProperty("chatfilter_enabled", SmpConfig.CHATFILTER_ENABLED);
+
+        JsonObject vtSave = new JsonObject();
+        vtSave.addProperty("enabled", SmpConfig.VOTIFIER_ENABLED);
+        vtSave.addProperty("port", SmpConfig.VOTIFIER_PORT);
+        vtSave.addProperty("token", SmpConfig.VOTIFIER_TOKEN);
+        vtSave.addProperty("broadcast", SmpConfig.VOTE_BROADCAST);
+        com.google.gson.JsonArray rewardsSave = new com.google.gson.JsonArray();
+        for (String r : SmpConfig.VOTE_REWARDS) rewardsSave.add(r);
+        vtSave.add("rewards", rewardsSave);
+        root.add("votifier", vtSave);
+
+        JsonObject dbSave = new JsonObject();
+        dbSave.addProperty("enabled", SmpConfig.DASHBOARD_ENABLED);
+        dbSave.addProperty("port", SmpConfig.DASHBOARD_PORT);
+        dbSave.addProperty("admin_enabled", SmpConfig.ADMIN_ENABLED);
+        dbSave.addProperty("admin_password_hash", SmpConfig.ADMIN_PASSWORD_HASH);
+        dbSave.addProperty("server_name", SmpConfig.SERVER_NAME);
+        root.add("dashboard", dbSave);
+
+        JsonObject dcSave = new JsonObject();
+        dcSave.addProperty("webhook_url", SmpConfig.DISCORD_WEBHOOK_URL);
+        dcSave.addProperty("join_leave", SmpConfig.DISCORD_JOIN_LEAVE);
+        dcSave.addProperty("chat", SmpConfig.DISCORD_CHAT);
+        root.add("discord", dcSave);
+
         root.addProperty("voicechat_enable", SmpConfig.VOICECHAT_ENABLE);
         root.addProperty("bluemap_enable", SmpConfig.BLUEMAP_ENABLE);
         root.addProperty("bluemap_show_homes", SmpConfig.BLUEMAP_SHOW_HOMES);

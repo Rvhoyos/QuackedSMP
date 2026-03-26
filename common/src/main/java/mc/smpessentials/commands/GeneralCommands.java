@@ -19,6 +19,8 @@ import net.minecraft.server.level.ServerPlayer;
  *   <li>{@code /smp end reset dragon} — respawn the Ender Dragon live without a world reset (OP).</li>
  *   <li>{@code /smp end reset world} — queue a full End-dimension reset on next server restart (OP).</li>
  *   <li>{@code /smp help} — print the command reference to the player's chat.</li>
+ *   <li>{@code /smp admin setpassword <password>} — set or update the admin panel password; also
+ *       enables the panel if it was disabled. Min 8 characters. Invalidates all active sessions (OP).</li>
  *   <li>{@code /mute <player> <minutes>} — mute a player for a fixed duration (OP).</li>
  *   <li>{@code /unmute <player>} — remove an active mute (OP).</li>
  * </ul>
@@ -50,7 +52,13 @@ public class GeneralCommands {
                                                                 .then(Commands.literal("world")
                                                                                 .executes(GeneralCommands::resetEndWorld))))
                                 .then(Commands.literal("help")
-                                                .executes(GeneralCommands::sendHelp)));
+                                                .executes(GeneralCommands::sendHelp))
+                                .then(Commands.literal("admin")
+                                                .requires(s -> net.minecraft.commands.Commands.LEVEL_GAMEMASTERS.check(s.permissions()))
+                                                .then(Commands.literal("setpassword")
+                                                                .then(Commands.argument("password",
+                                                                                com.mojang.brigadier.arguments.StringArgumentType.string())
+                                                                                .executes(GeneralCommands::setAdminPassword)))));
 
                 dispatcher.register(Commands.literal("mute")
                                 .requires(s -> net.minecraft.commands.Commands.LEVEL_GAMEMASTERS.check(s.permissions()))
@@ -155,6 +163,7 @@ public class GeneralCommands {
         private static int reloadConfig(CommandContext<CommandSourceStack> ctx) {
                 try {
                         SmpConfig.load();
+                        mc.smpessentials.votifier.VotifierListener.restart();
                         var res = mc.smpessentials.chatfilter.ChatFilterConfig
                                         .mergeFromConfig(ctx.getSource().getServer());
                         ctx.getSource().sendSuccess(() -> Component.literal("QuackedSMP config reloaded!"), true);
@@ -203,6 +212,32 @@ public class GeneralCommands {
                 }
                 return result;
         }
+
+        /**
+         * Sets or updates the admin panel password and enables the panel.
+         * This is the only in-game way to enable the admin panel — there is no separate enable command.
+         * Requires OP. Min 8 characters. Invalidates all active sessions on success.
+         */
+        private static int setAdminPassword(CommandContext<CommandSourceStack> ctx) {
+                try {
+                        String password = com.mojang.brigadier.arguments.StringArgumentType.getString(ctx, "password");
+                        if (password.length() < 8) {
+                                ctx.getSource().sendFailure(Component.literal("Password must be at least 8 characters."));
+                                return 0;
+                        }
+                        mc.smpessentials.config.SmpConfig.ADMIN_ENABLED = true;
+                        mc.smpessentials.dashboard.AdminAuth.setPassword(password);
+                        mc.smpessentials.dashboard.AdminAuth.clearSessions();
+                        ctx.getSource().sendSuccess(
+                                        () -> Component.literal("\u00a7aAdmin panel enabled and password updated. All sessions invalidated."),
+                                        true);
+                        return 1;
+                } catch (Exception e) {
+                        ctx.getSource().sendFailure(Component.literal("Failed to set password: " + e.getMessage()));
+                        return 0;
+                }
+        }
+
 
         private static int resetEndWorld(CommandContext<CommandSourceStack> ctx) {
                 int result = EndResetLogic.resetWorld(ctx.getSource().getServer());

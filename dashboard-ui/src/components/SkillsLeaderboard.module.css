@@ -1,0 +1,185 @@
+.wrap {
+  flex-shrink: 0;
+  background: var(--mc-panel);
+  border: 1px solid #1A1A1A;
+  display: flex;
+  flex-direction: column;
+  max-height: 300px;
+  overflow: hidden;
+}
+
+/* ── Header ──────────────────────────────────────────────────────── */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 14px;
+  border-bottom: 1px solid #111;
+  background: #181818;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.title {
+  font-family: var(--font-pixel);
+  font-size: 7px;
+  color: #A855F7;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  text-shadow: 1px 1px 0 rgba(0,0,0,0.5);
+  white-space: nowrap;
+}
+
+.tabs {
+  display: flex;
+  gap: 2px;
+}
+
+.tab {
+  font-family: var(--font-pixel);
+  font-size: 6px;
+  letter-spacing: 0.3px;
+  background: none;
+  border: 1px solid #2A2A2A;
+  color: #666;
+  padding: 4px 10px;
+  cursor: pointer;
+  transition: color var(--t-fast), border-color var(--t-fast);
+  white-space: nowrap;
+}
+.tab:hover { color: #AAA; border-color: #444; }
+.tabActive { color: #C084FC; border-color: #5B1A8C; background: rgba(88,26,140,0.2); }
+
+/* ── Body ────────────────────────────────────────────────────────── */
+.body {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+  padding: 4px 0;
+}
+
+/* ── Overall table ───────────────────────────────────────────────── */
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.thRank, .thPlayer, .thLevel {
+  font-family: var(--font-pixel);
+  font-size: 6px;
+  color: #444;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  text-align: left;
+  border-bottom: 1px solid #111;
+}
+.thLevel { text-align: right; }
+
+.tr { border-bottom: 1px solid #0D0D0D; }
+.tr:hover { background: rgba(255,255,255,0.03); }
+
+.rank {
+  font-family: var(--font-pixel);
+  font-size: 7px;
+  color: #555;
+  padding: 6px 10px;
+  width: 30px;
+  letter-spacing: 0.3px;
+}
+
+.playerName {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: #CCC;
+  padding: 6px 10px;
+}
+
+.level {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: #A855F7;
+  padding: 6px 10px;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.noData {
+  font-family: var(--font-pixel);
+  font-size: 6px;
+  color: #333;
+  padding: 12px 10px;
+  text-align: center;
+  letter-spacing: 0.3px;
+}
+
+/* ── Per-skill grid ──────────────────────────────────────────────── */
+.skillsGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1px;
+  background: #111;
+  padding: 0;
+}
+
+@media (max-width: 800px) {
+  .skillsGrid { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 500px) {
+  .skillsGrid { grid-template-columns: 1fr; }
+}
+
+.skillCard {
+  background: #181818;
+  padding: 10px 12px;
+}
+
+.skillTitle {
+  font-family: var(--font-pixel);
+  font-size: 6px;
+  color: #888;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+  text-shadow: 1px 1px 0 rgba(0,0,0,0.5);
+}
+
+.skillRows {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.skillRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.skillRank {
+  font-family: var(--font-pixel);
+  font-size: 6px;
+  color: #555;
+  width: 14px;
+  letter-spacing: 0.3px;
+  flex-shrink: 0;
+}
+
+.skillPlayer {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: #AAA;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.skillLevel {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: #A855F7;
+  white-space: nowrap;
+  flex-shrink: 0;
+}

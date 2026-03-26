@@ -1,15 +1,15 @@
 modLoader = "javafml"
 loaderVersion = "[9,)"
 #issueTrackerURL = ""
-license = "Apache-2.0"
+license = "ARR"
 
 [[mods]]
 modId = "quacksmp"
 version = "${version}"
 displayName = "QuackSMP"
-authors = "Rvhoyos"
+authors = "Monte_Carlo_Simulations"
 description = '''
-Comprehensive server-side utility mod featuring claims, RPG skills, and chat management for 1.21.11.
+Server-side mod with a built-in browser admin panel. Every feature is modular, enable only what you want. Includes claims, RPG skills, custom dimensions, chat filter, Discord, Votifier, and more. No config editing required.
 '''
 issueTrackerURL = "https://github.com/Rvhoyos/QuackedSMP/issues"
 displayURL = "https://www.curseforge.com/minecraft/mc-mods/quackedsmp"

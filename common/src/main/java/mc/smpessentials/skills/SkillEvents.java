@@ -58,6 +58,7 @@ public final class SkillEvents {
      * Tree Feller chain-breaking.
      */
     public static void onBlockBreak(Level level, BlockPos pos, BlockState state, Player player) {
+        if (!SmpConfig.SKILLS_ENABLED) return;
         if (!(player instanceof ServerPlayer sp))
             return;
         if (!(level instanceof ServerLevel sl))
@@ -114,6 +115,7 @@ public final class SkillEvents {
      * Zoom if the dying entity is a player.
      */
     public static void onLivingDeath(LivingEntity entity, DamageSource source) {
+        if (!SmpConfig.SKILLS_ENABLED) return;
         if (entity.level().isClientSide())
             return;
 
@@ -160,6 +162,7 @@ public final class SkillEvents {
      * Also cancels Scout Zoom if the hurt entity is a player with zoom active.
      */
     public static void onLivingHurt(LivingEntity entity, DamageSource source, float amount) {
+        if (!SmpConfig.SKILLS_ENABLED) return;
         if (entity.level().isClientSide())
             return;
 
@@ -216,6 +219,7 @@ public final class SkillEvents {
      * @return true if the original fall damage event should be cancelled (we handled it)
      */
     public static boolean onFallDamage(LivingEntity entity, DamageSource source, float amount) {
+        if (!SmpConfig.SKILLS_ENABLED) return false;
         if (SAFE_LANDING_GUARD.get()) return false;
         if (!(entity instanceof ServerPlayer sp)) return false;
         if (!source.is(DamageTypeTags.IS_FALL)) return false;
@@ -253,6 +257,7 @@ public final class SkillEvents {
      * application and expiry check).
      */
     public static void onPlayerTick(Player player) {
+        if (!SmpConfig.SKILLS_ENABLED) return;
         if (!(player instanceof ServerPlayer sp))
             return;
         if (sp.level().isClientSide())
@@ -330,6 +335,7 @@ public final class SkillEvents {
      * {@link ActiveAbilities#tryActivateZoom}.
      */
     public static void onZoomActivate(net.minecraft.server.level.ServerPlayer sp) {
+        if (!SmpConfig.SKILLS_ENABLED) return;
         ServerLevel sl = (ServerLevel) sp.level();
         ActiveAbilities.tryActivateZoom(sp, SkillData.get(sl));
     }
@@ -362,6 +368,7 @@ public final class SkillEvents {
      * and executes any queued punishments.
      */
     public static void onPlayerJoin(Player player) {
+        if (!SmpConfig.SKILLS_ENABLED) return;
         if (player instanceof ServerPlayer sp) {
             ServerLevel sl = (ServerLevel) sp.level();
             SkillData data = SkillData.get(sl);

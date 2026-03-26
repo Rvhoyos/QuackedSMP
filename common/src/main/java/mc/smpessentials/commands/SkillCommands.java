@@ -32,7 +32,7 @@ public final class SkillCommands {
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(Commands.literal("skills")
-                .requires(src -> src.getEntity() instanceof ServerPlayer)
+                .requires(src -> mc.smpessentials.config.SmpConfig.SKILLS_ENABLED && src.getEntity() instanceof ServerPlayer)
 
                 // /skills — concise overview
                 .executes(ctx -> showAllSkills(ctx, (ServerPlayer) ctx.getSource().getEntity()))
@@ -141,7 +141,7 @@ public final class SkillCommands {
         ServerLevel sl = (ServerLevel) viewer.level();
         SkillData data = SkillData.get(sl);
 
-        int pageSize = Math.max(1, SmpConfig.LEADERBOARD_SIZE);
+        int pageSize = 10;
         int offset = (page - 1) * pageSize;
         int total = data.totalProfiles();
         int totalPages = Math.max(1, (int) Math.ceil((double) total / pageSize));
