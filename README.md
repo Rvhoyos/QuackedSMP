@@ -51,6 +51,39 @@ Accessible to anyone who can reach the port. No login required:
 - **Event feed**: Join/leave events and chat in real time (WebSocket)
 - **Skills leaderboard**: Top players per skill and overall
 
+### Security
+
+The panel serves plain HTTP. Without TLS, your session token is unencrypted on the wire. The password itself is protected (PBKDF2, rate limiting), but the token can be sniffed after login on an untrusted network.
+
+If your server has a domain, put the panel behind a reverse proxy (Caddy, Nginx) with TLS. If you don't, accessing it from home or a VPN is fine in practice.
+
+**Auth**
+- Passwords hashed with PBKDF2-SHA256 (100,000 iterations)
+- Constant-time comparison on verify
+- 128-bit random session tokens, 24-hour TTL
+- All admin endpoints require a Bearer token. No cookies, no CSRF surface.
+
+**Brute-force protection**
+- 5 failed logins within 15 minutes locks the IP out for 5 minutes (HTTP 429)
+- Counter clears on successful login
+
+**Path traversal**
+- Static files reject any path with `..` and serve only from the embedded classpath
+
+**Mod upload**
+- Filename must end in `.jar`, no path separators, no `..`
+- 100 MB size cap
+- Written to a temp file first, then moved atomically
+
+**Public endpoints (no auth)**
+- `/api/health` — player count, server name
+- `/api/metrics` — heap, RAM, disk, uptime, threads
+- `/api/spark/*` — TPS, CPU, MSPT (requires [Spark](https://modrinth.com/plugin/spark))
+- `/api/skills/leaderboard` — skill rankings
+- WebSocket — join/leave events and chat
+
+---
+
 ### Discord Integration
 
 Set a Discord webhook URL in the Config tab to mirror join/leave events and chat messages to a channel automatically.

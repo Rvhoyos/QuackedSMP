@@ -256,6 +256,7 @@ public final class DashboardServer extends Thread {
             case 200 -> "OK"; case 204 -> "No Content";
             case 400 -> "Bad Request"; case 401 -> "Unauthorized";
             case 403 -> "Forbidden"; case 405 -> "Method Not Allowed";
+            case 413 -> "Payload Too Large"; case 429 -> "Too Many Requests";
             case 503 -> "Service Unavailable"; default -> "Not Found";
         };
         String headers = "HTTP/1.1 " + code + " " + reason + "\r\n"

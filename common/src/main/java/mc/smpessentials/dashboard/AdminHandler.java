@@ -92,15 +92,20 @@ public final class AdminHandler {
         if (!"POST".equals(method))     return err(405, "Method not allowed");
         if (!SmpConfig.ADMIN_ENABLED)   return err(403, "Admin panel disabled");
         if (AdminAuth.noPasswordSet())  return err(400, "No password set — use /api/admin/setup");
+        String ip = headers.getOrDefault("x-forwarded-for", "direct").split(",")[0].trim();
+        if (AdminAuth.isRateLimited(ip)) return err(429, "Too many failed attempts — try again later");
         try {
             JsonObject req = JsonParser.parseString(body).getAsJsonObject();
             String password = req.get("password").getAsString();
             if (!AdminAuth.verifyPassword(password)) {
+                AdminAuth.recordFailedLogin(ip);
                 return err(401, "Invalid password");
             }
+            AdminAuth.clearFailedLogins(ip);
             String token = AdminAuth.createSession();
             return String.format("{\"ok\":true,\"token\":\"%s\"}", token);
         } catch (Exception e) {
+            AdminAuth.recordFailedLogin(ip);
             return err(401, "Invalid request");
         }
     }
