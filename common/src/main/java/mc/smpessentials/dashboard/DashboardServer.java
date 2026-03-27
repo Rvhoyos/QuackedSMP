@@ -39,8 +39,20 @@ public final class DashboardServer extends Thread {
         String handle(String method, Map<String, String> headers, String body);
     }
 
+    /**
+     * Upload route handler: receives method, headers, the raw socket InputStream,
+     * and the Content-Length. The handler is responsible for reading exactly
+     * {@code contentLength} bytes from the stream.
+     */
+    @FunctionalInterface
+    public interface UploadRouteHandler {
+        String handle(String method, Map<String, String> headers, InputStream stream, long contentLength);
+    }
+
     // HTTP route table: path → handler
-    private final Map<String, RouteHandler> routes = new ConcurrentHashMap<>();
+    private final Map<String, RouteHandler>       routes       = new ConcurrentHashMap<>();
+    // Upload route table: path → handler (bypasses the 64 KB body cap)
+    private final Map<String, UploadRouteHandler> uploadRoutes = new ConcurrentHashMap<>();
 
     private final ExecutorService executor = Executors.newCachedThreadPool(r -> {
         Thread t = new Thread(r, "Dashboard-Conn");
@@ -62,6 +74,15 @@ public final class DashboardServer extends Thread {
     /** Register a full route handler that receives method, headers, and body. */
     public void addRoute(String path, RouteHandler handler) {
         routes.put(path, handler);
+    }
+
+    /**
+     * Register an upload route handler that receives the raw InputStream instead of a
+     * pre-read body string. Use this for endpoints that accept binary data (e.g. JAR uploads)
+     * that would exceed the normal 64 KB body cap.
+     */
+    public void addUploadRoute(String path, UploadRouteHandler handler) {
+        uploadRoutes.put(path, handler);
     }
 
     // ── Server loop ────────────────────────────────────────────────────────────
@@ -123,21 +144,30 @@ public final class DashboardServer extends Thread {
                 }
             }
 
-            // --- Read body ---
+            // Expose query string to route handlers via pseudo-header
+            headers.put("x-query-string", queryString);
+
+            if (isUpgrade && wsKey != null) {
+                handleWebSocket(socket, wsKey);
+                return;
+            }
+
+            // Check for upload route BEFORE reading body — upload handlers receive the
+            // raw InputStream directly so they are not limited by the 64 KB cap.
+            UploadRouteHandler uploadHandler = uploadRoutes.get(path);
+            if (uploadHandler != null) {
+                handleHttpUpload(socket, method, headers, uploadHandler, (long) contentLength, in);
+                return;
+            }
+
+            // --- Read body (standard routes, max 64 KB) ---
             String body = "";
             if (contentLength > 0 && contentLength <= 65_536) {
                 byte[] bodyBytes = in.readNBytes(contentLength);
                 body = new String(bodyBytes, StandardCharsets.UTF_8);
             }
 
-            // Expose query string to route handlers via pseudo-header
-            headers.put("x-query-string", queryString);
-
-            if (isUpgrade && wsKey != null) {
-                handleWebSocket(socket, wsKey);
-            } else {
-                handleHttp(socket, method, path, headers, body);
-            }
+            handleHttp(socket, method, path, headers, body);
         } catch (IOException | NoSuchAlgorithmException e) {
             try { socket.close(); } catch (IOException ignored) {}
         }
@@ -165,6 +195,39 @@ public final class DashboardServer extends Thread {
                 }
             } else {
                 serveStatic(out, path);
+            }
+        }
+    }
+
+    /**
+     * Serves an upload route: passes the raw {@link InputStream} directly to the handler
+     * instead of pre-reading into a string. OPTIONS preflight is handled here as well.
+     * The socket is closed when this method returns.
+     */
+    private void handleHttpUpload(Socket socket, String method, Map<String, String> headers,
+                                   UploadRouteHandler handler, long contentLength, InputStream in)
+            throws IOException {
+        try (socket) {
+            OutputStream out = socket.getOutputStream();
+            if ("OPTIONS".equals(method)) {
+                writeResponse(out, 204, "text/plain", "no-store", new byte[0]);
+                return;
+            }
+            String result;
+            try {
+                result = handler.handle(method, headers, in, contentLength);
+            } catch (Exception e) {
+                SmpUtilsMod.LOGGER.warn("[Dashboard] Upload handler error: {}", e.getMessage());
+                byte[] body = "{\"error\":\"Internal server error\"}".getBytes(StandardCharsets.UTF_8);
+                writeResponse(out, 500, "application/json; charset=utf-8", "no-store", body);
+                return;
+            }
+            if (AdminHandler.isErr(result)) {
+                byte[] body = AdminHandler.errBody(result).getBytes(StandardCharsets.UTF_8);
+                writeResponse(out, AdminHandler.errStatus(result), "application/json; charset=utf-8", "no-store", body);
+            } else {
+                byte[] body = result.getBytes(StandardCharsets.UTF_8);
+                writeResponse(out, 200, "application/json; charset=utf-8", "no-store", body);
             }
         }
     }
@@ -200,8 +263,8 @@ public final class DashboardServer extends Thread {
                 + "Content-Length: " + body.length + "\r\n"
                 + "Cache-Control: " + cacheControl + "\r\n"
                 + "Access-Control-Allow-Origin: *\r\n"
-                + "Access-Control-Allow-Methods: GET, POST, OPTIONS\r\n"
-                + "Access-Control-Allow-Headers: Content-Type, Authorization\r\n"
+                + "Access-Control-Allow-Methods: GET, POST, DELETE, OPTIONS\r\n"
+                + "Access-Control-Allow-Headers: Content-Type, Authorization, X-Filename\r\n"
                 + "Connection: close\r\n\r\n";
         out.write(headers.getBytes(StandardCharsets.UTF_8));
         out.write(body);

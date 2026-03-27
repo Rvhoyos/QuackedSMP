@@ -8,7 +8,8 @@ import DimsPanel from './DimsPanel'
 import SkillsPanel from './SkillsPanel'
 import ClaimsPanel from './ClaimsPanel'
 import ChatFilterPanel from './ChatFilterPanel'
-import { IconPlayerHead, IconCommandBlock, IconChest, IconBookshelf, IconPortal, IconSkills, IconFlag, IconChatFilter } from './MinecraftIcons'
+import ModsPanel from './ModsPanel'
+import { IconPlayerHead, IconCommandBlock, IconChest, IconBookshelf, IconPortal, IconSkills, IconFlag, IconChatFilter, IconMod } from './MinecraftIcons'
 import styles from './AdminPanel.module.css'
 
 const TABS = [
@@ -18,6 +19,7 @@ const TABS = [
   { id: 'skills',     label: 'Skills',      Icon: IconSkills },
   { id: 'claims',     label: 'Claims',      Icon: IconFlag },
   { id: 'chatfilter', label: 'Chat Filter', Icon: IconChatFilter },
+  { id: 'mods',       label: 'Mods',        Icon: IconMod },
   { id: 'config',     label: 'Config',      Icon: IconChest },
   { id: 'features',   label: 'Showcase',    Icon: IconBookshelf },
 ]
@@ -75,6 +77,7 @@ export default function AdminPanel({ health }) {
         {activeTab === 'skills'     && <SkillsPanel token={token} onExpired={logout} />}
         {activeTab === 'claims'     && <ClaimsPanel token={token} onExpired={logout} />}
         {activeTab === 'chatfilter' && <ChatFilterPanel token={token} onExpired={logout} />}
+        {activeTab === 'mods'       && <ModsPanel token={token} onExpired={logout} />}
         {activeTab === 'config'     && <ConfigEditor token={token} onExpired={logout} />}
         {activeTab === 'features'   && <FeatureShowcase token={token} onExpired={logout} />}
       </div>

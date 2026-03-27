@@ -129,7 +129,6 @@ export default function ConfigEditor({ token, onExpired }) {
   }
 
   async function disableDashboard() {
-    if (!window.confirm('Stop the dashboard server? You will lose access until the Minecraft server is restarted.')) return
     setDisabling(true)
     setDisableMsg('')
     try {
