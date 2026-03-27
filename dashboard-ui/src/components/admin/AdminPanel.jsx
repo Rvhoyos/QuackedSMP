@@ -21,7 +21,7 @@ const TABS = [
   { id: 'chatfilter', label: 'Chat Filter', Icon: IconChatFilter },
   { id: 'mods',       label: 'Mods',        Icon: IconMod },
   { id: 'config',     label: 'Config',      Icon: IconChest },
-  { id: 'features',   label: 'Showcase',    Icon: IconBookshelf },
+  { id: 'features',   label: 'Features',    Icon: IconBookshelf },
 ]
 
 const TOKEN_KEY = 'quack_admin_token'

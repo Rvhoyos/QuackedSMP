@@ -1141,6 +1141,13 @@ public final class AdminHandler {
             if (!target.startsWith(modsDir)) return err(400, "Invalid filename");
             if (!Files.exists(target))       return err(404, "Mod not found: " + jsonEscape(filename));
 
+            // Block deleting the currently running JAR
+            try {
+                Optional<Path> active = mc.smpessentials.platform.SmpServices.PLATFORM.getActiveModJarPath();
+                if (active.isPresent() && active.get().toAbsolutePath().normalize().equals(target))
+                    return err(400, "Cannot delete the active mod JAR");
+            } catch (Exception ignored) {}
+
             Files.delete(target);
             SmpUtilsMod.LOGGER.info("[ModManager] Deleted mod: {}", filename);
             return "{\"ok\":true}";

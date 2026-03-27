@@ -60,7 +60,7 @@ public final class ConfigIO {
                 dirty = true;
             }
             if (!obj.has("welcome_message")) {
-                obj.addProperty("welcome_message", "Welcome to QuackedSMP, {player}!");
+                obj.addProperty("welcome_message", "Welcome to {server}, {player}!");
                 dirty = true;
             }
             if (!obj.has("rules")) {
