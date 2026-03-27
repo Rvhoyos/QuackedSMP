@@ -30,7 +30,7 @@ public final class SmpConfig {
     public static java.util.List<String> VOTE_REWARDS = new java.util.ArrayList<>();
 
     // ---- Dashboard ----
-    public static boolean DASHBOARD_ENABLED = true;
+    public static boolean DASHBOARD_ENABLED = false;
     public static int DASHBOARD_PORT = 8125;
     public static boolean ADMIN_ENABLED = false;
     public static String ADMIN_PASSWORD_HASH = "";

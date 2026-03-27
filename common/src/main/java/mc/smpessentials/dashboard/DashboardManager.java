@@ -57,6 +57,34 @@ public final class DashboardManager {
         mcServer = null;
     }
 
+    /**
+     * Enables the dashboard: saves {@code dashboard_enabled=true} to config and
+     * starts the webserver if it is not already running.
+     * Called from {@code /smp admin setpassword}.
+     */
+    public static void scheduleEnable() {
+        if (running) return;
+        SmpConfig.DASHBOARD_ENABLED = true;
+        mc.smpessentials.config.ConfigIO.save();
+        if (mcServer != null) start(SmpConfig.DASHBOARD_PORT);
+    }
+
+    /**
+     * Disables the dashboard: saves {@code dashboard_enabled=false} to config,
+     * then stops the server on a daemon thread after a short delay so the
+     * in-flight HTTP response can be sent first.
+     */
+    public static void scheduleDisable() {
+        SmpConfig.DASHBOARD_ENABLED = false;
+        mc.smpessentials.config.ConfigIO.save();
+        Thread t = new Thread(() -> {
+            try { Thread.sleep(400); } catch (InterruptedException ignored) {}
+            stop();
+        }, "Dashboard-Disable");
+        t.setDaemon(true);
+        t.start();
+    }
+
     // ── Start / stop ───────────────────────────────────────────────────────────
 
     private static void start(int port) {
@@ -170,6 +198,10 @@ public final class DashboardManager {
                 (m, h, b) -> AdminHandler.handleClaimsGet(m, h, b, mcServer));
         s.addRoute("/api/admin/claims/unclaim",
                 (m, h, b) -> AdminHandler.handleClaimsUnclaim(m, h, b, mcServer));
+
+        // Dashboard self-disable
+        s.addRoute("/api/admin/dashboard/disable",
+                (m, h, b) -> AdminHandler.handleDashboardDisable(m, h, b));
 
         // Chat filter management
         s.addRoute("/api/admin/chatfilter",

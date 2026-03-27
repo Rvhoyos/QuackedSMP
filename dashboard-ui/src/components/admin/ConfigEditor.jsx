@@ -63,12 +63,14 @@ const TABS = [
 // ── Main component ────────────────────────────────────────────────────────────
 
 export default function ConfigEditor({ token, onExpired }) {
-  const [cfg,     setCfg]    = useState(null)
-  const [draft,   setDraft]  = useState({})
-  const [tab,     setTab]    = useState('general')
-  const [saving,  setSaving] = useState({})
-  const [msgs,    setMsgs]   = useState({})
-  const [loadErr, setLoadErr] = useState('')
+  const [cfg,         setCfg]        = useState(null)
+  const [draft,       setDraft]      = useState({})
+  const [tab,         setTab]        = useState('general')
+  const [saving,      setSaving]     = useState({})
+  const [msgs,        setMsgs]       = useState({})
+  const [loadErr,     setLoadErr]    = useState('')
+  const [disabling,   setDisabling]  = useState(false)
+  const [disableMsg,  setDisableMsg] = useState('')
 
   useEffect(() => {
     fetch('/api/admin/config', { headers: authHeaders(token) })
@@ -126,6 +128,23 @@ export default function ConfigEditor({ token, onExpired }) {
     }
   }
 
+  async function disableDashboard() {
+    if (!window.confirm('Stop the dashboard server? You will lose access until the Minecraft server is restarted.')) return
+    setDisabling(true)
+    setDisableMsg('')
+    try {
+      await fetch('/api/admin/dashboard/disable', {
+        method: 'POST',
+        headers: authHeaders(token),
+      })
+      setDisableMsg('Dashboard stopped. This page will stop responding shortly.')
+    } catch {
+      setDisableMsg('Server stopped.')
+    } finally {
+      setDisabling(false)
+    }
+  }
+
   if (!cfg) return <div className={styles.loading}>{loadErr || 'Loading config…'}</div>
 
   const tabMsg   = msgs[tab] || ''
@@ -149,7 +168,7 @@ export default function ConfigEditor({ token, onExpired }) {
       </div>
 
       <div className={styles.scroll}>
-        {tab === 'general'      && <GeneralTab      draft={draft} patch={patch} />}
+        {tab === 'general'      && <GeneralTab      draft={draft} patch={patch} onDisable={disableDashboard} disabling={disabling} disableMsg={disableMsg} />}
         {tab === 'chat'         && <ChatTab          draft={draft} patch={patch} />}
         {tab === 'integrations' && <IntegrationsTab  draft={draft} patch={patch} />}
         {tab === 'skills'       && <SkillsTab        draft={draft} patch={patch} />}
@@ -172,7 +191,7 @@ export default function ConfigEditor({ token, onExpired }) {
 
 // ── Tab: General ──────────────────────────────────────────────────────────────
 
-function GeneralTab({ draft, patch }) {
+function GeneralTab({ draft, patch, onDisable, disabling, disableMsg }) {
   return (
     <>
       <Group icon={<IconGrassBlock />} title="Claims & Land Protection" accent="green">
@@ -217,7 +236,36 @@ function GeneralTab({ draft, patch }) {
         </Row>
         <div className={styles.note}>Password changes: <code>/smp admin setpassword</code> in-game</div>
       </Group>
+
+      <DangerZone onDisable={onDisable} disabling={disabling} disableMsg={disableMsg} />
     </>
+  )
+}
+
+// ── Danger Zone ───────────────────────────────────────────────────────────────
+
+function DangerZone({ onDisable, disabling, disableMsg }) {
+  const [open, setOpen] = useState(false)
+  return (
+    <div className={styles.dangerSection}>
+      <button className={styles.dangerToggle} onClick={() => setOpen(o => !o)} type="button">
+        {open ? '[ - ] Danger Zone' : '[ + ] Danger Zone'}
+      </button>
+      {open && (
+        <div className={styles.dangerBody}>
+          <div className={styles.dangerWarn}>
+            Stops the dashboard HTTP server and frees the port. The config is saved with
+            dashboard disabled. Re-enable by restarting the Minecraft server.
+          </div>
+          <div className={styles.dangerRow}>
+            <button className={styles.dangerBtn} onClick={onDisable} disabled={disabling}>
+              {disabling ? 'Stopping…' : 'Disable Dashboard'}
+            </button>
+            {disableMsg && <span className={styles.disableMsg}>{disableMsg}</span>}
+          </div>
+        </div>
+      )}
+    </div>
   )
 }
 

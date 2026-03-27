@@ -253,7 +253,7 @@ public final class ConfigIO {
         root.add("votifier", votifier);
 
         JsonObject dashboard = new JsonObject();
-        dashboard.addProperty("enabled", true);
+        dashboard.addProperty("enabled", false);
         dashboard.addProperty("port", 8125);
         dashboard.addProperty("admin_enabled", false);
         dashboard.addProperty("admin_password_hash", "");
