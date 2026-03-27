@@ -7,9 +7,9 @@
 
 # QuackedSMP
 
-QuackedSMP is a server-side mod for **Minecraft 1.21.11** (Fabric + NeoForge) with a **browser-based admin panel included**. Drop the JAR, start the server, open a browser. No external tools, no plugins, no config file editing required.
+Server-side mod for **Minecraft 1.21.11** (Fabric + NeoForge) with a built-in browser admin panel. Drop the JAR and manage your server from a browser, no external tools or config editing needed.
 
-Every feature is modular and toggleable from the panel. Use all of it, or just the parts you want. Claims, skills, chat filter, custom dimensions, Discord webhooks, BlueMap, Votifier: each one can be switched on or off independently without touching a file.
+Claims, skills, chat filter, custom dimensions, Discord, BlueMap, Votifier. Every feature is toggleable from the panel.
 
 ---
 
@@ -27,7 +27,10 @@ The admin panel is a password-protected browser UI served directly by the mod on
    ```
    This enables the panel and sets the password in one step. Open `http://your-server-ip:8125` in any browser.
 
-> The public dashboard (metrics, leaderboard, event feed) is always accessible. Only the admin section requires a password.
+> Once enabled, the public dashboard (metrics, leaderboard, event feed) is accessible to anyone. Admin features require the password.
+
+> [!WARNING]
+> Manually setting `dashboard.enabled=true` in `config/quackedsmp.json` without a password is intentional if you want passwordless access, but admin will be open to anyone who can reach the port. Use `/smp admin setpassword` if you want the panel password-protected.
 
 ### Admin Panel Tabs
 
@@ -46,7 +49,7 @@ The admin panel is a password-protected browser UI served directly by the mod on
 
 Accessible to anyone who can reach the port. No login required:
 
-- **Live metrics**: TPS, CPU usage, MSPT, RAM, disk, uptime
+- **Live metrics**: RAM, disk, uptime. TPS, CPU, MSPT if [Spark](https://modrinth.com/plugin/spark) is installed.
 - **Player count**: Live online count
 - **Event feed**: Join/leave events and chat in real time (WebSocket)
 - **Skills leaderboard**: Top players per skill and overall
