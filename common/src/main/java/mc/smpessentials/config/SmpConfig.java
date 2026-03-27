@@ -6,7 +6,7 @@ import mc.smpessentials.skills.SkillType;
 public final class SmpConfig {
     public static int MAX_CLAIMS = 50;
     public static int TP_WARMUP = 5;
-    public static String WELCOME_MESSAGE = "Welcome to QuackedSMP, {player}!";
+    public static String WELCOME_MESSAGE = "Welcome to {server}, {player}!";
     public static java.util.List<String> RULES = new java.util.ArrayList<>();
     public static java.util.List<String> PERIODIC_MESSAGES = new java.util.ArrayList<>();
     public static int MESSAGE_INTERVAL = 300; // Seconds

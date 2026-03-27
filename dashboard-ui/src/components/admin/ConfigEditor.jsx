@@ -254,7 +254,7 @@ function DangerZone({ onDisable, disabling, disableMsg }) {
         <div className={styles.dangerBody}>
           <div className={styles.dangerWarn}>
             Stops the dashboard HTTP server and frees the port. The config is saved with
-            dashboard disabled. Re-enable by restarting the Minecraft server.
+            dashboard disabled. Re-enable with <code>/smp admin setpassword</code> in-game.
           </div>
           <div className={styles.dangerRow}>
             <button className={styles.dangerBtn} type="button" onClick={onDisable} disabled={disabling}>
@@ -379,7 +379,7 @@ function ChatTab({ draft, patch }) {
     <>
       <ColorLegend />
       <Group icon={<IconSign />} title="Announcements" accent="yellow">
-        <StackedRow label="Welcome Message" hint="{player} is replaced with the joining player's name">
+        <StackedRow label="Welcome Message" hint="{player} = joining player's name, {server} = server name from General tab">
           <TextInput value={draft.welcome_message} onChange={v => patch('welcome_message', v)} />
         </StackedRow>
         <Row label="Periodic Tip Interval" hint="Seconds between automatic tip broadcasts">
