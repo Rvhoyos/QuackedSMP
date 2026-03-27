@@ -150,9 +150,18 @@ public final class DashboardManager {
                     "{\"heapUsed\":%d,\"heapMax\":%d,\"ramTotal\":%d,\"ramFree\":%d,\"diskTotal\":%d,\"diskUsable\":%d,\"uptimeMs\":%d,\"threads\":%d}",
                     heapUsed, heapMax, ramTotal, ramFree, diskTotal, diskUsable, uptimeMs, threads);
         });
-        s.addRoute("/api/spark/tps",  SparkMetrics::getTpsJson);
-        s.addRoute("/api/spark/cpu",  SparkMetrics::getCpuJson);
-        s.addRoute("/api/spark/tick", SparkMetrics::getMsptJson);
+        // Spark routes — only reference SparkMetrics if Spark is on the classpath.
+        // SparkMetrics imports Spark types directly; loading it without Spark present
+        // throws NoClassDefFoundError and would crash the dashboard startup.
+        if (sparkLoaded) {
+            s.addRoute("/api/spark/tps",  SparkMetrics::getTpsJson);
+            s.addRoute("/api/spark/cpu",  SparkMetrics::getCpuJson);
+            s.addRoute("/api/spark/tick", SparkMetrics::getMsptJson);
+        } else {
+            s.addRoute("/api/spark/tps",  () -> "{\"error\":\"spark_unavailable\"}");
+            s.addRoute("/api/spark/cpu",  () -> "{\"error\":\"spark_unavailable\"}");
+            s.addRoute("/api/spark/tick", () -> "{\"error\":\"spark_unavailable\"}");
+        }
 
         // Admin endpoints
         s.addRoute("/api/admin/status", AdminHandler::handleStatus);
