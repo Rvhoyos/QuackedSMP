@@ -338,6 +338,78 @@
   cursor: not-allowed;
 }
 
+/* ── Danger Zone ── */
+.dangerSection {
+  margin: 8px 12px 4px;
+}
+
+.dangerToggle {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: #555;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px 2px;
+  letter-spacing: 0.5px;
+}
+
+.dangerToggle:hover {
+  color: var(--red);
+}
+
+.dangerBody {
+  margin-top: 8px;
+  padding: 10px 12px;
+  border: 1px solid #3A1010;
+  background: #1A0A0A;
+}
+
+.dangerWarn {
+  font-size: 10px;
+  color: #886666;
+  font-style: italic;
+  margin-bottom: 10px;
+  line-height: 1.5;
+}
+
+.dangerRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.dangerBtn {
+  font-family: var(--font-pixel);
+  font-size: 7px;
+  padding: 7px 14px;
+  background: #3A1010;
+  border-top:    2px solid #8A3030;
+  border-left:   2px solid #8A3030;
+  border-bottom: 2px solid #1A0808;
+  border-right:  2px solid #1A0808;
+  color: var(--red);
+  text-shadow: 1px 1px 0 rgba(0,0,0,0.5);
+  cursor: pointer;
+  letter-spacing: 0.5px;
+}
+
+.dangerBtn:hover:not(:disabled) {
+  background: #5A1A1A;
+  color: #FFAAAA;
+}
+
+.dangerBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.disableMsg {
+  font-size: 10px;
+  color: var(--yellow);
+  font-style: italic;
+}
+
 /* ── Tab bar ── */
 .tabBar {
   display: flex;

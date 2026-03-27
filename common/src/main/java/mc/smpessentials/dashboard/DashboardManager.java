@@ -57,6 +57,34 @@ public final class DashboardManager {
         mcServer = null;
     }
 
+    /**
+     * Enables the dashboard: saves {@code dashboard_enabled=true} to config and
+     * starts the webserver if it is not already running.
+     * Called from {@code /smp admin setpassword}.
+     */
+    public static void scheduleEnable() {
+        if (running) return;
+        SmpConfig.DASHBOARD_ENABLED = true;
+        mc.smpessentials.config.ConfigIO.save();
+        if (mcServer != null) start(SmpConfig.DASHBOARD_PORT);
+    }
+
+    /**
+     * Disables the dashboard: saves {@code dashboard_enabled=false} to config,
+     * then stops the server on a daemon thread after a short delay so the
+     * in-flight HTTP response can be sent first.
+     */
+    public static void scheduleDisable() {
+        SmpConfig.DASHBOARD_ENABLED = false;
+        mc.smpessentials.config.ConfigIO.save();
+        Thread t = new Thread(() -> {
+            try { Thread.sleep(400); } catch (InterruptedException ignored) {}
+            stop();
+        }, "Dashboard-Disable");
+        t.setDaemon(true);
+        t.start();
+    }
+
     // ── Start / stop ───────────────────────────────────────────────────────────
 
     private static void start(int port) {
@@ -103,6 +131,13 @@ public final class DashboardManager {
             Runtime rt       = Runtime.getRuntime();
             long heapUsed    = rt.totalMemory() - rt.freeMemory();
             long heapMax     = rt.maxMemory();
+            long ramTotal = 0, ramFree = 0;
+            try {
+                com.sun.management.OperatingSystemMXBean os =
+                        (com.sun.management.OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
+                ramTotal = os.getTotalMemorySize();
+                ramFree  = readPlatformFreeMemory(os);
+            } catch (Exception ignored) {}
             long diskTotal   = 0, diskUsable = 0;
             try {
                 java.nio.file.FileStore fs = Files.getFileStore(Path.of(".").toAbsolutePath());
@@ -112,8 +147,8 @@ public final class DashboardManager {
             long uptimeMs = ManagementFactory.getRuntimeMXBean().getUptime();
             int  threads  = ManagementFactory.getThreadMXBean().getThreadCount();
             return String.format(Locale.US,
-                    "{\"heapUsed\":%d,\"heapMax\":%d,\"diskTotal\":%d,\"diskUsable\":%d,\"uptimeMs\":%d,\"threads\":%d}",
-                    heapUsed, heapMax, diskTotal, diskUsable, uptimeMs, threads);
+                    "{\"heapUsed\":%d,\"heapMax\":%d,\"ramTotal\":%d,\"ramFree\":%d,\"diskTotal\":%d,\"diskUsable\":%d,\"uptimeMs\":%d,\"threads\":%d}",
+                    heapUsed, heapMax, ramTotal, ramFree, diskTotal, diskUsable, uptimeMs, threads);
         });
         s.addRoute("/api/spark/tps",  SparkMetrics::getTpsJson);
         s.addRoute("/api/spark/cpu",  SparkMetrics::getCpuJson);
@@ -163,6 +198,10 @@ public final class DashboardManager {
                 (m, h, b) -> AdminHandler.handleClaimsGet(m, h, b, mcServer));
         s.addRoute("/api/admin/claims/unclaim",
                 (m, h, b) -> AdminHandler.handleClaimsUnclaim(m, h, b, mcServer));
+
+        // Dashboard self-disable
+        s.addRoute("/api/admin/dashboard/disable",
+                (m, h, b) -> AdminHandler.handleDashboardDisable(m, h, b));
 
         // Chat filter management
         s.addRoute("/api/admin/chatfilter",
@@ -222,6 +261,71 @@ public final class DashboardManager {
     }
 
     // ── Util ──────────────────────────────────────────────────────────────────
+
+    /**
+     * Returns the best available free-memory figure for the current platform.
+     * Linux:  reads MemAvailable from /proc/meminfo (includes reclaimable page cache).
+     * macOS:  parses vm_stat output (free + inactive + speculative pages).
+     * Other:  falls back to OperatingSystemMXBean.getFreeMemorySize().
+     */
+    private static long readPlatformFreeMemory(com.sun.management.OperatingSystemMXBean os) {
+        long memAvail = readMemAvailable();
+        if (memAvail > 0) return memAvail;
+        if (System.getProperty("os.name", "").toLowerCase().contains("mac")) {
+            long vmFree = readVmStat();
+            if (vmFree > 0) return vmFree;
+        }
+        return os.getFreeMemorySize();
+    }
+
+    /** Reads MemAvailable from /proc/meminfo (Linux only). Returns -1 if unavailable. */
+    private static long readMemAvailable() {
+        try {
+            for (String line : java.nio.file.Files.readAllLines(java.nio.file.Path.of("/proc/meminfo"))) {
+                if (line.startsWith("MemAvailable:")) {
+                    String[] parts = line.trim().split("\\s+");
+                    return Long.parseLong(parts[1]) * 1024; // kB to bytes
+                }
+            }
+        } catch (Exception ignored) {}
+        return -1;
+    }
+
+    /**
+     * Parses vm_stat output on macOS to get available memory.
+     * Available = (free + inactive + speculative) * page_size.
+     * Returns -1 if parsing fails.
+     */
+    private static long readVmStat() {
+        try {
+            Process p = Runtime.getRuntime().exec("vm_stat");
+            p.waitFor(2, TimeUnit.SECONDS);
+            String output = new String(p.getInputStream().readAllBytes());
+            long pageSize = 4096;
+            long pagesFree = 0, pagesInactive = 0, pagesSpeculative = 0;
+            for (String line : output.split("\n")) {
+                if (line.contains("page size of ")) {
+                    String[] parts = line.split("page size of ");
+                    if (parts.length > 1)
+                        pageSize = Long.parseLong(parts[1].trim().split(" ")[0]);
+                } else if (line.startsWith("Pages free:")) {
+                    pagesFree = vmStatLong(line);
+                } else if (line.startsWith("Pages inactive:")) {
+                    pagesInactive = vmStatLong(line);
+                } else if (line.startsWith("Pages speculative:")) {
+                    pagesSpeculative = vmStatLong(line);
+                }
+            }
+            return (pagesFree + pagesInactive + pagesSpeculative) * pageSize;
+        } catch (Exception ignored) {}
+        return -1;
+    }
+
+    /** Extracts trailing integer from a vm_stat line like "Pages free:  1234." */
+    private static long vmStatLong(String line) {
+        String num = line.substring(line.lastIndexOf(' ') + 1).replace(".", "").trim();
+        try { return Long.parseLong(num); } catch (Exception e) { return 0; }
+    }
 
     private static String jsonEscape(String s) {
         if (s == null) return "";

@@ -316,6 +316,19 @@ public final class AdminHandler {
     }
 
     /**
+     * POST /api/admin/dashboard/disable — saves dashboard_enabled=false to config and
+     * shuts down the dashboard server after the response is sent.
+     * The caller will lose connection; they must re-enable via /smp admin setpassword.
+     */
+    public static String handleDashboardDisable(String method, Map<String, String> headers, String body) {
+        if (!"POST".equals(method))           return err(405, "Method not allowed");
+        if (!SmpConfig.ADMIN_ENABLED)         return err(403, "Admin panel disabled");
+        if (!AdminAuth.isAuthorized(headers)) return err(403, "Unauthorized");
+        DashboardManager.scheduleDisable();
+        return "{\"ok\":true}";
+    }
+
+    /**
      * POST /api/admin/setop — sets a player's operator level by editing ops.json directly.
      * Levels 1–3 have no vanilla command so require direct file editing.
      * ops.json is written synchronously on the HTTP thread; only the reload+sync

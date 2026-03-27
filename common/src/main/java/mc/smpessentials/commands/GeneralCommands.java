@@ -228,6 +228,7 @@ public class GeneralCommands {
                         mc.smpessentials.config.SmpConfig.ADMIN_ENABLED = true;
                         mc.smpessentials.dashboard.AdminAuth.setPassword(password);
                         mc.smpessentials.dashboard.AdminAuth.clearSessions();
+                        mc.smpessentials.dashboard.DashboardManager.scheduleEnable();
                         ctx.getSource().sendSuccess(
                                         () -> Component.literal("\u00a7aAdmin panel enabled and password updated. All sessions invalidated."),
                                         true);
