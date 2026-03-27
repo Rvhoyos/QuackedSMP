@@ -17,6 +17,7 @@
     "LivingEntityMixin",
     "ExplosionMixin",
     "BlockItemMixin",
+    "BucketItemMixin",
     "PlayerActionMixin",
     "MinecraftServerMixin",
     "NetherPortalBlockMixin",

@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react'
 import {
   IconGrassBlock, IconEnderPearl, IconBookQuill,
-  IconXPOrb, IconBallot, IconDiscord, IconMapScroll, IconShield,
+  IconBallot, IconDiscord, IconMapScroll, IconShield,
   IconPlayerHead, IconChest, IconSign, IconClock,
-  IconVoiceChat, IconFurnace, IconSword,
+  IconVoiceChat,
 } from './MinecraftIcons'
 import styles from './ConfigEditor.module.css'
 
@@ -19,13 +19,6 @@ function toColorInput(hex)   { return hex ? `#${hex.toLowerCase()}` : '#000000' 
 function fromColorInput(val) { return val.replace('#', '').toUpperCase() }
 
 // ── Tab definitions ───────────────────────────────────────────────────────────
-
-const SKILL_NAMES = [
-  'mining', 'excavation', 'woodcutting',
-  'farming', 'fishing', 'agility',
-  'melee', 'archery', 'defense',
-  'enchanting', 'alchemy', 'trading',
-]
 
 const TABS = [
   {
@@ -46,16 +39,6 @@ const TABS = [
       'votifier_enabled', 'votifier_port', 'votifier_token', 'vote_broadcast', 'vote_rewards',
       'bluemap_enabled', 'bluemap_show_homes', 'bluemap_show_claims', 'bluemap_show_worldborder',
       'bluemap_claim_color', 'bluemap_op_claim_color', 'bluemap_vip_claim_color', 'bluemap_worldborder_color',
-    ],
-  },
-  {
-    id: 'skills', label: 'Skills',
-    keys: [
-      'skill_xp_exponent',
-      ...SKILL_NAMES.map(s => `skill_cooldown_${s}`),
-      ...SKILL_NAMES.map(s => `skill_unlock_${s}`),
-      'cap_industrial_speed', 'cap_nature_health', 'cap_combat_damage', 'cap_knowledge_xp',
-      'cap_double_drop', 'cap_defense_armor', 'cap_safe_landing',
     ],
   },
 ]
@@ -170,7 +153,6 @@ export default function ConfigEditor({ token, onExpired }) {
         {tab === 'general'      && <GeneralTab      draft={draft} patch={patch} onDisable={disableDashboard} disabling={disabling} disableMsg={disableMsg} />}
         {tab === 'chat'         && <ChatTab          draft={draft} patch={patch} />}
         {tab === 'integrations' && <IntegrationsTab  draft={draft} patch={patch} />}
-        {tab === 'skills'       && <SkillsTab        draft={draft} patch={patch} />}
       </div>
 
       <div className={styles.footer}>
@@ -487,77 +469,6 @@ function IntegrationsTab({ draft, patch }) {
         </Row>
         <Row label="World Border Color" hint="Color of the world border line">
           <ColorInput value={draft.bluemap_worldborder_color} onChange={v => patch('bluemap_worldborder_color', v)} />
-        </Row>
-      </Group>
-    </>
-  )
-}
-
-// ── Tab: Skills ───────────────────────────────────────────────────────────────
-
-const SKILL_GROUPS = [
-  { name: 'Industrial', accent: 'peach',  icon: <IconFurnace />,    skills: ['mining', 'excavation', 'woodcutting'] },
-  { name: 'Nature',     accent: 'green',  icon: <IconGrassBlock />, skills: ['farming', 'fishing', 'agility'] },
-  { name: 'Combat',     accent: 'red',    icon: <IconSword />,      skills: ['melee', 'archery', 'defense'] },
-  { name: 'Knowledge',  accent: 'mauve',  icon: <IconBookQuill />,  skills: ['enchanting', 'alchemy', 'trading'] },
-]
-
-function SkillsTab({ draft, patch }) {
-  return (
-    <>
-      <Group icon={<IconXPOrb />} title="XP Scaling" accent="mauve">
-        <Row label="XP Exponent" hint="Higher = slower level scaling. Default 1.5, change carefully.">
-          <NumInput value={draft.skill_xp_exponent} step={0.05} onChange={v => patch('skill_xp_exponent', v)} />
-        </Row>
-      </Group>
-
-      {SKILL_GROUPS.map(grp => (
-        <Group key={grp.name} icon={grp.icon} title={`${grp.name} Skills`} accent={grp.accent}>
-          <div className={styles.skillTableHeader}>
-            <span />
-            <span className={styles.skillColLabel}>Cooldown</span>
-            <span className={styles.skillColLabel}>Unlock Lvl</span>
-          </div>
-          {grp.skills.map(skill => (
-            <div key={skill} className={styles.skillRow}>
-              <span className={styles.skillName}>
-                {skill.charAt(0).toUpperCase() + skill.slice(1)}
-              </span>
-              <NumInput
-                value={draft[`skill_cooldown_${skill}`]}
-                onChange={v => patch(`skill_cooldown_${skill}`, v)}
-                suffix="s"
-              />
-              <NumInput
-                value={draft[`skill_unlock_${skill}`]}
-                onChange={v => patch(`skill_unlock_${skill}`, v)}
-              />
-            </div>
-          ))}
-        </Group>
-      ))}
-
-      <Group icon={<IconShield />} title="Passive Stat Caps" accent="mauve">
-        <Row label="Industrial Speed" hint="Max movement speed bonus at level 100 (0.5 = +50%)">
-          <NumInput value={draft.cap_industrial_speed} step={0.05} onChange={v => patch('cap_industrial_speed', v)} />
-        </Row>
-        <Row label="Nature Health" hint="Max bonus hearts at level 100 (10.0 = +10 hearts)">
-          <NumInput value={draft.cap_nature_health} step={0.5} onChange={v => patch('cap_nature_health', v)} />
-        </Row>
-        <Row label="Combat Damage" hint="Max bonus damage multiplier at level 100 (1.0 = +100%)">
-          <NumInput value={draft.cap_combat_damage} step={0.05} onChange={v => patch('cap_combat_damage', v)} />
-        </Row>
-        <Row label="Knowledge XP" hint="Max bonus XP orb multiplier at level 100 (1.0 = +100%)">
-          <NumInput value={draft.cap_knowledge_xp} step={0.05} onChange={v => patch('cap_knowledge_xp', v)} />
-        </Row>
-        <Row label="Double Drop Chance" hint="Max double drop chance at Industrial level 100 (0.5 = 50%)">
-          <NumInput value={draft.cap_double_drop} step={0.05} onChange={v => patch('cap_double_drop', v)} />
-        </Row>
-        <Row label="Defense Armor" hint="Max bonus armor points at Defense level 100 (10.0 = +10)">
-          <NumInput value={draft.cap_defense_armor} step={0.5} onChange={v => patch('cap_defense_armor', v)} />
-        </Row>
-        <Row label="Safe Landing" hint="Max fall damage absorbed at Agility level 100 (1.0 = 100%)">
-          <NumInput value={draft.cap_safe_landing} step={0.05} onChange={v => patch('cap_safe_landing', v)} />
         </Row>
       </Group>
     </>
