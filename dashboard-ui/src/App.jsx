@@ -53,7 +53,7 @@ export default function App() {
 
   const openWebSocket = useCallback(() => {
     if (wsRef.current) wsRef.current.close()
-    const ws = new WebSocket(`ws://${location.host}/ws/events`)
+    const ws = new WebSocket(`${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/ws/events`)
     wsRef.current = ws
     setWsStatus('connecting')
 
