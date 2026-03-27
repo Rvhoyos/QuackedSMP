@@ -29,7 +29,13 @@ public final class AdminAuth {
     private static final int          KEY_BITS   = 256;
     private static final long         SESSION_TTL = 24L * 60 * 60 * 1000; // 24 h
 
-    private static final ConcurrentHashMap<String, Long> sessions = new ConcurrentHashMap<>();
+    private static final ConcurrentHashMap<String, Long>   sessions     = new ConcurrentHashMap<>();
+
+    // Rate limiting: ip → [failCount, lockUntilMs, windowStartMs]
+    private static final int  FAIL_LIMIT  = 5;
+    private static final long WINDOW_MS   = 15L * 60 * 1000; // 15-minute failure window
+    private static final long LOCKOUT_MS  = 5L  * 60 * 1000; // 5-minute lockout
+    private static final ConcurrentHashMap<String, long[]> loginAttempts = new ConcurrentHashMap<>();
 
     private AdminAuth() {}
 
@@ -98,6 +104,34 @@ public final class AdminAuth {
     /** Invalidates all active sessions (e.g. on password change). */
     public static void clearSessions() {
         sessions.clear();
+    }
+
+    // ── Rate limiting ──────────────────────────────────────────────────────────
+
+    /** Returns true if this IP is currently locked out from login attempts. */
+    public static boolean isRateLimited(String ip) {
+        long[] s = loginAttempts.get(ip);
+        if (s == null) return false;
+        long now = System.currentTimeMillis();
+        if (s[1] > 0 && now < s[1]) return true;          // actively locked out
+        if (now - s[2] > WINDOW_MS) { loginAttempts.remove(ip); return false; } // window expired
+        return false;
+    }
+
+    /** Records a failed login attempt for this IP. Locks out after {@code FAIL_LIMIT} failures. */
+    public static void recordFailedLogin(String ip) {
+        long now = System.currentTimeMillis();
+        loginAttempts.compute(ip, (k, s) -> {
+            if (s == null || now - s[2] > WINDOW_MS) return new long[]{1, 0, now};
+            s[0]++;
+            if (s[0] >= FAIL_LIMIT) s[1] = now + LOCKOUT_MS;
+            return s;
+        });
+    }
+
+    /** Clears failed login state for this IP on successful login. */
+    public static void clearFailedLogins(String ip) {
+        loginAttempts.remove(ip);
     }
 
     // ── Auth check helper ──────────────────────────────────────────────────────
