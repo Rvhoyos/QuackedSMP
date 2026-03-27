@@ -258,7 +258,7 @@ function DangerZone({ onDisable, disabling, disableMsg }) {
             dashboard disabled. Re-enable by restarting the Minecraft server.
           </div>
           <div className={styles.dangerRow}>
-            <button className={styles.dangerBtn} onClick={onDisable} disabled={disabling}>
+            <button className={styles.dangerBtn} type="button" onClick={onDisable} disabled={disabling}>
               {disabling ? 'Stopping…' : 'Disable Dashboard'}
             </button>
             {disableMsg && <span className={styles.disableMsg}>{disableMsg}</span>}
