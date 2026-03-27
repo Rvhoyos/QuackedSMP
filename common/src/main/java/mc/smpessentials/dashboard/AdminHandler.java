@@ -27,9 +27,13 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import java.util.stream.Collectors;
 
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -1042,6 +1046,181 @@ public final class AdminHandler {
             return future.get(5, TimeUnit.SECONDS);
         } catch (Exception e) {
             return err(400, "Invalid request: " + jsonEscape(e.getMessage()));
+        }
+    }
+
+    // ── Mods management ───────────────────────────────────────────────────────
+
+    /**
+     * Dispatcher for {@code /api/admin/mods}.
+     *
+     * <ul>
+     *   <li>{@code GET} — list all {@code .jar} files in {@code mods/} with name, size,
+     *       last-modified timestamp, and an {@code active} flag for the running JAR.</li>
+     *   <li>{@code DELETE} — remove a named JAR. Request body: {@code {"filename":"foo.jar"}}.</li>
+     * </ul>
+     *
+     * <p>Requires admin auth ({@code ADMIN_ENABLED} + valid token).
+     */
+    public static String handleMods(String method, Map<String, String> headers, String body) {
+        if (!SmpConfig.ADMIN_ENABLED)           return err(403, "Admin panel disabled");
+        if (!AdminAuth.isAuthorized(headers))   return err(403, "Unauthorized");
+
+        if ("GET".equals(method))    return handleModsList(headers);
+        if ("DELETE".equals(method)) return handleModsDelete(body);
+        return err(405, "Method not allowed");
+    }
+
+    /**
+     * Lists all {@code .jar} files in {@code mods/}, sorted alphabetically.
+     * Each entry includes {@code name}, {@code size} (bytes), {@code modified} (epoch ms),
+     * and {@code active} ({@code true} if this is the currently running QuackedSMP JAR).
+     */
+    private static String handleModsList(Map<String, String> headers) {
+        try {
+            Path modsDir = Path.of("mods").toAbsolutePath().normalize();
+            if (!Files.isDirectory(modsDir)) return err(503, "Mods directory not found");
+
+            // Determine active JAR filename for badge display in the UI
+            String activeJarName = "";
+            try {
+                Optional<Path> ap = mc.smpessentials.platform.SmpServices.PLATFORM.getActiveModJarPath();
+                if (ap.isPresent()) activeJarName = ap.get().getFileName().toString();
+            } catch (Exception ignored) {}
+            final String activeJar = activeJarName;
+
+            List<Path> jars;
+            try (var dirStream = Files.list(modsDir)) {
+                jars = dirStream
+                        .filter(p -> p.getFileName().toString().endsWith(".jar"))
+                        .sorted(Comparator.comparing(p -> p.getFileName().toString().toLowerCase(Locale.ROOT)))
+                        .collect(java.util.stream.Collectors.toList());
+            }
+
+            StringBuilder sb = new StringBuilder("[");
+            for (int i = 0; i < jars.size(); i++) {
+                if (i > 0) sb.append(',');
+                Path jar = jars.get(i);
+                String name     = jar.getFileName().toString();
+                long   size     = Files.size(jar);
+                long   modified = Files.getLastModifiedTime(jar).toMillis();
+                boolean isActive = !activeJar.isEmpty() && activeJar.equals(name);
+                sb.append(String.format(Locale.US,
+                        "{\"name\":\"%s\",\"size\":%d,\"modified\":%d,\"active\":%b}",
+                        jsonEscape(name), size, modified, isActive));
+            }
+            sb.append(']');
+            return sb.toString();
+        } catch (Exception e) {
+            return err(500, "Failed to list mods: " + jsonEscape(e.getMessage()));
+        }
+    }
+
+    /**
+     * Deletes a single JAR from {@code mods/}.
+     *
+     * <p>Security checks (all enforced before touching the filesystem):
+     * <ul>
+     *   <li>Filename must end with {@code .jar}</li>
+     *   <li>Filename must not contain {@code /}, {@code \}, or {@code ..}</li>
+     *   <li>Resolved path must be inside {@code mods/} (path-traversal guard)</li>
+     * </ul>
+     */
+    private static String handleModsDelete(String body) {
+        try {
+            JsonObject req      = JsonParser.parseString(body).getAsJsonObject();
+            String     filename = req.get("filename").getAsString();
+
+            if (!filename.endsWith(".jar"))
+                return err(400, "Only .jar files can be deleted");
+            if (filename.contains("/") || filename.contains("\\") || filename.contains(".."))
+                return err(400, "Invalid filename");
+
+            Path modsDir = Path.of("mods").toAbsolutePath().normalize();
+            Path target  = modsDir.resolve(filename).normalize();
+            if (!target.startsWith(modsDir)) return err(400, "Invalid filename");
+            if (!Files.exists(target))       return err(404, "Mod not found: " + jsonEscape(filename));
+
+            Files.delete(target);
+            SmpUtilsMod.LOGGER.info("[ModManager] Deleted mod: {}", filename);
+            return "{\"ok\":true}";
+        } catch (Exception e) {
+            return err(500, "Failed to delete: " + jsonEscape(e.getMessage()));
+        }
+    }
+
+    /**
+     * {@code POST /api/admin/mods/upload} — streams a JAR into {@code mods/}.
+     *
+     * <p>This handler receives the raw {@link InputStream} via the upload route path,
+     * bypassing the normal 64 KB body cap. The file is written to a temp file inside
+     * {@code mods/} first, then atomically moved to the final destination on success.
+     * The temp file is always cleaned up in the {@code finally} block.
+     *
+     * <p>Required headers:
+     * <ul>
+     *   <li>{@code X-Filename} — target filename (must end in {@code .jar}, no path components)</li>
+     *   <li>{@code Content-Length} — exact byte count (required; upload rejected if absent or 0)</li>
+     * </ul>
+     *
+     * <p>Limits: 100 MB max. Requires admin auth.
+     */
+    public static String handleModsUpload(String method, Map<String, String> headers,
+                                           InputStream stream, long contentLength) {
+        if (!"POST".equals(method))             return err(405, "Method not allowed");
+        if (!SmpConfig.ADMIN_ENABLED)           return err(403, "Admin panel disabled");
+        if (!AdminAuth.isAuthorized(headers))   return err(403, "Unauthorized");
+        if (contentLength <= 0)                 return err(400, "Content-Length required");
+
+        final long maxBytes = 100L * 1024 * 1024; // 100 MB
+        if (contentLength > maxBytes)           return err(413, "File too large (max 100 MB)");
+
+        String filename = headers.getOrDefault("x-filename", "").trim();
+        if (filename.isEmpty())                 return err(400, "X-Filename header required");
+        if (!filename.endsWith(".jar"))         return err(400, "Only .jar files are allowed");
+        if (filename.contains("/") || filename.contains("\\") || filename.contains(".."))
+            return err(400, "Invalid filename");
+
+        Path modsDir = Path.of("mods").toAbsolutePath().normalize();
+        if (!Files.isDirectory(modsDir))        return err(503, "Mods directory not found");
+
+        Path target = modsDir.resolve(filename).normalize();
+        if (!target.startsWith(modsDir))        return err(400, "Invalid filename");
+
+        Path temp = null;
+        try {
+            temp = Files.createTempFile(modsDir, "upload-", ".tmp");
+            // Stream exactly contentLength bytes into the temp file
+            try (OutputStream fileOut = Files.newOutputStream(temp)) {
+                byte[] buf       = new byte[65_536];
+                long   remaining = contentLength;
+                while (remaining > 0) {
+                    int toRead = (int) Math.min(buf.length, remaining);
+                    int n      = stream.read(buf, 0, toRead);
+                    if (n == -1) break;
+                    fileOut.write(buf, 0, n);
+                    remaining -= n;
+                }
+                if (remaining > 0) {
+                    return err(400, "Upload incomplete");
+                }
+            }
+
+            long actual = Files.size(temp);
+            try {
+                Files.move(temp, target, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
+            } catch (java.nio.file.AtomicMoveNotSupportedException e) {
+                Files.move(temp, target, StandardCopyOption.REPLACE_EXISTING);
+            }
+            temp = null; // successfully moved — skip deletion in finally
+            SmpUtilsMod.LOGGER.info("[ModManager] Uploaded mod: {} ({} bytes)", filename, actual);
+            return String.format(Locale.US, "{\"ok\":true,\"filename\":\"%s\",\"size\":%d}",
+                    jsonEscape(filename), actual);
+        } catch (Exception e) {
+            SmpUtilsMod.LOGGER.warn("[ModManager] Upload failed: {}", e.getMessage());
+            return err(500, "Upload failed: " + jsonEscape(e.getMessage()));
+        } finally {
+            if (temp != null) try { Files.deleteIfExists(temp); } catch (Exception ignored) {}
         }
     }
 

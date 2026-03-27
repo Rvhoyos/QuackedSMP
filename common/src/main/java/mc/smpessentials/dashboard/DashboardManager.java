@@ -203,6 +203,12 @@ public final class DashboardManager {
         s.addRoute("/api/admin/dashboard/disable",
                 (m, h, b) -> AdminHandler.handleDashboardDisable(m, h, b));
 
+        // Mods management
+        s.addRoute("/api/admin/mods",
+                (m, h, b) -> AdminHandler.handleMods(m, h, b));
+        s.addUploadRoute("/api/admin/mods/upload",
+                (m, h, stream, len) -> AdminHandler.handleModsUpload(m, h, stream, len));
+
         // Chat filter management
         s.addRoute("/api/admin/chatfilter",
                 (m, h, b) -> AdminHandler.handleChatFilterGet(m, h, b, mcServer));

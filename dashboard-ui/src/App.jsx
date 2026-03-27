@@ -20,9 +20,9 @@ export default function App() {
   const [wsStatus,    setWsStatus]    = useState('connecting')
   const [view,        setView]        = useState('dashboard') // 'dashboard' | 'admin'
 
-  const wsRef    = useRef(null)
-  const retryRef = useRef(null)
-  const pollRef  = useRef(null)
+  const wsRef         = useRef(null)
+  const retryRef      = useRef(null)
+  const pollRef       = useRef(null)
 
   const pushEvent = useCallback((ev) => {
     setEvents(prev => [{ ...ev, id: `${ev.timestamp}-${Math.random()}` }, ...prev].slice(0, MAX_EVENTS))

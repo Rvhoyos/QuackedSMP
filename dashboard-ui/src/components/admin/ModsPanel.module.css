@@ -1,0 +1,220 @@
+.wrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
+  background: var(--mc-panel);
+}
+
+/* ── Restart banner ──────────────────────────────────────────────── */
+.banner {
+  padding: 7px 14px;
+  background: #1A1500;
+  border-bottom: 1px solid #3A2F00;
+  font-family: var(--font-pixel);
+  font-size: 6px;
+  color: #C8A820;
+  letter-spacing: 0.4px;
+  flex-shrink: 0;
+}
+
+/* ── Feedback ────────────────────────────────────────────────────── */
+.error {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  background: #2A0808;
+  border-bottom: 1px solid #5A1010;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: #FF8080;
+  flex-shrink: 0;
+}
+.dismiss {
+  margin-left: auto;
+  background: none;
+  border: none;
+  color: #FF4040;
+  cursor: pointer;
+  font-size: 12px;
+  padding: 0 2px;
+}
+.dismiss:hover { color: #FF8080; }
+
+.statusMsg {
+  padding: 6px 14px;
+  background: #0A2010;
+  border-bottom: 1px solid #1A4020;
+  font-family: var(--font-pixel);
+  font-size: 6px;
+  color: #60C060;
+  letter-spacing: 0.3px;
+  flex-shrink: 0;
+}
+
+/* ── Toolbar ─────────────────────────────────────────────────────── */
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-bottom: 1px solid #111;
+  background: #1A1A1A;
+  flex-shrink: 0;
+}
+
+.count {
+  flex: 1;
+  font-family: var(--font-pixel);
+  font-size: 6px;
+  color: #555;
+  letter-spacing: 0.3px;
+}
+
+.btn {
+  font-family: var(--font-pixel);
+  font-size: 6px;
+  letter-spacing: 0.3px;
+  background: var(--mc-wood);
+  border: none;
+  color: #FFF8E1;
+  padding: 6px 12px;
+  cursor: pointer;
+  text-shadow: 1px 1px 0 rgba(0,0,0,0.5);
+  white-space: nowrap;
+  transition: filter var(--t-fast);
+}
+.btn:hover:not(:disabled) { filter: brightness(1.15); }
+.btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+.btnGhost {
+  font-family: var(--font-pixel);
+  font-size: 6px;
+  letter-spacing: 0.3px;
+  background: none;
+  border: 1px solid #333;
+  color: #888;
+  padding: 5px 10px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color var(--t-fast), border-color var(--t-fast);
+}
+.btnGhost:hover:not(:disabled) { color: #CCC; border-color: #555; }
+.btnGhost:disabled { opacity: 0.35; cursor: not-allowed; }
+
+.btnDanger {
+  font-family: var(--font-pixel);
+  font-size: 6px;
+  letter-spacing: 0.3px;
+  background: #3A0808;
+  border: 1px solid #5A1010;
+  color: #FF6060;
+  padding: 5px 10px;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: filter var(--t-fast);
+}
+.btnDanger:hover { filter: brightness(1.2); }
+
+/* ── Upload progress bar ─────────────────────────────────────────── */
+.progressTrack {
+  height: 3px;
+  background: #111;
+  flex-shrink: 0;
+}
+.progressFill {
+  height: 100%;
+  background: #7DFE74;
+  transition: width 0.1s linear;
+}
+
+/* ── Mod list ────────────────────────────────────────────────────── */
+.list {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.empty {
+  padding: 32px 16px;
+  font-family: var(--font-pixel);
+  font-size: 7px;
+  color: #444;
+  text-align: center;
+  letter-spacing: 0.3px;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border-bottom: 1px solid #0D0D0D;
+  flex-wrap: wrap;
+}
+.row:hover { background: rgba(255,255,255,0.02); }
+.rowActive { background: rgba(125, 254, 116, 0.04); }
+.rowActive:hover { background: rgba(125, 254, 116, 0.07); }
+
+.modInfo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  flex: 1;
+}
+
+.modName {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: #BBB;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.rowActive .modName { color: #D0FFCC; }
+
+.badge {
+  font-family: var(--font-pixel);
+  font-size: 5px;
+  letter-spacing: 0.4px;
+  background: rgba(125,254,116,0.15);
+  border: 1px solid rgba(125,254,116,0.35);
+  color: #7DFE74;
+  padding: 2px 5px;
+  flex-shrink: 0;
+}
+
+.modMeta {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: #444;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.activeHint {
+  font-family: var(--font-pixel);
+  font-size: 5px;
+  letter-spacing: 0.3px;
+  color: #3A5A38;
+  flex-shrink: 0;
+}
+
+/* ── Confirm delete row ──────────────────────────────────────────── */
+.confirmRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.confirmText {
+  font-family: var(--font-pixel);
+  font-size: 6px;
+  color: #FF8060;
+  letter-spacing: 0.3px;
+}

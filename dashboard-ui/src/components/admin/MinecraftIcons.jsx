@@ -555,6 +555,32 @@ export function IconChatFilter({ size = 18 }) {
   )
 }
 
+export function IconMod({ size = 18 }) {
+  return (
+    <svg viewBox="0 0 16 16" width={size} height={size} shapeRendering="crispEdges">
+      {/* Crate body */}
+      {px(1, 5, 14, 10, '#7B5E2A')}
+      {px(0, 6, 16, 8, '#7B5E2A')}
+      {/* Crate highlight top */}
+      {px(1, 5, 14, 1, '#A07830')}
+      {px(1, 5, 1, 9, '#A07830')}
+      {/* Crate shadow bottom */}
+      {px(1, 14, 14, 1, '#5A4018')}
+      {px(14, 6, 1, 8, '#5A4018')}
+      {/* Cross straps */}
+      {px(7, 5, 2, 10, '#5A3E10')}
+      {px(0, 9, 16, 2, '#5A3E10')}
+      {/* Download arrow shaft */}
+      {px(7, 0, 2, 5, '#7DFE74')}
+      {/* Download arrow head */}
+      {px(4, 3, 8, 1, '#7DFE74')}
+      {px(5, 4, 6, 1, '#7DFE74')}
+      {px(6, 5, 4, 1, '#7DFE74')}
+      {px(7, 6, 2, 1, '#7DFE74')}
+    </svg>
+  )
+}
+
 export function IconSign({ size = 20 }) {
   return (
     <svg viewBox="0 0 16 16" width={size} height={size} shapeRendering="crispEdges">
