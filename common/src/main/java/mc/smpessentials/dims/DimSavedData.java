@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Persists the list of custom dimensions created via {@code /dim create} across server restarts.
+ * Persists metadata for custom dimensions created via {@code /dim create} across server restarts.
  *
  * <p>Stored in the overworld's {@code DimensionDataStorage} under the key
  * {@code quackedsmp_dims}, alongside other global saved data such as claims.
@@ -23,6 +23,12 @@ import java.util.Optional;
  * saved dimension before players can connect. The stored {@code id} is always the canonical
  * {@code namespace:path} string from the dimension's {@link net.minecraft.resources.ResourceKey}
  * to guarantee that creates and deletes always match.
+ *
+ * <p><strong>Note:</strong> this storage only covers dimensions created through our own
+ * {@code /dim create} command. Dimensions added externally (e.g. via datapacks) are loaded by
+ * Minecraft automatically and appear in the live level registry, but have no entry here.
+ * Callers that need the full set of active dimensions should use {@link DimManager#listAll}
+ * and look up entries here only for metadata enrichment.
  */
 public final class DimSavedData extends SavedData {
 

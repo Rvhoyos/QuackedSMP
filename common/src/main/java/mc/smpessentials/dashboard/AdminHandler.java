@@ -23,6 +23,7 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import java.util.stream.Collectors;
@@ -417,7 +418,16 @@ public final class AdminHandler {
     // ── Dims ─────────────────────────────────────────────────────────────────
 
     /**
-     * GET /api/admin/dims — list all custom dimensions stored in DimSavedData.
+     * GET /api/admin/dims — list all non-vanilla dimensions currently loaded by the server.
+     *
+     * <p>Enumerates the live level registry (same source as {@code /dim list}) so that
+     * dimensions added externally via datapacks are included, not just ones created through
+     * {@code /dim create}. Vanilla dimensions (overworld, nether, end) are excluded.
+     *
+     * <p>For each dimension the response includes any metadata stored in {@link DimSavedData}
+     * ({@code generatorType}, {@code generatorConfig}, {@code portalBlock}). Externally-added
+     * dimensions that have no saved-data entry report {@code "generatorType": "external"} and
+     * {@code null} for config and portal block.
      */
     public static String handleDimsGet(String method, Map<String, String> headers, String body,
                                        MinecraftServer server) {
@@ -428,19 +438,24 @@ public final class AdminHandler {
         CompletableFuture<String> future = new CompletableFuture<>();
         server.execute(() -> {
             try {
-                List<DimSavedData.DimEntry> entries = DimSavedData.get(server).getEntries();
+                DimSavedData savedData = DimSavedData.get(server);
+                List<ResourceKey<Level>> allLevels = DimManager.listAll(server);
                 StringBuilder sb = new StringBuilder("[");
-                for (int i = 0; i < entries.size(); i++) {
-                    if (i > 0) sb.append(',');
-                    DimSavedData.DimEntry e = entries.get(i);
-                    sb.append("{\"id\":\"").append(jsonEscape(e.id())).append('"');
-                    sb.append(",\"generatorType\":\"").append(jsonEscape(e.generatorType())).append('"');
+                boolean first = true;
+                for (ResourceKey<Level> key : allLevels) {
+                    if (key.equals(Level.OVERWORLD) || key.equals(Level.NETHER) || key.equals(Level.END)) continue;
+                    if (!first) sb.append(',');
+                    first = false;
+                    String id = key.identifier().toString();
+                    Optional<DimSavedData.DimEntry> entry = savedData.getEntry(id);
+                    sb.append("{\"id\":\"").append(jsonEscape(id)).append('"');
+                    sb.append(",\"generatorType\":\"").append(jsonEscape(entry.map(DimSavedData.DimEntry::generatorType).orElse("external"))).append('"');
                     sb.append(",\"generatorConfig\":");
-                    e.generatorConfig().ifPresentOrElse(
+                    entry.flatMap(DimSavedData.DimEntry::generatorConfig).ifPresentOrElse(
                         c -> sb.append('"').append(jsonEscape(c)).append('"'),
                         () -> sb.append("null"));
                     sb.append(",\"portalBlock\":");
-                    e.portalBlock().ifPresentOrElse(
+                    entry.flatMap(DimSavedData.DimEntry::portalBlock).ifPresentOrElse(
                         b -> sb.append('"').append(jsonEscape(b)).append('"'),
                         () -> sb.append("null"));
                     sb.append('}');
