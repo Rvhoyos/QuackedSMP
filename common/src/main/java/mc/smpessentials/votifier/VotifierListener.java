@@ -22,19 +22,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-/**
- * Optional Votifier v2 TCP listener. Binds on {@code SmpConfig.VOTIFIER_PORT} when enabled.
- *
- * <p>Protocol (NuVotifier-compatible):
- * <ol>
- *   <li>Server sends: {@code VOTIFIER 2 <challenge>\n} (random base-32 token)</li>
- *   <li>Client sends: 2-byte magic {@code 0x73 0x3A}, 2-byte big-endian payload length, UTF-8 JSON</li>
- *   <li>Outer JSON: {@code {"payload":"<json-string>","signature":"<base64>"}}</li>
- *   <li>Server verifies HMAC-SHA256 of payload string with shared token</li>
- *   <li>Server parses inner payload JSON and checks challenge matches</li>
- *   <li>Server responds {@code {"status":"ok"}\r\n} or error and closes</li>
- * </ol>
- */
+// Optional NuVotifier v2 TCP listener. Binds on VOTIFIER_PORT when enabled.
+// Protocol: server sends challenge, client sends HMAC-SHA256-signed JSON payload, server verifies and responds.
 public final class VotifierListener {
 
     private static final SecureRandom RANDOM = new SecureRandom();
@@ -46,11 +35,6 @@ public final class VotifierListener {
 
     private VotifierListener() {}
 
-    /**
-     * Binds the TCP socket and starts the listener thread.
-     * No-ops if already running, if {@code votifier_enabled} is {@code false},
-     * or if {@code votifier.token} is blank. Safe to call from any thread.
-     */
     public static void start() {
         if (!SmpConfig.VOTIFIER_ENABLED) return;
         if (SmpConfig.VOTIFIER_TOKEN.isBlank()) {
@@ -94,11 +78,7 @@ public final class VotifierListener {
         listenerThread.start();
     }
 
-    /**
-     * Closes the server socket, shuts down the worker pool, and joins the listener thread
-     * (waiting up to 2 s so the port is free before a subsequent {@link #start()} call).
-     * No-ops if the listener is not currently running.
-     */
+    // Closes the socket, shuts down workers, and joins the listener thread (waits up to 2s).
     public static void stop() {
         if (!running.getAndSet(false)) return;
         try {
@@ -111,7 +91,6 @@ public final class VotifierListener {
         SmpUtilsMod.LOGGER.info("[Votifier] Stopped");
     }
 
-    /** Stop and restart with current config values. Safe to call from any thread. */
     public static void restart() {
         stop();
         start();

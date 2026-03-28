@@ -30,48 +30,21 @@ import net.minecraft.world.entity.player.Inventory;
 
 import java.util.*;
 
-/**
- * Handles active ability activation via <b>sneak + drop key (Q)</b> with the
- * matching tool held. Abilities require a minimum skill level (10) and have
- * configurable cooldowns.
- *
- * <p>
- * Activation: hold the corresponding tool, sneak (shift), and press Q.
- * The item drop is cancelled and the ability activates instead. If the ability
- * is on cooldown, the drop is still cancelled and a cooldown message is shown.
- *
- * <p>
- * Exception: <b>Agility Dash</b> uses sprint + sneak while in air.
- * <b>Scout Zoom</b> uses sneak + F (swap offhand) with both hands empty.
- */
+// Active ability handler. Activation: hold matching tool + sneak + Q.
+// Agility Dash: sprint + sneak in air. Scout Zoom: sneak + F with both hands empty.
 public final class ActiveAbilities {
 
     // Track active ability durations (player UUID -> expiry time ms)
     private static final Map<UUID, Long> treeFellerActive = new HashMap<>();
 
-    /**
-     * Immutable snapshot of the player's state at Scout Zoom activation.
-     *
-     * @param savedOffhand        the offhand item that was replaced by the spyglass
-     *                            (always {@link ItemStack#EMPTY} since activation requires both
-     *                            hands to be empty, but stored defensively)
-     * @param expiry              wall-clock ms at which zoom expires automatically
-     * @param priorSpyglassCount  number of spyglasses in the player's main inventory
-     *                            (slots 0–35) at activation; used to detect and remove any
-     *                            injected spyglass the player dragged into their inventory
-     */
+    // Captures zoom activation state: saved offhand item, expiry time, and spyglass count in main inventory before activation.
     private record ZoomState(ItemStack savedOffhand, long expiry, int priorSpyglassCount) {}
     private static final Map<UUID, ZoomState> zoomActive = new HashMap<>();
 
     private ActiveAbilities() {
     }
 
-    /**
-     * Called when a player drops an item.
-     * 
-     * @return true if the event is handled and should be cancelled, false
-     *         otherwise.
-     */
+    // Returns true if the drop event should be cancelled (ability activated or on cooldown).
     public static boolean onPlayerDropItem(net.minecraft.world.entity.player.Player player,
             net.minecraft.world.entity.item.ItemEntity entity) {
         if (!mc.smpessentials.config.SmpConfig.SKILLS_ENABLED) return false;
@@ -144,11 +117,7 @@ public final class ActiveAbilities {
 
     // ========== ABILITY IMPLEMENTATIONS ==========
 
-    /**
-     * Generic ability handler for Mining/Excavation (Haste V).
-     *
-     * @return true if handled (activated or on cooldown), false if level too low
-     */
+    // Shared handler for Super Breaker (Mining) and Giga Drill (Excavation). Applies Haste V; duration: 10s + 0.2s/level.
     private static boolean tryActivate(ServerPlayer sp, SkillData data, SkillType skill, String name, UUID uuid) {
         int level = data.getLevel(uuid, skill);
         if (level < SmpConfig.getAbilityUnlockLevel(skill))
@@ -182,7 +151,7 @@ public final class ActiveAbilities {
         return true;
     }
 
-    /** @return true if handled */
+    // Marks the player's UUID in treeFellerActive. onLogBreak chain-breaks logs while the timer hasn't expired.
     private static boolean tryActivateTreeFeller(ServerPlayer sp, SkillData data, UUID uuid) {
         int level = data.getLevel(uuid, SkillType.WOODCUTTING);
         if (level < SmpConfig.getAbilityUnlockLevel(SkillType.WOODCUTTING))
@@ -204,7 +173,7 @@ public final class ActiveAbilities {
         return true;
     }
 
-    /** Check if tree feller is active and chain-break logs. */
+    // Called when a log is broken. If Tree Feller is active, chain-breaks connected logs upward (up to 64).
     public static void onLogBreak(ServerPlayer sp, BlockPos pos, ServerLevel level) {
         UUID uuid = sp.getUUID();
         Long expiry = treeFellerActive.get(uuid);
@@ -242,7 +211,7 @@ public final class ActiveAbilities {
         }
     }
 
-    /** @return true if handled */
+    // Green Terra: applies bonemeal to all crops in an 11x11x5 area around the player.
     private static boolean tryActivateGreenTerra(ServerPlayer sp, SkillData data, UUID uuid, ServerLevel level) {
         int farmLevel = data.getLevel(uuid, SkillType.FARMING);
         if (farmLevel < SmpConfig.getAbilityUnlockLevel(SkillType.FARMING))
@@ -280,7 +249,6 @@ public final class ActiveAbilities {
         return true;
     }
 
-    /** @return true if handled */
     private static boolean tryActivateMasterAngler(ServerPlayer sp, SkillData data, UUID uuid) {
         int fishLevel = data.getLevel(uuid, SkillType.FISHING);
         if (fishLevel < SmpConfig.getAbilityUnlockLevel(SkillType.FISHING))
@@ -301,7 +269,6 @@ public final class ActiveAbilities {
         return true;
     }
 
-    /** @return true if handled */
     private static boolean tryActivateBerzerk(ServerPlayer sp, SkillData data, UUID uuid) {
         int meleeLevel = data.getLevel(uuid, SkillType.MELEE);
         if (meleeLevel < SmpConfig.getAbilityUnlockLevel(SkillType.MELEE))
@@ -323,7 +290,6 @@ public final class ActiveAbilities {
         return true;
     }
 
-    /** @return true if handled */
     private static boolean tryActivateSniper(ServerPlayer sp, SkillData data, UUID uuid) {
         int archLevel = data.getLevel(uuid, SkillType.ARCHERY);
         if (archLevel < SmpConfig.getAbilityUnlockLevel(SkillType.ARCHERY))
@@ -345,7 +311,6 @@ public final class ActiveAbilities {
         return true;
     }
 
-    /** @return true if handled */
     private static boolean tryActivateJuggernaut(ServerPlayer sp, SkillData data, UUID uuid) {
         int defLevel = data.getLevel(uuid, SkillType.DEFENSE);
         if (defLevel < SmpConfig.getAbilityUnlockLevel(SkillType.DEFENSE))
@@ -367,10 +332,7 @@ public final class ActiveAbilities {
         return true;
     }
 
-    /**
-     * Agility Dash: boost velocity in facing direction.
-     * Triggered by sprint + sneak while in the air (not on ground).
-     */
+    // Agility Dash: launches player in look direction. Power scales with Agility level. Only called when sprinting in air.
     public static void tryActivateDash(ServerPlayer sp, SkillData data, UUID uuid) {
         if (sp.isCreative())
             return;
@@ -397,24 +359,8 @@ public final class ActiveAbilities {
 
     private static final String ZOOM_KEY = "archery_zoom";
 
-    /**
-     * Attempts to activate Scout Zoom for the given player.
-     *
-     * <p>Activation requires both hands to be empty (enforced upstream by
-     * {@link mc.smpessentials.mixin.PlayerActionMixin}) so {@code savedOffhand} in the
-     * resulting {@link ZoomState} will always be {@link net.minecraft.world.item.ItemStack#EMPTY}.
-     * The field is retained for defensive correctness in case the precondition changes.
-     *
-     * <p>Effects scale with Archery level:
-     * <ul>
-     *   <li>Duration: 10 s base + 0.25 s/level (up to 35 s at level 100)</li>
-     *   <li>Night Vision: amplifier 0 below level 67, amplifier 1 at 67+</li>
-     *   <li>Glow cone range: 30 blocks (levels 1–33), 60 (34–66), 100 (67–100)</li>
-     * </ul>
-     *
-     * <p>No-ops silently if the player has not reached the unlock level.
-     * Displays a cooldown message (actionbar) if the ability is on cooldown.
-     */
+    // Scout Zoom: injects spyglass into offhand, applies Night Vision + Slow Falling.
+    // Duration: 10s base + 0.25s/level. Night Vision II at Archery level 67+. Glowing cone range: 30/60/100 by tier.
     public static void tryActivateZoom(ServerPlayer sp, SkillData data) {
         if (sp.isCreative())
             return;
@@ -455,20 +401,7 @@ public final class ActiveAbilities {
         announce(sp, "Scout Zoom", durationTicks / 20, SoundEvents.SPYGLASS_USE);
     }
 
-    /**
-     * Deactivates Scout Zoom for the given player and restores their offhand.
-     *
-     * <p>Safe to call even when zoom is not active — no-ops if the player has no
-     * active zoom state. Also safe to call during player logout before inventory
-     * is saved, ensuring the temporary spyglass is never persisted.
-     *
-     * <p>The offhand is only cleared if it still holds the injected spyglass
-     * (item == {@link Items#SPYGLASS}, count == 1). This is the normal path —
-     * {@link mc.smpessentials.mixin.PlayerActionMixin} blocks all GUI interactions
-     * with the offhand slot while zoom is active, so the spyglass cannot be moved
-     * via normal inventory UI. The {@code else} branch handles admin commands or
-     * creative-mode manipulation that bypass the packet-level lock.
-     */
+    // Removes the spyglass from offhand and clears zoom state. Safe to call when not active.
     public static void deactivateZoom(UUID uuid, ServerPlayer sp) {
         ZoomState state = zoomActive.remove(uuid);
         if (state == null) return;
@@ -486,19 +419,7 @@ public final class ActiveAbilities {
         }
     }
 
-    /**
-     * Called every server tick for players with active Scout Zoom.
-     *
-     * <p>Responsibilities:
-     * <ol>
-     *   <li>Expire zoom when the duration timer elapses.</li>
-     *   <li>Deactivate if the player switches to a hotbar slot that has an item
-     *       (main hand becomes non-empty), since they can no longer hold the spyglass.</li>
-     *   <li>Apply the {@link net.minecraft.world.effect.MobEffects#GLOWING Glowing} effect
-     *       (40 ticks) to living entities within the look cone in front of the player.
-     *       Range and cone angle scale with Archery level.</li>
-     * </ol>
-     */
+    // Per-tick: expires zoom on timer, deactivates if main hand is occupied, and applies Glowing to mobs in the look cone.
     public static void onZoomTick(ServerPlayer sp, SkillData data) {
         UUID uuid = sp.getUUID();
         ZoomState state = zoomActive.get(uuid);
@@ -546,33 +467,17 @@ public final class ActiveAbilities {
             .forEach(e -> e.addEffect(new MobEffectInstance(MobEffects.GLOWING, 40, 0, false, false)));
     }
 
-    /**
-     * Called on player logout to discard any active Tree Feller state.
-     * Prevents stale UUID entries from accumulating in the map.
-     */
     public static void clearTreeFeller(UUID uuid) {
         treeFellerActive.remove(uuid);
     }
 
-    /**
-     * Returns {@code true} if the given player currently has Scout Zoom active.
-     * Used by the player tick and event handlers to skip the zoom pipeline for
-     * players who have not activated it.
-     */
     public static boolean isZoomActive(UUID uuid) {
         return zoomActive.containsKey(uuid);
     }
 
     // ========== KNOWLEDGE ABILITIES ==========
 
-    /**
-     * Arcane Infusion: repairs the dropped item by 10% durability.
-     * Triggered by sneak + Q with a damaged non-tool item (tridents, shears, etc.).
-     * The item is repaired in-place before being returned to the player's
-     * inventory.
-     *
-     * @return true if handled
-     */
+    // Arcane Infusion: repairs the dropped item by 10% of its max durability.
     private static boolean tryArcaneInfusion(ServerPlayer sp, SkillData data, UUID uuid, ItemStack droppedItem) {
         int level = data.getLevel(uuid, SkillType.ENCHANTING);
         if (level < SmpConfig.getAbilityUnlockLevel(SkillType.ENCHANTING))
@@ -596,11 +501,6 @@ public final class ActiveAbilities {
 
     // ========== SCOUT ZOOM HELPERS ==========
 
-    /**
-     * Counts spyglasses across main inventory slots 0–{@link Inventory#INVENTORY_SIZE}-1
-     * (does NOT include the offhand slot). Used to detect duplication when the player
-     * drags the injected spyglass out of the offhand.
-     */
     private static int countSpyglassesInMainInventory(ServerPlayer sp) {
         Inventory inv = sp.getInventory();
         int count = 0;
@@ -612,13 +512,7 @@ public final class ActiveAbilities {
         return count;
     }
 
-    /**
-     * Removes spyglasses from the player's main inventory until the count is back to
-     * {@code priorCount}. Slots are scanned front-to-back (hotbar first).
-     *
-     * <p>No-ops if the current count is already {@code <= priorCount} (e.g. the player
-     * dropped the spyglass to the world instead of moving it to inventory).
-     */
+    // Removes spyglasses added to main inventory since zoom activation (e.g. player dragged the injected offhand spyglass in).
     private static void removeExcessSpyglasses(ServerPlayer sp, int priorCount) {
         int toRemove = countSpyglassesInMainInventory(sp) - priorCount;
         if (toRemove <= 0) return;
@@ -673,7 +567,7 @@ public final class ActiveAbilities {
         sp.inventoryMenu.sendAllDataToRemote();
     }
 
-    /** @return true if handled */
+    // Philosopher's Touch: raycasts for a spawner within 5 blocks and silk-touches it, preserving the mob type in NBT.
     private static boolean tryActivateAlchemy(ServerPlayer sp, SkillData data, UUID uuid) {
         int alchLevel = data.getLevel(uuid, SkillType.ALCHEMY);
         if (alchLevel < SmpConfig.getAbilityUnlockLevel(SkillType.ALCHEMY))
@@ -735,7 +629,7 @@ public final class ActiveAbilities {
         return true;
     }
 
-    /** @return true if handled */
+    // Tycoon's Charm: grants Hero of the Village. Amplifier scales with Trading level (I/II/III at 1/50/80).
     private static boolean tryActivateTycoon(ServerPlayer sp, SkillData data, UUID uuid) {
         int tradeLevel = data.getLevel(uuid, SkillType.TRADING);
         if (tradeLevel < SmpConfig.getAbilityUnlockLevel(SkillType.TRADING))

@@ -67,25 +67,19 @@ public final class SmpConfig {
     public static double CAP_DEFENSE_ARMOR = 10.0; // max +10 armor points at Defense level 100
     public static double CAP_SAFE_LANDING = 1.0; // max 100% fall damage absorbed at Agility level 100 (linear)
 
-    /** Get cooldown in seconds for a skill's active ability. */
     public static long getSkillCooldown(SkillType skill) {
         return SKILL_COOLDOWNS.getOrDefault(skill.name().toLowerCase(), defaultCooldown(skill));
     }
 
-    /**
-     * Get cooldown in seconds for a named sub-ability (e.g. "archery_zoom").
-     * Falls back to 30s if not configured.
-     */
+    // Returns cooldown for a named sub-ability key (e.g. "archery_zoom"), defaulting to 30s.
     public static long getAbilityCooldown(String abilityKey) {
         return SKILL_COOLDOWNS.getOrDefault(abilityKey.toLowerCase(), 30L);
     }
 
-    /** Get the minimum level required to unlock a skill's active ability. */
     public static int getAbilityUnlockLevel(SkillType skill) {
         return SKILL_UNLOCK_LEVELS.getOrDefault(skill.name().toLowerCase(), defaultUnlockLevel(skill));
     }
 
-    /** Get the minimum level required to unlock a named sub-ability (e.g. "archery_zoom"). */
     public static int getAbilityUnlockLevel(String abilityKey) {
         return SKILL_UNLOCK_LEVELS.getOrDefault(abilityKey.toLowerCase(), 5);
     }

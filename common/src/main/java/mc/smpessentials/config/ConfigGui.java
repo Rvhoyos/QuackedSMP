@@ -19,9 +19,7 @@ import net.minecraft.world.item.component.ItemLore;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Server-side config menu using a Chest GUI.
- */
+// Server-side config menu using a Chest GUI.
 public class ConfigGui {
 
     // Helper to identify our slots

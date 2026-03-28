@@ -23,6 +23,7 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import java.util.stream.Collectors;
@@ -43,32 +44,21 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
-/**
- * Handles all {@code /api/admin/*} HTTP routes.
- *
- * <p>Registered into {@link DashboardServer} by {@link DashboardManager}.
- * Every protected endpoint calls {@link AdminAuth#isAuthorized} before executing.
- */
+// Handles all /api/admin/* HTTP routes, registered by DashboardManager.
 public final class AdminHandler {
 
     private AdminHandler() {}
 
     // ── Route handlers (called by DashboardServer) ────────────────────────────
 
-    /**
-     * GET /api/admin/status — public, no auth.
-     * Returns whether admin is enabled and whether a password has been set.
-     */
+    // GET /api/admin/status. Public, no auth. Returns whether admin is enabled and whether a password is set.
     public static String handleStatus(String method, Map<String, String> headers, String body) {
         boolean enabled     = SmpConfig.ADMIN_ENABLED;
         boolean hasPassword = !SmpConfig.ADMIN_PASSWORD_HASH.isBlank();
         return String.format("{\"enabled\":%b,\"hasPassword\":%b}", enabled, hasPassword);
     }
 
-    /**
-     * POST /api/admin/setup — sets initial password.
-     * Only works when no password is currently stored (first-time or after manual clear).
-     */
+    // POST /api/admin/setup. Sets the initial password; only works when none is stored yet.
     public static String handleSetup(String method, Map<String, String> headers, String body) {
         if (!"POST".equals(method)) return err(405, "Method not allowed");
         if (!SmpConfig.ADMIN_ENABLED)               return err(403, "Admin panel disabled");
@@ -85,9 +75,7 @@ public final class AdminHandler {
         }
     }
 
-    /**
-     * POST /api/admin/login — verifies password, returns session token.
-     */
+    // POST /api/admin/login. Verifies password and returns a session token.
     public static String handleLogin(String method, Map<String, String> headers, String body) {
         if (!"POST".equals(method))     return err(405, "Method not allowed");
         if (!SmpConfig.ADMIN_ENABLED)   return err(403, "Admin panel disabled");
@@ -110,9 +98,7 @@ public final class AdminHandler {
         }
     }
 
-    /**
-     * GET /api/admin/players — list of online players.
-     */
+    // GET /api/admin/players. Returns a list of currently online players.
     public static String handlePlayers(String method, Map<String, String> headers, String body,
                                        MinecraftServer server) {
         if (!SmpConfig.ADMIN_ENABLED)                   return err(403, "Admin panel disabled");
@@ -136,10 +122,7 @@ public final class AdminHandler {
         return sb.toString();
     }
 
-    /**
-     * POST /api/admin/exec — executes a server command.
-     * Runs asynchronously on the server thread; always returns ok immediately.
-     */
+    // POST /api/admin/exec. Runs a server command on the server thread asynchronously; returns immediately.
     public static String handleExec(String method, Map<String, String> headers, String body,
                                     MinecraftServer server) {
         if (!"POST".equals(method))                     return err(405, "Method not allowed");
@@ -166,9 +149,7 @@ public final class AdminHandler {
         }
     }
 
-    /**
-     * GET /api/admin/config — returns editable config fields.
-     */
+    // GET /api/admin/config. Returns all editable config fields.
     public static String handleConfigGet(String method, Map<String, String> headers, String body) {
         if (!SmpConfig.ADMIN_ENABLED)           return err(403, "Admin panel disabled");
         if (!AdminAuth.isAuthorized(headers))   return err(403, "Unauthorized");
@@ -236,10 +217,7 @@ public final class AdminHandler {
         return sb.toString();
     }
 
-    /**
-     * POST /api/admin/config — applies a partial config patch and hot-reloads.
-     * Only whitelisted keys are accepted; port changes are saved but require restart.
-     */
+    // POST /api/admin/config. Applies a partial config patch and hot-reloads. Port changes require restart.
     public static String handleConfigPost(String method, Map<String, String> headers, String body) {
         if (!"POST".equals(method))             return err(405, "Method not allowed");
         if (!SmpConfig.ADMIN_ENABLED)           return err(403, "Admin panel disabled");
@@ -324,11 +302,7 @@ public final class AdminHandler {
         }
     }
 
-    /**
-     * POST /api/admin/dashboard/disable — saves dashboard_enabled=false to config and
-     * shuts down the dashboard server after the response is sent.
-     * The caller will lose connection; they must re-enable via /smp admin setpassword.
-     */
+    // POST /api/admin/dashboard/disable. Sets dashboard_enabled=false and shuts down the server after responding.
     public static String handleDashboardDisable(String method, Map<String, String> headers, String body) {
         if (!"POST".equals(method))           return err(405, "Method not allowed");
         if (!SmpConfig.ADMIN_ENABLED)         return err(403, "Admin panel disabled");
@@ -337,12 +311,7 @@ public final class AdminHandler {
         return "{\"ok\":true}";
     }
 
-    /**
-     * POST /api/admin/setop — sets a player's operator level by editing ops.json directly.
-     * Levels 1–3 have no vanilla command so require direct file editing.
-     * ops.json is written synchronously on the HTTP thread; only the reload+sync
-     * is dispatched to the server thread.
-     */
+    // POST /api/admin/setop. Edits ops.json directly; levels 1-3 have no vanilla command. Reload is dispatched to the server thread.
     public static String handleSetOp(String method, Map<String, String> headers, String body,
                                      MinecraftServer server) {
         if (!"POST".equals(method))                 return err(405, "Method not allowed");
@@ -416,9 +385,7 @@ public final class AdminHandler {
 
     // ── Dims ─────────────────────────────────────────────────────────────────
 
-    /**
-     * GET /api/admin/dims — list all custom dimensions stored in DimSavedData.
-     */
+    // GET /api/admin/dims. Lists all non-vanilla dimensions from the live registry, including datapack-added ones. Vanilla dims excluded.
     public static String handleDimsGet(String method, Map<String, String> headers, String body,
                                        MinecraftServer server) {
         if (!SmpConfig.ADMIN_ENABLED)           return err(403, "Admin panel disabled");
@@ -428,19 +395,24 @@ public final class AdminHandler {
         CompletableFuture<String> future = new CompletableFuture<>();
         server.execute(() -> {
             try {
-                List<DimSavedData.DimEntry> entries = DimSavedData.get(server).getEntries();
+                DimSavedData savedData = DimSavedData.get(server);
+                List<ResourceKey<Level>> allLevels = DimManager.listAll(server);
                 StringBuilder sb = new StringBuilder("[");
-                for (int i = 0; i < entries.size(); i++) {
-                    if (i > 0) sb.append(',');
-                    DimSavedData.DimEntry e = entries.get(i);
-                    sb.append("{\"id\":\"").append(jsonEscape(e.id())).append('"');
-                    sb.append(",\"generatorType\":\"").append(jsonEscape(e.generatorType())).append('"');
+                boolean first = true;
+                for (ResourceKey<Level> key : allLevels) {
+                    if (key.equals(Level.OVERWORLD) || key.equals(Level.NETHER) || key.equals(Level.END)) continue;
+                    if (!first) sb.append(',');
+                    first = false;
+                    String id = key.identifier().toString();
+                    Optional<DimSavedData.DimEntry> entry = savedData.getEntry(id);
+                    sb.append("{\"id\":\"").append(jsonEscape(id)).append('"');
+                    sb.append(",\"generatorType\":\"").append(jsonEscape(entry.map(DimSavedData.DimEntry::generatorType).orElse("external"))).append('"');
                     sb.append(",\"generatorConfig\":");
-                    e.generatorConfig().ifPresentOrElse(
+                    entry.flatMap(DimSavedData.DimEntry::generatorConfig).ifPresentOrElse(
                         c -> sb.append('"').append(jsonEscape(c)).append('"'),
                         () -> sb.append("null"));
                     sb.append(",\"portalBlock\":");
-                    e.portalBlock().ifPresentOrElse(
+                    entry.flatMap(DimSavedData.DimEntry::portalBlock).ifPresentOrElse(
                         b -> sb.append('"').append(jsonEscape(b)).append('"'),
                         () -> sb.append("null"));
                     sb.append('}');
@@ -458,10 +430,7 @@ public final class AdminHandler {
         }
     }
 
-    /**
-     * POST /api/admin/dims/create — create a custom dimension.
-     * Body: {"id":"quacksmp:pvp","type":"overworld","config":"biomes minecraft:plains:1"} (config optional)
-     */
+    // POST /api/admin/dims/create. Creates a custom dimension. Body: {id, type, config (optional)}.
     public static String handleDimCreate(String method, Map<String, String> headers, String body,
                                          MinecraftServer server) {
         if (!"POST".equals(method))             return err(405, "Method not allowed");
@@ -495,10 +464,7 @@ public final class AdminHandler {
         }
     }
 
-    /**
-     * POST /api/admin/dims/delete — delete a custom dimension.
-     * Body: {"id":"quacksmp:pvp"}
-     */
+    // POST /api/admin/dims/delete. Deletes a custom dimension. Body: {id}.
     public static String handleDimDelete(String method, Map<String, String> headers, String body,
                                          MinecraftServer server) {
         if (!"POST".equals(method))             return err(405, "Method not allowed");
@@ -525,10 +491,7 @@ public final class AdminHandler {
         }
     }
 
-    /**
-     * POST /api/admin/dims/setportal — assign a portal frame block to a custom dimension.
-     * Body: {"dimId":"quacksmp:pvp","blockId":"minecraft:glowstone"}
-     */
+    // POST /api/admin/dims/setportal. Assigns a portal frame block to a custom dimension. Body: {dimId, blockId}.
     public static String handleDimSetPortal(String method, Map<String, String> headers, String body,
                                             MinecraftServer server) {
         if (!"POST".equals(method))             return err(405, "Method not allowed");
@@ -577,11 +540,7 @@ public final class AdminHandler {
 
     // ── Registry lists ────────────────────────────────────────────────────────
 
-    /**
-     * GET /api/admin/blocks — returns sorted JSON array of all registered block IDs.
-     * Used by the dashboard to populate portal-block autocomplete suggestions.
-     * BuiltInRegistries.BLOCK is static and read-only, safe to query from any thread.
-     */
+    // GET /api/admin/blocks. Returns sorted array of all registered block IDs for portal-block autocomplete.
     public static String handleBlocksGet(String method, Map<String, String> headers, String body) {
         if (!SmpConfig.ADMIN_ENABLED)           return err(403, "Admin panel disabled");
         if (!AdminAuth.isAuthorized(headers))   return err(403, "Unauthorized");
@@ -593,10 +552,7 @@ public final class AdminHandler {
         return jsonStrArr(ids);
     }
 
-    /**
-     * GET /api/admin/biomes — returns sorted JSON array of all registered biome IDs.
-     * Uses the server's registry access (dynamic registry), requires the server.
-     */
+    // GET /api/admin/biomes. Returns sorted array of all registered biome IDs from the dynamic registry.
     public static String handleBiomesGet(String method, Map<String, String> headers, String body,
                                          MinecraftServer server) {
         if (!SmpConfig.ADMIN_ENABLED)           return err(403, "Admin panel disabled");
@@ -619,10 +575,7 @@ public final class AdminHandler {
 
     // ── Skills leaderboard (public) ───────────────────────────────────────────
 
-    /**
-     * GET /api/skills/leaderboard — public, no auth.
-     * Returns overall top-10 and per-skill top-5 for all 12 skills.
-     */
+    // GET /api/skills/leaderboard. Public, no auth. Returns overall top-10 and per-skill top-5.
     public static String handleSkillsLeaderboard(String method, Map<String, String> headers, String body,
                                                  MinecraftServer server) {
         if (server == null) return err(503, "Server not ready");
@@ -668,10 +621,7 @@ public final class AdminHandler {
 
     // ── Skills admin ──────────────────────────────────────────────────────────
 
-    /**
-     * GET /api/admin/skills/players — list all players who have skill data.
-     * Returns [{uuid, name, totalLevel}] sorted by total level desc.
-     */
+    // GET /api/admin/skills/players. Returns all players with skill data, sorted by total level desc.
     public static String handleSkillsPlayers(String method, Map<String, String> headers, String body,
                                              MinecraftServer server) {
         if (!SmpConfig.ADMIN_ENABLED)           return err(403, "Admin panel disabled");
@@ -699,10 +649,7 @@ public final class AdminHandler {
         try { return future.get(5, TimeUnit.SECONDS); } catch (Exception e) { return err(500, "Timeout"); }
     }
 
-    /**
-     * GET /api/admin/skills?player=<uuid_or_name> — get a single player's full skill data.
-     * Returns {uuid, name, skills: {SKILL_NAME: {level, xp}, ...}}.
-     */
+    // GET /api/admin/skills?player=<uuid_or_name>. Returns full skill data for a single player.
     public static String handleSkillsGet(String method, Map<String, String> headers, String body,
                                          MinecraftServer server) {
         if (!SmpConfig.ADMIN_ENABLED)           return err(403, "Admin panel disabled");
@@ -750,10 +697,7 @@ public final class AdminHandler {
         try { return future.get(5, TimeUnit.SECONDS); } catch (Exception e) { return err(500, "Timeout"); }
     }
 
-    /**
-     * POST /api/admin/skills/set — set a player's level for a specific skill.
-     * Body: {"uuid":"...","skill":"MINING","level":42}
-     */
+    // POST /api/admin/skills/set. Sets a player's level for a specific skill. Body: {uuid, skill, level}.
     public static String handleSkillsSet(String method, Map<String, String> headers, String body,
                                          MinecraftServer server) {
         if (!"POST".equals(method))             return err(405, "Method not allowed");
@@ -788,10 +732,7 @@ public final class AdminHandler {
 
     // ── Claims ────────────────────────────────────────────────────────────────
 
-    /**
-     * GET /api/admin/claims — summary of all claims per player.
-     * Returns {total, players: [{uuid, name, count}]} sorted by count desc.
-     */
+    // GET /api/admin/claims. Returns claim counts per player, sorted by count desc.
     public static String handleClaimsGet(String method, Map<String, String> headers, String body,
                                          MinecraftServer server) {
         if (!SmpConfig.ADMIN_ENABLED)           return err(403, "Admin panel disabled");
@@ -826,10 +767,7 @@ public final class AdminHandler {
         try { return future.get(5, TimeUnit.SECONDS); } catch (Exception e) { return err(500, "Timeout"); }
     }
 
-    /**
-     * POST /api/admin/claims/unclaim — removes all claims owned by a player.
-     * Body: {"uuid":"..."}
-     */
+    // POST /api/admin/claims/unclaim. Removes all claims owned by a player. Body: {uuid}.
     public static String handleClaimsUnclaim(String method, Map<String, String> headers, String body,
                                              MinecraftServer server) {
         if (!"POST".equals(method))             return err(405, "Method not allowed");
@@ -858,10 +796,7 @@ public final class AdminHandler {
 
     // ── Chat filter ───────────────────────────────────────────────────────────
 
-    /**
-     * GET /api/admin/chatfilter — paginated word list.
-     * Query params: q (search), page, size, tab (blocked|whitelist)
-     */
+    // GET /api/admin/chatfilter. Paginated word list. Query params: q, page, size, tab (blocked|whitelist).
     public static String handleChatFilterGet(String method, Map<String, String> headers, String body,
                                              MinecraftServer server) {
         if (!SmpConfig.ADMIN_ENABLED)           return err(403, "Admin panel disabled");
@@ -914,10 +849,7 @@ public final class AdminHandler {
         try { return future.get(5, TimeUnit.SECONDS); } catch (Exception e) { return err(500, "Timeout"); }
     }
 
-    /**
-     * POST /api/admin/chatfilter/add — bulk add words to blocked list or whitelist.
-     * Body: {"words":["word1","word2"], "whitelist":false}
-     */
+    // POST /api/admin/chatfilter/add. Bulk adds words to the blocked list or whitelist. Body: {words, whitelist}.
     public static String handleChatFilterAdd(String method, Map<String, String> headers, String body,
                                              MinecraftServer server) {
         if (!"POST".equals(method))             return err(405, "Method not allowed");
@@ -952,10 +884,7 @@ public final class AdminHandler {
         }
     }
 
-    /**
-     * POST /api/admin/chatfilter/remove — bulk remove words from blocked list or whitelist.
-     * Body: {"words":["word1","word2"], "whitelist":false}
-     */
+    // POST /api/admin/chatfilter/remove. Bulk removes words from the blocked list or whitelist. Body: {words, whitelist}.
     public static String handleChatFilterRemove(String method, Map<String, String> headers, String body,
                                                 MinecraftServer server) {
         if (!"POST".equals(method))             return err(405, "Method not allowed");
@@ -990,10 +919,7 @@ public final class AdminHandler {
         }
     }
 
-    /**
-     * GET /api/admin/chatfilter/mutes — list all currently muted players.
-     * Returns [{uuid, name, muteEnd}] (expired mutes excluded).
-     */
+    // GET /api/admin/chatfilter/mutes. Returns all currently active mutes; expired ones excluded.
     public static String handleChatFilterMutes(String method, Map<String, String> headers, String body,
                                                MinecraftServer server) {
         if (!SmpConfig.ADMIN_ENABLED)           return err(403, "Admin panel disabled");
@@ -1025,10 +951,7 @@ public final class AdminHandler {
         try { return future.get(5, TimeUnit.SECONDS); } catch (Exception e) { return err(500, "Timeout"); }
     }
 
-    /**
-     * POST /api/admin/chatfilter/unmute — unmute a player immediately.
-     * Body: {"uuid":"..."}
-     */
+    // POST /api/admin/chatfilter/unmute. Immediately unmutes a player. Body: {uuid}.
     public static String handleChatFilterUnmute(String method, Map<String, String> headers, String body,
                                                 MinecraftServer server) {
         if (!"POST".equals(method))             return err(405, "Method not allowed");
@@ -1056,17 +979,8 @@ public final class AdminHandler {
 
     // ── Mods management ───────────────────────────────────────────────────────
 
-    /**
-     * Dispatcher for {@code /api/admin/mods}.
-     *
-     * <ul>
-     *   <li>{@code GET} — list all {@code .jar} files in {@code mods/} with name, size,
-     *       last-modified timestamp, and an {@code active} flag for the running JAR.</li>
-     *   <li>{@code DELETE} — remove a named JAR. Request body: {@code {"filename":"foo.jar"}}.</li>
-     * </ul>
-     *
-     * <p>Requires admin auth ({@code ADMIN_ENABLED} + valid token).
-     */
+    // GET /api/admin/mods: lists .jar files with name, size, modified, and active flag.
+    // DELETE /api/admin/mods: removes a named JAR. Body: {filename}.
     public static String handleMods(String method, Map<String, String> headers, String body) {
         if (!SmpConfig.ADMIN_ENABLED)           return err(403, "Admin panel disabled");
         if (!AdminAuth.isAuthorized(headers))   return err(403, "Unauthorized");
@@ -1076,11 +990,7 @@ public final class AdminHandler {
         return err(405, "Method not allowed");
     }
 
-    /**
-     * Lists all {@code .jar} files in {@code mods/}, sorted alphabetically.
-     * Each entry includes {@code name}, {@code size} (bytes), {@code modified} (epoch ms),
-     * and {@code active} ({@code true} if this is the currently running QuackedSMP JAR).
-     */
+    // Lists all .jar files in mods/, sorted alphabetically, with name, size, modified ms, and active flag.
     private static String handleModsList(Map<String, String> headers) {
         try {
             Path modsDir = Path.of("mods").toAbsolutePath().normalize();
@@ -1121,16 +1031,7 @@ public final class AdminHandler {
         }
     }
 
-    /**
-     * Deletes a single JAR from {@code mods/}.
-     *
-     * <p>Security checks (all enforced before touching the filesystem):
-     * <ul>
-     *   <li>Filename must end with {@code .jar}</li>
-     *   <li>Filename must not contain {@code /}, {@code \}, or {@code ..}</li>
-     *   <li>Resolved path must be inside {@code mods/} (path-traversal guard)</li>
-     * </ul>
-     */
+    // Deletes a single JAR from mods/. Validates filename ends with .jar, has no path components, and resolves inside mods/.
     private static String handleModsDelete(String body) {
         try {
             JsonObject req      = JsonParser.parseString(body).getAsJsonObject();
@@ -1161,22 +1062,7 @@ public final class AdminHandler {
         }
     }
 
-    /**
-     * {@code POST /api/admin/mods/upload} — streams a JAR into {@code mods/}.
-     *
-     * <p>This handler receives the raw {@link InputStream} via the upload route path,
-     * bypassing the normal 64 KB body cap. The file is written to a temp file inside
-     * {@code mods/} first, then atomically moved to the final destination on success.
-     * The temp file is always cleaned up in the {@code finally} block.
-     *
-     * <p>Required headers:
-     * <ul>
-     *   <li>{@code X-Filename} — target filename (must end in {@code .jar}, no path components)</li>
-     *   <li>{@code Content-Length} — exact byte count (required; upload rejected if absent or 0)</li>
-     * </ul>
-     *
-     * <p>Limits: 100 MB max. Requires admin auth.
-     */
+    // POST /api/admin/mods/upload. Streams a JAR into mods/ via temp file then atomic move. Max 100 MB. Requires X-Filename and Content-Length headers.
     public static String handleModsUpload(String method, Map<String, String> headers,
                                            InputStream stream, long contentLength) {
         if (!"POST".equals(method))             return err(405, "Method not allowed");
@@ -1238,7 +1124,7 @@ public final class AdminHandler {
 
     // ── Helpers ───────────────────────────────────────────────────────────────
 
-    /** Builds a JSON error string. The status code is embedded so DashboardServer can read it. */
+    // Builds a JSON error string. The status code is embedded so DashboardServer can read it.
     static String err(int status, String message) {
         return "__HTTP_" + status + "__" + String.format("{\"error\":\"%s\"}", jsonEscape(message));
     }
@@ -1289,7 +1175,7 @@ public final class AdminHandler {
                 .replace("\n", "\\n").replace("\r", "\\r").replace("\t", "\\t");
     }
 
-    /** Parses a single query-string parameter value from a raw query string. */
+    // Parses a single query-string parameter value from a raw query string.
     private static String queryParam(String queryString, String key) {
         if (queryString == null || queryString.isEmpty()) return "";
         for (String part : queryString.split("&")) {

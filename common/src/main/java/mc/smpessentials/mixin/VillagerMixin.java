@@ -13,16 +13,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-/**
- * Mixin into {@link Villager#rewardTradeXp(MerchantOffer)} to award Trading
- * skill XP when a player completes a trade with a villager.
- *
- * <p>
- * {@code rewardTradeXp()} is called whenever a trade succeeds. It sets
- * {@code this.lastTradedPlayer = this.getTradingPlayer()}, so we can safely
- * read the trading player at {@code HEAD} before the villager processes the
- * reward. XP is scaled by the offer's own XP value (bigger trades = more XP).
- */
+// Awards Trading XP when a villager trade succeeds. XP scales with the offer's own XP value.
 @Mixin(Villager.class)
 public abstract class VillagerMixin {
 

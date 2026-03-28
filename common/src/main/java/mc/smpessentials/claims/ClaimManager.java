@@ -10,12 +10,8 @@ import net.minecraft.world.level.ChunkPos;
 
 /**
  * Thin wrapper around {@link ClaimedSavedData} that scopes all operations to a single
- * {@link ServerLevel}.
- *
- * <p>Callers obtain an instance via {@link #get(ServerLevel)}.  Internally, all data is
- * stored in the overworld's {@code DataStorage} (see {@link ClaimedSavedData#get}), so
- * claim counts are accurate across dimensions even though each {@code ClaimManager}
- * instance filters by level.
+ * {@link ServerLevel}. All data is stored in the overworld's data storage, so claim counts
+ * are accurate across dimensions even though each instance filters by level.
  */
 public final class ClaimManager {
     private final ClaimedSavedData data;

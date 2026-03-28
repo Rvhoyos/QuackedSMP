@@ -14,9 +14,7 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Filters sign text through the chat filter before it is applied to the sign.
- */
+// Filters sign text through the chat filter before it is applied.
 @Mixin(SignBlockEntity.class)
 public abstract class SignBlockEntityMixin {
 

@@ -12,20 +12,12 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * Chat masking hook and SavedData accessor.
- * Registers a decorate callback that replaces offending word tokens with
- * "****". Includes multi-layer normalization for evasion resistance.
- */
+// Chat filter: replaces blocked words with ****. Normalizes leet-speak and separators to resist evasion.
 public final class ChatFilter {
     // Letters, digits, and common in-word symbols: _ ' - @ $ ! . + * # % & ? ~ ^
     private static final Pattern WORD = Pattern.compile("[\\p{L}\\p{N}_'@\\-\\$!\\.\\+\\*#%&\\?~^]+");
 
-    /**
-     * Leet-speak substitution map.
-     * Sources: Wikipedia "Leet" article, PimDeWitte's Java profanity filter.
-     * Only single-char → single-char mappings to keep it practical.
-     */
+    // Common leet-speak substitutions (single-char only)
     private static final Map<Character, Character> LEET_MAP = new HashMap<>();
     static {
         LEET_MAP.put('@', 'a');
@@ -44,20 +36,13 @@ public final class ChatFilter {
         LEET_MAP.put('+', 't');
     }
 
-    /**
-     * Characters treated as separators inserted between letters to evade filters.
-     */
-    private static final String SEPARATORS = ".-_*~";
-
-    /** Matches runs of 2+ identical characters for squashing. */
-    private static final Pattern REPEATED_CHARS = Pattern.compile("(.)\\1{1,}");
+    private static final String SEPARATORS = ".-_*~"; // common separator chars used to evade filters
+    private static final Pattern REPEATED_CHARS = Pattern.compile("(.)\\1{1,}"); // matches 2+ consecutive identical chars
 
     private ChatFilter() {
     }
 
-    /**
-     * Called when the server starts.
-     */
+    // Loads and merges the chat filter word/phrase config from disk. Logs any parse warnings.
     public static void onServerStart(MinecraftServer server) {
         try {
             var res = ChatFilterConfig.mergeFromConfig(server);
@@ -72,11 +57,7 @@ public final class ChatFilter {
         }
     }
 
-    /**
-     * Chat decorate callback. Replaces offending tokens/phrases with "****".
-     * Messages beginning with '/' are ignored.
-     * Returns the modified component, or null if it was deleted (e.g. muted).
-     */
+    // Replaces blocked words with ****. Returns null/empty if the player is muted.
     public static Component onDecorate(ServerPlayer player, Component component) {
         if (!mc.smpessentials.config.SmpConfig.CHATFILTER_ENABLED) return component;
         if (component == null)
@@ -164,11 +145,8 @@ public final class ChatFilter {
         return overworld.getDataStorage().computeIfAbsent(ChatFilterSavedData.TYPE);
     }
 
-    /**
-     * Replaces any whole-word token present in the SavedData set with "****".
-     * Uses a two-pass strategy: basic normalization first, then aggressive
-     * normalization as fallback — this minimizes false positives.
-     */
+    // Replaces whole-word tokens matching the filter set with ****. Uses basic normalization first,
+    // then leet-speak and squash fallbacks to catch evasion attempts.
     public static String maskTokens(String message, ChatFilterSavedData data) {
         StringBuilder out = new StringBuilder(message);
         Matcher m = WORD.matcher(message);
@@ -228,10 +206,7 @@ public final class ChatFilter {
         return out.toString();
     }
 
-    /**
-     * Pass 2: masks phrases containing whitespace by substring search
-     * (case-insensitive).
-     */
+    // Replaces multi-word phrases (which span spaces and can't be caught by token matching) with ****.
     public static String maskPhrases(String message, ChatFilterSavedData data) {
         String out = message;
         for (Pattern pat : data.getPhrasePatterns()) {
@@ -240,10 +215,7 @@ public final class ChatFilter {
         return out;
     }
 
-    /**
-     * Filters arbitrary text (for signs, books, anvils).
-     * Returns the masked version of the input.
-     */
+    // Runs the full filter pipeline on arbitrary text (signs, books, anvil renames).
     public static String filterText(String text, ChatFilterSavedData data) {
         if (!mc.smpessentials.config.SmpConfig.CHATFILTER_ENABLED) return text;
         String masked = maskTokens(text, data);
@@ -252,11 +224,7 @@ public final class ChatFilter {
 
     // ---- Normalization Pipeline ----
 
-    /**
-     * Basic normalization: lowercase + NFKC (compatibility decomposition +
-     * composition) + accent strip. NFKC collapses fullwidth chars (e.g. Ａ → A)
-     * and other compatibility equivalences.
-     */
+    // Lowercase + NFKC normalization + accent strip. Collapses fullwidth chars (e.g. Ａ -> A).
     public static String normalize(String s) {
         String lower = s.toLowerCase(Locale.ROOT);
         String nfkc = Normalizer.normalize(lower, Normalizer.Form.NFKC);
@@ -264,10 +232,7 @@ public final class ChatFilter {
         return stripped;
     }
 
-    /**
-     * Aggressive normalization part 1: Leet-speak + Separator stripping.
-     * Does NOT squash repeated chars yet.
-     */
+    // Applies base normalization, then leet-speak substitution and separator stripping.
     public static String normalizeLeet(String s) {
         String base = normalize(s);
 
@@ -290,28 +255,19 @@ public final class ChatFilter {
         return cleaned.toString();
     }
 
-    /**
-     * Aggressive normalization part 2: Squash repeated characters (fuuuck -> fuck).
-     */
+    // Collapses any run of repeated chars to one (fuuuck -> fuck).
     public static String squash(String s) {
         return REPEATED_CHARS.matcher(s).replaceAll("$1");
     }
 
-    /**
-     * Aggressive normalization part 3: Squash 3+ repeated characters to 2 (niggger
-     * ->
-     * nigger).
-     */
+    // Collapses runs of 3+ repeated chars to 2 (niggger -> nigger), leaving intentional doubles intact.
     public static String squash3PlusTo2(String s) {
         // Find any character repeated 3 or more times ((.)\1{2,}) and replace with 2
         // instances ($1$1)
         return s.replaceAll("(.)\\1{2,}", "$1$1");
     }
 
-    /**
-     * Legacy method for backward compatibility if needed, though maskTokens uses
-     * split logic now.
-     */
+    // Convenience: normalizeLeet + squash in one call.
     public static String normalizeAggressive(String s) {
         return squash(normalizeLeet(s));
     }

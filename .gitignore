@@ -38,6 +38,9 @@ docs/
 # --- Root-level build artifact (fabric/neoforge META-INF are legitimate) ---
 /META-INF/
 
+# --- Stray extracted vanilla .class files (use javap for inspection, don't commit) ---
+/net/
+
 # --- Claude Code internal files ---
 CLAUDE.md
 .claude-decompiled/

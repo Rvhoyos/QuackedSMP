@@ -15,24 +15,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Comparator;
 
-/**
- * Logic for resetting the End dimension.
- * Implements a "Delayed Reset" strategy:
- * 1. Dragon-only resets are performed live without kicking players.
- * 2. World terrain resets are queued via a marker file and performed during server shutdown
- *    to avoid file-lock issues and provide a seamless player experience.
- */
+// Logic for resetting the End dimension.
+// Dragon-only resets run live; terrain resets are queued via a RESET_PENDING marker file
+// and executed on shutdown to avoid file-lock issues.
 public class EndResetLogic {
 
-    /**
-     * Resets the Ender Dragon fight logic live.
-     * This method resets the internal state of the current fight instance,
-     * discards existing dragon/crystals, and triggers a respawn.
-     * 
-     * @param server The Minecraft server instance.
-     * @param activePortal Whether the exit portal should be generated in its active state.
-     * @return 1 if successful, 0 if End level not found, -1 on error.
-     */
+    // Returns 1 if successful, 0 if End level not found, -1 on error.
     public static int resetDragon(MinecraftServer server, boolean activePortal) {
         Level endLevel = server.getLevel(Level.END);
         if (endLevel == null || !(endLevel instanceof ServerLevel))
@@ -70,15 +58,7 @@ public class EndResetLogic {
         }
     }
 
-    /**
-     * Queues the End dimension for a full world reset.
-     * This marks the dimension for deletion on shutdown, clears existing entities live,
-     * and resets the global fight state in WorldData so that the next server startup
-     * begins a fresh, natural dragon fight.
-     * 
-     * @param server The Minecraft server instance.
-     * @return 2 if successfully queued, 0 if End level not found, -1 on error.
-     */
+    // Returns 2 if queued, 0 if End level not found, -1 on error.
     public static int resetWorld(MinecraftServer server) {
         Level endLevel = server.getLevel(Level.END);
         if (endLevel == null || !(endLevel instanceof ServerLevel))
@@ -110,13 +90,7 @@ public class EndResetLogic {
         }
     }
 
-    /**
-     * Callback for server shutdown events.
-     * Checks for the presence of the RESET_PENDING marker file and deletes
-     * the End's region, data, and poi files if found.
-     * 
-     * @param server The Minecraft server instance.
-     */
+    // Deletes End region/data/poi files if a RESET_PENDING marker exists. Called from the server-stopped event.
     public static void onServerStopping(MinecraftServer server) {
         try {
             Path dim1Dir = server.getWorldPath(LevelResource.ROOT).resolve("DIM1");
@@ -138,9 +112,7 @@ public class EndResetLogic {
         }
     }
 
-    /**
-     * Cleans up the boss bar and fight events for the current End level.
-     */
+    // Removes all players from the dragon boss bar so it stops displaying during and after the reset.
     private static void cleanUpOldFight(Level endLevel) {
         if (!(endLevel instanceof ServerLevel))
             return;
@@ -159,9 +131,7 @@ public class EndResetLogic {
     }
 
 
-    /**
-     * Discards all dragon and crystal entities in the level.
-     */
+    // Discards all EnderDragon and EndCrystal entities in the level.
     private static void discardEndEntities(Level endLevel) {
         if (!(endLevel instanceof ServerLevel))
             return;
@@ -236,11 +206,7 @@ public class EndResetLogic {
         }
     }
 
-    /**
-     * Resets the global EndDragonFight.Data in the server's WorldData.
-     * This ensures that when the server restarts, it initializes a fresh fight
-     * as if the dragon had never been killed.
-     */
+    // Resets EndDragonFight.Data in WorldData so the next startup spawns a fresh dragon fight.
     private static void resetWorldDataDragonState(MinecraftServer server) {
         try {
             Class<?> dataClass = net.minecraft.world.level.dimension.end.EndDragonFight.Data.class;

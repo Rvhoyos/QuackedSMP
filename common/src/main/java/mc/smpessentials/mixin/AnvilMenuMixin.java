@@ -15,10 +15,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 
-/**
- * Filters anvil item renames through the chat filter.
- * Extends ItemCombinerMenu to access the inherited 'player' field.
- */
+// Filters anvil item renames through the chat filter.
 @Mixin(AnvilMenu.class)
 public abstract class AnvilMenuMixin extends ItemCombinerMenu {
 

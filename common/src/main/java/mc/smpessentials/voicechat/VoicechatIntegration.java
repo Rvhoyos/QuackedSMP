@@ -23,11 +23,9 @@ public final class VoicechatIntegration {
      * Simple Voice Chat API at runtime without a hard dependency. Sets {@link #available}
      * to {@code true} only if both the config flag and the API class are present.
      *
-     * <p><b>Hot-toggle not supported.</b> The {@code voicechat_enable} config flag is only
-     * read here, at startup. The {@code available} boolean is set once and never re-evaluated.
-     * Changing the flag at runtime updates the in-memory value but the Simple Voice Chat
-     * plugin is already registered (or not) with the mod's plugin system — that cannot be
-     * undone without a restart. A server restart is required for the toggle to take effect.
+     * Hot-toggle not supported. The {@code voicechat_enable} flag is only read here at startup.
+     * The plugin registration cannot be undone at runtime; a restart is required for the toggle
+     * to take effect.
      */
     public static void init() {
         if (!SmpConfig.VOICECHAT_ENABLE) {

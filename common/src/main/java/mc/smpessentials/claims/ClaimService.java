@@ -10,29 +10,20 @@ import net.minecraft.core.BlockPos;
 import java.util.Optional;
 import java.util.UUID;
 
-/**
- * High-level claim operations invoked by command handlers.
- *
- * <p>This class owns all business rules (spawn-protection guard, per-player cap, VIP bonus,
- * OP bypass) and delegates raw persistence to {@link ClaimManager} /
- * {@link mc.smpessentials.claims.storage.ClaimedSavedData}.  Command classes should call
- * methods here rather than touching storage directly.
- */
+// Business logic for claim operations. Commands call this; storage is handled by ClaimManager.
 public final class ClaimService {
     private ClaimService() {
     }
 
-    /** Returns the UUID of the owner of the chunk at {@code pos}, or empty if unclaimed. */
     public static Optional<UUID> getOwner(ServerLevel level, ChunkPos pos) {
         return ClaimManager.get(level).get(pos).map(ClaimData::owner);
     }
 
-    /** Global claim count for this owner (across all dimensions). */
     public static int ownedCount(ServerLevel level, UUID owner) {
         return ClaimManager.get(level).ownedCount(owner);
     }
 
-    /** Owner OR OP can unclaim. */
+    // Owner or OP can unclaim. Returns false if not claimed or caller has no permission.
     public static boolean unclaim(ServerPlayer player, ServerLevel level, ChunkPos pos) {
         var mgr = ClaimManager.get(level);
         var existing = mgr.get(pos);
@@ -49,13 +40,11 @@ public final class ClaimService {
         return false;
     }
 
-    /** Owner can set name. */
     public static boolean setName(ServerPlayer player, ServerLevel level, ChunkPos pos, String name) {
         var mgr = ClaimManager.get(level);
         return mgr.setNameIfOwned(pos, player.getUUID(), name);
     }
 
-    /** Claims the chunk at {@code pos} for {@code player}. OPs bypass the per-player cap and spawn protection. */
     public static Result claim(ServerPlayer player, ServerLevel level, ChunkPos pos) {
         UUID me = player.getUUID();
         // OP bypass: allow server operators to ignore the per-player MAX_PER_PLAYER cap
@@ -111,17 +100,7 @@ public final class ClaimService {
         return Result.SUCCESS;
     }
 
-    /**
-     * Transfers all of {@code sender}'s claims to {@code target}.
-     *
-     * <p>The transfer is blocked if it would cause {@code target} to exceed their personal
-     * claim limit (base + VIP bonus if applicable). This prevents abuse where players
-     * transfer claims to an alt, re-claim up to their limit, and repeat to accumulate
-     * more land than the limit intends. OPs have no cap and can always receive claims.
-     *
-     * @return number of claims transferred, or a negative error code:
-     *         -1 = same player, -2 = sender has no claims, -3 = would exceed target's limit
-     */
+    // Returns claims transferred, or negative: -1 same player, -2 no claims, -3 would exceed target limit.
     public static int transfer(ServerPlayer sender, ServerPlayer target) {
         if (sender.getUUID().equals(target.getUUID()))
             return -1;

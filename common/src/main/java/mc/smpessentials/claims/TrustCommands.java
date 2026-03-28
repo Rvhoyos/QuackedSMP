@@ -15,23 +15,12 @@ import java.util.stream.Collectors;
 
 import mc.smpessentials.claims.storage.WhitelistSavedData;
 
-/**
- * Registers the trust management commands:
- * <ul>
- *   <li>{@code /trust <player>} — grant another online player access to all of your claims.</li>
- *   <li>{@code /untrust <player>} — revoke that access.</li>
- *   <li>{@code /trustlist} — list all players you currently trust (online names shown; offline
- *       players shown as a count).</li>
- * </ul>
- *
- * <p>Trust is owner-wide: it applies to <em>all</em> of an owner's claims, not individual
- * chunks.  Persistence is handled by {@link mc.smpessentials.claims.storage.WhitelistSavedData}.
- */
+// Registers /trust, /untrust, /trustlist. Trust is owner-wide; it covers all of an owner's claims, not individual chunks.
 public final class TrustCommands {
     private TrustCommands() {
     }
 
-    /** Registers all trust-related commands with the given dispatcher. */
+    // Registers /trust, /untrust, and /trustlist with the given dispatcher.
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         // /trust <player>
         dispatcher.register(

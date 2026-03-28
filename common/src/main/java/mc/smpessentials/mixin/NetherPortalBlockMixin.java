@@ -28,51 +28,16 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import java.util.Optional;
 import java.util.Set;
 
-/**
- * Intercepts {@link NetherPortalBlock#getPortalDestination} to route players through custom
- * portals wired via {@code /dim setportal}.
- *
- * <h2>Routing rules</h2>
- * <ul>
- *   <li>Frame block is {@code minecraft:obsidian} or not registered → fall through to vanilla.</li>
- *   <li>Frame block is registered to a custom dim:
- *     <ul>
- *       <li>Current dim == custom dim → teleport to the overworld (return trip).</li>
- *       <li>Current dim != custom dim → teleport to the custom dim (outbound).</li>
- *     </ul>
- *   </li>
- * </ul>
- * Portals are always bidirectional. Players can return from any custom dim by stepping through
- * an existing portal block in that dim — no second activation needed.
- *
- * <h2>Default portal block</h2>
- * <p>When a custom dim is created, {@code minecraft:glowstone} is assigned as its portal frame
- * block automatically (unless glowstone is already claimed by another dim). Admins can reassign
- * at any time with {@code /dim setportal <dim> <block>}. Only one frame block per dim; only one
- * dim per frame block.
- *
- * <h2>No auto-portal generation</h2>
- * <p>The {@link net.minecraft.world.level.portal.TeleportTransition} returned here teleports
- * directly to the destination's spawn origin — vanilla's portal-search / portal-generation
- * logic is never invoked, so no unwanted portals are created in either dimension.
+/*
+ * Intercepts NetherPortalBlock#getPortalDestination to route custom-dim portals.
+ * If the frame block is registered to a custom dim: outbound from vanilla, return from within the dim.
+ * Obsidian frames always fall through to vanilla. Spawn island/portal is generated on next tick.
  */
 @Mixin(NetherPortalBlock.class)
 public abstract class NetherPortalBlockMixin {
 
-    /**
-     * Injected at the head of {@link NetherPortalBlock#getPortalDestination}, cancelling vanilla
-     * behaviour and returning a custom {@link TeleportTransition} when the portal's frame block is
-     * registered to a custom dimension.
-     *
-     * <p>If the frame block is {@code minecraft:obsidian} or not registered in {@link DimSavedData},
-     * the injection returns without cancelling and vanilla handles the portal normally.
-     * Otherwise, the destination is determined bidirectionally: players in the custom dim are sent
-     * to the overworld; players elsewhere are sent to the custom dim.
-     *
-     * <p>The return portal / spawn island is generated asynchronously on the next server tick so
-     * that spawn chunks are guaranteed to be loaded and the heightmap returns accurate surface Y.
-     * This applies to all custom dim types (ether, overworld, nether, end).
-     */
+    // Cancels vanilla portal logic and returns a custom TeleportTransition when the frame block is registered to a custom dim.
+    // If the entity is already in that custom dim, routes back to overworld. Otherwise routes to the custom dim.
     @Inject(method = "getPortalDestination", at = @At("HEAD"), cancellable = true)
     private void onGetPortalDestination(ServerLevel level, Entity entity, BlockPos pos,
                                          CallbackInfoReturnable<TeleportTransition> cir) {
@@ -147,10 +112,7 @@ public abstract class NetherPortalBlockMixin {
                 TeleportTransition.PLAY_PORTAL_SOUND));
     }
 
-    /**
-     * Walks outward from the portal block along the perpendicular axis to find
-     * the first non-air, non-portal block (the frame).
-     */
+    // Walks outward from the portal along the perpendicular axis to find the first non-air, non-portal block (the frame).
     @Nullable
     private static Block findFrameBlock(ServerLevel level, BlockPos portalPos) {
         Direction.Axis portalAxis = level.getBlockState(portalPos)

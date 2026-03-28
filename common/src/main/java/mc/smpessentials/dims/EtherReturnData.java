@@ -13,20 +13,10 @@ import java.util.UUID;
 
 /**
  * Persists each player's overworld portal entry position so they return to the correct portal
- * after a custom dim trip — even across server restarts.
- *
- * <p>Stored in the overworld's {@code DimensionDataStorage} under the key
- * {@code quackedsmp_ether_returns}, alongside other global saved data.
- *
- * <h2>Lifecycle</h2>
- * <ol>
- *   <li>When a player enters any custom dim outbound, their current overworld position is
- *       written via {@link #record} (called by {@link DimManager#saveReturnPos}).</li>
- *   <li>When they step through the return portal, the position is read and removed via
- *       {@link #remove} (called by {@link DimManager#popReturnPos}).</li>
- *   <li>If no position is stored (e.g. first visit after a fresh install), callers fall back
- *       to overworld spawn.</li>
- * </ol>
+ * after a custom dim trip, even across server restarts. Stored in the overworld's data storage
+ * under {@code quackedsmp_ether_returns}. On outbound entry the position is written via
+ * {@link #record}; on return it is read and removed via {@link #remove}. Falls back to overworld
+ * spawn if no position is stored.
  */
 public final class EtherReturnData extends SavedData {
 

@@ -14,25 +14,10 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-/**
- * Mixin into {@link FishingHook#retrieve(ItemStack)} to award Fishing skill XP
- * when a player successfully catches an item from water.
- *
- * <p>
- * The {@code retrieve()} method returns:
- * <ul>
- * <li>{@code 0} — nothing happened / client-side</li>
- * <li>{@code 1} — player caught loot from bobbing (the fish-catch path)</li>
- * <li>{@code 2} — hook was on ground</li>
- * <li>{@code 3} — hooked an ItemEntity</li>
- * <li>{@code 5} — hooked a non-item entity</li>
- * </ul>
- * We only award XP when return value is 1 (actual fishing catch).
- */
+// Awards Fishing XP when retrieve() returns 1 (loot from water); other return values are non-catch paths.
 @Mixin(FishingHook.class)
 public abstract class FishingHookMixin {
 
-    /** Access the hook's owning player. */
     @Shadow
     public abstract Player getPlayerOwner();
 

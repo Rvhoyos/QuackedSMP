@@ -16,10 +16,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.util.Optional;
 
-/**
- * Prevents nether portals from auto-generating inside the overworld spawn protection radius.
- * Players can still transit through existing portals in the area; only auto-generation is blocked.
- */
+// Blocks nether portal auto-generation inside spawn protection. Transit through existing portals still works.
 @Mixin(PortalForcer.class)
 public abstract class PortalForcerMixin {
 

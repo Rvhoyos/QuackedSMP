@@ -17,12 +17,7 @@ public final class ClaimAccess {
      * Returns {@code true} if {@code actor} is allowed to modify blocks/entities in
      * {@code chunk} within {@code level}.
      *
-     * <p>Grant conditions (short-circuit order):
-     * <ol>
-     *   <li>Server operator — always allowed.</li>
-     *   <li>Chunk is unclaimed — always allowed.</li>
-     *   <li>Actor is the chunk owner or is in the owner's trust list.</li>
-     * </ol>
+     * Allowed if: server operator, chunk is unclaimed, or actor is the owner or trusted.
      */
     public static boolean canModify(ServerPlayer actor, ServerLevel level, ChunkPos chunk) {
         // OPs bypass

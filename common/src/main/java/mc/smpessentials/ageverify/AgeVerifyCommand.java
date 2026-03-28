@@ -7,14 +7,8 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 
 /**
- * Registers the {@code /verify} command, allowing players to confirm or deny
- * their age in order to enable or opt out of Simple Voice Chat.
- *
- * <ul>
- *   <li>{@code /verify confirm} — marks the player as 18+ and enables voice chat.</li>
- *   <li>{@code /verify deny}    — opts out; voice chat remains disabled. Player can
- *       re-run {@code /verify confirm} at any time to change their response.</li>
- * </ul>
+ * Registers the {@code /verify} command. {@code /verify confirm} marks the player as 18+
+ * and enables voice chat; {@code /verify deny} opts out. Either can be re-run to change.
  */
 public final class AgeVerifyCommand {
 

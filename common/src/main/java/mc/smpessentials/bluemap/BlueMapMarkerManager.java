@@ -32,33 +32,15 @@ import java.io.File;
 import java.util.*;
 import java.util.stream.Collectors;
 
-/**
- * Manages the generation, initialization, and synchronization of BlueMap
- * markers for QuackedSMP.
- * 
- * This class handles:
- * 1. Player Homes (reading active configs and offline compressed NBT dat
- * files).
- * 2. Claimed Regions (drawing 2D shapes on the map corresponding to player land
- * claims).
- * 
- * Notice: This class bypasses CSP issues with POIs by utilizing BlueMap's
- * AssetStorage directly.
- */
+// Manages BlueMap markers for player homes, claimed regions, and the world border.
+// Uses BlueMap's AssetStorage for custom icons to avoid CSP restrictions on POI markers.
 public class BlueMapMarkerManager {
     private final BlueMapAPI api;
 
-    /**
-     * In-memory cache to prevent expensive, repeated NBT reads of offline player
-     * data.
-     * Maps a player's UUID to their last known home data and the file's last
-     * modified timestamp.
-     */
+    // Caches parsed NBT home data per UUID to avoid re-reading .dat files on every update tick.
     private final Map<UUID, CachedHome> homeCache = new java.util.concurrent.ConcurrentHashMap<>();
 
-    /**
-     * DTO containing parsed home data directly from an offline `.dat` file.
-     */
+    // Parsed home data from an offline player's .dat file.
     private static class CachedHome {
         final long lastModified;
         final String playerName;
@@ -79,11 +61,7 @@ public class BlueMapMarkerManager {
 
     private static final String HOUSE_SVG = "<svg width=\"64\" height=\"64\" viewBox=\"0 0 64 64\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\"><defs><linearGradient id=\"roofGradient\" x1=\"0%\" y1=\"0%\" x2=\"0%\" y2=\"100%\"><stop offset=\"0%\" style=\"stop-color:#FF5252;stop-opacity:1\"/><stop offset=\"100%\" style=\"stop-color:#D32F2F;stop-opacity:1\"/></linearGradient><linearGradient id=\"wallGradient\" x1=\"0%\" y1=\"0%\" x2=\"0%\" y2=\"100%\"><stop offset=\"0%\" style=\"stop-color:#F5F5F5;stop-opacity:1\"/><stop offset=\"100%\" style=\"stop-color:#E0E0E0;stop-opacity:1\"/></linearGradient><dropShadow id=\"shadow\" dx=\"0\" dy=\"2\" stdDeviation=\"2\" flood-color=\"#000000\" flood-opacity=\"0.3\"/></defs><rect x=\"12\" y=\"32\" width=\"40\" height=\"24\" fill=\"url(#wallGradient)\" stroke=\"#BDBDBD\" stroke-width=\"1\"/><path d=\"M8 32L32 12L56 32H8Z\" fill=\"url(#roofGradient)\" stroke=\"#C62828\" stroke-width=\"1\"/><rect x=\"28\" y=\"44\" width=\"8\" height=\"12\" fill=\"#5D4037\"/><circle cx=\"34\" cy=\"50\" r=\"1\" fill=\"#FFD200\"/><rect x=\"18\" y=\"38\" width=\"6\" height=\"6\" fill=\"#81D4FA\" stroke=\"#4FC3F7\" stroke-width=\"0.5\"/><rect x=\"40\" y=\"38\" width=\"6\" height=\"6\" fill=\"#81D4FA\" stroke=\"#4FC3F7\" stroke-width=\"0.5\"/><rect x=\"42\" y=\"18\" width=\"6\" height=\"8\" fill=\"#757575\"/></svg>";
 
-    /**
-     * Re-initializes SVG assets and forces an update of all tracked BlueMap marker
-     * sets based on SmpConfig settings.
-     * This iterates over all known maps managed by BlueMapAPI.
-     */
+    // Re-uploads SVG assets and refreshes all marker sets on every BlueMap map based on current SmpConfig settings.
     public void updateAll() {
         // Upload custom icons to BlueMap's Web App Asset Storage
         for (BlueMapMap map : api.getMaps()) {
@@ -109,13 +87,7 @@ public class BlueMapMarkerManager {
         }
     }
 
-    /**
-     * Reads through all active server players to find their respawn dimension and
-     * coordinates.
-     * Furthermore, probes the `world/playerdata/*.dat` folder to extract the
-     * respawn configuration
-     * of offline players to persist their home marker on the web map indefinitely.
-     */
+    // Syncs home markers for online players and offline players (reading their .dat files with NBT caching).
     private void updateHomes() {
         MinecraftServer server = BlueMapIntegration.getServer();
         if (server == null)
@@ -219,15 +191,7 @@ public class BlueMapMarkerManager {
         }
     }
 
-    /**
-     * Internal utility to inject a single `POIMarker` depicting a House SVG onto
-     * the target dimension.
-     * 
-     * @param owner      The UUID of the player who owns this home.
-     * @param playerName The String name to display on the marker popup.
-     * @param pos        The BlockPos of the home (usually center of a bed).
-     * @param dimension  The resource key of the level (e.g. `minecraft:overworld`).
-     */
+    // Places a house SVG POI marker on the correct BlueMap map for the given dimension.
     private void addHomeMarker(UUID owner, String playerName, BlockPos pos, ResourceKey<Level> dimension) {
         // Find map for dimension
         String dimId = dimension.identifier().toString();
@@ -255,10 +219,7 @@ public class BlueMapMarkerManager {
         homesMarkerSet.put(owner.toString() + "_home", marker);
     }
 
-    /**
-     * Parses the persistent claim data saved via `ClaimedSavedData` and renders
-     * the protected regions as 2D flat geometric boundaries on the surface level.
-     */
+    // Reads ClaimedSavedData and draws 2D shape markers for each claimed chunk on the relevant BlueMap map.
     private void updateClaims() {
         MinecraftServer server = BlueMapIntegration.getServer();
         if (server == null)

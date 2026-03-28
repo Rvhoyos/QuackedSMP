@@ -16,51 +16,15 @@ import org.jspecify.annotations.Nullable;
 
 import java.util.Optional;
 
-/**
- * Handles custom portal activation via a right-click with a water bucket.
- *
- * <h2>Portal lifecycle</h2>
- * <ol>
- *   <li><strong>Link a block to a dim</strong> — {@code /dim setportal <dim> <block>}.
- *       Each custom dim has exactly one portal frame block; each block links to at most one dim.
- *       When a dim is first created, {@code minecraft:glowstone} is assigned automatically
- *       as its default frame block (if glowstone is not already claimed by another dim).</li>
- *   <li><strong>Build the frame</strong> — arrange the frame block in the standard nether-portal
- *       shape (2–21 wide, 3–21 tall) anywhere in a vanilla dimension.</li>
- *   <li><strong>Activate</strong> — right-click any frame block with a water bucket.
- *       The interior fills with {@link net.minecraft.world.level.block.Blocks#NETHER_PORTAL} blocks
- *       and the bucket is consumed (returned as an empty bucket in survival).</li>
- *   <li><strong>Travel</strong> — stepping through the portal routes the player via
- *       {@link mc.smpessentials.mixin.NetherPortalBlockMixin}, which handles both directions:
- *       vanilla dim → custom dim, and custom dim → overworld.</li>
- * </ol>
- *
- * <h2>Custom-dim restriction</h2>
- * <p>Portal activation is intentionally blocked inside custom (non-vanilla) dimensions.
- * Allowing it there would trigger vanilla's cross-dimension portal search, which auto-generates
- * return portals and pollutes the overworld with unwanted portal structures.
- * Players return from a custom dim by stepping through any existing portal block in that dim,
- * which is routed back to the overworld by the mixin.
- *
- * <p>Call {@link #onRightClickBlock} from both platform event hooks, passing the face of the
- * clicked block so the interior seed position can be derived correctly.
- */
+// Handles right-click-with-water-bucket portal activation for custom dims.
+// Blocked inside custom dims to prevent vanilla from generating obsidian return portals in the overworld.
 public final class CustomPortalActivator {
 
     private CustomPortalActivator() {}
 
-    /**
-     * Attempts to activate a custom portal when a player right-clicks a frame block with a
-     * water bucket. Activation is blocked inside custom dimensions (see class javadoc).
-     *
-     * <p>{@code face} is the face of {@code pos} that was clicked. It is used to derive
-     * the interior seed position ({@code pos.relative(face)}) for shape detection, since
-     * {@link CustomPortalShape#findEmptyShape} requires a position inside the frame, not on it.
-     *
-     * @param face the face of the clicked block (from the platform right-click event)
-     * @return {@link InteractionResult#SUCCESS} if a portal was created (consume the event),
-     *         {@link InteractionResult#PASS} otherwise.
-     */
+    // Attempts to activate a custom portal on right-click with a water bucket.
+    // Returns SUCCESS (consume event) if a portal was created, PASS otherwise.
+    // Blocked inside custom dims to prevent vanilla from creating unwanted obsidian return portals.
     public static InteractionResult onRightClickBlock(Player player, Level world,
                                                        InteractionHand hand, BlockPos pos,
                                                        Direction face) {
@@ -97,14 +61,7 @@ public final class CustomPortalActivator {
         return InteractionResult.SUCCESS;
     }
 
-    /**
-     * Finds a valid, empty portal shape made of {@code frameBlock} near {@code framePos}.
-     *
-     * <p>{@link CustomPortalShape#findEmptyShape} requires a seed position inside the frame
-     * (air), not on the frame itself. We derive candidate seeds by trying {@code pos.relative(face)}
-     * first (the natural interior when clicking the inner face), then all other adjacent positions
-     * as a fallback so that clicking any face of any frame block works reliably.
-     */
+    // Tries pos.relative(face) first, then all neighbors, so clicking any face of any frame block works.
     @Nullable
     private static CustomPortalShape findValidShape(Level world, BlockPos framePos,
                                                      Direction face, Block frameBlock) {

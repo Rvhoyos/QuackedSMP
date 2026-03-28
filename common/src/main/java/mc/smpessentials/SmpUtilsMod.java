@@ -23,11 +23,7 @@ public final class SmpUtilsMod {
         purgeOldModVersions();
     }
 
-    /**
-     * Scans the mods/ directory for stale QuackedSMP JARs and deletes any that are
-     * not the currently running one. Runs at startup so uploading a new version via
-     * the mod manager automatically cleans up the old JAR on the next restart.
-     */
+    // Deletes stale QuackedSMP JARs from mods/ on startup, keeping only the currently running one.
     public static void purgeOldModVersions() {
         try {
             Optional<Path> activeOpt = mc.smpessentials.platform.SmpServices.PLATFORM.getActiveModJarPath();

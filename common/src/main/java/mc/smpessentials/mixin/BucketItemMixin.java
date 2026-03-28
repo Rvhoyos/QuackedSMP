@@ -14,12 +14,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import net.minecraft.world.level.material.Fluid;
 
-/**
- * Intercepts {@link BucketItem#emptyContents} to enforce the lava-in-wilderness
- * restriction. {@link BlockItemMixin} covers {@link net.minecraft.world.item.BlockItem#place},
- * but bucket placement bypasses that path entirely — lava buckets call
- * {@code emptyContents} directly, so a separate injection is needed here.
- */
+// Enforces the lava-in-wilderness restriction for bucket placement, which bypasses BlockItem.place entirely.
 @Mixin(BucketItem.class)
 public abstract class BucketItemMixin {
 

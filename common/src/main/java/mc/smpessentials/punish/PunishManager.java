@@ -17,11 +17,8 @@ import net.minecraft.world.level.saveddata.SavedDataType;
 import java.util.*;
 
 /**
- * Manages player punishments, specifically clearing inventories and containers in claimed chunks.
- * Handles both immediate punishments for online players and queued punishments for offline players.
- * 
- * <p>This system avoids direct NBT file manipulation for offline players by using a join-listener 
- * approach, ensuring player data is modified only when safely loaded by the server.</p>
+ * Clears inventories and containers in claimed chunks. Punishments for offline players
+ * are queued and applied on next login to avoid touching NBT files directly.
  */
 public final class PunishManager extends SavedData {
     private final Set<UUID> pendingPunishments;

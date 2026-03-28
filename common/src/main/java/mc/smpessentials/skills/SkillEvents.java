@@ -213,7 +213,7 @@ public final class SkillEvents {
      * At Agility 100, absorbs up to {@code CAP_SAFE_LANDING} (default 1.0 = full negation).
      * Scales linearly: at level 50 with default cap, absorbs 50%.
      *
-     * <p>When partially absorbed, re-applies the reduced amount via {@code entity.hurt()}
+     * When partially absorbed, re-applies the reduced amount via {@code entity.hurt()}
      * guarded by {@link #SAFE_LANDING_GUARD} to prevent infinite recursion.
      *
      * @return true if the original fall damage event should be cancelled (we handled it)
@@ -417,8 +417,6 @@ public final class SkillEvents {
      * Award XP for a skill, applying the Knowledge parent buff XP multiplier
      * for non-Knowledge skills. Sends action bar notification and level-up
      * announcement. Updates parent buff attribute modifiers on level change.
-     *
-     * <p>
      * Public so that mixin classes (different package) can call it.
      */
     public static void awardXp(ServerPlayer player, SkillData data, SkillType skill, double amount) {
@@ -461,14 +459,8 @@ public final class SkillEvents {
 
     /**
      * Apply persistent attribute modifiers based on parent category levels.
-     * Called on level-up and player join.
-     *
-     * <ul>
-     * <li><b>Industrial</b> → Movement Speed (multiplier)</li>
-     * <li><b>Nature</b> → Max Health (flat HP; CAP_NATURE_HEALTH hearts max)</li>
-     * <li><b>Combat</b> → Attack Damage (multiplier)</li>
-     * <li><b>Knowledge</b> → XP multiplier (applied in awardXp, not here)</li>
-     * </ul>
+     * Called on level-up and player join. Industrial grants movement speed, Nature grants max
+     * health, Combat grants attack damage, Knowledge XP multiplier is applied in awardXp.
      */
     private static void updateParentBuffs(ServerPlayer player, SkillData data) {
         Map<SkillType, Double> xpMap = data.getTypedXpMap(player.getUUID());
@@ -670,7 +662,7 @@ public final class SkillEvents {
      * unlock while the player is still below the threshold, and a celebratory
      * announcement when the threshold is crossed.
      *
-     * <p>All unlock levels are read from {@link SmpConfig} so changing them in
+     * All unlock levels are read from {@link SmpConfig} so changing them in
      * config automatically adjusts the teaser countdown without touching this code.
      */
     private static void checkAbilityDiscovery(ServerPlayer player, SkillType skill, int oldLevel, int newLevel) {

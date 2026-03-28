@@ -73,7 +73,7 @@ public final class CustomPortalShape {
      * Scans the level to characterise the portal frame around {@code pos} on the given axis,
      * regardless of whether the interior is empty or already filled.
      *
-     * <p>Returns a zero-size shape if the frame cannot be detected (e.g. no frame block found,
+     * Returns a zero-size shape if the frame cannot be detected (e.g. no frame block found,
      * width out of range). Callers check {@link #isValid()} before use.
      */
     private static CustomPortalShape findAnyShape(BlockGetter level, BlockPos pos,
@@ -175,7 +175,7 @@ public final class CustomPortalShape {
      * for each existing portal block encountered. Stops and returns the current row index when
      * a pillar is missing or an interior cell is non-empty.
      *
-     * <p>Returns at most {@link #MAX_HEIGHT} to bound the search.
+     * Returns at most {@link #MAX_HEIGHT} to bound the search.
      */
     private static int getDistanceUntilTop(BlockGetter level, BlockPos pos, Direction direction,
                                             BlockPos.MutableBlockPos mutable, int width,

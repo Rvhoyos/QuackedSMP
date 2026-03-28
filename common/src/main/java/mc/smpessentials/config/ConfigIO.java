@@ -11,7 +11,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-/** Shared config file helpers for all packages. */
+// Shared config file helpers for all packages.
 public final class ConfigIO {
     private static final String FILE_NAME = "quackedsmp.json";
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
@@ -23,11 +23,7 @@ public final class ConfigIO {
         return SmpServices.PLATFORM.getConfigDir().resolve(FILE_NAME);
     }
 
-    /**
-     * Reads and returns the config JSON, creating a full-default file if it is absent or empty.
-     * Also backfills any keys that were added in later versions (forward-compat) and rewrites
-     * the file when anything was backfilled, so the file stays in sync with the current schema.
-     */
+    // Reads the config, creating defaults if absent. Backfills missing keys added in later versions.
     public static JsonObject readOrCreate() {
         Path p = path();
         try {
@@ -217,11 +213,7 @@ public final class ConfigIO {
         }
     }
 
-    /**
-     * Thrown when quackedsmp.json contains invalid JSON syntax.
-     * The message includes Gson's description of what went wrong
-     * (line, column, and expected token).
-     */
+    // Thrown when quackedsmp.json contains invalid JSON syntax.
     public static class ConfigParseException extends RuntimeException {
         public ConfigParseException(String message, Throwable cause) {
             super(message, cause);
@@ -401,7 +393,6 @@ public final class ConfigIO {
         return sk;
     }
 
-    /** Default chatfilter section with starter blocklist and whitelist. */
     private static JsonObject defaultChatFilterJson() {
         JsonObject cf = new JsonObject();
 
@@ -555,9 +546,6 @@ public final class ConfigIO {
         }
     }
 
-    /**
-     * Deletes the config file and reloads defaults.
-     */
     public static void resetToFactory() {
         try {
             Files.deleteIfExists(path());

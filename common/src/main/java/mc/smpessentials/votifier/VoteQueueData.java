@@ -10,7 +10,7 @@ import net.minecraft.world.level.saveddata.SavedDataType;
 import java.util.HashMap;
 import java.util.Map;
 
-/** Persists offline vote rewards so they survive server restarts. */
+// Persists offline vote rewards so they survive server restarts.
 public final class VoteQueueData extends SavedData {
 
     private final Map<String, Integer> pending;
@@ -32,18 +32,16 @@ public final class VoteQueueData extends SavedData {
         this.pending = new HashMap<>(pending);
     }
 
-    /** Returns the singleton instance, creating and persisting it if it does not yet exist. */
     public static VoteQueueData get(MinecraftServer server) {
         return server.overworld().getDataStorage().computeIfAbsent(TYPE);
     }
 
-    /** Adds one pending vote for an offline player. */
     public void queue(String username) {
         pending.merge(username, 1, Integer::sum);
         setDirty();
     }
 
-    /** Returns and removes all pending vote counts for the player (0 if none). */
+    // Returns and removes all pending vote counts for the player (0 if none).
     public int take(String username) {
         Integer count = pending.remove(username);
         if (count != null && count > 0) {
