@@ -16,7 +16,7 @@ import net.minecraft.world.level.saveddata.SavedDataType;
 import java.util.*;
 import java.util.stream.Collectors;
 
-/** Persistent store for claims (1.21 SavedDataType API). */
+// Persistent store for claims (1.21 SavedDataType API).
 public final class ClaimedSavedData extends SavedData {
     private final List<ClaimData> claims;
 
@@ -38,11 +38,7 @@ public final class ClaimedSavedData extends SavedData {
         rebuildIndex();
     }
 
-    /**
-     * All claim data is stored in the overworld's DataStorage so that counts
-     * are global across all dimensions. The dimension key inside each ClaimData
-     * record still scopes individual claims correctly.
-     */
+    // Stored in the overworld's DataStorage so counts are global across all dimensions.
     public static ClaimedSavedData get(ServerLevel level) {
         return level.getServer().overworld().getDataStorage().computeIfAbsent(TYPE);
     }
@@ -60,26 +56,19 @@ public final class ClaimedSavedData extends SavedData {
         return indexByDim.computeIfAbsent(dim, k -> new Long2ObjectOpenHashMap<>());
     }
 
-    /** Returns {@code true} if {@code chunk} in {@code level}'s dimension is claimed. */
     public boolean isClaimed(ServerLevel level, ChunkPos chunk) {
         return dimIndex(level.dimension()).containsKey(chunk.toLong());
     }
 
-    /** Returns the {@link ClaimData} for {@code chunk} in {@code level}'s dimension, or empty. */
     public Optional<ClaimData> getClaim(ServerLevel level, ChunkPos chunk) {
         return Optional.ofNullable(dimIndex(level.dimension()).get(chunk.toLong()));
     }
 
-    /** Convenience overload: looks up the claim for the chunk containing {@code pos}. */
     public Optional<ClaimData> getClaimAt(ServerLevel level, BlockPos pos) {
         return getClaim(level, new ChunkPos(pos));
     }
 
-    /**
-     * Claims {@code chunk} in {@code level}'s dimension for {@code owner}.
-     *
-     * @return {@code true} if the claim was created; {@code false} if already claimed.
-     */
+    // Returns false if the chunk is already claimed.
     public boolean claim(ServerLevel level, ChunkPos chunk, UUID owner) {
         long key = chunk.toLong();
         var map = dimIndex(level.dimension());
@@ -94,11 +83,7 @@ public final class ClaimedSavedData extends SavedData {
         return true;
     }
 
-    /**
-     * Removes the claim for {@code chunk} in {@code level}'s dimension regardless of owner.
-     *
-     * @return {@code true} if the claim existed and was removed; {@code false} if unclaimed.
-     */
+    // Returns false if the chunk was not claimed.
     public boolean unclaim(ServerLevel level, ChunkPos chunk) {
         long key = chunk.toLong();
         var map = dimIndex(level.dimension());
@@ -111,17 +96,11 @@ public final class ClaimedSavedData extends SavedData {
         return true;
     }
 
-    /** Returns an unmodifiable snapshot of all claims in {@code level}'s dimension. */
     public List<ClaimData> listClaims(ServerLevel level) {
         return dimIndex(level.dimension()).values().stream().collect(Collectors.toUnmodifiableList());
     }
 
-    /**
-     * Sets or clears the display name of the claim at {@code chunk}.
-     *
-     * @param name the new name, or {@code null} to clear it.
-     * @return {@code true} if the claim existed and was updated; {@code false} if unclaimed.
-     */
+    // Pass null to clear the display name. Returns false if the chunk is not claimed.
     public boolean updateName(ServerLevel level, ChunkPos chunk, String name) {
         long key = chunk.toLong();
         var map = dimIndex(level.dimension());
@@ -146,20 +125,15 @@ public final class ClaimedSavedData extends SavedData {
         setDirty();
         return true;
     }
-    /** Returns the total number of claims owned by {@code owner} across all dimensions. */
     public int countByOwner(UUID owner) {
         return claimCounts.getOrDefault(owner, 0);
     }
 
-    /** Returns an unmodifiable snapshot of claim counts per owner UUID. */
     public Map<UUID, Integer> claimCountsSnapshot() {
         return Map.copyOf(claimCounts);
     }
 
-    /**
-     * Removes all claims owned by {@code owner}.
-     * Returns the number of claims removed.
-     */
+    // Returns the number of claims removed.
     public int removeAllByOwner(UUID owner) {
         List<ClaimData> toRemove = claims.stream()
                 .filter(c -> c.owner().equals(owner))
@@ -175,10 +149,7 @@ public final class ClaimedSavedData extends SavedData {
         return toRemove.size();
     }
 
-    /**
-     * Transfers all claims from {@code from} to {@code to}.
-     * Returns the number of claims transferred (0 if {@code from} had none).
-     */
+    // Moves all claims from one UUID to another. Returns the count transferred.
     public int transferClaims(UUID from, UUID to) {
         List<ClaimData> toTransfer = claims.stream()
                 .filter(c -> c.owner().equals(from))

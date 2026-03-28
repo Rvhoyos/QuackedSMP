@@ -17,14 +17,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.Supplier;
 
-/**
- * Single-port server that handles both plain HTTP (GET) and WebSocket upgrades.
- *
- * <p>Every incoming TCP connection is inspected: if it carries an
- * {@code Upgrade: websocket} header it is promoted to a WebSocket session and
- * added to the broadcast set; otherwise it is served as a normal HTTP request.
- * This avoids the need for a second port.
- */
+// Single-port server handling plain HTTP and WebSocket on the same port.
 public final class DashboardServer extends Thread {
 
     private final int port;
@@ -33,17 +26,12 @@ public final class DashboardServer extends Thread {
     // WebSocket clients — added on upgrade, removed on disconnect
     private final Set<Socket> wsClients = ConcurrentHashMap.newKeySet();
 
-    /** Full HTTP route handler: receives method, headers, and body; returns JSON string. */
     @FunctionalInterface
     public interface RouteHandler {
         String handle(String method, Map<String, String> headers, String body);
     }
 
-    /**
-     * Upload route handler: receives method, headers, the raw socket InputStream,
-     * and the Content-Length. The handler is responsible for reading exactly
-     * {@code contentLength} bytes from the stream.
-     */
+    // Like RouteHandler but receives the raw InputStream for binary uploads (bypasses 64KB body cap).
     @FunctionalInterface
     public interface UploadRouteHandler {
         String handle(String method, Map<String, String> headers, InputStream stream, long contentLength);
@@ -66,21 +54,14 @@ public final class DashboardServer extends Thread {
         this.port = port;
     }
 
-    /** Register a route that returns a JSON string regardless of method, body, or headers. */
     public void addRoute(String path, Supplier<String> handler) {
         routes.put(path, (m, h, b) -> handler.get());
     }
 
-    /** Register a full route handler that receives method, headers, and body. */
     public void addRoute(String path, RouteHandler handler) {
         routes.put(path, handler);
     }
 
-    /**
-     * Register an upload route handler that receives the raw InputStream instead of a
-     * pre-read body string. Use this for endpoints that accept binary data (e.g. JAR uploads)
-     * that would exceed the normal 64 KB body cap.
-     */
     public void addUploadRoute(String path, UploadRouteHandler handler) {
         uploadRoutes.put(path, handler);
     }
@@ -199,11 +180,8 @@ public final class DashboardServer extends Thread {
         }
     }
 
-    /**
-     * Serves an upload route: passes the raw {@link InputStream} directly to the handler
-     * instead of pre-reading into a string. OPTIONS preflight is handled here as well.
-     * The socket is closed when this method returns.
-     */
+    // Passes the raw InputStream directly to the upload handler instead of pre-reading the body.
+    // Also handles OPTIONS preflight. Closes the socket when done.
     private void handleHttpUpload(Socket socket, String method, Map<String, String> headers,
                                    UploadRouteHandler handler, long contentLength, InputStream in)
             throws IOException {
@@ -364,7 +342,7 @@ public final class DashboardServer extends Thread {
         }
     }
 
-    /** Broadcasts a JSON string as a WebSocket text frame to all connected clients. */
+    // Sends a JSON string as a WebSocket text frame to all connected clients.
     public void broadcast(String json) {
         byte[] frame = buildTextFrame(json.getBytes(StandardCharsets.UTF_8));
         for (Socket socket : wsClients) {
@@ -380,7 +358,7 @@ public final class DashboardServer extends Thread {
         }
     }
 
-    /** Shuts down the executor, closes the server socket, and disconnects all WebSocket clients. */
+    // Stops the executor, closes the server socket, and disconnects all WebSocket clients.
     public void shutdown() {
         executor.shutdown();
         try { if (serverSocket != null) serverSocket.close(); } catch (IOException ignored) {}
@@ -390,7 +368,7 @@ public final class DashboardServer extends Thread {
 
     // ── Helpers ────────────────────────────────────────────────────────────────
 
-    /** Reads one line from a raw InputStream without buffering beyond the newline. */
+    // Reads one CRLF-terminated line from a raw InputStream without buffering past the newline.
     private static String readLine(InputStream in) throws IOException {
         StringBuilder sb = new StringBuilder();
         int prev = -1;

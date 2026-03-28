@@ -30,33 +30,10 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
 /**
- * Registers the {@code /dim} command tree for runtime dimension management.
- *
- * <pre>
- *   /dim create &lt;id&gt; overworld                         — Vanilla overworld terrain and biomes (OP)
- *   /dim create &lt;id&gt; overworld biomes [b1[:w]...]      — Overworld terrain, custom biome list (OP)
- *   /dim create &lt;id&gt; overworld flat &lt;block:h&gt;...        — Flat terrain (OP)
- *   /dim create &lt;id&gt; ether                             — Floating islands, overworld biomes (OP)
- *   /dim create &lt;id&gt; ether biomes [b1[:w]...]          — Floating islands, custom biome list (OP)
- *   /dim create &lt;id&gt; nether                            — Vanilla nether (OP)
- *   /dim create &lt;id&gt; end                               — Vanilla end (OP)
- *   /dim delete &lt;id&gt;                                   — Delete a custom dimension (OP)
- *   /dim list                                          — List all active dimensions (everyone)
- *   /dim setportal &lt;dim_id&gt; &lt;block_id&gt;                 — Wire a block type as portal frame (OP)
- *   /dim tp &lt;id&gt;                                       — Teleport self to dimension (OP)
- *   /dim tp &lt;player&gt; &lt;id&gt;                              — Teleport player to dimension (OP)
- * </pre>
- *
- * <h2>Biome list format</h2>
- * <p>Space-separated tokens of the form {@code namespace:path} (weight 1) or
- * {@code namespace:path:weight} (explicit weight). Only the ratio between weights matters —
- * {@code plains:1 desert:1} and {@code plains:7 desert:7} produce the same 50/50 split.
- * A single biome token pins the entire dimension to that biome. Omitting {@code biomes}
- * entirely uses the full vanilla biome set.
- *
- * <h2>Flat layer format</h2>
- * <p>Space-separated tokens of the form {@code namespace:path:height}, listed
- * <strong>bottom to top</strong>. Example: {@code minecraft:bedrock:1 minecraft:dirt:3 minecraft:grass_block:1}.
+ * Registers the /dim command tree for runtime dimension management.
+ * Supports create (overworld/nether/end/ether), delete, list, setportal, and tp subcommands.
+ * Biome list format: "namespace:path[:weight] ..." — weights are ratios, single biome pins the dim.
+ * Flat layer format: "blockId:height ..." listed bottom to top.
  *
  * <h2>Portal system</h2>
  * <p>Each custom dim is automatically assigned {@code minecraft:glowstone} as its portal frame
@@ -73,10 +50,7 @@ public final class DimCommands {
 
     private DimCommands() {}
 
-    /**
-     * Registers the entire {@code /dim} command subtree with the given dispatcher.
-     * Called from {@link mc.smpessentials.commands.CommandRegistrar} during server startup.
-     */
+    // Registers the entire /dim command subtree. Called from CommandRegistrar on server startup.
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(
             Commands.literal("dim")
@@ -263,12 +237,7 @@ public final class DimCommands {
         );
     }
 
-    /**
-     * Shared handler for all {@code /dim create} subcommands. Delegates to
-     * {@link DimManager#create} and sends a success or failure message to the command source.
-     *
-     * @return {@code 1} on success, {@code 0} on failure (Brigadier convention)
-     */
+    // Shared handler for all /dim create subcommands. Returns 1 on success, 0 on failure (Brigadier convention).
     private static int executeCreate(CommandSourceStack source, Identifier dimId,
                                       String type, Optional<String> generatorConfig) {
         String err = DimManager.create(source.getServer(), dimId.toString(), type, generatorConfig);
@@ -282,13 +251,8 @@ public final class DimCommands {
         return 1;
     }
 
-    /**
-     * Teleports {@code player} to the spawn origin of {@code dest}.
-     * Schedules spawn-structure generation on the next tick (ether island for ether dims,
-     * return portal for all other custom dims) so chunks are loaded when the heightmap is queried.
-     *
-     * @return {@code 1} on success, {@code 0} if the teleport was rejected by the server
-     */
+    // Teleports player to the dim's spawn origin. Schedules spawn island/portal generation on the next tick.
+    // Returns 1 on success, 0 if teleport was rejected.
     private static int tpPlayerToDim(CommandSourceStack source, ServerPlayer player, ServerLevel dest) {
         BlockPos origin = DimManager.findSpawnOrigin(source.getServer(), dest);
 
@@ -325,10 +289,7 @@ public final class DimCommands {
         }
     }
 
-    /**
-     * Suggests biome IDs for a greedy-string biome list argument.
-     * Handles multi-token input: completes the current (last) token against the biome registry.
-     */
+    // Tab-completes the current (last) token against the biome registry for a greedy biome-list argument.
     private static CompletableFuture<Suggestions> suggestBiomes(
             CommandContext<CommandSourceStack> ctx, SuggestionsBuilder builder) {
         String remaining = builder.getRemaining();
@@ -344,10 +305,7 @@ public final class DimCommands {
         return builder.buildFuture();
     }
 
-    /**
-     * Suggests all active dimension IDs (vanilla + runtime-created custom dims).
-     * Used for {@code /dim tp} where any loaded dim is a valid destination.
-     */
+    // Suggests all active dimension IDs (vanilla and custom). Used for /dim tp.
     private static CompletableFuture<Suggestions> suggestAllDims(
             CommandContext<CommandSourceStack> ctx, SuggestionsBuilder builder) {
         DimManager.listAll(ctx.getSource().getServer()).stream()
@@ -357,12 +315,7 @@ public final class DimCommands {
         return builder.buildFuture();
     }
 
-    /**
-     * Suggests only custom (non-vanilla) dimension IDs.
-     * Reads from the live levels map so datapack-registered dims are included alongside
-     * plugin-created ones. Vanilla dims (overworld, nether, end) are excluded.
-     * Used for {@code /dim delete} and {@code /dim setportal} where vanilla dims are not valid targets.
-     */
+    // Suggests only non-vanilla dimension IDs. Used for /dim delete and /dim setportal.
     private static CompletableFuture<Suggestions> suggestCustomDims(
             CommandContext<CommandSourceStack> ctx, SuggestionsBuilder builder) {
         DimManager.listAll(ctx.getSource().getServer()).stream()
@@ -373,10 +326,7 @@ public final class DimCommands {
         return builder.buildFuture();
     }
 
-    /**
-     * Suggests block IDs for a greedy-string flat-layer argument.
-     * Handles multi-token input: completes the current (last) token against the block registry.
-     */
+    // Tab-completes the current token against the block registry for a greedy flat-layer argument.
     private static CompletableFuture<Suggestions> suggestBlocks(
             CommandContext<CommandSourceStack> ctx, SuggestionsBuilder builder) {
         String remaining = builder.getRemaining();

@@ -57,86 +57,36 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.Executor;
 
-/**
- * Runtime dimension management: create, destroy, list, and restore custom dimensions.
- *
- * <p>Dimensions are added to {@code MinecraftServer.levels} via a Mixin accessor, making them
- * immediately active (ticked, saved, queryable) without a restart.
- *
- * <h2>Generator types</h2>
- * <ul>
- *   <li>{@code overworld} — standard overworld noise terrain</li>
- *   <li>{@code nether} — vanilla nether terrain and biomes</li>
- *   <li>{@code end} — vanilla end terrain and biomes</li>
- *   <li>{@code ether} — floating-islands noise ({@link NoiseGeneratorSettings#FLOATING_ISLANDS}),
- *       overworld {@code DimensionType}; falling below {@code minY} teleports the player back
- *       to the overworld at Y=300 above world spawn (see {@link EtherFallthrough})</li>
- * </ul>
- *
- * <h2>Portal system</h2>
- * <p>Every newly created dim is automatically assigned {@code minecraft:glowstone} as its portal
- * frame block, provided glowstone is not already claimed by another dim. Admins can override with
- * {@code /dim setportal <dim> <block>}. Each dim holds at most one frame block; each block links
- * to at most one dim. Players build a frame in the standard nether-portal shape and right-click
- * it with a water bucket to activate — only works in vanilla dimensions (overworld/nether/end).
- * Portal routing in both directions is handled by
- * {@link mc.smpessentials.mixin.NetherPortalBlockMixin}.</p>
- *
- * <h2>generatorConfig format</h2>
- * <p>The {@code generatorConfig} string encodes optional sub-generator parameters and is persisted
- * in {@link DimSavedData} so the dimension can be reconstructed on restart.
- * <ul>
- *   <li>Absent/empty — use the default biome set for the generator type</li>
- *   <li>{@code "biomes minecraft:plains:2 minecraft:desert:1"} — custom biome list with optional
- *       per-biome weights. Applies to {@code overworld} and {@code ether}.
- *       See {@link #parseBiomeSource} for weight semantics.</li>
- *   <li>{@code "flat minecraft:stone:5 minecraft:dirt:3 minecraft:grass_block:1"} — flat terrain
- *       with layers listed bottom-to-top. {@code overworld} only.</li>
- * </ul>
+/*
+ * Handles runtime creation, deletion, and restoration of custom dimensions.
+ * Dimensions are injected into MinecraftServer.levels via a Mixin accessor so they are live
+ * immediately without a restart. Supports generator types: overworld, nether, end, ether.
+ * Each custom dim gets a portal frame block (default glowstone); right-click with water bucket
+ * to activate. The generatorConfig string is persisted in DimSavedData for restart recovery.
  */
 public final class DimManager {
 
     private static final Logger LOGGER = LogManager.getLogger("DimManager");
 
-    /**
-     * Dimension IDs that need to be scrubbed from {@code level.dat}'s
-     * {@code Data.WorldGenSettings.dimensions} on the next server stop.
-     * Populated by {@link #destroy}; consumed by {@link #scrubLevelDat}.
-     */
+    // Dims queued for removal from level.dat on next server stop (see scrubLevelDat)
     private static final Set<String> pendingLevelDatRemovals =
             Collections.synchronizedSet(new HashSet<>());
 
-    /**
-     * IDs of all currently loaded ether dimensions. Populated by {@link #createLevel} and
-     * {@link #restoreAll}; cleared by {@link #destroy}. Used by {@link EtherFallthrough#tick}
-     * to avoid a {@link DimSavedData} lookup on every server tick per player.
-     */
+    // Tracks which loaded dims are ether-type to avoid SavedData lookups on every tick
     private static final Set<String> etherDimIds =
             Collections.synchronizedSet(new HashSet<>());
 
-    /**
-     * Returns {@code true} if {@code dimId} is a currently loaded ether dimension.
-     * Backed by an in-memory set populated at server start and kept in sync with create/destroy.
-     */
+    // True if the dim is currently loaded as ether-type; backed by an in-memory set updated on create/destroy/restore.
     public static boolean isEtherDim(String dimId) {
         return etherDimIds.contains(dimId);
     }
 
-    /**
-     * Persists {@code portalPos} as the overworld return destination for {@code entity}.
-     * Called whenever an entity enters any custom dim outbound so that the matching return
-     * trip ({@link #popReturnPos}) can teleport them back to the right overworld location.
-     * Stored via {@link EtherReturnData} and survives server restarts.
-     */
+    // Records where the entity entered the custom dim so the return trip lands in the right spot.
     public static void saveReturnPos(Entity entity, BlockPos portalPos, MinecraftServer server) {
         EtherReturnData.get(server).record(entity.getUUID(), portalPos);
     }
 
-    /**
-     * Retrieves and removes the stored overworld return position for {@code entity}.
-     * Falls back to overworld spawn only if no position was ever stored (e.g. the very first
-     * time a player visits a custom dim on a fresh server install).
-     */
+    // Returns (and clears) the stored return position, falling back to overworld spawn.
     public static BlockPos popReturnPos(Entity entity, MinecraftServer server) {
         BlockPos stored = EtherReturnData.get(server).remove(entity.getUUID());
         return stored != null ? stored : server.overworld().getRespawnData().pos();
@@ -144,37 +94,15 @@ public final class DimManager {
 
     private DimManager() {}
 
-    /**
-     * Creates a new custom dimension and persists it to {@link DimSavedData}.
-     *
-     * @param generatorConfig optional sub-generator config string (see class javadoc)
-     * @return {@code null} on success, or a human-readable error message on failure.
-     */
+    // Returns null on success or an error message on failure.
     public static String create(MinecraftServer server, String id, String generatorType,
                                  Optional<String> generatorConfig) {
         return createLevel(server, id, generatorType, generatorConfig, true);
     }
 
-    /**
-     * Destroys a custom dimension: evicts all players, saves, closes, and removes it.
-     *
-     * <p>Three cleanup steps run after the level is removed from the live map:
-     * <ol>
-     *   <li><strong>Chunk data folder</strong> — deleted so recreating the dim starts with
-     *       fresh terrain.</li>
-     *   <li><strong>Datapack JSON</strong> — if the dim was registered via a datapack, its
-     *       definition file at
-     *       {@code <worldRoot>/datapacks/<packName>/data/<ns>/dimension/<path>.json}
-     *       is deleted so vanilla does not re-register it from the pack on restart.</li>
-     *   <li><strong>{@code level.dat} scrub</strong> — vanilla bakes datapack-registered dims
-     *       into {@code Data.WorldGenSettings.dimensions} in {@code level.dat} and re-registers
-     *       them from there even if the JSON file is gone. The dim ID is queued in
-     *       {@link #pendingLevelDatRemovals} and patched out by {@link #scrubLevelDat} after the
-     *       server writes its final {@code level.dat} on shutdown.</li>
-     * </ol>
-     *
-     * @return {@code null} on success, or a human-readable error message on failure.
-     */
+    // Evicts all players, saves, closes, and removes the dimension. Deletes chunk data and datapack
+    // JSON so it does not re-register on restart. Queues a level.dat scrub for server stop.
+    // Returns null on success or an error message on failure.
     public static String destroy(MinecraftServer server, String id) {
         Identifier loc;
         try {
@@ -268,16 +196,8 @@ public final class DimManager {
         return null;
     }
 
-    /**
-     * Patches {@code level.dat} to remove any dimensions queued by {@link #destroy} from
-     * {@code Data.WorldGenSettings.dimensions}. Must be called <em>after</em> the server has
-     * written its own {@code level.dat} (i.e. from the platform's server-stopped event), so
-     * our write is the final one before the next startup.
-     *
-     * <p>Safe to call even if no deletions are pending — exits immediately in that case.
-     * Logs a warning on failure but never throws; a failed scrub is not fatal (the dim
-     * will simply reappear on the next restart and can be deleted again).
-     */
+    // Patches level.dat after the server's own save to remove deleted dim IDs from
+    // WorldGenSettings.dimensions. Must be called from the server-stopped event.
     public static void scrubLevelDat(MinecraftServer server) {
         if (pendingLevelDatRemovals.isEmpty()) return;
 
@@ -311,10 +231,7 @@ public final class DimManager {
         }
     }
 
-    /**
-     * Re-creates all custom dimensions from {@link DimSavedData} after a server restart.
-     * Does NOT write back to saved data (entries are already persisted).
-     */
+    // Re-creates all custom dimensions from SavedData on server start.
     public static void restoreAll(MinecraftServer server) {
         List<DimSavedData.DimEntry> entries = DimSavedData.get(server).getEntries();
         for (DimSavedData.DimEntry entry : entries) {
@@ -328,35 +245,18 @@ public final class DimManager {
         }
     }
 
-    /**
-     * Returns a list of all currently active level keys (vanilla + custom).
-     */
+    // Returns all currently active dimension keys, vanilla and custom.
     public static List<ResourceKey<Level>> listAll(MinecraftServer server) {
         return new ArrayList<>(((MinecraftServerMixin) server).getLevels().keySet());
     }
 
-    /**
-     * Returns a sensible spawn-search origin for {@code dest}, using overworld spawn XZ as the
-     * horizontal hint. Delegates to {@link #findSpawnOrigin(MinecraftServer, ServerLevel, int, int)}.
-     * Used by {@link DimCommands#tpPlayerToDim} (all dim types) and the ether dim-creation path
-     * where no portal entry XZ context is available.
-     */
+    // Delegates to the hint overload using overworld spawn XZ as the position hint.
     public static BlockPos findSpawnOrigin(MinecraftServer server, ServerLevel dest) {
         BlockPos owSpawn = server.overworld().getRespawnData().pos();
         return findSpawnOrigin(server, dest, owSpawn.getX(), owSpawn.getZ());
     }
 
-    /**
-     * Returns a sensible spawn-search origin for {@code dest} at the given horizontal position.
-     *
-     * <p>For ceiling dims (nether-type), Y=64 is used directly at the hint XZ.
-     * For flat dims, the generator spawn height is used (no chunk load required).
-     * For noise dims, the heightmap is probed at {@code hintX, hintZ}; falls back to (0,0) if
-     * the chunk is not yet loaded (heightmap returns 0).
-     *
-     * <p>Portal entry callers should pass the overworld portal's XZ as the hint so the return
-     * portal in the custom dim is placed at the matching position rather than a global spawn point.
-     */
+    // hintX/hintZ should be the overworld portal XZ so the custom-dim portal aligns with it.
     public static BlockPos findSpawnOrigin(MinecraftServer server, ServerLevel dest, int hintX, int hintZ) {
         if (dest.dimensionTypeRegistration().value().hasCeiling()) {
             return new BlockPos(hintX, 64, hintZ);
@@ -376,33 +276,7 @@ public final class DimManager {
         return new BlockPos(0, islandY > 0 ? islandY : 80, 0);
     }
 
-    /**
-     * Generates a small floating island centred on {@code spawnPos} in {@code dest} if the
-     * surface block (one below {@code spawnPos}) is air. If terrain already exists at that
-     * position, the island is skipped but the return portal is still ensured.
-     *
-     * <p>Always calls {@link #ensureReturnPortal} so a return portal exists on the island
-     * (or on whatever terrain is at {@code spawnPos}) regardless of whether the island was
-     * freshly generated.
-     *
-     * <p>Called when routing a player to an ether dimension via portal or {@code /dim tp}.
-     *
-     * <h3>Island shape (tapered, floating-island style)</h3>
-     * <ul>
-     *   <li>+0 — {@code grass_block}, ~13-block oval</li>
-     *   <li>−1, −2 — {@code dirt}, 3×3</li>
-     *   <li>−3 — {@code stone}, 3×3</li>
-     *   <li>−4 — {@code stone}, 5-block cross</li>
-     *   <li>−5 — {@code stone}, single tip</li>
-     * </ul>
-     *
-     * <h3>Return portal</h3>
-     * <p>A 2×3 interior portal is placed on the island surface using the dim's registered frame
-     * block (see {@link DimSavedData}), defaulting to glowstone. {@code AXIS=X}.
-     * The mod's portal routing intercepts it and sends the player back to the overworld.
-     *
-     * @param spawnPos the block position where the player's feet will land
-     */
+    // Generates a small floating island at spawnPos if terrain is missing, then ensures a return portal.
     public static void ensureSpawnPlatform(ServerLevel dest, BlockPos spawnPos) {
         BlockPos surface = spawnPos.below();
         if (!dest.getBlockState(surface).isAir()) {
@@ -429,21 +303,8 @@ public final class DimManager {
         ensureReturnPortal(dest, spawnPos);
     }
 
-    /**
-     * Places a return portal at {@code spawnPos} in any custom dimension using the dim's
-     * registered portal frame block (from {@link DimSavedData}), falling back to glowstone.
-     * The frame is 4 wide × 5 tall (2×3 interior, {@code AXIS=X}) with its base at {@code spawnPos.Y}.
-     * Frame blocks are force-placed (overwriting existing blocks) so the frame is always complete
-     * even when landing inside a structure.
-     *
-     * <p>Skips silently if a {@code NETHER_PORTAL} block already exists anywhere in the interior
-     * column at {@code spawnPos.XZ} — this is unambiguous (portal blocks only exist where we place
-     * them) and avoids false positives from terrain blocks that match the frame block type.
-     *
-     * <p>Called directly for all non-ether custom dims, and via {@link #ensureSpawnPlatform} for ether.
-     *
-     * @param spawnPos the player's feet position (frame base is placed at this Y)
-     */
+    // Places a 4×5 return portal at spawnPos using the dim's registered frame block (default glowstone).
+    // Skips if a NETHER_PORTAL block already exists in that column.
     public static void ensureReturnPortal(ServerLevel dest, BlockPos spawnPos) {
         String dimId = dest.dimension().identifier().toString();
         Optional<String> portalBlockId = DimSavedData.get(dest.getServer())
@@ -481,10 +342,6 @@ public final class DimManager {
         }
     }
 
-    /**
-     * Places {@code block} at {@code pos} only if the existing block state is air.
-     * The flag {@code 3} triggers block update and client notification.
-     */
     private static void placeIfAir(ServerLevel level, BlockPos pos, Block block) {
         if (level.getBlockState(pos).isAir()) {
             level.setBlock(pos, block.defaultBlockState(), 3);
@@ -493,18 +350,7 @@ public final class DimManager {
 
     // -------------------------------------------------------------------------
 
-    /**
-     * Core implementation shared by {@link #create} and {@link #restoreAll}.
-     *
-     * <p>Constructs a {@link ServerLevel} with the appropriate {@link LevelStem}, registers it in
-     * the live levels map, and optionally persists it to {@link DimSavedData}. For {@code ether}
-     * dims, a spawn-island generation task is scheduled on the server thread.
-     *
-     * @param persist if {@code true}, writes the entry to {@link DimSavedData} and assigns the
-     *                default glowstone portal frame block. Pass {@code false} when called from
-     *                {@link #restoreAll} to avoid duplicating already-persisted entries.
-     * @return {@code null} on success, or a human-readable error message on failure.
-     */
+    // persist=true when creating new (writes SavedData); false when restoring on startup.
     private static String createLevel(MinecraftServer server, String id, String generatorType,
                                        Optional<String> generatorConfig, boolean persist) {
         Identifier loc;
@@ -574,17 +420,7 @@ public final class DimManager {
         return null;
     }
 
-    /**
-     * Resolves a {@link LevelStem} for the given generator type and optional config string.
-     *
-     * <p>For {@code nether} and {@code end}, the vanilla registry stem is used directly.
-     * For {@code overworld}, an optional {@code flat} or {@code biomes} sub-config may override
-     * the chunk generator while keeping the vanilla overworld {@link net.minecraft.world.level.dimension.DimensionType}.
-     * For {@code ether}, the floating-islands noise preset is used with configurable biomes,
-     * also reusing the overworld {@code DimensionType}.
-     *
-     * @return the resolved {@link LevelStem}, or {@code null} if {@code generatorType} is unknown.
-     */
+    // Returns null if generatorType is unrecognised.
     @SuppressWarnings("unchecked")
     private static LevelStem resolveStem(MinecraftServer server, String generatorType,
                                           Optional<String> generatorConfig) {
@@ -649,33 +485,8 @@ public final class DimManager {
         };
     }
 
-    /**
-     * Resolves a {@link BiomeSource} from a space-separated list of {@code biomeId[:weight]} tokens.
-     *
-     * <h3>Behaviour by input</h3>
-     * <ul>
-     *   <li>Null/blank — returns the full vanilla overworld multi-noise preset (all vanilla biomes
-     *       with their normal climate-based distribution).</li>
-     *   <li>One valid biome — returns a {@link FixedBiomeSource}; the entire dimension uses that
-     *       single biome exclusively.</li>
-     *   <li>Multiple biomes — returns a {@link MultiNoiseBiomeSource} whose parameter list
-     *       partitions the worldgen <em>temperature axis</em> {@code [-1, 1]} proportionally by
-     *       weight. All other climate axes (humidity, continentalness, erosion, depth, weirdness)
-     *       are set to the full range for every biome, so temperature alone determines placement.</li>
-     * </ul>
-     *
-     * <h3>Weight semantics</h3>
-     * <p>Only the <em>ratio</em> between weights matters — absolute values are irrelevant.
-     * {@code plains:1 desert:1} and {@code plains:7 desert:7} produce an identical 50/50
-     * distribution. A biome with weight {@code 3} in a list whose total weight is {@code 5}
-     * occupies roughly 60% of the world's area.
-     *
-     * <h3>Token format</h3>
-     * <p>Each token is either {@code namespace:path} (weight defaults to 1) or
-     * {@code namespace:path:weight} where {@code weight} is a positive integer.
-     * Unknown biome IDs are skipped with a warning; if all IDs are invalid the method
-     * falls back to the vanilla overworld preset.
-     */
+    // Parses "biomeId[:weight] ..." tokens. Single biome = FixedBiomeSource; multiple = MultiNoise
+    // partitioned by weight along the temperature axis. Falls back to vanilla overworld on null/blank.
     private static BiomeSource parseBiomeSource(MinecraftServer server, String biomeListStr) {
         if (biomeListStr == null || biomeListStr.isBlank()) {
             var reg = server.registryAccess()
@@ -750,16 +561,7 @@ public final class DimManager {
         return MultiNoiseBiomeSource.createFromList(new Climate.ParameterList<>(paramList));
     }
 
-    /**
-     * Builds a flat-terrain {@link LevelStem} from a space-separated list of
-     * {@code blockId:height} tokens.
-     *
-     * <p>Layers are applied <strong>bottom to top</strong>. Each token is
-     * {@code namespace:path:height} where {@code height} is the number of block layers.
-     * The dimension type is borrowed from the vanilla overworld stem.
-     * The biome defaults to {@code minecraft:plains}.
-     * Unknown or air blocks are skipped with a warning.
-     */
+    // Builds a flat terrain stem from "blockId:height ..." tokens (bottom to top). Defaults biome to plains.
     private static LevelStem buildFlatStem(MinecraftServer server, String layersStr,
                                             LevelStem overworldStem) {
         var biomeReg  = server.registryAccess().lookupOrThrow(Registries.BIOME);

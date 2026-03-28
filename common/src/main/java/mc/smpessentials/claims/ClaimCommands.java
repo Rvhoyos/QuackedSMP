@@ -1,4 +1,3 @@
-// common/src/main/java/mc/smpessentials/claims/ClaimCommands.java
 package mc.smpessentials.claims;
 
 import com.mojang.brigadier.CommandDispatcher;
@@ -14,21 +13,7 @@ import net.minecraft.network.chat.MutableComponent;
 import java.util.Optional;
 import java.util.UUID;
 
-/**
- * Registers the player-facing claim commands:
- * <ul>
- *   <li>{@code /claim} — claim the current chunk.</li>
- *   <li>{@code /claim map} — render a 7×7 ASCII mini-map of nearby claims.</li>
- *   <li>{@code /claim name <name>} — set a display name for the current claim (VIP/OP only).</li>
- *   <li>{@code /claim transfer <player>} — transfer all of your claims to another player.</li>
- *   <li>{@code /claim info} — show owned count vs. limit.</li>
- *   <li>{@code /unclaim} — unclaim the current chunk.</li>
- *   <li>{@code /claims} — show total owned chunks and current-chunk owner.</li>
- * </ul>
- *
- * <p>All commands require a player source; console use is rejected by the {@code .requires}
- * predicate.  Business logic is delegated to {@link ClaimService}.
- */
+// Registers /claim, /unclaim, /claims and related subcommands. Business logic lives in ClaimService.
 public final class ClaimCommands {
     private ClaimCommands() {
     }
