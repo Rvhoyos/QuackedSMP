@@ -16,18 +16,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-/**
- * Mixin into
- * {@link BrewingStandBlockEntity#doBrew(Level, BlockPos, NonNullList)}
- * to award Alchemy skill XP when a brewing operation completes.
- *
- * <p>
- * {@code doBrew()} is a private static method called from {@code serverTick()}
- * when {@code brewTime} reaches 0 and the recipe is still valid. It has no
- * player
- * context, so we award XP to the <b>nearest player within 8 blocks</b> of the
- * brewing stand. This mirrors how mcMMO handles brewing attribution.
- */
+// Awards Alchemy XP on brew completion. No player context in doBrew(), so XP goes to nearest player within 8 blocks.
 @Mixin(BrewingStandBlockEntity.class)
 public abstract class BrewingStandMixin {
 

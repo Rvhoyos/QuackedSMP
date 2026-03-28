@@ -16,15 +16,10 @@ import java.util.UUID;
 import java.util.Optional;
 
 /**
- * Implements the {@code /sos} command.
- *
- * <p>Iterates every online player and teleports any untrusted player who is currently
- * standing inside a chunk owned by the command caller to that player's own respawn
- * point (or world spawn as a fallback).  OPs and spectators are never ejected.
- *
- * <p>Performance note: iterates the online player list ({@code O(N)} players) rather
- * than the claim list ({@code O(M)} claims) because {@code N} is expected to be much
- * smaller.
+ * Implements the {@code /sos} command. Teleports any untrusted player currently standing
+ * in the caller's claimed chunks to their respawn point (or world spawn as fallback).
+ * OPs and spectators are never ejected. Iterates online players rather than all claims
+ * since the player list is expected to be smaller.
  */
 public final class SosCommand {
     private SosCommand() {

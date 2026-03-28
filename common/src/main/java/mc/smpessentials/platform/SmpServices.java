@@ -2,9 +2,7 @@ package mc.smpessentials.platform;
 
 import java.util.ServiceLoader;
 
-/**
- * Service locator for platform-specific implementations.
- */
+// Service locator for platform-specific implementations.
 public class SmpServices {
     public static final PlatformHelper PLATFORM = load(PlatformHelper.class);
 

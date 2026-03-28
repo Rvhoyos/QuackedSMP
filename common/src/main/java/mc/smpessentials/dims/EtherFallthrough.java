@@ -9,11 +9,9 @@ import java.util.Set;
 /**
  * Void fall-through mechanic for {@code ether} dimensions.
  *
- * <p>If a player falls below the dimension floor ({@code minY}) in an ether dim, they are
+ * If a player falls below the dimension floor ({@code minY}) in an ether dim, they are
  * teleported to Y=300 above world-spawn XZ in the overworld, where they fall down naturally
- * onto the surface.
- *
- * <p>Call {@link #tick(ServerPlayer)} once per player per server tick.
+ * onto the surface. Call {@link #tick(ServerPlayer)} once per player per server tick.
  */
 public final class EtherFallthrough {
 
@@ -24,7 +22,7 @@ public final class EtherFallthrough {
      * If so, teleports them to Y=300 above overworld world-spawn XZ so they fall back down
      * naturally onto the surface. A hotbar message is shown to inform the player.
      *
-     * <p>This method is a no-op for players in non-ether or vanilla dimensions.
+     * This method is a no-op for players in non-ether or vanilla dimensions.
      */
     public static void tick(ServerPlayer player) {
         ServerLevel level = (ServerLevel) player.level();

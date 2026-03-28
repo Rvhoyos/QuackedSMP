@@ -16,25 +16,9 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-/**
- * Three responsibilities:
- *
- * <p><b>1. Ability activation via item drop</b> — intercepts {@code LivingEntity.drop()}
- * at RETURN. If the dropped item is a recognized tool and the player is sneaking,
- * {@link mc.smpessentials.skills.ActiveAbilities#onPlayerDropItem} handles activation
- * and returns the item to the player's inventory. The item entity's stack is consumed
- * by the inventory add, causing the entity to auto-discard on its next tick.
- *
- * <p><b>2. Fall damage / Safe Landing</b> — intercepts {@code hurtServer} at HEAD to
- * absorb a fraction of fall damage proportional to Agility level. Cancelled falls are
- * re-applied at reduced magnitude internally, guarded by
- * {@link mc.smpessentials.skills.SkillEvents#SAFE_LANDING_GUARD} to prevent recursion.
- *
- * <p><b>3. XP + claim events</b> — delegates to {@link SkillEvents#onLivingHurt} and
- * {@link SkillEvents#onLivingDeath} for XP gain, zoom cancellation, and bleed;
- * delegates to {@link mc.smpessentials.claims.ClaimProtection#onLivingHurt} for
- * PvP protection inside claims.
- */
+// 1. Item drop -> ability activation (sneak+drop a tool).
+// 2. Fall damage -> Safe Landing absorption scaled by Agility level.
+// 3. Hurt/death -> skill XP, zoom cancellation, bleed, and claim PvP protection.
 @Mixin(LivingEntity.class)
 public abstract class LivingEntityMixin {
     @Inject(method = "drop(Lnet/minecraft/world/item/ItemStack;ZZ)Lnet/minecraft/world/entity/item/ItemEntity;", at = @At("RETURN"), cancellable = true)

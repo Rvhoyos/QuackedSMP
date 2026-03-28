@@ -15,13 +15,8 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 /**
- * Mixin into {@link EnchantmentMenu#clickMenuButton(Player, int)} to award
- * Enchanting skill XP when the player completes an enchantment.
- *
- * <p>
- * The method returns {@code true} only when an enchantment was successfully
- * applied (lapis consumed, XP levels spent, item enchanted). We read the
- * {@code costs[id]} field to scale XP based on the enchantment's level cost.
+ * Awards Enchanting XP when an enchantment is successfully applied.
+ * XP scales with {@code costs[id]} (the level cost of the chosen slot).
  */
 @Mixin(EnchantmentMenu.class)
 public abstract class EnchantmentMenuMixin {

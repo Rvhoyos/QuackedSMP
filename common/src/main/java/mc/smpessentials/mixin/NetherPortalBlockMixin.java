@@ -112,10 +112,7 @@ public abstract class NetherPortalBlockMixin {
                 TeleportTransition.PLAY_PORTAL_SOUND));
     }
 
-    /**
-     * Walks outward from the portal block along the perpendicular axis to find
-     * the first non-air, non-portal block (the frame).
-     */
+    // Walks outward from the portal along the perpendicular axis to find the first non-air, non-portal block (the frame).
     @Nullable
     private static Block findFrameBlock(ServerLevel level, BlockPos portalPos) {
         Direction.Axis portalAxis = level.getBlockState(portalPos)

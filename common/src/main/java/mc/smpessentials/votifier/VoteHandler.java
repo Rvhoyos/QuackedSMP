@@ -9,7 +9,7 @@ import net.minecraft.server.level.ServerPlayer;
 import java.util.List;
 import java.util.Random;
 
-/** Processes validated votes: dispatches rewards and manages the offline queue. */
+// Processes validated votes: dispatches rewards and manages the offline queue.
 public final class VoteHandler {
 
     private static volatile MinecraftServer server;
@@ -17,16 +17,11 @@ public final class VoteHandler {
 
     private VoteHandler() {}
 
-    /**
-     * Stores the running server so that votes submitted from the listener thread
-     * can be dispatched onto the server tick thread via {@link MinecraftServer#execute}.
-     * Must be called from the server-started event on both platforms.
-     */
+    // Stores the server reference so the listener thread can dispatch to the server thread.
     public static void init(MinecraftServer srv) {
         server = srv;
     }
 
-    /** Called from the Votifier listener thread; submits work to the server thread. */
     public static void onVote(VoteData vote) {
         MinecraftServer srv = server; // capture volatile once — safe for cross-thread handoff
         if (srv == null) return;
@@ -42,7 +37,6 @@ public final class VoteHandler {
         });
     }
 
-    /** Call on player join to flush any queued rewards they earned while offline. */
     public static void onPlayerJoin(ServerPlayer player) {
         MinecraftServer srv = server; // capture volatile once
         if (srv == null) return;

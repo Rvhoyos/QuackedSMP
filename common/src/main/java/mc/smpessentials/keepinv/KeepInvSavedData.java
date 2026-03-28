@@ -15,14 +15,8 @@ import net.minecraft.world.level.saveddata.SavedDataType;
 
 import java.util.*;
 
-/**
- * Persists the set of players who have opted OUT of keep-inventory.
- * Default behaviour (keep items) requires no entry — only opted-out UUIDs are stored.
- *
- * The server keepInventory gamerule must remain ON.
- * On death, opted-out players have their inventory dropped at their death
- * position and cleared before respawn.
- */
+// Persists UUIDs of players who opted out of keep-inventory. Default is keep; only opt-outs are stored.
+// keepInventory gamerule must stay ON; opted-out players get their inventory dropped manually on death.
 public final class KeepInvSavedData extends SavedData {
 
     private final Set<UUID> optedOut = new HashSet<>();
@@ -51,11 +45,7 @@ public final class KeepInvSavedData extends SavedData {
         return server.overworld().getDataStorage().computeIfAbsent(TYPE);
     }
 
-    /**
-     * Enforce keepInventory=true on the server. Must be called on server start.
-     * Our system relies on vanilla keeping items; opted-out players then get their
-     * inventory dropped manually in onPlayerDeath().
-     */
+    // Forces keepInventory=true on startup; our system relies on this and handles drops manually.
     public static void enforceGamerule(MinecraftServer server) {
         GameRules rules = server.overworld().getGameRules();
         if (!((Boolean) rules.get(GameRules.KEEP_INVENTORY))) {
@@ -68,27 +58,18 @@ public final class KeepInvSavedData extends SavedData {
         return get(level.getServer());
     }
 
-    /** Returns true if this player keeps their inventory on death (default). */
     public boolean isKeeping(UUID uuid) {
         return !optedOut.contains(uuid);
     }
 
-    /**
-     * Set preference. Returns true if the preference actually changed.
-     * keep=true  → keep items (remove from opted-out set)
-     * keep=false → drop items on death (add to opted-out set)
-     */
+    // Returns true if the preference changed. keep=true removes from opted-out; keep=false adds.
     public boolean setKeeping(UUID uuid, boolean keep) {
         boolean changed = keep ? optedOut.remove(uuid) : optedOut.add(uuid);
         if (changed) setDirty();
         return changed;
     }
 
-    /**
-     * Called on player death when keepInventory gamerule is ON.
-     * If the player opted out, drops all their items and XP at their death position
-     * and clears both, so the respawn transfer restores nothing.
-     */
+    // If the player opted out, drops all items and XP at the death position and clears them before respawn.
     public static void onPlayerDeath(ServerPlayer player) {
         KeepInvSavedData data = get((net.minecraft.server.level.ServerLevel) player.level());
         if (data.isKeeping(player.getUUID())) return;

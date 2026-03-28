@@ -11,11 +11,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-/**
- * Intercepts {@link ServerExplosion#explode()} to enforce claim protection.
- * If any block that would be destroyed by the explosion falls within a claimed
- * chunk, the entire explosion is cancelled (return value set to 0).
- */
+// Cancels explosions that would affect any claimed chunk.
 @Mixin(ServerExplosion.class)
 public abstract class ExplosionMixin {
     @Shadow

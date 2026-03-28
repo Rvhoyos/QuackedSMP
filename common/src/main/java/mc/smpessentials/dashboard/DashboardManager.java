@@ -14,10 +14,8 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * Manages the dashboard server lifecycle and event broadcasting.
- *
- * <p>HTTP and WebSocket share a single port via {@link DashboardServer}.
- * The dashboard starts if {@code dashboard.enabled = true} in config.
- * Spark is optional — detected at startup, metrics endpoints degrade gracefully if absent.
+ * HTTP and WebSocket share a single port via {@link DashboardServer}.
+ * Spark is optional; metrics endpoints degrade gracefully if absent.
  */
 public final class DashboardManager {
     private DashboardManager() {}

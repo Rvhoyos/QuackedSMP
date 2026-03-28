@@ -32,19 +32,13 @@ import java.util.concurrent.CompletableFuture;
 /**
  * Registers the /dim command tree for runtime dimension management.
  * Supports create (overworld/nether/end/ether), delete, list, setportal, and tp subcommands.
- * Biome list format: "namespace:path[:weight] ..." — weights are ratios, single biome pins the dim.
+ * Biome list format: "namespace:path[:weight] ..." (weights are ratios, single biome pins the dim).
  * Flat layer format: "blockId:height ..." listed bottom to top.
  *
- * <h2>Portal system</h2>
- * <p>Each custom dim is automatically assigned {@code minecraft:glowstone} as its portal frame
- * block when first created (if glowstone is not already claimed). {@code /dim setportal} overrides
- * this with any block of your choice. Only one frame block per dim; only one dim per frame block.
- *
- * <p>To open a portal: build a nether-portal-shaped frame (2–21 wide, 3–21 tall) anywhere in a
- * vanilla dimension and right-click any frame block with a water bucket. Portals are bidirectional
- * — stepping through from the custom dim returns to the overworld. Portal creation is intentionally
- * blocked inside custom dims to prevent vanilla from auto-generating unwanted return portals in
- * the overworld.
+ * Each custom dim is automatically assigned {@code minecraft:glowstone} as its portal frame block
+ * when first created. {@code /dim setportal} overrides this. One frame block per dim; one dim per
+ * frame block. Build a nether-portal-shaped frame (2-21 wide, 3-21 tall) in a vanilla dim and
+ * right-click the frame block with a water bucket to open the portal. Portals are bidirectional.
  */
 public final class DimCommands {
 

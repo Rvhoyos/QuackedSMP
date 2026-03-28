@@ -5,14 +5,7 @@ import mc.smpessentials.SmpUtilsMod;
 import mc.smpessentials.config.SmpConfig;
 import net.minecraft.server.MinecraftServer;
 
-/**
- * Bootstrapper class that handles hooking into the BlueMap API when the server
- * starts.
- * Registers enablement and disablement listeners securely and maintains the
- * server context
- * required for the BlueMapMarkerManager to access player dimensions and level
- * data.
- */
+// Registers BlueMap API hooks at startup and keeps the marker manager in sync.
 public final class BlueMapIntegration {
     private BlueMapIntegration() {
     }
@@ -21,9 +14,6 @@ public final class BlueMapIntegration {
     private static BlueMapMarkerManager markerManager;
     private static MinecraftServer server;
 
-    /**
-     * Tracks the number of server ticks elapsed between BlueMap updates.
-     */
     private static int tickCounter = 0;
     private static final int UPDATE_INTERVAL_TICKS = 12000; // 10 minutes (20 ticks * 60 seconds * 10 mins)
 
@@ -34,13 +24,6 @@ public final class BlueMapIntegration {
         }
     }
 
-    /**
-     * Periodically called by platform tick events (e.g. ServerTickEvent.Post).
-     * Triggers a non-blocking background sync of claims and homes to the BlueMap
-     * web interface.
-     *
-     * @param s The running MinecraftServer instance.
-     */
     public static void onServerTick(MinecraftServer s) {
         if (!isLoaded || markerManager == null)
             return;
@@ -55,16 +38,7 @@ public final class BlueMapIntegration {
         }
     }
 
-    /**
-     * Called once at mod startup. Checks {@link SmpConfig#BLUEMAP_ENABLE} and, if set,
-     * hooks into the BlueMap API via {@link BlueMapAPI#onEnable}/{@link BlueMapAPI#onDisable}.
-     *
-     * <p><b>Hot-toggle not supported.</b> The {@code bluemap_enable} config flag is only
-     * read here, at startup. Changing it at runtime (e.g. via the admin dashboard) updates
-     * the in-memory value but has no effect because the BlueMap API callbacks are registered
-     * once and cannot be unregistered. A server restart is required for the toggle to take
-     * effect.
-     */
+    // bluemap_enable is only read here at startup; changing it at runtime requires a restart.
     public static void init() {
         if (!SmpConfig.BLUEMAP_ENABLE) {
             SmpUtilsMod.LOGGER.info("BlueMap integration is disabled in config.");

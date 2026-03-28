@@ -13,19 +13,8 @@ import java.util.UUID;
 
 /**
  * Simple Voice Chat plugin that enforces age-gating on all voice audio.
- *
- * <p>Registers two server-side events:
- * <ul>
- *   <li>{@link de.maxhenkel.voicechat.api.events.MicrophonePacketEvent} — cancels
- *       outgoing microphone packets from players who have not verified their age,
- *       preventing them from being heard by others.</li>
- *   <li>{@link de.maxhenkel.voicechat.api.events.EntitySoundPacketEvent} — cancels
- *       incoming audio packets destined for unverified players, preventing them from
- *       hearing others speak.</li>
- * </ul>
- *
- * <p>This class contains only common logic. Platform-specific discovery annotations
- * ({@code @ForgeVoicechatPlugin}) are applied in the platform module wrapper class.
+ * Cancels outgoing mic packets from unverified players and incoming audio packets for unverified
+ * receivers. Common logic only; platform-specific annotations are in the platform wrapper class.
  */
 public class QuackedVoicechatPlugin implements VoicechatPlugin {
 

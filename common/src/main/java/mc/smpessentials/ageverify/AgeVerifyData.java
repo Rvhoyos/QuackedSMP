@@ -12,17 +12,9 @@ import java.util.*;
 
 /**
  * Persists per-player age verification responses server-side via {@link SavedData}.
- *
- * <p>Three states exist per player:
- * <ul>
- *   <li><b>Unverified</b> (absent from both sets) — prompted on join and re-prompted every
- *       5 minutes until a response is given.</li>
- *   <li><b>Verified</b> — confirmed 18+; Simple Voice Chat is fully enabled.</li>
- *   <li><b>Denied</b> — explicitly declined; voice chat disabled. A one-time reminder is sent
- *       on each login. Players can change their response at any time via {@code /verify confirm}.</li>
- * </ul>
- *
- * <p>Stored in the overworld data folder as {@code quackedsmp_ageverify}.
+ * Stored as {@code quackedsmp_ageverify} in the overworld data folder.
+ * Three states: unverified (absent from both sets, re-prompted every 5 min), verified (18+,
+ * voice chat enabled), or denied (opted out, voice chat off). Players can change at any time.
  */
 public final class AgeVerifyData extends SavedData {
 
