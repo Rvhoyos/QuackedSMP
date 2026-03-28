@@ -83,7 +83,14 @@ export default function ConfigEditor({ token, onExpired }) {
   async function saveTab(tabId) {
     const keys    = TABS.find(t => t.id === tabId)?.keys ?? []
     const payload = {}
-    for (const k of keys) if (draft[k] !== undefined) payload[k] = draft[k]
+    for (const k of keys) {
+      if (draft[k] === undefined) continue
+      const d = draft[k], c = cfg[k]
+      const dirty = (Array.isArray(d) || Array.isArray(c))
+        ? JSON.stringify(d) !== JSON.stringify(c)
+        : String(d) !== String(c)
+      if (dirty) payload[k] = draft[k]
+    }
 
     setSaving(s => ({ ...s, [tabId]: true }))
     setMsgs(m => ({ ...m, [tabId]: '' }))
