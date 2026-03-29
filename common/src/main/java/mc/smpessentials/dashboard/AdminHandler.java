@@ -75,6 +75,16 @@ public final class AdminHandler {
         }
     }
 
+    // POST /api/admin/logout. Invalidates the caller's session token immediately.
+    public static String handleLogout(String method, Map<String, String> headers, String body) {
+        if (!"POST".equals(method)) return err(405, "Method not allowed");
+        String auth = headers.get("authorization");
+        if (auth != null && auth.startsWith("Bearer ")) {
+            AdminAuth.invalidateSession(auth.substring(7).trim());
+        }
+        return "{\"ok\":true}";
+    }
+
     // POST /api/admin/login. Verifies password and returns a session token.
     public static String handleLogin(String method, Map<String, String> headers, String body) {
         if (!"POST".equals(method))     return err(405, "Method not allowed");

@@ -433,6 +433,31 @@ export function IconSword({ size = 20 }) {
   )
 }
 
+export function IconSpeedometer({ size = 20 }) {
+  // 24x24, dial centered at (12,14), outer r=10, inner r=7.
+  // 240° arc split into three 80° zones (SVG clockwise angles).
+  // Green: 150°→230°, Yellow: 230°→310°, Red: 310°→30°.
+  return (
+    <svg viewBox="0 0 24 24" width={size} height={size}>
+      <circle cx="12" cy="14" r="11" fill="#1A1A2A"/>
+      {/* Green zone */}
+      <path d="M3.34,19 A10,10 0 0,1 5.57,6.34 L7.5,8.64 A7,7 0 0,0 5.94,17.5 Z" fill="#2E7D32"/>
+      {/* Yellow zone */}
+      <path d="M5.57,6.34 A10,10 0 0,1 18.43,6.34 L16.5,8.64 A7,7 0 0,0 7.5,8.64 Z" fill="#F57F17"/>
+      {/* Red zone */}
+      <path d="M18.43,6.34 A10,10 0 0,1 20.66,19 L18.06,17.5 A7,7 0 0,0 16.5,8.64 Z" fill="#B71C1C"/>
+      {/* Zone dividers */}
+      <line x1="5.57"  y1="6.34" x2="7.5"  y2="8.64" stroke="#1A1A2A" strokeWidth="1.5"/>
+      <line x1="18.43" y1="6.34" x2="16.5" y2="8.64" stroke="#1A1A2A" strokeWidth="1.5"/>
+      {/* Needle — pointing to 12 o'clock (middle of yellow = normal range) */}
+      <line x1="12" y1="14" x2="12" y2="5" stroke="#FFFFFF" strokeWidth="1.5" strokeLinecap="round"/>
+      {/* Center cap */}
+      <circle cx="12" cy="14" r="2.5" fill="#555555"/>
+      <circle cx="12" cy="14" r="1"   fill="#AAAAAA"/>
+    </svg>
+  )
+}
+
 export function IconFurnace({ size = 20 }) {
   return (
     <svg viewBox="0 0 16 16" width={size} height={size} shapeRendering="crispEdges">

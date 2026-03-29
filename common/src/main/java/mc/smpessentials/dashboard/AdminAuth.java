@@ -88,6 +88,10 @@ public final class AdminAuth {
         return true;
     }
 
+    public static void invalidateSession(String token) {
+        if (token != null) sessions.remove(token);
+    }
+
     public static void clearSessions() {
         sessions.clear();
     }

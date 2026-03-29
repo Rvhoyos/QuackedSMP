@@ -165,6 +165,7 @@ public final class DashboardManager {
         s.addRoute("/api/admin/status", AdminHandler::handleStatus);
         s.addRoute("/api/admin/setup",  AdminHandler::handleSetup);
         s.addRoute("/api/admin/login",  AdminHandler::handleLogin);
+        s.addRoute("/api/admin/logout", AdminHandler::handleLogout);
         s.addRoute("/api/admin/players",
                 (m, h, b) -> AdminHandler.handlePlayers(m, h, b, mcServer));
         s.addRoute("/api/admin/exec",

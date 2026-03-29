@@ -248,7 +248,10 @@ function SettingsTab({ token, onExpired }) {
 
   async function save() {
     const payload = {}
-    for (const k of CFG_KEYS) if (draft[k] !== undefined) payload[k] = draft[k]
+    for (const k of CFG_KEYS) {
+      if (draft[k] === undefined) continue
+      if (String(draft[k]) !== String(cfg[k])) payload[k] = draft[k]
+    }
     setSaving(true); setMsg('')
     try {
       const r = await fetch('/api/admin/config', {
