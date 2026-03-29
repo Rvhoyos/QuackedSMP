@@ -83,7 +83,8 @@ If your server has a domain, put the panel behind a reverse proxy (Caddy, Nginx)
 
 ---
 
-## Features
+<details>
+<summary><strong>Features</strong></summary>
 
 All features are **individually toggleable** from the admin panel Config tab or directly in `config/quackedsmp.json`.
 
@@ -287,6 +288,8 @@ Optional age-gate for [Simple Voice Chat](https://modrinth.com/plugin/simple-voi
 
 - `/smp end reset dragon`: respawn the Ender Dragon live without resetting the dimension
 - `/smp end reset world`: queue a full End dimension reset for next server restart
+
+</details>
 
 ---
 
