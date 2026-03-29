@@ -1,5 +1,5 @@
 import styles from './MetricsPanel.module.css'
-import { IconClock, IconSword, IconFurnace, IconPlayerHead } from './admin/MinecraftIcons'
+import { IconClock, IconSpeedometer, IconFurnace, IconPlayerHead } from './admin/MinecraftIcons'
 
 function tpsColor(val) {
   if (val == null) return 'var(--overlay0)'
@@ -99,7 +99,7 @@ export default function MetricsPanel({ tps, cpu, mspt, online, sys }) {
       {/* MSPT */}
       <div className={styles.card}>
         <div className={styles.cardTop}>
-          <span className={styles.cardIcon}><IconSword size={22} /></span>
+          <span className={styles.cardIcon}><IconSpeedometer size={22} /></span>
           <span className={styles.cardLabel}>MSPT</span>
         </div>
         <div className={styles.cardPrimary} style={{ color: msptColor(mspt?.mean10s) }}>
@@ -125,6 +125,7 @@ export default function MetricsPanel({ tps, cpu, mspt, online, sys }) {
         <div className={styles.cardSub}>
           <SubStat label="1m"  value={pct(cpu?.cpu1m)} />
           <SubStat label="15m" value={pct(cpu?.cpu15m)} />
+          {sys?.threads != null && <SubStat label="threads" value={String(sys.threads)} />}
         </div>
         <div className={styles.cardWindow}>10s window</div>
       </div>
@@ -139,11 +140,9 @@ export default function MetricsPanel({ tps, cpu, mspt, online, sys }) {
           {online ?? '—'}
         </div>
         <div className={styles.cardSub}>
-          <SubStat label="online now" />
           {sys?.uptimeMs != null && <SubStat label="uptime" value={fmtUptime(sys.uptimeMs)} />}
-          {sys?.threads  != null && <SubStat label="threads" value={String(sys.threads)} />}
         </div>
-        <div className={styles.cardWindow}>live count</div>
+        <div className={styles.cardWindow}>online now</div>
       </div>
 
       {/* RAM */}

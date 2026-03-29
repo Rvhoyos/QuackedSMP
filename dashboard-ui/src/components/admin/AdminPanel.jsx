@@ -40,6 +40,12 @@ export default function AdminPanel({ health }) {
   }
 
   function logout() {
+    if (token) {
+      fetch('/api/admin/logout', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      }).catch(() => {})
+    }
     sessionStorage.removeItem(TOKEN_KEY)
     setToken('')
   }

@@ -91,6 +91,7 @@ public final class DashboardServer extends Thread {
 
     private void handleConnection(Socket socket) {
         try {
+            socket.setSoTimeout(10_000);
             InputStream in = socket.getInputStream();
 
             // --- Read request line ---

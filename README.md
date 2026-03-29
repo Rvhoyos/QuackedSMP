@@ -4,35 +4,31 @@
 [![Modrinth Downloads](https://img.shields.io/modrinth/dt/quackedsmp?label=Modrinth%20downloads)](https://modrinth.com/mod/quackedsmp)
 [![License](https://img.shields.io/badge/License-All%20Rights%20Reserved-red)](LICENSE)
 
-
 # QuackedSMP
 
 Server-side mod for **Minecraft 1.21.11** (Fabric + NeoForge) with a built-in browser admin panel. Drop the JAR and manage your server from a browser, no external tools or config editing needed.
 
-Claims, skills, chat filter, custom dimensions, Discord, BlueMap, Votifier. Every feature is toggleable from the panel.
+The panel is a password-protected SPA served directly by the mod over an embedded HTTP server, with WebSocket for live events, Bearer token auth, and PBKDF2-hashed passwords. Claims, skills, chat filter, custom dimensions, Discord, BlueMap, Votifier: every feature is toggleable from the panel.
 
 ---
 
-## Admin Panel
+## Quick Start
 
-The admin panel is a password-protected browser UI served directly by the mod on a configurable port (default **8125**).
-
-### Setup
-
-1. Drop the JAR into your server's `mods/` folder.
-2. Start the server.
-3. In-game as OP, run:
+1. Drop the JAR into your server's `mods/` folder and start the server.
+2. In-game as OP, run:
    ```
    /smp admin setpassword <your-password>
    ```
-   This enables the panel and sets the password in one step. Open `http://your-server-ip:8125` in any browser.
+3. Open `http://your-server-ip:8125` in any browser.
 
 > Once enabled, the public dashboard (metrics, leaderboard, event feed) is accessible to anyone. Admin features require the password.
 
 > [!WARNING]
 > Manually setting `dashboard.enabled=true` in `config/quackedsmp.json` without a password is intentional if you want passwordless access, but admin will be open to anyone who can reach the port. Use `/smp admin setpassword` if you want the panel password-protected.
 
-### Admin Panel Tabs
+---
+
+## Admin Panel
 
 | Tab | What you can do |
 | :--- | :--- |
@@ -64,7 +60,7 @@ If your server has a domain, put the panel behind a reverse proxy (Caddy, Nginx)
 - Passwords hashed with PBKDF2-SHA256 (100,000 iterations)
 - Constant-time comparison on verify
 - 128-bit random session tokens, 24-hour TTL
-- All admin endpoints require a Bearer token. No cookies, no CSRF surface.
+- All admin endpoints require a Bearer token sent explicitly in the `Authorization` header. Cookies are never used, which eliminates CSRF entirely: a malicious page cannot trigger authenticated requests on a user's behalf because it cannot access or inject the token.
 
 **Brute-force protection**
 - 5 failed logins within 15 minutes locks the IP out for 5 minutes (HTTP 429)
@@ -79,17 +75,11 @@ If your server has a domain, put the panel behind a reverse proxy (Caddy, Nginx)
 - Written to a temp file first, then moved atomically
 
 **Public endpoints (no auth)**
-- `/api/health` — player count, server name
-- `/api/metrics` — heap, RAM, disk, uptime, threads
-- `/api/spark/*` — TPS, CPU, MSPT (requires [Spark](https://modrinth.com/plugin/spark))
-- `/api/skills/leaderboard` — skill rankings
-- WebSocket — join/leave events and chat
-
----
-
-### Discord Integration
-
-Set a Discord webhook URL in the Config tab to mirror join/leave events and chat messages to a channel automatically.
+- `/api/health` - player count, server name
+- `/api/metrics` - heap, RAM, disk, uptime, threads
+- `/api/spark/*` - TPS, CPU, MSPT (requires [Spark](https://modrinth.com/plugin/spark))
+- `/api/skills/leaderboard` - skill rankings
+- WebSocket - join/leave events and chat
 
 ---
 
@@ -168,8 +158,6 @@ Chunk-based land protection. Claim a chunk and no one else can build, break, or 
 - Water only flows into a claim from the same owner's source
 - Armor Stands, Item Frames, Paintings, and Villagers protected from damage and theft
 - PvP immunity inside own claims
-
-**Commands:**
 
 | Command | Description | Permission |
 | :--- | :--- | :--- |
@@ -253,8 +241,6 @@ Wire any block type as a portal frame for a custom dimension:
 ```
 Build the frame (same shape as nether portal, 2–21 wide, 3–21 tall), activate with a water bucket. Travel is bidirectional. Return portals are placed automatically on first entry.
 
-**Commands:**
-
 | Command | Permission |
 | :--- | :--- |
 | `/dim create <id> <type> [sub-params]` | OP |
@@ -265,6 +251,12 @@ Build the frame (same shape as nether portal, 2–21 wide, 3–21 tall), activat
 | `/dim setportal <dim_id> <block_id>` | OP |
 
 > `/dim delete` works on datapack dimensions too. Removes from session, deletes chunk data, and removes the datapack JSON.
+
+---
+
+### Discord Integration
+
+Set a Discord webhook URL in the Config tab to mirror join/leave events and chat messages to a channel automatically.
 
 ---
 
@@ -298,7 +290,8 @@ Optional age-gate for [Simple Voice Chat](https://modrinth.com/plugin/simple-voi
 
 ---
 
-## Full Command Reference
+<details>
+<summary><strong>Full Command Reference</strong></summary>
 
 | Command | Description | Permission |
 | :--- | :--- | :--- |
@@ -351,9 +344,12 @@ Optional age-gate for [Simple Voice Chat](https://modrinth.com/plugin/simple-voi
 | `/dim tp <player> <id>` | Teleport player to dimension | OP |
 | `/dim setportal <dim_id> <block_id>` | Wire portal frame block to dimension | OP |
 
+</details>
+
 ---
 
-## Configuration Reference
+<details>
+<summary><strong>Configuration Reference</strong></summary>
 
 Config lives at `config/quackedsmp.json`. Most settings are editable live from the admin panel without touching the file. Hot-reloadable via `/smp reload`.
 
@@ -395,6 +391,8 @@ Config lives at `config/quackedsmp.json`. Most settings are editable live from t
 - `double_drop` (0.5) → max 50% double drop chance
 - `defense_armor` (10.0) → max +10 armor points
 - `safe_landing` (1.0) → max 100% fall damage absorbed
+
+</details>
 
 ---
 
