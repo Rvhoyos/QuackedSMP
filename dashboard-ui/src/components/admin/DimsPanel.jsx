@@ -99,7 +99,7 @@ export default function DimsPanel({ token, onExpired }) {
     } finally {
       setLoading(false)
     }
-  }, [token, onExpired])
+  }, [token]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchBlocks = useCallback(async () => {
     if (blocksLoaded) return

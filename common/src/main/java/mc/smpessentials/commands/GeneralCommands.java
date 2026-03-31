@@ -41,7 +41,9 @@ public class GeneralCommands {
                         .then(Commands.literal("setpassword")
                                 .then(Commands.argument("password",
                                         com.mojang.brigadier.arguments.StringArgumentType.string())
-                                        .executes(GeneralCommands::setAdminPassword)))));
+                                        .executes(GeneralCommands::setAdminPassword))))
+                .then(mc.smpessentials.ageverify.AgeVerifyCommand.verifySubtree())
+                .then(mc.smpessentials.keepinv.KeepInvCommand.keepInvSubtree()));
 
         dispatcher.register(Commands.literal("mute")
                 .requires(s -> net.minecraft.commands.Commands.LEVEL_GAMEMASTERS.check(s.permissions()))
@@ -115,15 +117,17 @@ public class GeneralCommands {
 
         src.sendSystemMessage(Component.literal("/claim").withStyle(cmd)
                 .append(Component.literal(" - Claim current chunk to protect it").withStyle(desc)));
-        src.sendSystemMessage(Component.literal("/trust <player>").withStyle(cmd)
-                .append(Component.literal(" - Give friend permission in claims").withStyle(desc)));
+        src.sendSystemMessage(Component.literal("/claim trust <player>").withStyle(cmd)
+                .append(Component.literal(" - Give friend permission in all your claims").withStyle(desc)));
+        src.sendSystemMessage(Component.literal("/claim info").withStyle(cmd)
+                .append(Component.literal(" - Show your claim count, limit, and current chunk status").withStyle(desc)));
         src.sendSystemMessage(Component.literal("/tpr <player>").withStyle(cmd)
                 .append(Component.literal(" - Request teleport to friend").withStyle(desc)));
         src.sendSystemMessage(Component.literal("/skills").withStyle(cmd)
                 .append(Component.literal(" - View your RPG skill progression").withStyle(desc)));
-        src.sendSystemMessage(Component.literal("/keepinv on/off").withStyle(cmd)
+        src.sendSystemMessage(Component.literal("/smp keepinv on/off").withStyle(cmd)
                 .append(Component.literal(" - Toggle keeping items on death").withStyle(desc)));
-        src.sendSystemMessage(Component.literal("/verify confirm").withStyle(cmd)
+        src.sendSystemMessage(Component.literal("/smp verify confirm").withStyle(cmd)
                 .append(Component.literal(" - Enable proximity voice chat").withStyle(desc)));
         src.sendSystemMessage(Component.literal("/rules").withStyle(cmd)
                 .append(Component.literal(" - Read the server rules").withStyle(desc)));

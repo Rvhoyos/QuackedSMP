@@ -24,7 +24,7 @@ const TABS = [
   {
     id: 'general', label: 'General',
     keys: [
-      'max_claims', 'vip_bonus_claims', 'allow_lava_wilderness', 'vips',
+      'max_claims', 'allow_lava_wilderness', 'tiers',
       'tp_warmup', 'mute_levels_minutes', 'admin_enabled', 'dashboard_port', 'server_name',
     ],
   },
@@ -64,7 +64,7 @@ export default function ConfigEditor({ token, onExpired }) {
       })
       .then(d => { setCfg(d); setDraft(d) })
       .catch(e => { if (e.message !== 'session') setLoadErr('Failed to load config.') })
-  }, [token, onExpired])
+  }, [token]) // eslint-disable-line react-hooks/exhaustive-deps
 
   function patch(key, val) {
     setDraft(d => ({ ...d, [key]: val }))
@@ -186,17 +186,14 @@ function GeneralTab({ draft, patch, onDisable, disabling, disableMsg }) {
         <Row label="Max Claims" hint="Per player base limit">
           <NumInput value={draft.max_claims} onChange={v => patch('max_claims', v)} />
         </Row>
-        <Row label="VIP Bonus Claims" hint="Extra claims granted to VIP-tagged players">
-          <NumInput value={draft.vip_bonus_claims} onChange={v => patch('vip_bonus_claims', v)} />
-        </Row>
         <Row label="Lava in Wilderness" hint="Allow lava source placement outside claimed land">
           <Toggle value={draft.allow_lava_wilderness} onChange={v => patch('allow_lava_wilderness', v)} />
         </Row>
       </Group>
 
-      <Group icon={<IconPlayerHead />} title="VIP Players" accent="yellow">
-        <StackedRow label="VIP List" hint="Players with VIP bonus claims, one name per entry">
-          <ListEditor value={draft.vips} onChange={v => patch('vips', v)} placeholder="PlayerName" />
+      <Group icon={<IconPlayerHead />} title="Tiers" accent="mauve">
+        <StackedRow label="Tier Definitions" hint="Each tier: level number, display name, min playtime to auto-earn, bonus claims granted">
+          <TierDefsEditor value={draft.tiers} onChange={v => patch('tiers', v)} />
         </StackedRow>
       </Group>
 
@@ -626,6 +623,35 @@ function ListEditor({ value = [], onChange, placeholder }) {
         onClick={() => onChange([...value, ''])}
         type="button"
       >+ Add</button>
+    </div>
+  )
+}
+
+function TierDefsEditor({ value = [], onChange }) {
+  function update(i, field, val) {
+    const next = [...value]
+    next[i] = { ...next[i], [field]: val }
+    onChange(next)
+  }
+  const nextTier = value.length > 0 ? Math.max(...value.map(v => v.tier)) + 1 : 1
+  return (
+    <div className={styles.listEditor}>
+      {value.map((item, i) => (
+        <div key={i} className={styles.tierDefRow}>
+          <span className={styles.tierDefNum}>T{item.tier}</span>
+          <div style={{ flex: 1, minWidth: 60 }}>
+            <TextInput value={item.name} onChange={v => update(i, 'name', v)} placeholder="Name" />
+          </div>
+          <div style={{ flexShrink: 0 }}>
+            <NumInput value={item.minPlaytimeHours} onChange={v => update(i, 'minPlaytimeHours', v)} suffix="h" />
+          </div>
+          <div style={{ flexShrink: 0 }}>
+            <NumInput value={item.bonusClaims} onChange={v => update(i, 'bonusClaims', v)} suffix="claims" />
+          </div>
+          <button className={styles.listRemove} onClick={() => onChange(value.filter((_, j) => j !== i))} type="button">✕</button>
+        </div>
+      ))}
+      <button className={styles.listAdd} onClick={() => onChange([...value, { tier: nextTier, name: '', minPlaytimeHours: 0, bonusClaims: 0 }])} type="button">+ Add Tier</button>
     </div>
   )
 }

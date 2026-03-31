@@ -1,14 +1,15 @@
 package mc.smpessentials.ageverify;
 
 import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 
 /**
- * Registers the {@code /verify} command. {@code /verify confirm} marks the player as 18+
- * and enables voice chat; {@code /verify deny} opts out. Either can be re-run to change.
+ * Registers {@code /verify} and {@code /smp verify}. {@code confirm} marks the player as 18+
+ * and enables voice chat; {@code deny} opts out. Either subcommand can be re-run to change.
  */
 public final class AgeVerifyCommand {
 
@@ -16,15 +17,20 @@ public final class AgeVerifyCommand {
     }
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
-        dispatcher.register(Commands.literal("verify")
+        dispatcher.register(verifySubtree());
+    }
+
+    /** Returns the verify subtree for use as a standalone command or as a subcommand (e.g. /smp verify). */
+    public static LiteralArgumentBuilder<CommandSourceStack> verifySubtree() {
+        return Commands.literal("verify")
                 .requires(src -> src.getEntity() instanceof ServerPlayer)
                 .then(Commands.literal("confirm")
                         .executes(ctx -> confirm(ctx.getSource())))
                 .then(Commands.literal("deny")
-                        .executes(ctx -> deny(ctx.getSource()))));
+                        .executes(ctx -> deny(ctx.getSource())));
     }
 
-    private static int confirm(CommandSourceStack source) {
+    static int confirm(CommandSourceStack source) {
         if (!(source.getEntity() instanceof ServerPlayer sp))
             return 0;
         AgeVerifyData.get(source.getServer()).setVerified(sp.getUUID());
@@ -32,7 +38,7 @@ public final class AgeVerifyCommand {
         return 1;
     }
 
-    private static int deny(CommandSourceStack source) {
+    static int deny(CommandSourceStack source) {
         if (!(source.getEntity() instanceof ServerPlayer sp))
             return 0;
         AgeVerifyData.get(source.getServer()).setDenied(sp.getUUID());

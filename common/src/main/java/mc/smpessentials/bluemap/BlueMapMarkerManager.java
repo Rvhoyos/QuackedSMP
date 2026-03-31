@@ -255,7 +255,7 @@ public class BlueMapMarkerManager {
                     isOp = server.getPlayerList().isOp(profile);
                 }
 
-                boolean isVip = SmpConfig.VIPS.contains(ownerName);
+                boolean isVip = mc.smpessentials.tier.TierService.getTier(owner, server) >= 1;
 
                 String hexColorStr = isOp ? SmpConfig.BLUEMAP_OP_CLAIM_COLOR
                         : (isVip ? SmpConfig.BLUEMAP_VIP_CLAIM_COLOR : SmpConfig.BLUEMAP_CLAIM_COLOR);

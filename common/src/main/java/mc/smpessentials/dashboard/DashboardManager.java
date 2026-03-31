@@ -42,6 +42,9 @@ public final class DashboardManager {
     /** Starts the dashboard HTTP/WebSocket server if enabled in config. */
     public static void onServerStart(MinecraftServer srv) {
         mcServer = srv;
+        // Migrate any legacy player_tiers from JSON config into NBT SavedData
+        mc.smpessentials.tier.PlayerTierData.get(srv)
+                .loadPendingMigration(mc.smpessentials.config.ConfigIO.pendingTierMigration);
         if (!SmpConfig.DASHBOARD_ENABLED) {
             SmpUtilsMod.LOGGER.info("[Dashboard] Disabled in config.");
             return;
@@ -176,6 +179,8 @@ public final class DashboardManager {
                         : AdminHandler.handleConfigPost(m, h, b));
         s.addRoute("/api/admin/setop",
                 (m, h, b) -> AdminHandler.handleSetOp(m, h, b, mcServer));
+        s.addRoute("/api/admin/players/settier",
+                (m, h, b) -> AdminHandler.handleSetTier(m, h, b, mcServer));
         s.addRoute("/api/admin/dims",
                 (m, h, b) -> AdminHandler.handleDimsGet(m, h, b, mcServer));
         s.addRoute("/api/admin/dims/create",

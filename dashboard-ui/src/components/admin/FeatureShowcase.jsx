@@ -96,7 +96,7 @@ export default function FeatureShowcase({ token, onExpired }) {
       })
       .then(d => { if (d) setCfg(d) })
       .catch(() => {})
-  }, [token, onExpired])
+  }, [token]) // eslint-disable-line react-hooks/exhaustive-deps
 
   function resolve(feature) {
     const key = feature.configKey

@@ -90,9 +90,9 @@ public final class ClaimService {
             return Result.ALREADY_CLAIMED;
 
         int limit = mc.smpessentials.config.SmpConfig.MAX_CLAIMS;
-        if (mc.smpessentials.config.SmpConfig.VIPS.contains(player.getName().getString())) {
-            limit += mc.smpessentials.config.SmpConfig.VIP_BONUS_CLAIMS;
-        }
+        limit += mc.smpessentials.tier.TierService.getBonusClaims(
+                mc.smpessentials.tier.TierService.getTier(player.getUUID(),
+                        ((net.minecraft.server.level.ServerLevel) player.level()).getServer()));
         if (!isOp && ownedCount(level, me) >= limit)
             return Result.REACHED_CAP;
 
@@ -114,9 +114,10 @@ public final class ClaimService {
         boolean isTargetOp = ((ServerLevel) sender.level()).getServer().getPlayerList().isOp(target.nameAndId());
         if (!isTargetOp) {
             int targetCount = data.countByOwner(target.getUUID());
-            int targetLimit = mc.smpessentials.config.SmpConfig.MAX_CLAIMS;
-            if (mc.smpessentials.config.SmpConfig.VIPS.contains(target.getName().getString()))
-                targetLimit += mc.smpessentials.config.SmpConfig.VIP_BONUS_CLAIMS;
+            int targetLimit = mc.smpessentials.config.SmpConfig.MAX_CLAIMS
+                    + mc.smpessentials.tier.TierService.getBonusClaims(
+                            mc.smpessentials.tier.TierService.getTier(target.getUUID(),
+                                    ((net.minecraft.server.level.ServerLevel) target.level()).getServer()));
             if (targetCount + senderCount > targetLimit)
                 return -3;
         }
