@@ -270,7 +270,7 @@ public class BlueMapMarkerManager {
 
                 int regionIdx = 0;
                 for (Set<ChunkPos> region : regions) {
-                    drawRegion(server, level.dimension(), owner, ownerName, regionIdx++, region, isOp, isVip, fillColor,
+                    drawRegion(server, level.dimension(), owner, ownerName, regionIdx++, region, isOp, isTier, fillColor,
                             lineColor);
                 }
             }
