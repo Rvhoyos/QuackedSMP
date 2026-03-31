@@ -65,6 +65,7 @@ public class SmpEvents {
         if (event.getEntity() instanceof ServerPlayer player) {
             JoinMessageHandler.onPlayerJoin(player);
             SkillEvents.onPlayerJoin(player);
+            mc.smpessentials.tier.TierService.onPlayerJoin(player);
             mc.smpessentials.punish.PunishManager pm =
                     mc.smpessentials.punish.PunishManager.get(((net.minecraft.server.level.ServerLevel) player.level()).getServer());
             if (pm.isPending(player.getUUID())) {

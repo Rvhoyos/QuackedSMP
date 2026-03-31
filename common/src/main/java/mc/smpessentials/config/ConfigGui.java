@@ -35,10 +35,6 @@ public class ConfigGui {
     private static final int SLOT_MAX_CLAIMS_DISPLAY = 3;
     private static final int SLOT_MAX_CLAIMS_PLUS = 4;
 
-    private static final int SLOT_VIP_BONUS_MINUS = 6;
-    private static final int SLOT_VIP_BONUS_DISPLAY = 7;
-    private static final int SLOT_VIP_BONUS_PLUS = 8;
-
     // Row 1: Chat & Teleport
     private static final int SLOT_WARMUP_MINUS = 11;
     private static final int SLOT_WARMUP_DISPLAY = 12;
@@ -119,11 +115,6 @@ public class ConfigGui {
         container.setItem(SLOT_MAX_CLAIMS_DISPLAY,
                 createInfoItem(Items.PAPER, "Max Claims", String.valueOf(SmpConfig.MAX_CLAIMS)));
         container.setItem(SLOT_MAX_CLAIMS_PLUS, createActionItem(Items.GREEN_CONCRETE, "\u00a7a+5 Claims"));
-
-        container.setItem(SLOT_VIP_BONUS_MINUS, createActionItem(Items.RED_CONCRETE, "\u00a7c-1 Bonus"));
-        container.setItem(SLOT_VIP_BONUS_DISPLAY,
-                createInfoItem(Items.GOLD_INGOT, "VIP Bonus Claims", String.valueOf(SmpConfig.VIP_BONUS_CLAIMS)));
-        container.setItem(SLOT_VIP_BONUS_PLUS, createActionItem(Items.GREEN_CONCRETE, "\u00a7a+1 Bonus"));
 
         // --- Row 1: Chat & Teleport ---
         container.setItem(SLOT_WARMUP_MINUS, createActionItem(Items.RED_CONCRETE, "\u00a7c-1s Warmup"));
@@ -274,12 +265,6 @@ public class ConfigGui {
             refresh = true;
         } else if (slotId == SLOT_MAX_CLAIMS_PLUS) {
             SmpConfig.MAX_CLAIMS += 5;
-            refresh = true;
-        } else if (slotId == SLOT_VIP_BONUS_MINUS) {
-            SmpConfig.VIP_BONUS_CLAIMS = Math.max(0, SmpConfig.VIP_BONUS_CLAIMS - 1);
-            refresh = true;
-        } else if (slotId == SLOT_VIP_BONUS_PLUS) {
-            SmpConfig.VIP_BONUS_CLAIMS += 1;
             refresh = true;
         }
         // Row 1

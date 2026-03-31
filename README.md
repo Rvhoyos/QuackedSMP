@@ -36,10 +36,10 @@ The panel is a password-protected SPA served directly by the mod over an embedde
 | **Commands** | Run any server command from the browser. Full server-level permissions. |
 | **Dimensions** | Create, delete, and configure custom dimensions. Wire portal frame blocks. |
 | **Skills** | Browse every player's skill levels. Set or adjust XP and levels per skill. |
-| **Claims** | View all active claims on the server. Force-unclaim any chunk. |
+| **Claims** | View all active claims on the server. Force-unclaim all chunks owned by a player. |
 | **Chat Filter** | Add/remove blocked words. View active mutes, unmute players. |
 | **Config** | Edit every configurable value live. No file editing, no restart for most settings. |
-| **Showcase** | Overview of all features with toggle controls. |
+| **Mods** | Upload, replace, or remove server mods directly from the browser. |
 
 ### Public Dashboard
 
@@ -54,7 +54,8 @@ Accessible to anyone who can reach the port. No login required:
 
 The panel serves plain HTTP. Without TLS, your session token is unencrypted on the wire. The password itself is protected (PBKDF2, rate limiting), but the token can be sniffed after login on an untrusted network.
 
-If your server has a domain, put the panel behind a reverse proxy (Caddy, Nginx) with TLS. If you don't, accessing it from home or a VPN is fine in practice.
+> [!WARNING]
+> If your server has a domain, put the panel behind a reverse proxy (Caddy, Nginx) with TLS. If you don't, accessing it from home or a VPN is fine in practice.
 
 **Auth**
 - Passwords hashed with PBKDF2-SHA256 (100,000 iterations)
@@ -164,15 +165,16 @@ Chunk-based land protection. Claim a chunk and no one else can build, break, or 
 | :--- | :--- | :--- |
 | `/claim` | Claim current chunk | Everyone |
 | `/unclaim` | Unclaim current chunk | Everyone |
-| `/claims` | Show owned count and current chunk owner | Everyone |
-| `/claim info` | Show owned count vs. your claim limit | Everyone |
+| `/claim info` | Show owned count, limit, remaining, and current chunk status | Everyone |
 | `/claim map` | Visualize nearby chunks in chat | Everyone |
 | `/claim name <name>` | Name a claim (used by BlueMap) | VIP / OP |
 | `/claim transfer <player>` | Transfer all claims to another player | Everyone |
-| `/trust <player>` | Trust a player in all your claims | Everyone |
-| `/untrust <player>` | Revoke trust | Everyone |
-| `/trustlist` | List all trusted players | Everyone |
+| `/claim trust <player>` | Trust a player in all your claims | Everyone |
+| `/claim untrust <player>` | Revoke trust | Everyone |
+| `/claim trustlist` | List all trusted players | Everyone |
 | `/sos` | Eject all untrusted players from current claim | Everyone |
+
+> `/trust`, `/untrust`, and `/trustlist` also work as standalone commands (legacy aliases).
 
 ---
 
@@ -280,7 +282,7 @@ Optional age-gate for [Simple Voice Chat](https://modrinth.com/plugin/simple-voi
 - Players receive a clickable prompt on first join to confirm they are 18+
 - Unverified players cannot speak or hear others
 - Re-prompted every 5 minutes until they respond
-- Players can verify at any time with `/verify confirm`
+- Players can verify at any time with `/smp verify confirm` (or `/verify confirm`)
 
 ---
 
@@ -309,14 +311,13 @@ Optional age-gate for [Simple Voice Chat](https://modrinth.com/plugin/simple-voi
 | `/rules` | View server rules | Everyone |
 | `/claim` | Claim current chunk | Everyone |
 | `/unclaim` | Unclaim current chunk | Everyone |
-| `/claims` | Show owned chunk count and current chunk owner | Everyone |
-| `/claim info` | Show owned count vs. limit | Everyone |
+| `/claim info` | Show owned count, limit, remaining, and current chunk status | Everyone |
 | `/claim map` | Visualize nearby chunks in chat | Everyone |
 | `/claim name <name>` | Name a claim | VIP / OP |
 | `/claim transfer <player>` | Transfer all claims | Everyone |
-| `/trust <player>` | Trust a player globally | Everyone |
-| `/untrust <player>` | Revoke trust | Everyone |
-| `/trustlist` | List trusted players | Everyone |
+| `/claim trust <player>` | Trust a player globally (also: `/trust`) | Everyone |
+| `/claim untrust <player>` | Revoke trust (also: `/untrust`) | Everyone |
+| `/claim trustlist` | List trusted players (also: `/trustlist`) | Everyone |
 | `/sos` | Eject untrusted players from claim | Everyone |
 | `/home` | Teleport to bed/spawn | Everyone |
 | `/spawn` | Teleport to world spawn | Everyone |
@@ -324,9 +325,10 @@ Optional age-gate for [Simple Voice Chat](https://modrinth.com/plugin/simple-voi
 | `/tpa <player>` | Accept or deny teleport | Everyone |
 | `/smp end reset dragon` | Reset Ender Dragon fight | OP |
 | `/smp end reset world` | Queue End dimension reset | OP |
-| `/vip add <player>` | Grant VIP status | OP |
-| `/vip remove <player>` | Revoke VIP status | OP |
-| `/vip list` | List all VIPs | OP |
+| `/vip set <player> <tier>` | Set player tier | OP |
+| `/vip remove <player>` | Remove assigned tier | OP |
+| `/vip list` | List all assigned tiers | OP |
+| `/vip info <player>` | Show assigned, earned, and effective tier | OP |
 | `/punish <player>` | Wipe player inventory and claim items | OP |
 | `/skills` | Skill overview | Everyone |
 | `/skills <skill>` | Detailed skill info | Everyone |
@@ -335,11 +337,11 @@ Optional age-gate for [Simple Voice Chat](https://modrinth.com/plugin/simple-voi
 | `/skills top <skill>` | Per-skill leaderboard | Everyone |
 | `/skills admin givexp <player> <skill> <amount>` | Give skill XP | OP |
 | `/skills admin setlevel <player> <skill> <level>` | Set skill level | OP |
-| `/keepinv` | Show keep inventory status | Everyone |
-| `/keepinv on` | Keep items and XP on death | Everyone |
-| `/keepinv off` | Drop on death (vanilla) | Everyone |
-| `/verify confirm` | Confirm 18+ for voice chat | Everyone |
-| `/verify deny` | Decline voice chat | Everyone |
+| `/smp keepinv` | Show keep inventory status (also: `/keepinv`) | Everyone |
+| `/smp keepinv on` | Keep items and XP on death (also: `/keepinv on`) | Everyone |
+| `/smp keepinv off` | Drop on death — vanilla (also: `/keepinv off`) | Everyone |
+| `/smp verify confirm` | Confirm 18+ for voice chat (also: `/verify confirm`) | Everyone |
+| `/smp verify deny` | Decline voice chat (also: `/verify deny`) | Everyone |
 | `/dim create <id> <type> [sub-params]` | Create a custom dimension | OP |
 | `/dim delete <id>` | Delete a custom dimension | OP |
 | `/dim list` | List all active dimensions | Everyone |
@@ -359,8 +361,8 @@ Config lives at `config/quackedsmp.json`. Most settings are editable live from t
 | Key | Default | Description |
 | :--- | :--- | :--- |
 | `max_claims` | `50` | Maximum chunks a normal player can claim |
-| `vip_bonus_claims` | `20` | Extra claims for VIP players |
-| `vips` | `[]` | List of VIP usernames |
+| `tiers` | `[{tier:1, name:"VIP", minPlaytimeHours:100, bonusClaims:20}]` | Tier definitions: level, display name, playtime threshold, bonus claims |
+| `player_tiers` | `[]` | Admin-assigned tiers by player name |
 | `tp_warmup` | `5` | Seconds to stand still before teleporting |
 | `message_interval` | `300` | Seconds between periodic tip broadcasts |
 | `allow_lava_wilderness` | `false` | Allow lava placement outside claims |

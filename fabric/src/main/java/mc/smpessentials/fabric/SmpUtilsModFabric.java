@@ -54,6 +54,7 @@ public final class SmpUtilsModFabric implements ModInitializer {
             net.minecraft.server.level.ServerPlayer player = handler.getPlayer();
             mc.smpessentials.events.JoinMessageHandler.onPlayerJoin(player);
             mc.smpessentials.skills.SkillEvents.onPlayerJoin(player);
+            mc.smpessentials.tier.TierService.onPlayerJoin(player);
             mc.smpessentials.punish.PunishManager pm =
                     mc.smpessentials.punish.PunishManager.get(server);
             if (pm.isPending(player.getUUID())) {

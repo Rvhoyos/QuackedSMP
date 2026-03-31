@@ -1,6 +1,7 @@
 package mc.smpessentials.keepinv;
 
 import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
@@ -12,7 +13,12 @@ public final class KeepInvCommand {
     }
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
-        dispatcher.register(Commands.literal("keepinv")
+        dispatcher.register(keepInvSubtree());
+    }
+
+    /** Returns the keepinv subtree for use as a standalone command or as a subcommand (e.g. /smp keepinv). */
+    public static LiteralArgumentBuilder<CommandSourceStack> keepInvSubtree() {
+        return Commands.literal("keepinv")
                 .requires(src -> src.getEntity() instanceof ServerPlayer)
                 // /keepinv — show current status
                 .executes(ctx -> showStatus(ctx.getSource()))
@@ -21,7 +27,7 @@ public final class KeepInvCommand {
                         .executes(ctx -> setKeepInv(ctx.getSource(), true)))
                 // /keepinv off
                 .then(Commands.literal("off")
-                        .executes(ctx -> setKeepInv(ctx.getSource(), false))));
+                        .executes(ctx -> setKeepInv(ctx.getSource(), false)));
     }
 
     private static int showStatus(CommandSourceStack src) {

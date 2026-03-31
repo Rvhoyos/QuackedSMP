@@ -65,7 +65,7 @@
   border-collapse: collapse;
 }
 
-.thRank, .thPlayer, .thLevel {
+.thRank, .thPlayer, .thLevel, .thPlaytime, .thTier {
   font-family: var(--font-pixel);
   font-size: 6px;
   color: #444;
@@ -75,7 +75,7 @@
   text-align: left;
   border-bottom: 1px solid #111;
 }
-.thLevel { text-align: right; }
+.thLevel, .thPlaytime, .thTier { text-align: right; }
 
 .tr { border-bottom: 1px solid #0D0D0D; }
 .tr:hover { background: rgba(255,255,255,0.03); }
@@ -103,6 +103,31 @@
   padding: 6px 10px;
   text-align: right;
   white-space: nowrap;
+}
+
+.playtime {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: #555;
+  padding: 6px 10px;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.tier {
+  padding: 6px 10px;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.tierBadge {
+  font-family: var(--font-pixel);
+  font-size: 5px;
+  letter-spacing: 0.3px;
+  padding: 1px 4px;
+  color: var(--mauve);
+  background: rgba(203,166,247,0.1);
+  border: 1px solid rgba(203,166,247,0.25);
 }
 
 .noData {

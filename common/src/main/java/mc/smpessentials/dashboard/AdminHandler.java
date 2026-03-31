@@ -119,14 +119,17 @@ public final class AdminHandler {
         StringBuilder sb = new StringBuilder("[");
         for (int i = 0; i < players.size(); i++) {
             ServerPlayer p = players.get(i);
-            boolean isOp  = server.getPlayerList().isOp(p.nameAndId());
-            String  dim   = p.level().dimension().identifier().toString();
-            String  name  = jsonEscape(p.getGameProfile().name());
-            String  uuid  = p.getUUID().toString();
+            boolean isOp       = server.getPlayerList().isOp(p.nameAndId());
+            String  dim        = p.level().dimension().identifier().toString();
+            String  name       = jsonEscape(p.getGameProfile().name());
+            String  uuid       = p.getUUID().toString();
+            int     playtime     = p.getStats().getValue(net.minecraft.stats.Stats.CUSTOM.get(net.minecraft.stats.Stats.PLAY_TIME));
+            int     tier         = mc.smpessentials.tier.TierService.getTier(p.getUUID(), server);
+            int     earnedTier   = mc.smpessentials.tier.TierService.getEarnedTier(p);
             if (i > 0) sb.append(',');
             sb.append(String.format(Locale.US,
-                    "{\"name\":\"%s\",\"uuid\":\"%s\",\"dimension\":\"%s\",\"isOp\":%b}",
-                    name, uuid, dim, isOp));
+                    "{\"name\":\"%s\",\"uuid\":\"%s\",\"dimension\":\"%s\",\"isOp\":%b,\"playtime_ticks\":%d,\"tier\":%d,\"earned_tier\":%d}",
+                    name, uuid, dim, isOp, playtime, tier, earnedTier));
         }
         sb.append(']');
         return sb.toString();
@@ -170,7 +173,6 @@ public final class AdminHandler {
         sb.append(String.format("\"tp_warmup\":%d,", SmpConfig.TP_WARMUP));
         sb.append(String.format("\"welcome_message\":\"%s\",", jsonEscape(SmpConfig.WELCOME_MESSAGE)));
         sb.append(String.format("\"message_interval\":%d,", SmpConfig.MESSAGE_INTERVAL));
-        sb.append(String.format("\"vip_bonus_claims\":%d,", SmpConfig.VIP_BONUS_CLAIMS));
         sb.append(String.format("\"allow_lava_wilderness\":%b,", SmpConfig.ALLOW_LAVA_WILDERNESS));
         // Feature toggles
         sb.append(String.format("\"claims_enabled\":%b,", SmpConfig.CLAIMS_ENABLED));
@@ -202,8 +204,16 @@ public final class AdminHandler {
         sb.append(String.format("\"bluemap_op_claim_color\":\"%s\",", jsonEscape(SmpConfig.BLUEMAP_OP_CLAIM_COLOR)));
         sb.append(String.format("\"bluemap_vip_claim_color\":\"%s\",", jsonEscape(SmpConfig.BLUEMAP_VIP_CLAIM_COLOR)));
         sb.append(String.format("\"bluemap_worldborder_color\":\"%s\",", jsonEscape(SmpConfig.BLUEMAP_WORLDBORDER_COLOR)));
+        // Tiers
+        sb.append("\"tiers\":[");
+        for (int i = 0; i < SmpConfig.TIERS.size(); i++) {
+            if (i > 0) sb.append(',');
+            SmpConfig.TierDef def = SmpConfig.TIERS.get(i);
+            sb.append(String.format("{\"tier\":%d,\"name\":\"%s\",\"minPlaytimeHours\":%d,\"bonusClaims\":%d}",
+                    def.tier(), jsonEscape(def.name()), def.minPlaytimeHours(), def.bonusClaims()));
+        }
+        sb.append("],");
         // Lists
-        sb.append("\"vips\":").append(jsonStrArr(SmpConfig.VIPS)).append(",");
         sb.append("\"periodic_messages\":").append(jsonStrArr(SmpConfig.PERIODIC_MESSAGES)).append(",");
         sb.append("\"rules\":").append(jsonStrArr(SmpConfig.RULES)).append(",");
         sb.append("\"mute_levels_minutes\":").append(jsonIntArr(SmpConfig.MUTE_LEVELS_MINUTES)).append(",");
@@ -241,7 +251,6 @@ public final class AdminHandler {
             if (patch.has("tp_warmup"))             { SmpConfig.TP_WARMUP             = patch.get("tp_warmup").getAsInt();                changed++; }
             if (patch.has("welcome_message"))       { SmpConfig.WELCOME_MESSAGE       = patch.get("welcome_message").getAsString();       changed++; }
             if (patch.has("message_interval"))      { SmpConfig.MESSAGE_INTERVAL      = patch.get("message_interval").getAsInt();         changed++; }
-            if (patch.has("vip_bonus_claims"))      { SmpConfig.VIP_BONUS_CLAIMS      = patch.get("vip_bonus_claims").getAsInt();         changed++; }
             if (patch.has("allow_lava_wilderness")) { SmpConfig.ALLOW_LAVA_WILDERNESS = patch.get("allow_lava_wilderness").getAsBoolean(); changed++; }
             // Feature toggles
             if (patch.has("claims_enabled"))     { SmpConfig.CLAIMS_ENABLED     = patch.get("claims_enabled").getAsBoolean();     changed++; }
@@ -273,7 +282,19 @@ public final class AdminHandler {
             if (patch.has("bluemap_worldborder_color")) { SmpConfig.BLUEMAP_WORLDBORDER_COLOR = patch.get("bluemap_worldborder_color").getAsString();  changed++; blueMapChanged = true; }
             // Lists
             if (patch.has("vote_rewards") && patch.get("vote_rewards").isJsonArray())          { loadStrArr(patch.getAsJsonArray("vote_rewards"),         SmpConfig.VOTE_REWARDS);       changed++; }
-            if (patch.has("vips") && patch.get("vips").isJsonArray())                          { loadStrArr(patch.getAsJsonArray("vips"),                  SmpConfig.VIPS);               changed++; }
+            if (patch.has("tiers") && patch.get("tiers").isJsonArray()) {
+                SmpConfig.TIERS.clear();
+                for (var el : patch.getAsJsonArray("tiers")) {
+                    if (!el.isJsonObject()) continue;
+                    JsonObject td = el.getAsJsonObject();
+                    int tdTier    = td.has("tier")              ? td.get("tier").getAsInt()              : 0;
+                    String tdName = td.has("name")              ? td.get("name").getAsString()            : "";
+                    long tdHours  = td.has("minPlaytimeHours")  ? td.get("minPlaytimeHours").getAsLong()  : 0;
+                    int tdBonus   = td.has("bonusClaims")       ? td.get("bonusClaims").getAsInt()        : 0;
+                    if (tdTier > 0) SmpConfig.TIERS.add(new SmpConfig.TierDef(tdTier, tdName, tdHours, tdBonus));
+                }
+                changed++;
+            }
             if (patch.has("periodic_messages") && patch.get("periodic_messages").isJsonArray()) { loadStrArr(patch.getAsJsonArray("periodic_messages"),     SmpConfig.PERIODIC_MESSAGES);  changed++; }
             if (patch.has("rules") && patch.get("rules").isJsonArray())                        { loadStrArr(patch.getAsJsonArray("rules"),                 SmpConfig.RULES);              changed++; }
             if (patch.has("mute_levels_minutes") && patch.get("mute_levels_minutes").isJsonArray()) { loadIntArr(patch.getAsJsonArray("mute_levels_minutes"), SmpConfig.MUTE_LEVELS_MINUTES); changed++; }
@@ -602,8 +623,17 @@ public final class AdminHandler {
                 for (int i = 0; i < overall.size(); i++) {
                     if (i > 0) sb.append(',');
                     SkillData.LeaderboardEntry e = overall.get(i);
-                    sb.append(String.format("{\"name\":\"%s\",\"level\":%d}",
-                            jsonEscape(data.getDisplayName(e.uuid())), e.level()));
+                    String playerName = jsonEscape(data.getDisplayName(e.uuid()));
+                    ServerPlayer online = server.getPlayerList().getPlayer(e.uuid());
+                    int tier = mc.smpessentials.tier.TierService.getTier(e.uuid(), server);
+                    if (online != null) {
+                        int playtime = online.getStats().getValue(net.minecraft.stats.Stats.CUSTOM.get(net.minecraft.stats.Stats.PLAY_TIME));
+                        sb.append(String.format("{\"name\":\"%s\",\"level\":%d,\"playtime_ticks\":%d,\"tier\":%d}",
+                                playerName, e.level(), playtime, tier));
+                    } else {
+                        sb.append(String.format("{\"name\":\"%s\",\"level\":%d,\"tier\":%d}",
+                                playerName, e.level(), tier));
+                    }
                 }
                 sb.append("],\"bySkill\":{");
                 SkillType[] skills = SkillType.values();
@@ -735,6 +765,45 @@ public final class AdminHandler {
                 }
             });
             return future.get(5, TimeUnit.SECONDS);
+        } catch (Exception e) {
+            return err(400, "Invalid request: " + jsonEscape(e.getMessage()));
+        }
+    }
+
+    // ── Tiers ─────────────────────────────────────────────────────────────────
+
+    // POST /api/admin/players/settier. Assigns or clears an admin tier for a player by name.
+    // The dashboard player list only shows online players, so the player is guaranteed online.
+    public static String handleSetTier(String method, Map<String, String> headers, String body,
+                                       MinecraftServer server) {
+        if (!"POST".equals(method))             return err(405, "Method not allowed");
+        if (!SmpConfig.ADMIN_ENABLED)           return err(403, "Admin panel disabled");
+        if (!AdminAuth.isAuthorized(headers))   return err(403, "Unauthorized");
+        if (server == null)                     return err(503, "Server not ready");
+        try {
+            JsonObject req = JsonParser.parseString(body).getAsJsonObject();
+            String name = req.get("name").getAsString().strip();
+            int tier    = req.get("tier").getAsInt();
+            if (tier < 0) return err(400, "Tier must be >= 0 (0 clears assignment)");
+            if (tier > 0 && SmpConfig.TIERS.stream().noneMatch(t -> t.tier() == tier)) {
+                return err(400, "Tier " + tier + " is not defined in config");
+            }
+
+            java.util.concurrent.CompletableFuture<String> future = new java.util.concurrent.CompletableFuture<>();
+            server.execute(() -> {
+                try {
+                    net.minecraft.server.level.ServerPlayer player = server.getPlayerList().getPlayerByName(name);
+                    if (player == null) {
+                        future.complete(err(400, "Player not online"));
+                        return;
+                    }
+                    mc.smpessentials.tier.PlayerTierData.get(server).set(player.getUUID(), tier);
+                    future.complete(String.format("{\"ok\":true,\"name\":\"%s\",\"tier\":%d}", jsonEscape(name), tier));
+                } catch (Exception ex) {
+                    future.complete(err(500, jsonEscape(ex.getMessage())));
+                }
+            });
+            return future.get(5, java.util.concurrent.TimeUnit.SECONDS);
         } catch (Exception e) {
             return err(400, "Invalid request: " + jsonEscape(e.getMessage()));
         }

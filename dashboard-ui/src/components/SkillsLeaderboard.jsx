@@ -50,6 +50,8 @@ export default function SkillsLeaderboard({ data }) {
                 <th className={styles.thRank}>#</th>
                 <th className={styles.thPlayer}>Player</th>
                 <th className={styles.thLevel}>Total Level</th>
+                <th className={styles.thPlaytime}>Playtime</th>
+                <th className={styles.thTier}>Tier</th>
               </tr>
             </thead>
             <tbody>
@@ -60,10 +62,16 @@ export default function SkillsLeaderboard({ data }) {
                   </td>
                   <td className={styles.playerName}>{entry.name}</td>
                   <td className={styles.level}>{entry.level}</td>
+                  <td className={styles.playtime}>
+                    {entry.playtime_ticks != null ? `${Math.floor(entry.playtime_ticks / 72000)}h` : '—'}
+                  </td>
+                  <td className={styles.tier}>
+                    {entry.tier > 0 ? <span className={styles.tierBadge}>T{entry.tier}</span> : '—'}
+                  </td>
                 </tr>
               ))}
               {data.overall.length === 0 && (
-                <tr><td colSpan={3} className={styles.noData}>No data yet</td></tr>
+                <tr><td colSpan={5} className={styles.noData}>No data yet</td></tr>
               )}
             </tbody>
           </table>

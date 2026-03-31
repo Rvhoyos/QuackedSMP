@@ -16,6 +16,10 @@ public final class ConfigIO {
     private static final String FILE_NAME = "quackedsmp.json";
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
 
+    // Populated during load() when old player_tiers or vips data is found in JSON.
+    // Drained into PlayerTierData at server start (see DashboardManager.onServerStart).
+    public static final java.util.Map<String, Integer> pendingTierMigration = new java.util.LinkedHashMap<>();
+
     private ConfigIO() {
     }
 
@@ -99,10 +103,6 @@ public final class ConfigIO {
                 obj.addProperty("message_interval", 300);
                 dirty = true;
             }
-            if (!obj.has("vip_bonus_claims")) {
-                obj.addProperty("vip_bonus_claims", 20);
-                dirty = true;
-            }
             if (!obj.has("allow_lava_wilderness")) {
                 obj.addProperty("allow_lava_wilderness", false);
                 dirty = true;
@@ -144,8 +144,29 @@ public final class ConfigIO {
                 dirty = true;
             }
 
-            if (!obj.has("vips")) {
-                obj.add("vips", new com.google.gson.JsonArray());
+            if (!obj.has("tiers")) {
+                obj.add("tiers", defaultTiersJson());
+                dirty = true;
+            }
+            // Migrate legacy vips list → pendingTierMigration at tier 1
+            if (obj.has("vips") && obj.get("vips").isJsonArray()) {
+                for (var el : obj.getAsJsonArray("vips")) {
+                    String name = el.getAsString().strip();
+                    if (!name.isEmpty()) pendingTierMigration.putIfAbsent(name.toLowerCase(java.util.Locale.ROOT), 1);
+                }
+                obj.remove("vips");
+                dirty = true;
+            }
+            // Migrate legacy player_tiers JSON array → pendingTierMigration
+            if (obj.has("player_tiers") && obj.get("player_tiers").isJsonArray()) {
+                for (var el : obj.getAsJsonArray("player_tiers")) {
+                    if (!el.isJsonObject()) continue;
+                    com.google.gson.JsonObject pt = el.getAsJsonObject();
+                    String name = pt.has("name") ? pt.get("name").getAsString().strip() : "";
+                    int tier = pt.has("tier") ? pt.get("tier").getAsInt() : 0;
+                    if (!name.isEmpty() && tier > 0) pendingTierMigration.putIfAbsent(name.toLowerCase(java.util.Locale.ROOT), tier);
+                }
+                obj.remove("player_tiers");
                 dirty = true;
             }
             if (!obj.has("skills") || !obj.get("skills").isJsonObject()) {
@@ -226,7 +247,6 @@ public final class ConfigIO {
         root.addProperty("tp_warmup", 5);
         root.addProperty("welcome_message", "&6Welcome to QuackedSMP, {player}!");
         root.addProperty("message_interval", 300);
-        root.addProperty("vip_bonus_claims", 20);
         root.addProperty("allow_lava_wilderness", false);
         root.addProperty("claims_enabled", true);
         root.addProperty("skills_enabled", true);
@@ -274,7 +294,7 @@ public final class ConfigIO {
         muteLevels.add(1440);
         root.add("mute_levels_minutes", muteLevels);
 
-        root.add("vips", new com.google.gson.JsonArray());
+        root.add("tiers", defaultTiersJson());
 
         com.google.gson.JsonArray rules = new com.google.gson.JsonArray();
         rules.add("&e1. Be respectful. 2. No GRIEFING. 3. No cheating.");
@@ -342,6 +362,17 @@ public final class ConfigIO {
         root.add("messages", msgs);
         root.add("skills", defaultSkillsJson());
         return root;
+    }
+
+    static com.google.gson.JsonArray defaultTiersJson() {
+        com.google.gson.JsonArray arr = new com.google.gson.JsonArray();
+        JsonObject tier1 = new JsonObject();
+        tier1.addProperty("tier", 1);
+        tier1.addProperty("name", "VIP");
+        tier1.addProperty("min_playtime_hours", 100);
+        tier1.addProperty("bonus_claims", 20);
+        arr.add(tier1);
+        return arr;
     }
 
     static JsonObject defaultSkillsJson() {
@@ -432,7 +463,6 @@ public final class ConfigIO {
         root.addProperty("tp_warmup", SmpConfig.TP_WARMUP);
         root.addProperty("welcome_message", SmpConfig.WELCOME_MESSAGE);
         root.addProperty("message_interval", SmpConfig.MESSAGE_INTERVAL);
-        root.addProperty("vip_bonus_claims", SmpConfig.VIP_BONUS_CLAIMS);
         root.addProperty("allow_lava_wilderness", SmpConfig.ALLOW_LAVA_WILDERNESS);
         root.addProperty("claims_enabled", SmpConfig.CLAIMS_ENABLED);
         root.addProperty("skills_enabled", SmpConfig.SKILLS_ENABLED);
@@ -477,10 +507,18 @@ public final class ConfigIO {
             muteLevels.add(m);
         root.add("mute_levels_minutes", muteLevels);
 
-        com.google.gson.JsonArray vips = new com.google.gson.JsonArray();
-        for (String v : SmpConfig.VIPS)
-            vips.add(v);
-        root.add("vips", vips);
+        com.google.gson.JsonArray tiers = new com.google.gson.JsonArray();
+        for (SmpConfig.TierDef def : SmpConfig.TIERS) {
+            com.google.gson.JsonObject td = new com.google.gson.JsonObject();
+            td.addProperty("tier", def.tier());
+            td.addProperty("name", def.name());
+            td.addProperty("min_playtime_hours", def.minPlaytimeHours());
+            td.addProperty("bonus_claims", def.bonusClaims());
+            tiers.add(td);
+        }
+        root.add("tiers", tiers.size() > 0 ? tiers : defaultTiersJson());
+
+        // player_tiers is now stored in NBT (PlayerTierData) — not written to JSON.
 
         com.google.gson.JsonArray rules = new com.google.gson.JsonArray();
         for (String r : SmpConfig.RULES)

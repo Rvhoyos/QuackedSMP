@@ -516,6 +516,22 @@
 
 .listAdd:hover { background: #183018; }
 
+/* ── Tier def editor ── */
+.tierDefRow {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.tierDefNum {
+  font-family: var(--font-pixel);
+  font-size: 6px;
+  color: var(--mauve);
+  width: 18px;
+  flex-shrink: 0;
+  letter-spacing: 0.3px;
+}
+
 /* ── Mute levels ── */
 .muteLevels {
   display: flex;

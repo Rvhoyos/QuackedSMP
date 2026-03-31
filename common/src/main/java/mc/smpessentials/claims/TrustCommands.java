@@ -1,6 +1,7 @@
 package mc.smpessentials.claims;
 
 import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.EntityArgument;
@@ -14,85 +15,83 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import mc.smpessentials.claims.storage.WhitelistSavedData;
+import mc.smpessentials.config.SmpConfig;
 
-// Registers /trust, /untrust, /trustlist. Trust is owner-wide; it covers all of an owner's claims, not individual chunks.
+// Registers /trust, /untrust, /trustlist at root. Also exposes nodes for /claim trust|untrust|trustlist aliases.
+// Trust is owner-wide; it covers all of an owner's claims, not individual chunks.
 public final class TrustCommands {
     private TrustCommands() {
     }
 
-    // Registers /trust, /untrust, and /trustlist with the given dispatcher.
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
-        // /trust <player>
-        dispatcher.register(
-                Commands.literal("trust")
-                        .requires(src -> mc.smpessentials.config.SmpConfig.CLAIMS_ENABLED && src.getEntity() instanceof ServerPlayer)
-                        .then(Commands.argument("player", EntityArgument.player())
-                                .executes(ctx -> {
-                                    ServerPlayer self = ctx.getSource().getPlayerOrException();
-                                    ServerLevel level = (ServerLevel) self.level();
-                                    ServerPlayer target = EntityArgument.getPlayer(ctx, "player");
+        dispatcher.register(trustNode());
+        dispatcher.register(untrustNode());
+        dispatcher.register(trustlistNode());
+    }
 
-                                    boolean added = WhitelistSavedData.get(level).add(self.getUUID(), target.getUUID());
-                                    if (added) {
-                                        ctx.getSource().sendSystemMessage(Component.literal(
-                                                "Trusted " + target.getName().getString() + " for all your claims."));
-                                    } else {
-                                        ctx.getSource().sendFailure(Component
-                                                .literal(target.getName().getString() + " is already trusted."));
-                                    }
-                                    return 1;
-                                })));
-
-        // /untrust <player>
-        dispatcher.register(
-                Commands.literal("untrust")
-                        .requires(src -> mc.smpessentials.config.SmpConfig.CLAIMS_ENABLED && src.getEntity() instanceof ServerPlayer)
-                        .then(Commands.argument("player", EntityArgument.player())
-                                .executes(ctx -> {
-                                    ServerPlayer self = ctx.getSource().getPlayerOrException();
-                                    ServerLevel level = (ServerLevel) self.level();
-                                    ServerPlayer target = EntityArgument.getPlayer(ctx, "player");
-
-                                    boolean removed = WhitelistSavedData.get(level).remove(self.getUUID(),
-                                            target.getUUID());
-                                    if (removed) {
-                                        ctx.getSource().sendSystemMessage(Component
-                                                .literal("Removed trust for " + target.getName().getString() + "."));
-                                    } else {
-                                        ctx.getSource().sendFailure(
-                                                Component.literal(target.getName().getString() + " wasn’t trusted."));
-                                    }
-                                    return 1;
-                                })));
-
-        // /trustlist
-        dispatcher.register(
-                Commands.literal("trustlist")
-                        .requires(src -> mc.smpessentials.config.SmpConfig.CLAIMS_ENABLED && src.getEntity() instanceof ServerPlayer)
+    static LiteralArgumentBuilder<CommandSourceStack> trustNode() {
+        return Commands.literal("trust")
+                .requires(src -> SmpConfig.CLAIMS_ENABLED && src.getEntity() instanceof ServerPlayer)
+                .then(Commands.argument("player", EntityArgument.player())
                         .executes(ctx -> {
                             ServerPlayer self = ctx.getSource().getPlayerOrException();
                             ServerLevel level = (ServerLevel) self.level();
-
-                            Set<UUID> trusted = WhitelistSavedData.get(level).list(self.getUUID());
-                            if (trusted.isEmpty()) {
-                                ctx.getSource().sendSystemMessage(Component.literal("Your trust list is empty."));
-                                return 1;
-                            }
-
-                            // Resolve online names; fall back to count if no one online
-                            String names = trusted.stream()
-                                    .map(uuid -> level.getServer().getPlayerList().getPlayer(uuid))
-                                    .filter(Objects::nonNull)
-                                    .map(p -> p.getName().getString())
-                                    .collect(Collectors.joining(", "));
-
-                            if (names.isEmpty()) {
-                                ctx.getSource().sendSystemMessage(
-                                        Component.literal("Trusted: " + trusted.size() + " player(s)."));
+                            ServerPlayer target = EntityArgument.getPlayer(ctx, "player");
+                            boolean added = WhitelistSavedData.get(level).add(self.getUUID(), target.getUUID());
+                            if (added) {
+                                ctx.getSource().sendSystemMessage(Component.literal(
+                                        "Trusted " + target.getName().getString() + " for all your claims."));
                             } else {
-                                ctx.getSource().sendSystemMessage(Component.literal("Trusted: " + names));
+                                ctx.getSource().sendFailure(Component.literal(
+                                        target.getName().getString() + " is already trusted."));
                             }
                             return 1;
                         }));
+    }
+
+    static LiteralArgumentBuilder<CommandSourceStack> untrustNode() {
+        return Commands.literal("untrust")
+                .requires(src -> SmpConfig.CLAIMS_ENABLED && src.getEntity() instanceof ServerPlayer)
+                .then(Commands.argument("player", EntityArgument.player())
+                        .executes(ctx -> {
+                            ServerPlayer self = ctx.getSource().getPlayerOrException();
+                            ServerLevel level = (ServerLevel) self.level();
+                            ServerPlayer target = EntityArgument.getPlayer(ctx, "player");
+                            boolean removed = WhitelistSavedData.get(level).remove(self.getUUID(), target.getUUID());
+                            if (removed) {
+                                ctx.getSource().sendSystemMessage(Component.literal(
+                                        "Removed trust for " + target.getName().getString() + "."));
+                            } else {
+                                ctx.getSource().sendFailure(Component.literal(
+                                        target.getName().getString() + " wasn't trusted."));
+                            }
+                            return 1;
+                        }));
+    }
+
+    static LiteralArgumentBuilder<CommandSourceStack> trustlistNode() {
+        return Commands.literal("trustlist")
+                .requires(src -> SmpConfig.CLAIMS_ENABLED && src.getEntity() instanceof ServerPlayer)
+                .executes(ctx -> {
+                    ServerPlayer self = ctx.getSource().getPlayerOrException();
+                    ServerLevel level = (ServerLevel) self.level();
+                    Set<UUID> trusted = WhitelistSavedData.get(level).list(self.getUUID());
+                    if (trusted.isEmpty()) {
+                        ctx.getSource().sendSystemMessage(Component.literal("Your trust list is empty."));
+                        return 1;
+                    }
+                    String names = trusted.stream()
+                            .map(uuid -> level.getServer().getPlayerList().getPlayer(uuid))
+                            .filter(Objects::nonNull)
+                            .map(p -> p.getName().getString())
+                            .collect(Collectors.joining(", "));
+                    if (names.isEmpty()) {
+                        ctx.getSource().sendSystemMessage(
+                                Component.literal("Trusted: " + trusted.size() + " player(s)."));
+                    } else {
+                        ctx.getSource().sendSystemMessage(Component.literal("Trusted: " + names));
+                    }
+                    return 1;
+                });
     }
 }

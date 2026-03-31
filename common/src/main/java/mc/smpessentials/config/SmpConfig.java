@@ -10,8 +10,10 @@ public final class SmpConfig {
     public static java.util.List<String> RULES = new java.util.ArrayList<>();
     public static java.util.List<String> PERIODIC_MESSAGES = new java.util.ArrayList<>();
     public static int MESSAGE_INTERVAL = 300; // Seconds
-    public static java.util.List<String> VIPS = new java.util.ArrayList<>();
-    public static int VIP_BONUS_CLAIMS = 20;
+    // ---- Tier definitions (in ascending tier order) ----
+    public static java.util.List<TierDef> TIERS = new java.util.ArrayList<>();
+
+    public record TierDef(int tier, String name, long minPlaytimeHours, int bonusClaims) {}
     public static boolean ALLOW_LAVA_WILDERNESS = false;
     public static java.util.Map<String, String> MESSAGES = new java.util.HashMap<>();
 
@@ -127,10 +129,6 @@ public final class SmpConfig {
         if (root.has("message_interval")) {
             MESSAGE_INTERVAL = root.get("message_interval").getAsInt();
         }
-        if (root.has("vip_bonus_claims")) {
-            VIP_BONUS_CLAIMS = root.get("vip_bonus_claims").getAsInt();
-        }
-
         if (root.has("allow_lava_wilderness")) {
             ALLOW_LAVA_WILDERNESS = root.get("allow_lava_wilderness").getAsBoolean();
         }
@@ -187,7 +185,19 @@ public final class SmpConfig {
         if (root.has("bluemap_vip_claim_color"))
             BLUEMAP_VIP_CLAIM_COLOR = root.get("bluemap_vip_claim_color").getAsString();
 
-        loadList(root, "vips", VIPS);
+        if (root.has("tiers") && root.get("tiers").isJsonArray()) {
+            TIERS.clear();
+            for (var el : root.get("tiers").getAsJsonArray()) {
+                if (!el.isJsonObject()) continue;
+                com.google.gson.JsonObject td = el.getAsJsonObject();
+                int t = td.has("tier") ? td.get("tier").getAsInt() : 0;
+                String n = td.has("name") ? td.get("name").getAsString() : "Tier " + t;
+                long mph = td.has("min_playtime_hours") ? td.get("min_playtime_hours").getAsLong() : 0;
+                int bc = td.has("bonus_claims") ? td.get("bonus_claims").getAsInt() : 0;
+                TIERS.add(new TierDef(t, n, mph, bc));
+            }
+        }
+        // player_tiers is now stored in NBT (PlayerTierData). Migration is handled at server start.
         if (root.has("rules")) {
             loadList(root, "rules", RULES);
         } else if (RULES.isEmpty()) {
