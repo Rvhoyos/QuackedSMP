@@ -42,9 +42,6 @@ public final class DashboardManager {
     /** Starts the dashboard HTTP/WebSocket server if enabled in config. */
     public static void onServerStart(MinecraftServer srv) {
         mcServer = srv;
-        // Migrate any legacy player_tiers from JSON config into NBT SavedData
-        mc.smpessentials.tier.PlayerTierData.get(srv)
-                .loadPendingMigration(mc.smpessentials.config.ConfigIO.pendingTierMigration);
         if (!SmpConfig.DASHBOARD_ENABLED) {
             SmpUtilsMod.LOGGER.info("[Dashboard] Disabled in config.");
             return;
@@ -151,7 +148,7 @@ public final class DashboardManager {
                     "{\"heapUsed\":%d,\"heapMax\":%d,\"ramTotal\":%d,\"ramFree\":%d,\"diskTotal\":%d,\"diskUsable\":%d,\"uptimeMs\":%d,\"threads\":%d}",
                     heapUsed, heapMax, ramTotal, ramFree, diskTotal, diskUsable, uptimeMs, threads);
         });
-        // Spark routes — only reference SparkMetrics if Spark is on the classpath.
+        // Spark routes: only reference SparkMetrics if Spark is on the classpath.
         // SparkMetrics imports Spark types directly; loading it without Spark present
         // throws NoClassDefFoundError and would crash the dashboard startup.
         if (sparkLoaded) {

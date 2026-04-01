@@ -1,6 +1,5 @@
 package mc.smpessentials.config;
 
-import com.google.gson.JsonObject;
 import mc.smpessentials.skills.SkillType;
 
 public final class SmpConfig {
@@ -116,185 +115,56 @@ public final class SmpConfig {
     }
 
     public static void load() {
-        JsonObject root = ConfigIO.readOrCreate();
-        if (root.has("max_claims")) {
-            MAX_CLAIMS = root.get("max_claims").getAsInt();
-        }
-        if (root.has("tp_warmup")) {
-            TP_WARMUP = root.get("tp_warmup").getAsInt();
-        }
-        if (root.has("welcome_message")) {
-            WELCOME_MESSAGE = root.get("welcome_message").getAsString();
-        }
-        if (root.has("message_interval")) {
-            MESSAGE_INTERVAL = root.get("message_interval").getAsInt();
-        }
-        if (root.has("allow_lava_wilderness")) {
-            ALLOW_LAVA_WILDERNESS = root.get("allow_lava_wilderness").getAsBoolean();
-        }
+        ConfigData d = ConfigIO.readOrCreate();
 
-        if (root.has("claims_enabled"))     CLAIMS_ENABLED     = root.get("claims_enabled").getAsBoolean();
-        if (root.has("skills_enabled"))     SKILLS_ENABLED     = root.get("skills_enabled").getAsBoolean();
-        if (root.has("chatfilter_enabled")) CHATFILTER_ENABLED = root.get("chatfilter_enabled").getAsBoolean();
+        MAX_CLAIMS = d.maxClaims;
+        TP_WARMUP = d.tpWarmup;
+        WELCOME_MESSAGE = d.welcomeMessage;
+        MESSAGE_INTERVAL = d.messageInterval;
+        ALLOW_LAVA_WILDERNESS = d.allowLavaWilderness;
+        CLAIMS_ENABLED = d.claimsEnabled;
+        SKILLS_ENABLED = d.skillsEnabled;
+        CHATFILTER_ENABLED = d.chatfilterEnabled;
+        VOICECHAT_ENABLE = d.voicechatEnable;
+        BLUEMAP_ENABLE = d.bluemapEnable;
+        BLUEMAP_SHOW_HOMES = d.bluemapShowHomes;
+        BLUEMAP_SHOW_CLAIMS = d.bluemapShowClaims;
+        BLUEMAP_SHOW_WORLDBORDER = d.bluemapShowWorldborder;
+        BLUEMAP_WORLDBORDER_COLOR = d.bluemapWorldborderColor;
+        BLUEMAP_CLAIM_COLOR = d.bluemapClaimColor;
+        BLUEMAP_OP_CLAIM_COLOR = d.bluemapOpClaimColor;
+        BLUEMAP_VIP_CLAIM_COLOR = d.bluemapVipClaimColor;
+        MUTE_LEVELS_MINUTES = d.muteLevelsMinutes;
+        TIERS = d.tiers;
+        RULES = d.rules;
+        PERIODIC_MESSAGES = d.periodicMessages;
+        MESSAGES = d.messages;
 
-        if (root.has("votifier") && root.get("votifier").isJsonObject()) {
-            JsonObject vt = root.getAsJsonObject("votifier");
-            if (vt.has("enabled")) VOTIFIER_ENABLED = vt.get("enabled").getAsBoolean();
-            if (vt.has("port"))    VOTIFIER_PORT    = vt.get("port").getAsInt();
-            if (vt.has("token"))   VOTIFIER_TOKEN   = vt.get("token").getAsString();
-            if (vt.has("broadcast")) VOTE_BROADCAST = vt.get("broadcast").getAsString();
-            if (vt.has("rewards") && vt.get("rewards").isJsonArray()) {
-                VOTE_REWARDS.clear();
-                for (var el : vt.getAsJsonArray("rewards")) VOTE_REWARDS.add(el.getAsString());
-            }
-        }
+        VOTIFIER_ENABLED = d.votifier.enabled;
+        VOTIFIER_PORT = d.votifier.port;
+        VOTIFIER_TOKEN = d.votifier.token;
+        VOTE_BROADCAST = d.votifier.broadcast;
+        VOTE_REWARDS = d.votifier.rewards;
 
-        if (root.has("dashboard") && root.get("dashboard").isJsonObject()) {
-            JsonObject db = root.getAsJsonObject("dashboard");
-            if (db.has("enabled"))        DASHBOARD_ENABLED    = db.get("enabled").getAsBoolean();
-            if (db.has("port"))           DASHBOARD_PORT       = db.get("port").getAsInt();
-            if (db.has("admin_enabled"))  ADMIN_ENABLED        = db.get("admin_enabled").getAsBoolean();
-            if (db.has("admin_password_hash")) ADMIN_PASSWORD_HASH = db.get("admin_password_hash").getAsString();
-            if (db.has("server_name"))    SERVER_NAME          = db.get("server_name").getAsString();
-        }
+        DASHBOARD_ENABLED = d.dashboard.enabled;
+        DASHBOARD_PORT = d.dashboard.port;
+        ADMIN_ENABLED = d.dashboard.adminEnabled;
+        ADMIN_PASSWORD_HASH = d.dashboard.adminPasswordHash;
+        SERVER_NAME = d.dashboard.serverName;
 
-        if (root.has("discord") && root.get("discord").isJsonObject()) {
-            JsonObject dc = root.getAsJsonObject("discord");
-            if (dc.has("webhook_url"))  DISCORD_WEBHOOK_URL = dc.get("webhook_url").getAsString();
-            if (dc.has("join_leave"))   DISCORD_JOIN_LEAVE  = dc.get("join_leave").getAsBoolean();
-            if (dc.has("chat"))         DISCORD_CHAT        = dc.get("chat").getAsBoolean();
-        }
+        DISCORD_WEBHOOK_URL = d.discord.webhookUrl;
+        DISCORD_JOIN_LEAVE = d.discord.joinLeave;
+        DISCORD_CHAT = d.discord.chat;
 
-        if (root.has("voicechat_enable"))
-            VOICECHAT_ENABLE = root.get("voicechat_enable").getAsBoolean();
-
-        if (root.has("bluemap_enable"))
-            BLUEMAP_ENABLE = root.get("bluemap_enable").getAsBoolean();
-        if (root.has("bluemap_show_homes"))
-            BLUEMAP_SHOW_HOMES = root.get("bluemap_show_homes").getAsBoolean();
-        if (root.has("bluemap_show_claims"))
-            BLUEMAP_SHOW_CLAIMS = root.get("bluemap_show_claims").getAsBoolean();
-        if (root.has("bluemap_show_worldborder"))
-            BLUEMAP_SHOW_WORLDBORDER = root.get("bluemap_show_worldborder").getAsBoolean();
-        if (root.has("bluemap_worldborder_color"))
-            BLUEMAP_WORLDBORDER_COLOR = root.get("bluemap_worldborder_color").getAsString();
-        if (root.has("bluemap_claim_color"))
-            BLUEMAP_CLAIM_COLOR = root.get("bluemap_claim_color").getAsString();
-        if (root.has("bluemap_op_claim_color"))
-            BLUEMAP_OP_CLAIM_COLOR = root.get("bluemap_op_claim_color").getAsString();
-        if (root.has("bluemap_vip_claim_color"))
-            BLUEMAP_VIP_CLAIM_COLOR = root.get("bluemap_vip_claim_color").getAsString();
-
-        if (root.has("tiers") && root.get("tiers").isJsonArray()) {
-            TIERS.clear();
-            for (var el : root.get("tiers").getAsJsonArray()) {
-                if (!el.isJsonObject()) continue;
-                com.google.gson.JsonObject td = el.getAsJsonObject();
-                int t = td.has("tier") ? td.get("tier").getAsInt() : 0;
-                String n = td.has("name") ? td.get("name").getAsString() : "Tier " + t;
-                long mph = td.has("min_playtime_hours") ? td.get("min_playtime_hours").getAsLong() : 0;
-                int bc = td.has("bonus_claims") ? td.get("bonus_claims").getAsInt() : 0;
-                TIERS.add(new TierDef(t, n, mph, bc));
-            }
-        }
-        // player_tiers is now stored in NBT (PlayerTierData). Migration is handled at server start.
-        if (root.has("rules")) {
-            loadList(root, "rules", RULES);
-        } else if (RULES.isEmpty()) {
-            RULES.add("&e1. Be respectful. 2. No GRIEFING. 3. No cheating.");
-            RULES.add("&e4. Voice chat is strictly 18+. Falsely verifying your age will result in a ban.");
-            RULES.add("&e5. Do not attempt to bypass the chat filter or use slurs.");
-            RULES.add("&e6. Found a bug or exploit? Report it to dev@quackedmod.wiki for a reward!");
-            RULES.add("&e7. Build bases FAR from spawn. Use the RTP portal!");
-            RULES.add("&e8. Spawn's communal area is for cool builds to show off!");
-        }
-
-        if (root.has("periodic_messages")) {
-            loadList(root, "periodic_messages", PERIODIC_MESSAGES);
-        } else if (PERIODIC_MESSAGES.isEmpty()) {
-            PERIODIC_MESSAGES.add("&b[Tip] &fUse &a/claim &fto protect your land!");
-            PERIODIC_MESSAGES.add("&b[Tip] &fSleep in a bed to set your &a/home&f location!");
-            PERIODIC_MESSAGES.add("&b[Tip] &fType &a/smp help &ffor a list of commands!");
-            PERIODIC_MESSAGES.add("&b[Tip] &fPlease respect the &6/rules&f!");
-            PERIODIC_MESSAGES.add("&b[Tip] &fUnlock active abilities by leveling up your &a/skills&f!");
-            PERIODIC_MESSAGES.add("&b[Tip] &fUse &a/tpr <player>&f to teleport to friends!");
-            PERIODIC_MESSAGES.add("&b[Tip] &fStuck with an intruder? Use &a/sos &fto eject them from your claim!");
-            PERIODIC_MESSAGES.add("&b[Tip] &fReach &aLevel 10 &fin a skill to unlock its unique Active Ability!");
-            PERIODIC_MESSAGES.add("&b[Tip] &fUse &aSneak + Drop (Q) &fwith a tool to activate its ability!");
-            PERIODIC_MESSAGES.add("&b[Tip] &fActivate &bDash &fby &aSprinting + Jumping + Sneaking&f!");
-            PERIODIC_MESSAGES.add("&b[Tip] &fLeveling up skills grants passive buffs like &c+Health &fand &f+Speed!");
-            PERIODIC_MESSAGES.add("&b[Tip] &fReport griefers to &adev@quackedmod.wiki&f!");
-            PERIODIC_MESSAGES.add("&b[Tip] &fReset the ender dragon in the &6Shogun Temple &fin the village or ask an admin to reset the end world!");
-            PERIODIC_MESSAGES.add("&b[Tip] &fVisit Spawn Shops for blocks & gear! Trade items for Emeralds!");
-            PERIODIC_MESSAGES.add("&b[Tip] &fKeep Inventory is ON by default! If you prefer a challenge, type &a/keepinv off&f to drop your items on death.");
-            PERIODIC_MESSAGES.add("&b[Tip] &fNot sure where a claim ends? Use &a/claim map&f to visualize nearby chunk borders in chat!");
-            PERIODIC_MESSAGES.add("&b[Tip] &fBuilding with friends? Use &a/trust <player>&f to give them permission to safely build in your claims!");
-            PERIODIC_MESSAGES.add("&b[Tip] &fWe have proximity voice chat! If you're 18+, type &a/verify confirm&f to enable it and start talking!");
-            PERIODIC_MESSAGES.add("&b[Tip] &fWant to see who has the highest skills? Type &a/skills top&f to view the server leaderboards!");
-            PERIODIC_MESSAGES.add("&b[Tip] &fCheck out our live web-map! You can see your &a/home&f and even name your claims using &a/claim name <name>&f!");
-            PERIODIC_MESSAGES.add("&b[Tip] &fGet our recommended modpack for &ashaders&f, &aminimap&f, &avoice chat &fand more! [&bDownload Here](https://www.curseforge.com/minecraft/modpacks/play-quackedmod-wiki)");
-        }
-
-        if (root.has("messages") && root.get("messages").isJsonObject()) {
-            MESSAGES.clear();
-            JsonObject msgs = root.getAsJsonObject("messages");
-            for (String key : msgs.keySet()) {
-                MESSAGES.put(key, msgs.get(key).getAsString());
-            }
-        }
-
-        // ---- Skills ----
-        if (root.has("skills") && root.get("skills").isJsonObject()) {
-            JsonObject sk = root.getAsJsonObject("skills");
-            if (sk.has("xp_exponent"))
-                SKILL_XP_EXPONENT = sk.get("xp_exponent").getAsDouble();
-            if (sk.has("cooldowns") && sk.get("cooldowns").isJsonObject()) {
-                SKILL_COOLDOWNS.clear();
-                JsonObject cds = sk.getAsJsonObject("cooldowns");
-                for (String key : cds.keySet()) {
-                    SKILL_COOLDOWNS.put(key, cds.get(key).getAsLong());
-                }
-            }
-            if (sk.has("ability_unlock_levels") && sk.get("ability_unlock_levels").isJsonObject()) {
-                SKILL_UNLOCK_LEVELS.clear();
-                JsonObject unlocks = sk.getAsJsonObject("ability_unlock_levels");
-                for (String key : unlocks.keySet()) {
-                    SKILL_UNLOCK_LEVELS.put(key, unlocks.get(key).getAsInt());
-                }
-            }
-            if (sk.has("caps") && sk.get("caps").isJsonObject()) {
-                JsonObject caps = sk.getAsJsonObject("caps");
-                if (caps.has("industrial_speed"))
-                    CAP_INDUSTRIAL_SPEED = caps.get("industrial_speed").getAsDouble();
-                if (caps.has("nature_health"))
-                    CAP_NATURE_HEALTH = caps.get("nature_health").getAsDouble();
-                if (caps.has("combat_damage"))
-                    CAP_COMBAT_DAMAGE = caps.get("combat_damage").getAsDouble();
-                if (caps.has("knowledge_xp"))
-                    CAP_KNOWLEDGE_XP = caps.get("knowledge_xp").getAsDouble();
-                if (caps.has("double_drop"))
-                    CAP_DOUBLE_DROP = caps.get("double_drop").getAsDouble();
-                if (caps.has("defense_armor"))
-                    CAP_DEFENSE_ARMOR = caps.get("defense_armor").getAsDouble();
-                if (caps.has("safe_landing"))
-                    CAP_SAFE_LANDING = caps.get("safe_landing").getAsDouble();
-            }
-        }
-
-        if (root.has("mute_levels_minutes") && root.get("mute_levels_minutes").isJsonArray()) {
-            MUTE_LEVELS_MINUTES.clear();
-            for (var el : root.get("mute_levels_minutes").getAsJsonArray()) {
-                MUTE_LEVELS_MINUTES.add(el.getAsInt());
-            }
-        }
-    }
-
-    private static void loadList(JsonObject root, String key, java.util.List<String> list) {
-        if (root.has(key) && root.get(key).isJsonArray()) {
-            list.clear();
-            for (var el : root.get(key).getAsJsonArray()) {
-                list.add(el.getAsString());
-            }
-        }
+        SKILL_XP_EXPONENT = d.skills.xpExponent;
+        SKILL_COOLDOWNS = d.skills.cooldowns;
+        SKILL_UNLOCK_LEVELS = d.skills.abilityUnlockLevels;
+        CAP_INDUSTRIAL_SPEED = d.skills.caps.industrialSpeed;
+        CAP_NATURE_HEALTH = d.skills.caps.natureHealth;
+        CAP_COMBAT_DAMAGE = d.skills.caps.combatDamage;
+        CAP_KNOWLEDGE_XP = d.skills.caps.knowledgeXp;
+        CAP_DOUBLE_DROP = d.skills.caps.doubleDrop;
+        CAP_DEFENSE_ARMOR = d.skills.caps.defenseArmor;
+        CAP_SAFE_LANDING = d.skills.caps.safeLanding;
     }
 }

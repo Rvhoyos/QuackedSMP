@@ -1,8 +1,8 @@
 package mc.smpessentials.config;
 
+import com.google.gson.FieldNamingPolicy;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
 import mc.smpessentials.platform.SmpServices;
 
@@ -14,11 +14,11 @@ import java.nio.file.Path;
 // Shared config file helpers for all packages.
 public final class ConfigIO {
     private static final String FILE_NAME = "quackedsmp.json";
-    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
-
-    // Populated during load() when old player_tiers or vips data is found in JSON.
-    // Drained into PlayerTierData at server start (see DashboardManager.onServerStart).
-    public static final java.util.Map<String, Integer> pendingTierMigration = new java.util.LinkedHashMap<>();
+    private static final Gson GSON = new GsonBuilder()
+            .setPrettyPrinting()
+            .disableHtmlEscaping()
+            .setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES)
+            .create();
 
     private ConfigIO() {
     }
@@ -27,210 +27,45 @@ public final class ConfigIO {
         return SmpServices.PLATFORM.getConfigDir().resolve(FILE_NAME);
     }
 
-    // Reads the config, creating defaults if absent. Backfills missing keys added in later versions.
-    public static JsonObject readOrCreate() {
+    // Returns the chatfilter import queue from the config file without writing the file back.
+    public static ConfigData.ChatFilterData readChatFilterQueue() {
+        Path p = path();
+        try {
+            if (Files.exists(p) && Files.size(p) > 0) {
+                String s = Files.readString(p, StandardCharsets.UTF_8);
+                ConfigData data = GSON.fromJson(s, ConfigData.class);
+                if (data != null && data.chatfilter != null) {
+                    return data.chatfilter;
+                }
+            }
+        } catch (JsonSyntaxException | IOException ignored) {
+        }
+        return new ConfigData.ChatFilterData();
+    }
+
+    // Reads the config file, filling in defaults for any missing fields.
+    // Always writes the result back to disk so new fields appear immediately.
+    public static ConfigData readOrCreate() {
         Path p = path();
         try {
             Files.createDirectories(p.getParent());
-            if (!Files.exists(p) || Files.size(p) == 0) {
-                JsonObject root = defaultJson();
-                Files.writeString(p, GSON.toJson(root), StandardCharsets.UTF_8);
-                return root;
+            ConfigData data = null;
+            if (Files.exists(p) && Files.size(p) > 0) {
+                String s = Files.readString(p, StandardCharsets.UTF_8);
+                data = GSON.fromJson(s, ConfigData.class);
             }
-            String s = Files.readString(p, StandardCharsets.UTF_8);
-            JsonObject obj = GSON.fromJson(s, JsonObject.class);
-            if (obj == null)
-                obj = defaultJson();
-            boolean dirty = false;
-            // Backfill missing sections for forward-compat
-            if (!obj.has("chatfilter") || !obj.get("chatfilter").isJsonObject()) {
-                obj.add("chatfilter", defaultChatFilterJson());
-                dirty = true;
-            }
-            if (!obj.has("messages") || !obj.get("messages").isJsonObject()) {
-                obj.add("messages", defaultJson().getAsJsonObject("messages"));
-                dirty = true;
-            }
-            if (!obj.has("max_claims")) {
-                obj.addProperty("max_claims", 50);
-                dirty = true;
-            }
-            if (!obj.has("tp_warmup")) {
-                obj.addProperty("tp_warmup", 5);
-                dirty = true;
-            }
-            if (!obj.has("welcome_message")) {
-                obj.addProperty("welcome_message", "Welcome to {server}, {player}!");
-                dirty = true;
-            }
-            if (!obj.has("rules")) {
-                com.google.gson.JsonArray r = new com.google.gson.JsonArray();
-                r.add("&e1. Be respectful. 2. No GRIEFING. 3. No cheating.");
-                r.add("&e4. Voice chat is strictly 18+. Falsely verifying your age will result in a ban.");
-                r.add("&e5. Do not attempt to bypass the chat filter or use slurs.");
-                r.add("&e6. Found a bug or exploit? Report it to dev@quackedmod.wiki for a reward!");
-                r.add("&e7. Build bases FAR from spawn. Use the RTP portal!");
-                r.add("&e8. Spawn's communal area is for cool builds to show off!");
-                obj.add("rules", r);
-                dirty = true;
-            }
-            if (!obj.has("periodic_messages")) {
-                com.google.gson.JsonArray pm = new com.google.gson.JsonArray();
-                pm.add("&b[Tip] &fUse &a/claim &fto protect your land!");
-                pm.add("&b[Tip] &fSleep in a bed to set your &a/home&f location!");
-                pm.add("&b[Tip] &fType &a/smp help &ffor a list of commands!");
-                pm.add("&b[Tip] &fPlease respect the &6/rules&f!");
-                pm.add("&b[Tip] &fUnlock active abilities by leveling up your &a/skills&f!");
-                pm.add("&b[Tip] &fUse &a/tpr <player>&f to teleport to friends!");
-                pm.add("&b[Tip] &fStuck with an intruder? Use &a/sos &fto eject them from your claim!");
-                pm.add("&b[Tip] &fReach &aLevel 10 &fin a skill to unlock its unique Active Ability!");
-                pm.add("&b[Tip] &fUse &aSneak + Drop (Q) &fwith a tool to activate its ability!");
-                pm.add("&b[Tip] &fActivate &bDash &fby &aSprinting + Jumping + Sneaking&f!");
-                pm.add("&b[Tip] &fLeveling up skills grants passive buffs like &c+Health &fand &f+Speed!");
-                pm.add("&b[Tip] &fReport griefers to &adev@quackedmod.wiki&f!");
-                pm.add("&b[Tip] &fReset the ender dragon in the &6Shogun Temple &fin the village or ask an admin to reset the end world!");
-                pm.add("&b[Tip] &fVisit Spawn Shops for blocks & gear! Trade items for Emeralds!");
-                pm.add("&b[Tip] &fKeep Inventory is ON by default! If you prefer a challenge, type &a/keepinv off&f to drop your items on death.");
-                pm.add("&b[Tip] &fNot sure where a claim ends? Use &a/claim map&f to visualize nearby chunk borders in chat!");
-                pm.add("&b[Tip] &fBuilding with friends? Use &a/trust <player>&f to give them permission to safely build in your claims!");
-                pm.add("&b[Tip] &fWe have proximity voice chat! If you're 18+, type &a/verify confirm&f to enable it and start talking!");
-                pm.add("&b[Tip] &fWant to see who has the highest skills? Type &a/skills top&f to view the server leaderboards!");
-                pm.add("&b[Tip] &fCheck out our live web-map! You can see your &a/home&f and even name your claims using &a/claim name <name>&f!");
-                obj.add("periodic_messages", pm);
-                dirty = true;
-            }
-            if (!obj.has("message_interval")) {
-                obj.addProperty("message_interval", 300);
-                dirty = true;
-            }
-            if (!obj.has("allow_lava_wilderness")) {
-                obj.addProperty("allow_lava_wilderness", false);
-                dirty = true;
-            }
-            if (!obj.has("voicechat_enable")) {
-                obj.addProperty("voicechat_enable", true);
-                dirty = true;
-            }
-            if (!obj.has("bluemap_enable")) {
-                obj.addProperty("bluemap_enable", true);
-                dirty = true;
-            }
-            if (!obj.has("bluemap_show_homes")) {
-                obj.addProperty("bluemap_show_homes", true);
-                dirty = true;
-            }
-            if (!obj.has("bluemap_show_claims")) {
-                obj.addProperty("bluemap_show_claims", true);
-                dirty = true;
-            }
-            if (!obj.has("bluemap_claim_color")) {
-                obj.addProperty("bluemap_claim_color", "00FFFF");
-                dirty = true;
-            }
-            if (!obj.has("bluemap_op_claim_color")) {
-                obj.addProperty("bluemap_op_claim_color", "FFD700");
-                dirty = true;
-            }
-            if (!obj.has("bluemap_vip_claim_color")) {
-                obj.addProperty("bluemap_vip_claim_color", "8A2BE2");
-                dirty = true;
-            }
-            if (!obj.has("bluemap_show_worldborder")) {
-                obj.addProperty("bluemap_show_worldborder", true);
-                dirty = true;
-            }
-            if (!obj.has("bluemap_worldborder_color")) {
-                obj.addProperty("bluemap_worldborder_color", "FF3C3C");
-                dirty = true;
-            }
-
-            if (!obj.has("tiers")) {
-                obj.add("tiers", defaultTiersJson());
-                dirty = true;
-            }
-            // Migrate legacy vips list → pendingTierMigration at tier 1
-            if (obj.has("vips") && obj.get("vips").isJsonArray()) {
-                for (var el : obj.getAsJsonArray("vips")) {
-                    String name = el.getAsString().strip();
-                    if (!name.isEmpty()) pendingTierMigration.putIfAbsent(name.toLowerCase(java.util.Locale.ROOT), 1);
-                }
-                obj.remove("vips");
-                dirty = true;
-            }
-            // Migrate legacy player_tiers JSON array → pendingTierMigration
-            if (obj.has("player_tiers") && obj.get("player_tiers").isJsonArray()) {
-                for (var el : obj.getAsJsonArray("player_tiers")) {
-                    if (!el.isJsonObject()) continue;
-                    com.google.gson.JsonObject pt = el.getAsJsonObject();
-                    String name = pt.has("name") ? pt.get("name").getAsString().strip() : "";
-                    int tier = pt.has("tier") ? pt.get("tier").getAsInt() : 0;
-                    if (!name.isEmpty() && tier > 0) pendingTierMigration.putIfAbsent(name.toLowerCase(java.util.Locale.ROOT), tier);
-                }
-                obj.remove("player_tiers");
-                dirty = true;
-            }
-            if (!obj.has("skills") || !obj.get("skills").isJsonObject()) {
-                obj.add("skills", defaultSkillsJson());
-                dirty = true;
-            }
-            if (!obj.has("votifier") || !obj.get("votifier").isJsonObject()) {
-                JsonObject vt = new JsonObject();
-                vt.addProperty("enabled", false);
-                vt.addProperty("port", 8192);
-                vt.addProperty("token", "");
-                vt.addProperty("broadcast", "&6\u2736 {player} &ejust voted for the server! Thanks for the support!");
-                com.google.gson.JsonArray defRewards = new com.google.gson.JsonArray();
-                defRewards.add("give {player} diamond 2");
-                defRewards.add("give {player} emerald 5");
-                defRewards.add("give {player} gold_ingot 10");
-                vt.add("rewards", defRewards);
-                obj.add("votifier", vt);
-                dirty = true;
-            }
-            if (!obj.has("dashboard") || !obj.get("dashboard").isJsonObject()) {
-                JsonObject db = new JsonObject();
-                db.addProperty("enabled", true);
-                db.addProperty("port", 8125);
-                db.addProperty("admin_enabled", false);
-                db.addProperty("admin_password_hash", "");
-                obj.add("dashboard", db);
-                dirty = true;
+            if (data == null) {
+                data = new ConfigData();
             } else {
-                JsonObject db = obj.getAsJsonObject("dashboard");
-                if (!db.has("admin_enabled"))       { db.addProperty("admin_enabled", false);       dirty = true; }
-                if (!db.has("admin_password_hash")) { db.addProperty("admin_password_hash", "");    dirty = true; }
-                if (!db.has("server_name"))         { db.addProperty("server_name", "");             dirty = true; }
+                data.mergeDefaults();
             }
-            if (!obj.has("discord") || !obj.get("discord").isJsonObject()) {
-                JsonObject dc = new JsonObject();
-                dc.addProperty("webhook_url", "");
-                dc.addProperty("join_leave", true);
-                dc.addProperty("chat", true);
-                obj.add("discord", dc);
-                dirty = true;
-            }
-            if (!obj.has("mute_levels_minutes")) {
-                com.google.gson.JsonArray ml = new com.google.gson.JsonArray();
-                ml.add(60);
-                ml.add(120);
-                ml.add(240);
-                ml.add(480);
-                ml.add(1440);
-                obj.add("mute_levels_minutes", ml);
-                dirty = true;
-            }
-
-            if (dirty) {
-                Files.writeString(p, GSON.toJson(obj), StandardCharsets.UTF_8);
-            }
-            return obj;
+            Files.writeString(p, GSON.toJson(data), StandardCharsets.UTF_8);
+            return data;
         } catch (JsonSyntaxException e) {
-            // Malformed JSON — throw a descriptive error for callers to display
             throw new ConfigParseException(
                     "Malformed JSON in " + FILE_NAME + ": " + e.getMessage(), e);
         } catch (IOException e) {
-            // Fall back to default in-memory config when IO fails
-            return defaultJson();
+            return new ConfigData();
         }
     }
 
@@ -241,346 +76,67 @@ public final class ConfigIO {
         }
     }
 
-    private static JsonObject defaultJson() {
-        JsonObject root = new JsonObject();
-        root.addProperty("max_claims", 50);
-        root.addProperty("tp_warmup", 5);
-        root.addProperty("welcome_message", "&6Welcome to QuackedSMP, {player}!");
-        root.addProperty("message_interval", 300);
-        root.addProperty("allow_lava_wilderness", false);
-        root.addProperty("claims_enabled", true);
-        root.addProperty("skills_enabled", true);
-        root.addProperty("chatfilter_enabled", true);
-
-        JsonObject votifier = new JsonObject();
-        votifier.addProperty("enabled", false);
-        votifier.addProperty("port", 8192);
-        votifier.addProperty("token", "");
-        votifier.addProperty("broadcast", "&6\u2736 {player} &ejust voted for the server! Thanks for the support!");
-        com.google.gson.JsonArray defaultRewards = new com.google.gson.JsonArray();
-        defaultRewards.add("give {player} diamond 2");
-        defaultRewards.add("give {player} emerald 5");
-        defaultRewards.add("give {player} gold_ingot 10");
-        votifier.add("rewards", defaultRewards);
-        root.add("votifier", votifier);
-
-        JsonObject dashboard = new JsonObject();
-        dashboard.addProperty("enabled", false);
-        dashboard.addProperty("port", 8125);
-        dashboard.addProperty("admin_enabled", false);
-        dashboard.addProperty("admin_password_hash", "");
-        dashboard.addProperty("server_name", "");
-        root.add("dashboard", dashboard);
-
-        JsonObject discord = new JsonObject();
-        discord.addProperty("webhook_url", "");
-        discord.addProperty("join_leave", true);
-        discord.addProperty("chat", true);
-        root.add("discord", discord);
-
-        root.addProperty("voicechat_enable", true);
-        root.addProperty("bluemap_enable", true);
-        root.addProperty("bluemap_show_homes", true);
-        root.addProperty("bluemap_show_claims", true);
-        root.addProperty("bluemap_claim_color", "00FFFF");
-        root.addProperty("bluemap_op_claim_color", "FFD700");
-        root.addProperty("bluemap_vip_claim_color", "8A2BE2");
-
-        com.google.gson.JsonArray muteLevels = new com.google.gson.JsonArray();
-        muteLevels.add(60);
-        muteLevels.add(120);
-        muteLevels.add(240);
-        muteLevels.add(480);
-        muteLevels.add(1440);
-        root.add("mute_levels_minutes", muteLevels);
-
-        root.add("tiers", defaultTiersJson());
-
-        com.google.gson.JsonArray rules = new com.google.gson.JsonArray();
-        rules.add("&e1. Be respectful. 2. No GRIEFING. 3. No cheating.");
-        rules.add("&e4. Voice chat is strictly 18+. Falsely verifying your age will result in a ban.");
-        rules.add("&e5. Do not attempt to bypass the chat filter or use slurs.");
-        rules.add("&e6. Found a bug or exploit? Report it to dev@quackedmod.wiki for a reward!");
-        rules.add("&e7. Build bases FAR from spawn. Use the RTP portal!");
-        rules.add("&e8. Spawn's communal area is for cool builds to show off!");
-        root.add("rules", rules);
-
-        com.google.gson.JsonArray pm = new com.google.gson.JsonArray();
-        pm.add("&b[Tip] &fUse &a/claim &fto protect your land!");
-        pm.add("&b[Tip] &fSleep in a bed to set your &a/home&f location!");
-        pm.add("&b[Tip] &fType &a/smp help &ffor a list of commands!");
-        pm.add("&b[Tip] &fPlease respect the &6/rules&f!");
-        pm.add("&b[Tip] &fUnlock active abilities by leveling up your &a/skills&f!");
-        pm.add("&b[Tip] &fUse &a/tpr <player>&f to teleport to friends!");
-        pm.add("&b[Tip] &fStuck with an intruder? Use &a/sos &fto eject them from your claim!");
-        pm.add("&b[Tip] &fReach &aLevel 10 &fin a skill to unlock its unique Active Ability!");
-        pm.add("&b[Tip] &fUse &aSneak + Drop (Q) &fwith a tool to activate its ability!");
-        pm.add("&b[Tip] &fActivate &bDash &fby &aSprinting + Jumping + Sneaking&f!");
-        pm.add("&b[Tip] &fLeveling up skills grants passive buffs like &c+Health &fand &f+Speed!");
-        pm.add("&b[Tip] &fReport griefers to &adev@quackedmod.wiki&f!");
-        pm.add("&b[Tip] &fReset the ender dragon in the &6Shogun Temple &fin the village or ask an admin to reset the end world!");
-        pm.add("&b[Tip] &fVisit Spawn Shops for blocks & gear! Trade items for Emeralds!");
-        pm.add("&b[Tip] &fKeep Inventory is ON by default! If you prefer a challenge, type &a/keepinv off&f to drop your items on death.");
-        pm.add("&b[Tip] &fNot sure where a claim ends? Use &a/claim map&f to visualize nearby chunk borders in chat!");
-        pm.add("&b[Tip] &fBuilding with friends? Use &a/trust <player>&f to give them permission to safely build in your claims!");
-        pm.add("&b[Tip] &fWe have proximity voice chat! If you're 18+, type &a/verify confirm&f to enable it and start talking!");
-        pm.add("&b[Tip] &fWant to see who has the highest skills? Type &a/skills top&f to view the server leaderboards!");
-        pm.add("&b[Tip] &fCheck out our live web-map! You can see your &a/home&f and even name your claims using &a/claim name <name>&f!");
-        root.add("periodic_messages", pm);
-
-        root.add("chatfilter", defaultChatFilterJson());
-
-        JsonObject msgs = new JsonObject();
-        // Claiming
-        msgs.addProperty("claim.success", "Chunk claimed.");
-        msgs.addProperty("claim.already_claimed", "This claim is already protected.");
-        msgs.addProperty("claim.limit_reached", "You reached the claim limit ({count}).");
-        msgs.addProperty("claim.spawn_protected", "You can’t claim inside spawn protection.");
-        msgs.addProperty("unclaim.success", "Chunk unclaimed.");
-        msgs.addProperty("unclaim.fail_ownership", "You don’t control this claim.");
-        msgs.addProperty("claim.info.owned", "You own {count} chunk(s) total.");
-        msgs.addProperty("claim.info.protected_by_you", "This chunk is protected by you.");
-        msgs.addProperty("claim.info.protected", "This chunk is protected.");
-        msgs.addProperty("claim.info.unclaimed", "Current chunk is unclaimed.");
-
-        // Teleportation
-        msgs.addProperty("tpr.sent", "Teleport request sent to {player}");
-        msgs.addProperty("tpr.received", "{player} requested to teleport to you. Use /tpa accept or /tpa deny.");
-        msgs.addProperty("tpr.self", "Cannot request teleport to self.");
-        msgs.addProperty("tpr.cooldown", "A request was sent recently. Please wait.");
-        msgs.addProperty("tpr.already_pending", "A request is already pending.");
-        msgs.addProperty("tpr.queue_full", "That player has too many pending requests.");
-        msgs.addProperty("tpa.no_pending", "No pending teleport requests.");
-        msgs.addProperty("tpa.requester_offline", "Requester is no longer online.");
-        msgs.addProperty("tpa.requester_busy", "Requester cannot be teleported right now.");
-        msgs.addProperty("tpa.no_location", "No valid teleport location.");
-        msgs.addProperty("tpa.teleporting_requester", "Teleporting {player} in 5 seconds...");
-        msgs.addProperty("tpa.teleporting_to", "Teleported to {player}");
-        msgs.addProperty("tpa.denied", "Teleport request denied by {player}");
-        msgs.addProperty("tpa.denied_confirm", "Denied the oldest pending request.");
-
-        root.add("messages", msgs);
-        root.add("skills", defaultSkillsJson());
-        return root;
-    }
-
-    static com.google.gson.JsonArray defaultTiersJson() {
-        com.google.gson.JsonArray arr = new com.google.gson.JsonArray();
-        JsonObject tier1 = new JsonObject();
-        tier1.addProperty("tier", 1);
-        tier1.addProperty("name", "VIP");
-        tier1.addProperty("min_playtime_hours", 100);
-        tier1.addProperty("bonus_claims", 20);
-        arr.add(tier1);
-        return arr;
-    }
-
-    static JsonObject defaultSkillsJson() {
-        JsonObject sk = new JsonObject();
-        sk.addProperty("xp_exponent", 1.5);
-
-        JsonObject cds = new JsonObject();
-        cds.addProperty("mining", 240);
-        cds.addProperty("excavation", 300);
-        cds.addProperty("woodcutting", 300);
-        cds.addProperty("farming", 180);
-        cds.addProperty("fishing", 300);
-        cds.addProperty("agility", 10);
-        cds.addProperty("melee", 300);
-        cds.addProperty("archery", 180);
-        cds.addProperty("archery_zoom", 30);
-        cds.addProperty("defense", 600);
-        cds.addProperty("enchanting", 1200);
-        cds.addProperty("alchemy", 600);
-        cds.addProperty("trading", 1200);
-        sk.add("cooldowns", cds);
-
-        JsonObject unlocks = new JsonObject();
-        unlocks.addProperty("mining", 10);
-        unlocks.addProperty("excavation", 10);
-        unlocks.addProperty("woodcutting", 10);
-        unlocks.addProperty("farming", 10);
-        unlocks.addProperty("fishing", 10);
-        unlocks.addProperty("agility", 3);
-        unlocks.addProperty("melee", 10);
-        unlocks.addProperty("archery", 10);
-        unlocks.addProperty("archery_zoom", 5);
-        unlocks.addProperty("defense", 5);
-        unlocks.addProperty("enchanting", 10);
-        unlocks.addProperty("alchemy", 10);
-        unlocks.addProperty("trading", 1);
-        sk.add("ability_unlock_levels", unlocks);
-
-        JsonObject caps = new JsonObject();
-        caps.addProperty("industrial_speed", 0.5);
-        caps.addProperty("nature_health", 10);
-        caps.addProperty("combat_damage", 1.0);
-        caps.addProperty("knowledge_xp", 1.0);
-        caps.addProperty("double_drop", 0.5);
-        caps.addProperty("defense_armor", 10.0);
-        caps.addProperty("safe_landing", 1.0);
-        sk.add("caps", caps);
-
-        return sk;
-    }
-
-    private static JsonObject defaultChatFilterJson() {
-        JsonObject cf = new JsonObject();
-
-        // Starter blocklist — common profanity for kid-safety
-        com.google.gson.JsonArray contents = new com.google.gson.JsonArray();
-        for (String w : new String[] {
-                "fuck", "shit", "bitch", "ass", "damn", "crap",
-                "dick", "cock", "pussy", "bastard", "slut", "whore",
-                "cunt", "piss", "nigger", "nigga", "faggot", "retard",
-                "kill yourself", "kys"
-        }) {
-            contents.add(w);
-        }
-        cf.add("contents", contents);
-
-        // Default whitelist — words that contain blocked substrings
-        com.google.gson.JsonArray whitelist = new com.google.gson.JsonArray();
-        for (String w : new String[] {
-                "assassin", "bass", "class", "grass", "glass", "mass",
-                "pass", "compass", "bypass", "classic", "assign",
-                "assist", "assumption", "password", "butterscotch",
-                "cockatoo", "cocktail", "peacock", "scrapbook",
-                "shitake", "therapist"
-        }) {
-            whitelist.add(w);
-        }
-        cf.add("whitelist", whitelist);
-
-        return cf;
-    }
-
+    // Serializes current SmpConfig static fields back to disk.
+    // chatfilter is always written as empty arrays; it is an import queue, not persistent storage.
     public static void save() {
-        JsonObject root = defaultJson();
+        ConfigData data = new ConfigData();
 
-        // Update root with current values
-        root.addProperty("max_claims", SmpConfig.MAX_CLAIMS);
-        root.addProperty("tp_warmup", SmpConfig.TP_WARMUP);
-        root.addProperty("welcome_message", SmpConfig.WELCOME_MESSAGE);
-        root.addProperty("message_interval", SmpConfig.MESSAGE_INTERVAL);
-        root.addProperty("allow_lava_wilderness", SmpConfig.ALLOW_LAVA_WILDERNESS);
-        root.addProperty("claims_enabled", SmpConfig.CLAIMS_ENABLED);
-        root.addProperty("skills_enabled", SmpConfig.SKILLS_ENABLED);
-        root.addProperty("chatfilter_enabled", SmpConfig.CHATFILTER_ENABLED);
+        data.maxClaims = SmpConfig.MAX_CLAIMS;
+        data.tpWarmup = SmpConfig.TP_WARMUP;
+        data.welcomeMessage = SmpConfig.WELCOME_MESSAGE;
+        data.messageInterval = SmpConfig.MESSAGE_INTERVAL;
+        data.allowLavaWilderness = SmpConfig.ALLOW_LAVA_WILDERNESS;
+        data.claimsEnabled = SmpConfig.CLAIMS_ENABLED;
+        data.skillsEnabled = SmpConfig.SKILLS_ENABLED;
+        data.chatfilterEnabled = SmpConfig.CHATFILTER_ENABLED;
+        data.voicechatEnable = SmpConfig.VOICECHAT_ENABLE;
+        data.bluemapEnable = SmpConfig.BLUEMAP_ENABLE;
+        data.bluemapShowHomes = SmpConfig.BLUEMAP_SHOW_HOMES;
+        data.bluemapShowClaims = SmpConfig.BLUEMAP_SHOW_CLAIMS;
+        data.bluemapShowWorldborder = SmpConfig.BLUEMAP_SHOW_WORLDBORDER;
+        data.bluemapWorldborderColor = SmpConfig.BLUEMAP_WORLDBORDER_COLOR;
+        data.bluemapClaimColor = SmpConfig.BLUEMAP_CLAIM_COLOR;
+        data.bluemapOpClaimColor = SmpConfig.BLUEMAP_OP_CLAIM_COLOR;
+        data.bluemapVipClaimColor = SmpConfig.BLUEMAP_VIP_CLAIM_COLOR;
+        data.muteLevelsMinutes = new java.util.ArrayList<>(SmpConfig.MUTE_LEVELS_MINUTES);
+        data.tiers = new java.util.ArrayList<>(SmpConfig.TIERS);
+        data.rules = new java.util.ArrayList<>(SmpConfig.RULES);
+        data.periodicMessages = new java.util.ArrayList<>(SmpConfig.PERIODIC_MESSAGES);
+        data.messages = new java.util.HashMap<>(SmpConfig.MESSAGES);
 
-        JsonObject vtSave = new JsonObject();
-        vtSave.addProperty("enabled", SmpConfig.VOTIFIER_ENABLED);
-        vtSave.addProperty("port", SmpConfig.VOTIFIER_PORT);
-        vtSave.addProperty("token", SmpConfig.VOTIFIER_TOKEN);
-        vtSave.addProperty("broadcast", SmpConfig.VOTE_BROADCAST);
-        com.google.gson.JsonArray rewardsSave = new com.google.gson.JsonArray();
-        for (String r : SmpConfig.VOTE_REWARDS) rewardsSave.add(r);
-        vtSave.add("rewards", rewardsSave);
-        root.add("votifier", vtSave);
+        data.votifier.enabled = SmpConfig.VOTIFIER_ENABLED;
+        data.votifier.port = SmpConfig.VOTIFIER_PORT;
+        data.votifier.token = SmpConfig.VOTIFIER_TOKEN;
+        data.votifier.broadcast = SmpConfig.VOTE_BROADCAST;
+        data.votifier.rewards = new java.util.ArrayList<>(SmpConfig.VOTE_REWARDS);
 
-        JsonObject dbSave = new JsonObject();
-        dbSave.addProperty("enabled", SmpConfig.DASHBOARD_ENABLED);
-        dbSave.addProperty("port", SmpConfig.DASHBOARD_PORT);
-        dbSave.addProperty("admin_enabled", SmpConfig.ADMIN_ENABLED);
-        dbSave.addProperty("admin_password_hash", SmpConfig.ADMIN_PASSWORD_HASH);
-        dbSave.addProperty("server_name", SmpConfig.SERVER_NAME);
-        root.add("dashboard", dbSave);
+        data.dashboard.enabled = SmpConfig.DASHBOARD_ENABLED;
+        data.dashboard.port = SmpConfig.DASHBOARD_PORT;
+        data.dashboard.adminEnabled = SmpConfig.ADMIN_ENABLED;
+        data.dashboard.adminPasswordHash = SmpConfig.ADMIN_PASSWORD_HASH;
+        data.dashboard.serverName = SmpConfig.SERVER_NAME;
 
-        JsonObject dcSave = new JsonObject();
-        dcSave.addProperty("webhook_url", SmpConfig.DISCORD_WEBHOOK_URL);
-        dcSave.addProperty("join_leave", SmpConfig.DISCORD_JOIN_LEAVE);
-        dcSave.addProperty("chat", SmpConfig.DISCORD_CHAT);
-        root.add("discord", dcSave);
+        data.discord.webhookUrl = SmpConfig.DISCORD_WEBHOOK_URL;
+        data.discord.joinLeave = SmpConfig.DISCORD_JOIN_LEAVE;
+        data.discord.chat = SmpConfig.DISCORD_CHAT;
 
-        root.addProperty("voicechat_enable", SmpConfig.VOICECHAT_ENABLE);
-        root.addProperty("bluemap_enable", SmpConfig.BLUEMAP_ENABLE);
-        root.addProperty("bluemap_show_homes", SmpConfig.BLUEMAP_SHOW_HOMES);
-        root.addProperty("bluemap_show_claims", SmpConfig.BLUEMAP_SHOW_CLAIMS);
-        root.addProperty("bluemap_claim_color", SmpConfig.BLUEMAP_CLAIM_COLOR);
-        root.addProperty("bluemap_op_claim_color", SmpConfig.BLUEMAP_OP_CLAIM_COLOR);
-        root.addProperty("bluemap_vip_claim_color", SmpConfig.BLUEMAP_VIP_CLAIM_COLOR);
-        root.addProperty("bluemap_show_worldborder", SmpConfig.BLUEMAP_SHOW_WORLDBORDER);
-        root.addProperty("bluemap_worldborder_color", SmpConfig.BLUEMAP_WORLDBORDER_COLOR);
+        data.skills.xpExponent = SmpConfig.SKILL_XP_EXPONENT;
+        data.skills.cooldowns = new java.util.HashMap<>(SmpConfig.SKILL_COOLDOWNS);
+        data.skills.abilityUnlockLevels = new java.util.HashMap<>(SmpConfig.SKILL_UNLOCK_LEVELS);
+        data.skills.caps.industrialSpeed = SmpConfig.CAP_INDUSTRIAL_SPEED;
+        data.skills.caps.natureHealth = SmpConfig.CAP_NATURE_HEALTH;
+        data.skills.caps.combatDamage = SmpConfig.CAP_COMBAT_DAMAGE;
+        data.skills.caps.knowledgeXp = SmpConfig.CAP_KNOWLEDGE_XP;
+        data.skills.caps.doubleDrop = SmpConfig.CAP_DOUBLE_DROP;
+        data.skills.caps.defenseArmor = SmpConfig.CAP_DEFENSE_ARMOR;
+        data.skills.caps.safeLanding = SmpConfig.CAP_SAFE_LANDING;
 
-        com.google.gson.JsonArray muteLevels = new com.google.gson.JsonArray();
-        for (int m : SmpConfig.MUTE_LEVELS_MINUTES)
-            muteLevels.add(m);
-        root.add("mute_levels_minutes", muteLevels);
-
-        com.google.gson.JsonArray tiers = new com.google.gson.JsonArray();
-        for (SmpConfig.TierDef def : SmpConfig.TIERS) {
-            com.google.gson.JsonObject td = new com.google.gson.JsonObject();
-            td.addProperty("tier", def.tier());
-            td.addProperty("name", def.name());
-            td.addProperty("min_playtime_hours", def.minPlaytimeHours());
-            td.addProperty("bonus_claims", def.bonusClaims());
-            tiers.add(td);
-        }
-        root.add("tiers", tiers.size() > 0 ? tiers : defaultTiersJson());
-
-        // player_tiers is now stored in NBT (PlayerTierData) — not written to JSON.
-
-        com.google.gson.JsonArray rules = new com.google.gson.JsonArray();
-        for (String r : SmpConfig.RULES)
-            rules.add(r);
-        root.add("rules", rules);
-
-        com.google.gson.JsonArray pm = new com.google.gson.JsonArray();
-        for (String p : SmpConfig.PERIODIC_MESSAGES)
-            pm.add(p);
-        root.add("periodic_messages", pm);
-
-        // Messages
-        JsonObject msgs = new JsonObject();
-        for (var entry : SmpConfig.MESSAGES.entrySet()) {
-            msgs.addProperty(entry.getKey(), entry.getValue());
-        }
-        root.add("messages", msgs);
-
-        // Skills
-        JsonObject skills = new JsonObject();
-        skills.addProperty("xp_exponent", SmpConfig.SKILL_XP_EXPONENT);
-
-        JsonObject cds = new JsonObject();
-        for (var entry : SmpConfig.SKILL_COOLDOWNS.entrySet()) {
-            cds.addProperty(entry.getKey(), entry.getValue());
-        }
-        skills.add("cooldowns", cds);
-
-        JsonObject unlocks = new JsonObject();
-        for (var entry : SmpConfig.SKILL_UNLOCK_LEVELS.entrySet()) {
-            unlocks.addProperty(entry.getKey(), entry.getValue());
-        }
-        skills.add("ability_unlock_levels", unlocks);
-
-        JsonObject caps = new JsonObject();
-        caps.addProperty("industrial_speed", SmpConfig.CAP_INDUSTRIAL_SPEED);
-        caps.addProperty("nature_health", SmpConfig.CAP_NATURE_HEALTH);
-        caps.addProperty("combat_damage", SmpConfig.CAP_COMBAT_DAMAGE);
-        caps.addProperty("knowledge_xp", SmpConfig.CAP_KNOWLEDGE_XP);
-        caps.addProperty("double_drop", SmpConfig.CAP_DOUBLE_DROP);
-        caps.addProperty("defense_armor", SmpConfig.CAP_DEFENSE_ARMOR);
-        caps.addProperty("safe_landing", SmpConfig.CAP_SAFE_LANDING);
-        skills.add("caps", caps);
-
-        root.add("skills", skills);
+        // chatfilter intentionally left as empty arrays; it is an import queue.
 
         try {
-            Path p = path();
-            if (Files.exists(p)) {
-                String s = Files.readString(p, StandardCharsets.UTF_8);
-                JsonObject existing = GSON.fromJson(s, JsonObject.class);
-                if (existing != null && existing.has("chatfilter")) {
-                    root.add("chatfilter", existing.get("chatfilter"));
-                } else {
-                    root.add("chatfilter", defaultChatFilterJson());
-                }
-            } else {
-                root.add("chatfilter", defaultChatFilterJson());
-            }
-            Files.writeString(p, GSON.toJson(root), StandardCharsets.UTF_8);
+            Files.writeString(path(), GSON.toJson(data), StandardCharsets.UTF_8);
         } catch (IOException e) {
-            e.printStackTrace();
+            mc.smpessentials.SmpUtilsMod.LOGGER.error("[Config] Failed to save config: {}", e.getMessage());
         }
     }
 
@@ -589,7 +145,7 @@ public final class ConfigIO {
             Files.deleteIfExists(path());
             SmpConfig.load();
         } catch (IOException e) {
-            e.printStackTrace();
+            mc.smpessentials.SmpUtilsMod.LOGGER.error("[Config] Failed to reset config: {}", e.getMessage());
         }
     }
 }
