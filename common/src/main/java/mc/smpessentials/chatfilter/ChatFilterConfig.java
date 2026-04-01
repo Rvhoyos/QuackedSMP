@@ -1,8 +1,5 @@
 package mc.smpessentials.chatfilter;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
 import mc.smpessentials.config.ConfigIO;
 import net.minecraft.server.MinecraftServer;
 
@@ -18,7 +15,7 @@ public final class ChatFilterConfig {
     private ChatFilterConfig() {
     }
 
-    /** Hardcoded blocklist — always loaded, works out of the box. */
+    /** Hardcoded blocklist; always loaded regardless of configuration. */
     private static final List<String> BUILTIN_WORDS = List.of(
             "fuck", "shit", "ass", "bitch", "damn",
             "dick", "cock", "pussy", "cunt", "whore",
@@ -28,7 +25,7 @@ public final class ChatFilterConfig {
             "jizz", "blowjob", "handjob", "dildo", "anal");
 
     /**
-     * Hardcoded whitelist — prevents common false positives (Scunthorpe problem).
+     * Hardcoded whitelist; prevents common false positives (Scunthorpe problem).
      */
     private static final List<String> BUILTIN_WHITELIST = List.of(
             // -- contains "ass" --
@@ -96,52 +93,20 @@ public final class ChatFilterConfig {
             data.addWhitelist(word);
         }
 
-        // 2. Then layer JSON config on top
-        JsonObject root = ConfigIO.readOrCreate();
-        if (root.has("chatfilter")) {
-            if (!root.get("chatfilter").isJsonObject()) {
-                warnings.add("\"chatfilter\" should be a JSON object, got "
-                        + root.get("chatfilter").getClass().getSimpleName());
-            } else {
-                JsonObject cf = root.getAsJsonObject("chatfilter");
-
-                // Load blocked words
-                if (cf.has("contents")) {
-                    if (!cf.get("contents").isJsonArray()) {
-                        warnings.add("\"chatfilter.contents\" should be a JSON array, got "
-                                + cf.get("contents").getClass().getSimpleName());
-                    } else {
-                        JsonArray arr = cf.getAsJsonArray("contents");
-                        for (int i = 0; i < arr.size(); i++) {
-                            JsonElement el = arr.get(i);
-                            if (el.isJsonPrimitive() && el.getAsJsonPrimitive().isString()) {
-                                data.add(el.getAsString());
-                            } else {
-                                warnings.add("chatfilter.contents[" + i + "] is not a string (skipped): " + el);
-                            }
-                        }
-                    }
-                }
-
-                // Load whitelist
-                if (cf.has("whitelist")) {
-                    if (!cf.get("whitelist").isJsonArray()) {
-                        warnings.add("\"chatfilter.whitelist\" should be a JSON array, got "
-                                + cf.get("whitelist").getClass().getSimpleName());
-                    } else {
-                        JsonArray arr = cf.getAsJsonArray("whitelist");
-                        for (int i = 0; i < arr.size(); i++) {
-                            JsonElement el = arr.get(i);
-                            if (el.isJsonPrimitive() && el.getAsJsonPrimitive().isString()) {
-                                data.addWhitelist(el.getAsString());
-                            } else {
-                                warnings.add("chatfilter.whitelist[" + i + "] is not a string (skipped): " + el);
-                            }
-                        }
-                    }
-                }
+        // 2. Then layer JSON config on top, then clear the queue so words aren't re-imported next reload
+        var queue = ConfigIO.readChatFilterQueue();
+        for (String word : queue.contents) {
+            if (word != null && !word.isEmpty()) {
+                data.add(word);
             }
         }
+        for (String word : queue.whitelist) {
+            if (word != null && !word.isEmpty()) {
+                data.addWhitelist(word);
+            }
+        }
+        // Clear the import queue in the file now that words are in NBT.
+        ConfigIO.save();
 
         int after = data.snapshot().size();
         return new Result(Math.max(after - before, 0), after, warnings);
