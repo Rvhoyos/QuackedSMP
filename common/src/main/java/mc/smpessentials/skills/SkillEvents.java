@@ -420,6 +420,7 @@ public final class SkillEvents {
      * Public so that mixin classes (different package) can call it.
      */
     public static void awardXp(ServerPlayer player, SkillData data, SkillType skill, double amount) {
+        if (!SmpConfig.SKILLS_ENABLED) return;
         // Knowledge parent buff: XP multiplier for non-Knowledge skills
         if (skill.category() != SkillType.Category.KNOWLEDGE) {
             int knowledgeLevel = SkillManager.parentLevel(
