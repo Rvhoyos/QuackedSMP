@@ -431,47 +431,37 @@ public class BlueMapMarkerManager {
         MinecraftServer server = BlueMapIntegration.getServer();
         if (server == null) return;
 
-        ServerLevel overworld = server.getLevel(net.minecraft.world.level.Level.OVERWORLD);
-        if (overworld == null) return;
+        for (ServerLevel level : server.getAllLevels()) {
+            WorldBorder border = level.getWorldBorder();
+            String dimId = level.dimension().identifier().toString();
 
-        WorldBorder border = overworld.getWorldBorder();
+            for (BlueMapMap map : api.getMaps()) {
+                if (!map.getWorld().getId().endsWith("#" + dimId)) continue;
 
-        // Skip if the border is at the default unlimited size — no border has been set
-        if (border.getSize() >= 5.9E7) {
-            for (BlueMapMap map : api.getMaps())
-                map.getMarkerSets().remove("quacksmp_worldborder");
-            return;
-        }
+                if (border.getSize() >= 5.9E7) {
+                    map.getMarkerSets().remove("quacksmp_worldborder");
+                    continue;
+                }
 
-        double minX = border.getMinX();
-        double maxX = border.getMaxX();
-        double minZ = border.getMinZ();
-        double maxZ = border.getMaxZ();
+                Shape borderShape = new Shape(
+                        new Vector2d(border.getMinX(), border.getMinZ()),
+                        new Vector2d(border.getMaxX(), border.getMinZ()),
+                        new Vector2d(border.getMaxX(), border.getMaxZ()),
+                        new Vector2d(border.getMinX(), border.getMaxZ()));
 
-        Shape borderShape = new Shape(
-                new Vector2d(minX, minZ),
-                new Vector2d(maxX, minZ),
-                new Vector2d(maxX, maxZ),
-                new Vector2d(minX, maxZ));
+                MarkerSet markerSet = map.getMarkerSets().computeIfAbsent("quacksmp_worldborder",
+                        id -> MarkerSet.builder().label("World Border").defaultHidden(false).build());
+                markerSet.getMarkers().clear();
 
-        String overworldId = net.minecraft.world.level.Level.OVERWORLD.identifier().toString();
-        for (BlueMapMap map : api.getMaps()) {
-            if (!map.getWorld().getId().endsWith("#" + overworldId)) continue;
-
-            MarkerSet markerSet = map.getMarkerSets().computeIfAbsent("quacksmp_worldborder",
-                    id -> MarkerSet.builder().label("World Border").defaultHidden(false).build());
-            markerSet.getMarkers().clear();
-
-            ShapeMarker marker = ShapeMarker.builder()
-                    .label("World Border")
-                    .shape(borderShape, 70)
-                    .fillColor(new Color(0, 0, 0, 0.0f))
-                    .lineColor(parseColor(SmpConfig.BLUEMAP_WORLDBORDER_COLOR))
-                    .lineWidth(3)
-                    .depthTestEnabled(false)
-                    .build();
-
-            markerSet.put("world_border", marker);
+                markerSet.put("world_border", ShapeMarker.builder()
+                        .label("World Border")
+                        .shape(borderShape, 70)
+                        .fillColor(new Color(0, 0, 0, 0.0f))
+                        .lineColor(parseColor(SmpConfig.BLUEMAP_WORLDBORDER_COLOR))
+                        .lineWidth(3)
+                        .depthTestEnabled(false)
+                        .build());
+            }
         }
     }
 

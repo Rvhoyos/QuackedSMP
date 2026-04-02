@@ -409,6 +409,7 @@ public final class DimManager {
             DimSavedData saved = DimSavedData.get(server);
             String canonicalId = dimKey.identifier().toString();
             saved.add(canonicalId, generatorType, generatorConfig);
+            mc.smpessentials.bluemap.BlueMapIntegration.onDimCreated(server, dimKey);
             // Assign glowstone as the default portal frame block if it is not already claimed
             // by another dim. Admins can override at any time with /dim setportal.
             String glowstoneId = "minecraft:glowstone";

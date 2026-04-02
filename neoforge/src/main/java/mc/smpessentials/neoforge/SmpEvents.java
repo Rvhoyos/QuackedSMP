@@ -39,10 +39,10 @@ public class SmpEvents {
     @SubscribeEvent
     public static void onServerStarted(ServerStartedEvent event) {
         ChatFilter.onServerStart(event.getServer());
-        mc.smpessentials.bluemap.BlueMapIntegration.onServerStart(event.getServer());
         mc.smpessentials.voicechat.VoicechatIntegration.onServerStart(event.getServer());
         mc.smpessentials.keepinv.KeepInvSavedData.enforceGamerule(event.getServer());
         mc.smpessentials.dims.DimManager.restoreAll(event.getServer());
+        mc.smpessentials.bluemap.BlueMapIntegration.onServerStart(event.getServer());
         mc.smpessentials.dashboard.DashboardManager.onServerStart(event.getServer());
         mc.smpessentials.votifier.VoteHandler.init(event.getServer());
         mc.smpessentials.votifier.VotifierListener.start();
