@@ -167,7 +167,7 @@ public class GeneralCommands {
             return 0;
         } catch (Exception e) {
             ctx.getSource().sendFailure(Component.literal("Failed to reload config: " + e.getMessage()));
-            e.printStackTrace();
+            mc.smpessentials.SmpUtilsMod.LOGGER.error("Failed to reload config", e);
             return 0;
         }
     }
@@ -181,7 +181,7 @@ public class GeneralCommands {
             return 1;
         } catch (Exception e) {
             ctx.getSource().sendFailure(Component.literal("Failed to reset config: " + e.getMessage()));
-            e.printStackTrace();
+            mc.smpessentials.SmpUtilsMod.LOGGER.error("Failed to reset config", e);
             return 0;
         }
     }

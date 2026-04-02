@@ -53,7 +53,7 @@ public class EndResetLogic {
 
             return 1;
         } catch (Exception e) {
-            e.printStackTrace();
+            mc.smpessentials.SmpUtilsMod.LOGGER.error("Failed to reset End dragon fight", e);
             return -1;
         }
     }
@@ -85,7 +85,7 @@ public class EndResetLogic {
 
             return 2; // Returns "Queued for restart"
         } catch (Exception e) {
-            e.printStackTrace();
+            mc.smpessentials.SmpUtilsMod.LOGGER.error("Failed to reset End world", e);
             return -1;
         }
     }
@@ -97,18 +97,18 @@ public class EndResetLogic {
             Path marker = dim1Dir.resolve("RESET_PENDING");
             
             if (Files.exists(marker)) {
-                System.out.println("[QuackedSMP] Performing scheduled End dimension reset...");
-                
+                mc.smpessentials.SmpUtilsMod.LOGGER.info("[QuackedSMP] Performing scheduled End dimension reset...");
+
                 // At this point, the server is shutting down, so we can attempt to delete files
                 deleteDirectoryContents(dim1Dir.resolve("region"));
                 deleteDirectoryContents(dim1Dir.resolve("data"));
                 deleteDirectoryContents(dim1Dir.resolve("poi"));
-                
+
                 Files.deleteIfExists(marker);
-                System.out.println("[QuackedSMP] End dimension reset complete.");
+                mc.smpessentials.SmpUtilsMod.LOGGER.info("[QuackedSMP] End dimension reset complete.");
             }
         } catch (Exception e) {
-            System.err.println("[QuackedSMP] Failed to perform End reset on shutdown: " + e.getMessage());
+            mc.smpessentials.SmpUtilsMod.LOGGER.error("[QuackedSMP] Failed to perform End reset on shutdown", e);
         }
     }
 
@@ -181,7 +181,7 @@ public class EndResetLogic {
                             }
                         } catch (IOException e) {
                             allDeleted.set(false);
-                            System.err.println("Could not delete file: " + p.toAbsolutePath());
+                            mc.smpessentials.SmpUtilsMod.LOGGER.error("Could not delete file: {}", p.toAbsolutePath());
                         }
                     });
         }
@@ -197,7 +197,7 @@ public class EndResetLogic {
                     .map(Path::toFile)
                     .forEach(f -> {
                         if (!f.delete()) {
-                            System.err.println("Could not delete file/dir: " + f.getAbsolutePath());
+                            mc.smpessentials.SmpUtilsMod.LOGGER.error("Could not delete file/dir: {}", f.getAbsolutePath());
                         }
                     });
             return !Files.exists(path);
@@ -227,7 +227,7 @@ public class EndResetLogic {
 
             server.getWorldData().setEndDragonFightData(emptyData);
         } catch (Exception e) {
-            e.printStackTrace();
+            mc.smpessentials.SmpUtilsMod.LOGGER.error("Failed to reset End dragon fight world data", e);
         }
     }
 }

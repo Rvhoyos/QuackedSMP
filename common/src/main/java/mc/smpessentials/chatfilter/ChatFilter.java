@@ -46,14 +46,10 @@ public final class ChatFilter {
     public static void onServerStart(MinecraftServer server) {
         try {
             var res = ChatFilterConfig.mergeFromConfig(server);
-            if (!res.warnings().isEmpty()) {
-                System.err.println("[QuackedSMP] Chat Filter Warnings:");
-                for (String w : res.warnings())
-                    System.err.println(" - " + w);
-            }
+            for (String w : res.warnings())
+                mc.smpessentials.SmpUtilsMod.LOGGER.warn("[QuackedSMP] Chat filter warning: {}", w);
         } catch (Exception e) {
-            System.err.println("[QuackedSMP] Failed to load chat filter config: " + e.getMessage());
-            e.printStackTrace();
+            mc.smpessentials.SmpUtilsMod.LOGGER.error("[QuackedSMP] Failed to load chat filter config", e);
         }
     }
 

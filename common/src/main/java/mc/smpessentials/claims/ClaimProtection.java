@@ -213,38 +213,26 @@ public final class ClaimProtection {
         return false;
     }
 
+    // Returns true if a water-bearing neighbor of pos shares the same claim owner as pos.
+    // Called only when pos is already claimed; equal owners (or both wilderness) means the flow
+    // stays within one player's land and is safe to allow.
     private static boolean isSourceSameClaim(ServerLevel level, BlockPos pos) {
         var data = ClaimedSavedData.get(level);
         ChunkPos currentChunk = new ChunkPos(pos);
         boolean isCurrentClaimed = data.isClaimed(level, currentChunk);
 
-        // Check 6 neighbors (Up/Down too for waterfalls)
+        // Check all 6 neighbors (including Up/Down for waterfalls).
         for (Direction dir : Direction.values()) {
             BlockPos neighbor = pos.relative(dir);
-            // If neighbor has water, it might be the source
             if (level.getFluidState(neighbor).getType() == net.minecraft.world.level.material.Fluids.WATER) {
                 ChunkPos neighborChunk = new ChunkPos(neighbor);
-                // If neighbor is in a different claim (or wilderness vs claim), then risk!
-                // Allowed: Same Claim ID (simplified here as "Is Claimed" + "Can Modify"
-                // logic?)
-                // Actually: We don't track Claim IDs yet?
-                // Wait, audit said "No granular permissions".
-                // BUT `ClaimedSavedData` knows WHO owns it.
-                // If `getOwner` matches, it's safe.
 
                 java.util.UUID currentOwner = data.getClaim(level, currentChunk)
                         .map(mc.smpessentials.claims.model.ClaimData::owner).orElse(null);
                 java.util.UUID neighborOwner = data.getClaim(level, neighborChunk)
                         .map(mc.smpessentials.claims.model.ClaimData::owner).orElse(null);
 
-                // Smart Check:
-                // 1. If owners match (both null, or both same UUID) -> Safe.
-                // 2. If owners differ -> Unsafe flow.
                 if (java.util.Objects.equals(currentOwner, neighborOwner)) {
-                    // Found a valid source from same owner (or both wild).
-                    // Since we know 'pos' IS claimed (checked before calling), currentOwner is NOT
-                    // null.
-                    // So neighbor must be owned by same person.
                     return true;
                 }
             }
