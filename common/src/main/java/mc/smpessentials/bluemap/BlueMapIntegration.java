@@ -43,6 +43,23 @@ public final class BlueMapIntegration {
         }
     }
 
+    // Called by DimManager when a custom dim is destroyed at runtime.
+    // Deletes the BlueMap map config file and triggers a reload so the map disappears.
+    public static void onDimDeleted(MinecraftServer s, ResourceKey<Level> dimKey) {
+        if (!isLoaded) return;
+        String dimId = dimKey.identifier().toString();
+        String mapId = dimId.replace(":", "_");
+        Path configFile = Path.of("config/bluemap/maps", mapId + ".conf");
+        try {
+            if (Files.deleteIfExists(configFile)) {
+                SmpUtilsMod.LOGGER.info("[BlueMap] Deleted map config for removed dim: {}", dimId);
+                scheduleBlueMapReload(s);
+            }
+        } catch (IOException e) {
+            SmpUtilsMod.LOGGER.warn("[BlueMap] Failed to delete map config for {}: {}", dimId, e.getMessage());
+        }
+    }
+
     public static void onServerTick(MinecraftServer s) {
         if (!isLoaded || markerManager == null)
             return;
