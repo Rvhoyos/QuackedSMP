@@ -198,6 +198,8 @@ public final class DimManager {
             }
         }
 
+        mc.smpessentials.bluemap.BlueMapIntegration.onDimDeleted(server, dimKey);
+
         return null;
     }
 
