@@ -229,12 +229,20 @@ Weights control coverage, only ratios matter. Single biome = entire dim uses tha
 ```
 Layers listed bottom to top.
 
+**Ether parameters** (`ether` only):
+```
+/dim create <id> ether [<threshold> [<minRadius> <maxRadius> [<spacing>]]] [biomes <list>]
+```
+- `threshold` (-1.0 to 0.0): Noise density cutoff. Lower (e.g., -0.85) creates distinct separated islands; higher (e.g., -0.1) creates dense, massive overlapping continents. (Default: -0.85)
+- `minRadius` & `maxRadius` (5.0 to 500.0): Determines the size bounds of the islands in blocks. (Default: 40 & 90)
+- `spacing` (1 to 32): Controls the gaps between islands by scaling noise frequency. Higher values stretch the noise and push islands further apart. (Default: 8)
+
 ```
 # Classic superflat
 /dim create quacksmp:flatworld overworld flat minecraft:bedrock:1 minecraft:dirt:2 minecraft:grass_block:1
 
-# Floating jungle islands
-/dim create quacksmp:sky_jungle ether biomes minecraft:jungle
+# Floating jungle islands with custom island sizes and density
+/dim create quacksmp:sky_jungle ether -0.7 10 80 20 biomes minecraft:jungle
 ```
 
 **Portal system:**
