@@ -28,10 +28,13 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.NetherPortalBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.dimension.LevelStem;
+import net.minecraft.world.level.levelgen.DensityFunction;
+import net.minecraft.world.level.levelgen.DensityFunctions;
 import net.minecraft.world.level.levelgen.FlatLevelSource;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.levelgen.NoiseBasedChunkGenerator;
 import net.minecraft.world.level.levelgen.NoiseGeneratorSettings;
+import net.minecraft.world.level.levelgen.NoiseRouter;
 import net.minecraft.world.level.levelgen.flat.FlatLayerInfo;
 import net.minecraft.world.level.levelgen.flat.FlatLevelGeneratorSettings;
 import net.minecraft.world.level.storage.DerivedLevelData;
@@ -61,6 +64,8 @@ import java.util.concurrent.Executor;
  * Handles runtime creation, deletion, and restoration of custom dimensions.
  * Dimensions are injected into MinecraftServer.levels via a Mixin accessor so they are live
  * immediately without a restart. Supports generator types: overworld, nether, end, ether.
+ * Ether uses a custom island density function (EtherIslandDensityFunction) with configurable
+ * threshold, radius, and spacing params. Stored in generatorConfig alongside biomes.
  * Each custom dim gets a portal frame block (default glowstone); right-click with water bucket
  * to activate. The generatorConfig string is persisted in DimSavedData for restart recovery.
  */
@@ -469,17 +474,49 @@ public final class DimManager {
                         parseBiomeSource(server, null), owNoise));
             }
 
-            // Ether: floating-islands terrain + overworld DimensionType + configurable biomes
+            // Ether: custom island density function + overworld DimensionType + configurable biomes
             case "ether" -> {
                 LevelStem ow = stemReg.getValue(LevelStem.OVERWORLD);
                 if (ow == null) yield null;
-                Holder<NoiseGeneratorSettings> floatingNoise = server.registryAccess()
-                        .lookupOrThrow(Registries.NOISE_SETTINGS)
-                        .getOrThrow(NoiseGeneratorSettings.FLOATING_ISLANDS);
                 String config = generatorConfig.orElse("");
-                String biomeListStr = config.startsWith("biomes ") ? config.substring(7).trim() : null;
-                yield new LevelStem(ow.type(), new NoiseBasedChunkGenerator(
-                        parseBiomeSource(server, biomeListStr), floatingNoise));
+
+                // Extract biomes (must be last in config string) -- backward compatible
+                String biomeListStr = null;
+                int biomesIdx = config.indexOf("biomes ");
+                if (biomesIdx >= 0) {
+                    String biomes = config.substring(biomesIdx + 7).trim();
+                    biomeListStr = biomes.isEmpty() ? null : biomes;
+                    config = config.substring(0, biomesIdx).trim();
+                }
+
+                // Parse ether-specific island params from remaining config
+                float threshold = EtherIslandDensityFunction.DEFAULT_THRESHOLD;
+                float minRadius = EtherIslandDensityFunction.DEFAULT_MIN_RADIUS;
+                float maxRadius = EtherIslandDensityFunction.DEFAULT_MAX_RADIUS;
+                int spacing = EtherIslandDensityFunction.DEFAULT_SPACING;
+                if (!config.isBlank()) {
+                    String[] tokens = config.split("\\s+");
+                    for (int ti = 0; ti < tokens.length; ti++) {
+                        try {
+                            switch (tokens[ti]) {
+                                case "threshold" -> {
+                                    if (ti + 1 < tokens.length) threshold = Float.parseFloat(tokens[++ti]);
+                                }
+                                case "radius" -> {
+                                    if (ti + 2 < tokens.length) {
+                                        minRadius = Float.parseFloat(tokens[++ti]);
+                                        maxRadius = Float.parseFloat(tokens[++ti]);
+                                    }
+                                }
+                                case "spacing" -> {
+                                    if (ti + 1 < tokens.length) spacing = Integer.parseInt(tokens[++ti]);
+                                }
+                            }
+                        } catch (NumberFormatException ignored) {}
+                    }
+                }
+
+                yield buildEtherStem(server, ow, threshold, minRadius, maxRadius, spacing, biomeListStr);
             }
 
             default -> null;
@@ -594,5 +631,77 @@ public final class DimManager {
 
         settings.updateLayers();
         return new LevelStem(overworldStem.type(), new FlatLevelSource(settings));
+    }
+
+    // Builds an ether LevelStem with our custom island density function wired into the noise router.
+    private static LevelStem buildEtherStem(MinecraftServer server, LevelStem overworldStem,
+                                             float threshold, float minRadius, float maxRadius,
+                                             int spacing, String biomeListStr) {
+        // Copy base settings from the registered FLOATING_ISLANDS preset
+        NoiseGeneratorSettings floatingSettings = server.registryAccess()
+                .lookupOrThrow(Registries.NOISE_SETTINGS)
+                .getOrThrow(NoiseGeneratorSettings.FLOATING_ISLANDS).value();
+        NoiseRouter existingRouter = floatingSettings.noiseRouter();
+
+        // Get the END base 3D noise from the density function registry
+        DensityFunction base3d = server.registryAccess()
+                .lookupOrThrow(Registries.DENSITY_FUNCTION)
+                .getOrThrow(ResourceKey.create(Registries.DENSITY_FUNCTION,
+                        Identifier.withDefaultNamespace("end/base_3d_noise")))
+                .value();
+
+        // Build the custom island density function
+        long seed = server.getWorldData().worldGenOptions().seed();
+        EtherIslandDensityFunction islands = new EtherIslandDensityFunction(
+                seed, threshold, minRadius, maxRadius, spacing);
+
+        // Island shaping + 3D noise for natural terrain detail
+        DensityFunction combined = DensityFunctions.add(islands, base3d);
+
+        // slideEndLike: slide(input, minY=0, height=256, 72, -184, -23.4375, 4, 32, -0.234375)
+        DensityFunction topGrad = DensityFunctions.yClampedGradient(256 - 72, 256 + 184, 1.0, 0.0);
+        DensityFunction afterTop = DensityFunctions.lerp(topGrad, -23.4375, combined);
+        DensityFunction botGrad = DensityFunctions.yClampedGradient(4, 32, 0.0, 1.0);
+        DensityFunction slid = DensityFunctions.lerp(botGrad, -0.234375, afterTop);
+
+        // postProcess: blend, interpolate, scale, squeeze
+        DensityFunction blended = DensityFunctions.blendDensity(slid);
+        DensityFunction finalDensity = DensityFunctions.mul(
+                DensityFunctions.interpolated(blended),
+                DensityFunctions.constant(0.64)).squeeze();
+
+        // Build router: keep temperature/vegetation from existing for biome placement
+        NoiseRouter router = new NoiseRouter(
+                DensityFunctions.zero(),      // barrier
+                DensityFunctions.zero(),      // fluidLevelFloodedness
+                DensityFunctions.zero(),      // fluidLevelSpread
+                DensityFunctions.zero(),      // lava
+                existingRouter.temperature(),
+                existingRouter.vegetation(),
+                DensityFunctions.zero(),      // continents
+                DensityFunctions.zero(),      // erosion
+                DensityFunctions.zero(),      // depth
+                DensityFunctions.zero(),      // ridges
+                DensityFunctions.zero(),      // initialDensityWithoutJaggedness
+                finalDensity,
+                DensityFunctions.zero(),      // veinToggle
+                DensityFunctions.zero(),      // veinRidged
+                DensityFunctions.zero());     // veinGap
+
+        NoiseGeneratorSettings customSettings = new NoiseGeneratorSettings(
+                floatingSettings.noiseSettings(),
+                floatingSettings.defaultBlock(),
+                floatingSettings.defaultFluid(),
+                router,
+                floatingSettings.surfaceRule(),
+                floatingSettings.spawnTarget(),
+                floatingSettings.seaLevel(),
+                floatingSettings.disableMobGeneration(),
+                floatingSettings.aquifersEnabled(),
+                floatingSettings.oreVeinsEnabled(),
+                floatingSettings.useLegacyRandomSource());
+
+        return new LevelStem(overworldStem.type(), new NoiseBasedChunkGenerator(
+                parseBiomeSource(server, biomeListStr), new Holder.Direct<>(customSettings)));
     }
 }

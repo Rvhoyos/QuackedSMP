@@ -90,7 +90,7 @@ public class EndResetLogic {
         }
     }
 
-    // Deletes End region/data/poi files if a RESET_PENDING marker exists. Called from the server-stopped event.
+    // Deletes End region/data/poi files if a RESET_PENDING marker exists. Called from the server-stopping event.
     public static void onServerStopping(MinecraftServer server) {
         try {
             Path dim1Dir = server.getWorldPath(LevelResource.ROOT).resolve("DIM1");
