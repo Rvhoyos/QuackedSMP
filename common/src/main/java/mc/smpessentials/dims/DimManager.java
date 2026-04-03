@@ -105,9 +105,9 @@ public final class DimManager {
         return createLevel(server, id, generatorType, generatorConfig, true);
     }
 
-    // Evicts all players, saves, closes, and removes the dimension. Deletes chunk data and datapack
-    // JSON so it does not re-register on restart. Queues a level.dat scrub for server stop.
-    // Returns null on success or an error message on failure.
+    // Evicts all players, saves, closes, and removes the dimension. Deletes chunk data, datapack
+    // JSON, and BlueMap map config so it does not re-register on restart. Queues a level.dat scrub
+    // for server stop. Returns null on success or an error message on failure.
     public static String destroy(MinecraftServer server, String id) {
         Identifier loc;
         try {
