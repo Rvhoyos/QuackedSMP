@@ -41,7 +41,6 @@ import net.minecraft.world.level.storage.DerivedLevelData;
 import net.minecraft.world.level.storage.LevelResource;
 import net.minecraft.world.level.storage.LevelStorageSource;
 import net.minecraft.world.level.storage.ServerLevelData;
-import net.minecraft.world.level.TicketStorage;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -492,21 +491,8 @@ public final class DimManager {
                 server, executor, storageSource, derivedData, dimKey, stem,
                 false, biomeZoomSeed, ImmutableList.of(), false, null);
 
-        // Match what vanilla does in MinecraftServer.createLevels() + prepareLevels():
-        // 1) Set world border max size so mayInteract() and isWithinBounds() work
-        newLevel.getWorldBorder().setAbsoluteMaxSize(server.getAbsoluteMaxWorldSize());
-
         levels.put(dimKey, newLevel);
         server.getPlayerList().addWorldborderListener(newLevel);
-
-        // 2) Activate any persisted forced-chunk tickets. Without this the chunk
-        //    system never processes chunk load requests for this dimension, so
-        //    blocks cannot be broken (getBlockState returns stale/wrong data on
-        //    the server side even though the client received chunks correctly).
-        TicketStorage ticketStorage = newLevel.getDataStorage().get(TicketStorage.TYPE);
-        if (ticketStorage != null) {
-            ticketStorage.activateAllDeactivatedTickets();
-        }
 
         if ("ether".equals(generatorType)) {
             etherDimIds.add(dimKey.identifier().toString());
