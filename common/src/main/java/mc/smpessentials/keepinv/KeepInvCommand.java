@@ -20,12 +20,10 @@ public final class KeepInvCommand {
     public static LiteralArgumentBuilder<CommandSourceStack> keepInvSubtree() {
         return Commands.literal("keepinv")
                 .requires(src -> src.getEntity() instanceof ServerPlayer)
-                // /keepinv — show current status
                 .executes(ctx -> showStatus(ctx.getSource()))
-                // /keepinv on
                 .then(Commands.literal("on")
                         .executes(ctx -> setKeepInv(ctx.getSource(), true)))
-                // /keepinv off
+
                 .then(Commands.literal("off")
                         .executes(ctx -> setKeepInv(ctx.getSource(), false)));
     }
@@ -37,11 +35,12 @@ public final class KeepInvCommand {
                 ? "\u00a7aON \u00a77(you keep items on death)"
                 : "\u00a7cOFF \u00a77(you drop items on death — vanilla experience)";
         player.sendSystemMessage(Component.literal("\u00a7eKeep Inventory: " + status));
-        player.sendSystemMessage(Component.literal("\u00a77Use \u00a7f/keepinv on\u00a77 or \u00a7f/keepinv off\u00a77 to change."));
+        player.sendSystemMessage(Component.literal("\u00a77Use \u00a7f/smp keepinv on\u00a77 or \u00a7f/smp keepinv off\u00a77 to change."));
         return 1;
     }
 
     private static int setKeepInv(CommandSourceStack src, boolean keep) {
+        if (mc.smpessentials.hardcore.HardcoreSavedData.denyIfInSession(src)) return 0;
         ServerPlayer player = (ServerPlayer) src.getEntity();
         boolean changed = KeepInvSavedData.get((net.minecraft.server.level.ServerLevel) player.level()).setKeeping(player.getUUID(), keep);
 

@@ -43,7 +43,8 @@ public class GeneralCommands {
                                         com.mojang.brigadier.arguments.StringArgumentType.string())
                                         .executes(GeneralCommands::setAdminPassword))))
                 .then(mc.smpessentials.ageverify.AgeVerifyCommand.verifySubtree())
-                .then(mc.smpessentials.keepinv.KeepInvCommand.keepInvSubtree()));
+                .then(mc.smpessentials.keepinv.KeepInvCommand.keepInvSubtree())
+                .then(mc.smpessentials.hardcore.HardcoreCommands.hardcoreSubtree()));
 
         dispatcher.register(Commands.literal("mute")
                 .requires(s -> net.minecraft.commands.Commands.LEVEL_GAMEMASTERS.check(s.permissions()))
@@ -129,6 +130,8 @@ public class GeneralCommands {
                 .append(Component.literal(" - Toggle keeping items on death").withStyle(desc)));
         src.sendSystemMessage(Component.literal("/smp verify confirm").withStyle(cmd)
                 .append(Component.literal(" - Enable proximity voice chat").withStyle(desc)));
+        src.sendSystemMessage(Component.literal("/smp hardcore create|join|leave|status|list").withStyle(cmd)
+                .append(Component.literal(" - Hardcore mode sessions").withStyle(desc)));
         src.sendSystemMessage(Component.literal("/rules").withStyle(cmd)
                 .append(Component.literal(" - Read the server rules").withStyle(desc)));
 

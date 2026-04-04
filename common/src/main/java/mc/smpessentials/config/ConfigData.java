@@ -55,7 +55,7 @@ public final class ConfigData {
             "&b[Tip] &fReport griefers to &adev@quackedmod.wiki&f!",
             "&b[Tip] &fReset the ender dragon in the &6Shogun Temple &fin the village or ask an admin to reset the end world!",
             "&b[Tip] &fVisit Spawn Shops for blocks & gear! Trade items for Emeralds!",
-            "&b[Tip] &fKeep Inventory is ON by default! If you prefer a challenge, type &a/keepinv off&f to drop your items on death.",
+            "&b[Tip] &fKeep Inventory is ON by default! If you prefer a challenge, type &a/smp keepinv off&f to drop your items on death.",
             "&b[Tip] &fNot sure where a claim ends? Use &a/claim map&f to visualize nearby chunk borders in chat!",
             "&b[Tip] &fBuilding with friends? Use &a/trust <player>&f to give them permission to safely build in your claims!",
             "&b[Tip] &fWe have proximity voice chat! If you're 18+, type &a/verify confirm&f to enable it and start talking!",
@@ -99,6 +99,9 @@ public final class ConfigData {
         defaults.skills.cooldowns.forEach(skills.cooldowns::putIfAbsent);
         defaults.skills.abilityUnlockLevels.forEach(skills.abilityUnlockLevels::putIfAbsent);
     }
+
+    public boolean hardcoreEnabled = false;
+    public int hardcoreDeathPercent = 50;
 
     public VotifierConfig votifier = new VotifierConfig();
     public DashboardConfig dashboard = new DashboardConfig();

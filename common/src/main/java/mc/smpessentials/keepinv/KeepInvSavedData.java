@@ -72,7 +72,11 @@ public final class KeepInvSavedData extends SavedData {
     // If the player opted out, drops all items and XP at the death position and clears them before respawn.
     public static void onPlayerDeath(ServerPlayer player) {
         KeepInvSavedData data = get((net.minecraft.server.level.ServerLevel) player.level());
-        if (data.isKeeping(player.getUUID())) return;
+        // Hardcore players always drop items regardless of keepinv setting
+        boolean inHardcore = mc.smpessentials.hardcore.HardcoreSavedData
+                .get(((net.minecraft.server.level.ServerLevel) player.level()).getServer())
+                .getPlayerSessionName(player.getUUID()) != null;
+        if (!inHardcore && data.isKeeping(player.getUUID())) return;
 
         double x = player.getX();
         double y = player.getY();

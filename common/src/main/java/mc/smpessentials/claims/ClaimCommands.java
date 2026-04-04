@@ -24,6 +24,7 @@ public final class ClaimCommands {
         var claim = Commands.literal("claim")
                 .requires(src -> mc.smpessentials.config.SmpConfig.CLAIMS_ENABLED && src.getEntity() instanceof ServerPlayer)
                 .executes(ctx -> {
+                    if (mc.smpessentials.hardcore.HardcoreSavedData.denyIfInSession(ctx.getSource())) return 0;
                     ServerPlayer p = ctx.getSource().getPlayerOrException();
                     ServerLevel lvl = p.level();
                     ChunkPos pos = p.chunkPosition();
@@ -228,6 +229,7 @@ public final class ClaimCommands {
                 Commands.literal("unclaim")
                         .requires(src -> mc.smpessentials.config.SmpConfig.CLAIMS_ENABLED && src.getEntity() instanceof ServerPlayer)
                         .executes(ctx -> {
+                            if (mc.smpessentials.hardcore.HardcoreSavedData.denyIfInSession(ctx.getSource())) return 0;
                             ServerPlayer p = ctx.getSource().getPlayerOrException();
                             ServerLevel lvl = p.level();
                             ChunkPos pos = p.chunkPosition();

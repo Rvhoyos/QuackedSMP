@@ -230,6 +230,12 @@ public final class DashboardManager {
                 (m, h, b) -> AdminHandler.handleChatFilterMutes(m, h, b, mcServer));
         s.addRoute("/api/admin/chatfilter/unmute",
                 (m, h, b) -> AdminHandler.handleChatFilterUnmute(m, h, b, mcServer));
+
+        // Hardcore session management
+        s.addRoute("/api/admin/hardcore",
+                (m, h, b) -> AdminHandler.handleHardcoreGet(m, h, b, mcServer));
+        s.addRoute("/api/admin/hardcore/end",
+                (m, h, b) -> AdminHandler.handleHardcoreEnd(m, h, b, mcServer));
     }
 
     // ── Scheduled ─────────────────────────────────────────────────────────────

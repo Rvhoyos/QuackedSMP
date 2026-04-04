@@ -66,6 +66,13 @@ const FEATURES = [
     restartRequired: true,
   },
   {
+    name: 'Hardcore Mode',
+    desc: 'Player-managed hardcore sessions. Shared start position, inventory stash, spectator on death. Resets when death threshold is reached.',
+    tag: 'hardcore',
+    configKey: 'hardcore_enabled',
+    toggleable: true,
+  },
+  {
     name: 'Admin Panel',
     desc: 'Manage players, run commands, and edit server config from the browser. Password-protected.',
     tag: 'admin',

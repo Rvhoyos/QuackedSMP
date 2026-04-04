@@ -9,17 +9,13 @@ import net.minecraft.server.level.ServerPlayer;
 
 import java.util.Set;
 
-/**
- * /spawn — Teleports the player to the world's main spawn point.
- *
- * Uses 1.21.8's teleport signature and restricts execution to players only.
- */
+// /spawn -- teleports the player to the world's main spawn point.
 public final class SpawnCommand {
     private SpawnCommand() {
     }
 
     public static int execute(CommandSourceStack source) {
-        // ---- SAFETY CHECK ----
+        if (mc.smpessentials.hardcore.HardcoreSavedData.denyIfInSession(source)) return 0;
         if (!(source.getEntity() instanceof ServerPlayer player)) {
             source.sendFailure(Component.literal("Only players can use /spawn."));
             return 0;

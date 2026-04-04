@@ -25,7 +25,8 @@ const TABS = [
     id: 'general', label: 'General',
     keys: [
       'max_claims', 'allow_lava_wilderness', 'tiers',
-      'tp_warmup', 'mute_levels_minutes', 'admin_enabled', 'dashboard_port', 'server_name',
+      'tp_warmup', 'mute_levels_minutes', 'hardcore_death_percent',
+      'admin_enabled', 'dashboard_port', 'server_name',
     ],
   },
   {
@@ -207,6 +208,12 @@ function GeneralTab({ draft, patch, onDisable, disabling, disableMsg }) {
         <StackedRow label="Mute Escalation Levels" hint="Duration in minutes for each repeated offence">
           <MuteLevels value={draft.mute_levels_minutes} onChange={v => patch('mute_levels_minutes', v)} />
         </StackedRow>
+      </Group>
+
+      <Group icon={<IconShield />} title="Hardcore Mode" accent="red">
+        <Row label="Death Threshold" hint="Percent of peak players that must die to end a session">
+          <NumInput value={draft.hardcore_death_percent} onChange={v => patch('hardcore_death_percent', v)} suffix="%" />
+        </Row>
       </Group>
 
       <Group icon={<IconChest />} title="Admin Panel" accent="red">

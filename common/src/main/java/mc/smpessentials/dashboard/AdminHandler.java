@@ -178,6 +178,9 @@ public final class AdminHandler {
         sb.append(String.format("\"claims_enabled\":%b,", SmpConfig.CLAIMS_ENABLED));
         sb.append(String.format("\"skills_enabled\":%b,", SmpConfig.SKILLS_ENABLED));
         sb.append(String.format("\"chatfilter_enabled\":%b,", SmpConfig.CHATFILTER_ENABLED));
+        // Hardcore
+        sb.append(String.format("\"hardcore_enabled\":%b,", SmpConfig.HARDCORE_ENABLED));
+        sb.append(String.format("\"hardcore_death_percent\":%d,", SmpConfig.HARDCORE_DEATH_PERCENT));
         // Admin
         sb.append(String.format("\"admin_enabled\":%b,", SmpConfig.ADMIN_ENABLED));
         sb.append(String.format("\"dashboard_port\":%d,", SmpConfig.DASHBOARD_PORT));
@@ -256,6 +259,9 @@ public final class AdminHandler {
             if (patch.has("claims_enabled"))     { SmpConfig.CLAIMS_ENABLED     = patch.get("claims_enabled").getAsBoolean();     changed++; }
             if (patch.has("skills_enabled"))     { SmpConfig.SKILLS_ENABLED     = patch.get("skills_enabled").getAsBoolean();     changed++; }
             if (patch.has("chatfilter_enabled")) { SmpConfig.CHATFILTER_ENABLED = patch.get("chatfilter_enabled").getAsBoolean(); changed++; }
+            // Hardcore
+            if (patch.has("hardcore_enabled"))        { SmpConfig.HARDCORE_ENABLED        = patch.get("hardcore_enabled").getAsBoolean();       changed++; }
+            if (patch.has("hardcore_death_percent"))   { SmpConfig.HARDCORE_DEATH_PERCENT   = patch.get("hardcore_death_percent").getAsInt();     changed++; }
             // Admin
             if (patch.has("admin_enabled"))         { SmpConfig.ADMIN_ENABLED         = patch.get("admin_enabled").getAsBoolean();        changed++; }
             if (patch.has("dashboard_port"))        { SmpConfig.DASHBOARD_PORT        = patch.get("dashboard_port").getAsInt();           changed++; }
@@ -1198,6 +1204,55 @@ public final class AdminHandler {
             return err(500, "Upload failed: " + jsonEscape(e.getMessage()));
         } finally {
             if (temp != null) try { Files.deleteIfExists(temp); } catch (Exception ignored) {}
+        }
+    }
+
+    // GET /api/admin/hardcore. Lists all active hardcore sessions.
+    public static String handleHardcoreGet(String method, Map<String, String> headers, String body,
+                                            MinecraftServer server) {
+        if (!SmpConfig.ADMIN_ENABLED)         return err(403, "Admin panel disabled");
+        if (!AdminAuth.isAuthorized(headers)) return err(403, "Unauthorized");
+
+        var data = mc.smpessentials.hardcore.HardcoreSavedData.get(server);
+        StringBuilder sb = new StringBuilder("{\"sessions\":[");
+        boolean first = true;
+        for (var session : data.allSessions()) {
+            if (!first) sb.append(',');
+            first = false;
+            sb.append(String.format(
+                    "{\"name\":\"%s\",\"alive\":%d,\"dead\":%d,\"peak\":%d,\"deaths\":%d,\"threshold\":%d,"
+                            + "\"start\":\"%d, %d, %d\",\"dim\":\"%s\"}",
+                    jsonEscape(session.getName()),
+                    session.getAliveCount(), session.getDeadCount(),
+                    session.getPeakPlayers(), session.getDeaths(), session.getThreshold(),
+                    session.getStartX(), session.getStartY(), session.getStartZ(),
+                    jsonEscape(session.getStartDim())));
+        }
+        sb.append("]}");
+        return sb.toString();
+    }
+
+    // POST /api/admin/hardcore/end. Force-ends a session by name. Body: {name}.
+    public static String handleHardcoreEnd(String method, Map<String, String> headers, String body,
+                                            MinecraftServer server) {
+        if (!"POST".equals(method))           return err(405, "Method not allowed");
+        if (!SmpConfig.ADMIN_ENABLED)         return err(403, "Admin panel disabled");
+        if (!AdminAuth.isAuthorized(headers)) return err(403, "Unauthorized");
+        try {
+            JsonObject req = JsonParser.parseString(body).getAsJsonObject();
+            String name = req.get("name").getAsString();
+            var data = mc.smpessentials.hardcore.HardcoreSavedData.get(server);
+
+            // Run on server thread since it modifies player state
+            server.execute(() -> {
+                String error = data.forceEndSession(name, server);
+                if (error != null) {
+                    SmpUtilsMod.LOGGER.warn("[Hardcore] Force-end failed: {}", error);
+                }
+            });
+            return "{\"ok\":true}";
+        } catch (Exception e) {
+            return err(400, "Invalid request: " + jsonEscape(e.getMessage()));
         }
     }
 

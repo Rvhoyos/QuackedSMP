@@ -15,17 +15,13 @@ public final class HomeCommand {
     private HomeCommand() {
     }
 
-    // Schedules a teleport to the player's respawn point (bed/anchor), falling back to world spawn. Returns 1 on success, 0 if not a player.
     public static int execute(CommandSourceStack source) {
-        // Safety: registration already ensures this is a player, but keep a cheap
-        // check.
+        if (mc.smpessentials.hardcore.HardcoreSavedData.denyIfInSession(source)) return 0;
         if (!(source.getEntity() instanceof ServerPlayer player)) {
-            // console / command block -> fail cleanly
             source.sendFailure(Component.literal("Only players can use /home."));
             return 0;
         }
 
-        // Prefer the player's bed/respawn-anchor if set.
         if (player.getRespawnConfig() != null) {
             mc.smpessentials.teleport.TeleportScheduler.schedule(player, () -> {
                 TeleportTransition transition = player.findRespawnPositionAndUseSpawnBlock(false, p -> {

@@ -104,6 +104,9 @@ public final class ConfigIO {
         data.periodicMessages = new java.util.ArrayList<>(SmpConfig.PERIODIC_MESSAGES);
         data.messages = new java.util.HashMap<>(SmpConfig.MESSAGES);
 
+        data.hardcoreEnabled = SmpConfig.HARDCORE_ENABLED;
+        data.hardcoreDeathPercent = SmpConfig.HARDCORE_DEATH_PERCENT;
+
         data.votifier.enabled = SmpConfig.VOTIFIER_ENABLED;
         data.votifier.port = SmpConfig.VOTIFIER_PORT;
         data.votifier.token = SmpConfig.VOTIFIER_TOKEN;
