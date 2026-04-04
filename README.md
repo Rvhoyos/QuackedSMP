@@ -204,7 +204,10 @@ Warmup defaults to 5 seconds, configurable in the panel.
 
 ### Custom Dimensions (`/dim`)
 
-Create and manage runtime dimensions without datapacks or restarts.
+Create and manage runtime dimensions without datapacks.
+ 
+> [!IMPORTANT]
+> **Server Restart Required**: While dimensions are created immediately, a server restart is currently required for the Minecraft chunk engine to properly register players for block interaction (breaking/placing) in any newly created dimension. Until the restart, the dimension is "read-only."
 
 **Generator types:**
 
