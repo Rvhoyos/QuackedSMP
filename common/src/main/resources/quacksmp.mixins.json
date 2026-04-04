@@ -21,7 +21,8 @@
     "PlayerActionMixin",
     "MinecraftServerMixin",
     "NetherPortalBlockMixin",
-    "PortalForcerMixin"
+    "PortalForcerMixin",
+    "GameModeDebugMixin"
   ],
   "injectors": {
     "defaultRequire": 1

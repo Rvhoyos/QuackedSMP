@@ -41,6 +41,7 @@ import net.minecraft.world.level.storage.DerivedLevelData;
 import net.minecraft.world.level.storage.LevelResource;
 import net.minecraft.world.level.storage.LevelStorageSource;
 import net.minecraft.world.level.storage.ServerLevelData;
+import net.minecraft.world.level.TicketStorage;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -48,7 +49,9 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtAccounter;
 import net.minecraft.nbt.NbtIo;
 
+
 import java.io.IOException;
+import java.nio.file.DirectoryStream;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -130,7 +133,7 @@ public final class DimManager {
             return "Dimension not found: " + id;
         }
 
-        // Evict all players to overworld spawn
+        // Evict all online players to overworld spawn
         ServerLevel overworld = server.overworld();
         BlockPos spawnPos = overworld.getRespawnData().pos();
         List<ServerPlayer> occupants = List.copyOf(level.players());
@@ -140,6 +143,12 @@ public final class DimManager {
                     safe.getX() + 0.5, safe.getY(), safe.getZ() + 0.5,
                     Set.of(), player.getYRot(), player.getXRot(), false);
         }
+
+        // Relocate any OFFLINE players whose saved Dimension tag references this dim.
+        // Without this, the server crashes (ArrayIndexOutOfBoundsException in
+        // LoadingChunkTracker) when an offline player who was last in this dim tries
+        // to reconnect after the dimension no longer exists.
+        relocateOfflinePlayers(server, dimKey.identifier().toString());
 
         // Save and close
         level.save(null, true, false);
@@ -203,6 +212,48 @@ public final class DimManager {
         return null;
     }
 
+    // Scans all offline player .dat files and resets the Dimension tag to
+    // minecraft:overworld for any player saved in the given dimension.
+    // This prevents a fatal server crash when the player reconnects.
+    private static void relocateOfflinePlayers(MinecraftServer server, String deletedDimId) {
+        Path playerDataDir = server.getWorldPath(LevelResource.ROOT).resolve("playerdata");
+        if (!java.nio.file.Files.isDirectory(playerDataDir)) return;
+
+        // Collect UUIDs of currently online players — their data is managed in memory.
+        Set<String> onlineUuids = new HashSet<>();
+        for (ServerPlayer p : server.getPlayerList().getPlayers()) {
+            onlineUuids.add(p.getStringUUID());
+        }
+
+        try (DirectoryStream<Path> stream = java.nio.file.Files.newDirectoryStream(playerDataDir, "*.dat")) {
+            for (Path datFile : stream) {
+                String fileName = datFile.getFileName().toString();
+                // Skip backups and online players
+                if (fileName.endsWith("_old")) continue;
+                String uuid = fileName.replace(".dat", "");
+                if (onlineUuids.contains(uuid)) continue;
+
+                try {
+                    CompoundTag root = NbtIo.readCompressed(datFile, NbtAccounter.unlimitedHeap());
+                    Optional<String> dimOpt = root.getString("Dimension");
+                    if (dimOpt.isEmpty()) continue;
+                    String savedDim = dimOpt.get();
+                    if (!savedDim.equals(deletedDimId)) continue;
+
+                    // Rewrite to overworld
+                    root.putString("Dimension", "minecraft:overworld");
+                    NbtIo.writeCompressed(root, datFile);
+                    LOGGER.info("Relocated offline player {} from deleted dim {} to overworld",
+                            uuid, deletedDimId);
+                } catch (Exception e) {
+                    LOGGER.warn("Failed to check/relocate player data {}: {}", datFile, e.getMessage());
+                }
+            }
+        } catch (IOException e) {
+            LOGGER.error("Failed to scan playerdata directory: {}", e.getMessage());
+        }
+    }
+
     // Patches level.dat after the server's own save to remove deleted dim IDs from
     // WorldGenSettings.dimensions. Must be called from the server-stopped event.
     public static void scrubLevelDat(MinecraftServer server) {
@@ -239,6 +290,9 @@ public final class DimManager {
     }
 
     // Re-creates all custom dimensions from SavedData on server start.
+    // After restoring, repairs any player data files that reference dimensions
+    // not present in the server's levels map (safety net for servers that already
+    // have corrupted data from a previous version that lacked the destroy() fix).
     public static void restoreAll(MinecraftServer server) {
         List<DimSavedData.DimEntry> entries = DimSavedData.get(server).getEntries();
         for (DimSavedData.DimEntry entry : entries) {
@@ -249,6 +303,49 @@ public final class DimManager {
             } else {
                 LOGGER.info("Restored custom dimension: {}", entry.id());
             }
+        }
+        repairOrphanedPlayers(server);
+    }
+
+    // Startup safety net: scans all offline player .dat files and relocates any
+    // whose saved Dimension does not exist in the server's active levels map.
+    // This handles the case where a previous version of the mod deleted a dim
+    // without fixing offline player data, bricking the server on their next login.
+    private static void repairOrphanedPlayers(MinecraftServer server) {
+        Map<ResourceKey<Level>, ServerLevel> levels =
+                ((MinecraftServerMixin) server).getLevels();
+        Path playerDataDir = server.getWorldPath(LevelResource.ROOT).resolve("playerdata");
+        if (!java.nio.file.Files.isDirectory(playerDataDir)) return;
+
+        try (DirectoryStream<Path> stream = java.nio.file.Files.newDirectoryStream(playerDataDir, "*.dat")) {
+            for (Path datFile : stream) {
+                String fileName = datFile.getFileName().toString();
+                if (fileName.endsWith("_old")) continue;
+
+                try {
+                    CompoundTag root = NbtIo.readCompressed(datFile, NbtAccounter.unlimitedHeap());
+                    Optional<String> dimOpt = root.getString("Dimension");
+                    if (dimOpt.isEmpty()) continue;
+                    String savedDim = dimOpt.get();
+
+                    // Check if this dimension exists in the server's active levels
+                    ResourceKey<Level> dimKey = ResourceKey.create(Registries.DIMENSION,
+                            Identifier.parse(savedDim));
+                    if (levels.containsKey(dimKey)) continue;
+
+                    // Dimension doesn't exist — relocate to overworld
+                    root.putString("Dimension", "minecraft:overworld");
+                    NbtIo.writeCompressed(root, datFile);
+                    String uuid = fileName.replace(".dat", "");
+                    LOGGER.warn("Repaired orphaned player {} — was in non-existent dim {}, "
+                            + "relocated to overworld", uuid, savedDim);
+                } catch (Exception e) {
+                    LOGGER.warn("Failed to check/repair player data {}: {}",
+                            datFile, e.getMessage());
+                }
+            }
+        } catch (IOException e) {
+            LOGGER.error("Failed to scan playerdata for orphaned dimensions: {}", e.getMessage());
         }
     }
 
@@ -395,8 +492,21 @@ public final class DimManager {
                 server, executor, storageSource, derivedData, dimKey, stem,
                 false, biomeZoomSeed, ImmutableList.of(), false, null);
 
+        // Match what vanilla does in MinecraftServer.createLevels() + prepareLevels():
+        // 1) Set world border max size so mayInteract() and isWithinBounds() work
+        newLevel.getWorldBorder().setAbsoluteMaxSize(server.getAbsoluteMaxWorldSize());
+
         levels.put(dimKey, newLevel);
         server.getPlayerList().addWorldborderListener(newLevel);
+
+        // 2) Activate any persisted forced-chunk tickets. Without this the chunk
+        //    system never processes chunk load requests for this dimension, so
+        //    blocks cannot be broken (getBlockState returns stale/wrong data on
+        //    the server side even though the client received chunks correctly).
+        TicketStorage ticketStorage = newLevel.getDataStorage().get(TicketStorage.TYPE);
+        if (ticketStorage != null) {
+            ticketStorage.activateAllDeactivatedTickets();
+        }
 
         if ("ether".equals(generatorType)) {
             etherDimIds.add(dimKey.identifier().toString());
