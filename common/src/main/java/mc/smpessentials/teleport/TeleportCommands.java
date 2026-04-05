@@ -28,6 +28,7 @@ public final class TeleportCommands {
                                 .requires(src -> src.getEntity() instanceof ServerPlayer)
                                 .then(Commands.argument("player", EntityArgument.player())
                                                 .executes(ctx -> {
+                                                        if (mc.smpessentials.hardcore.HardcoreSavedData.denyIfInSession(ctx.getSource())) return 0;
                                                         CommandSourceStack src = ctx.getSource();
                                                         ServerPlayer requester = src.getPlayerOrException();
                                                         ServerPlayer target = EntityArgument.getPlayer(ctx, "player");
@@ -90,6 +91,7 @@ public final class TeleportCommands {
         }
 
         private static int acceptOldest(CommandSourceStack src) throws CommandSyntaxException {
+                if (mc.smpessentials.hardcore.HardcoreSavedData.denyIfInSession(src)) return 0;
                 ServerPlayer target = src.getPlayerOrException();
                 long now = System.currentTimeMillis();
                 Optional<UUID> rq = TeleportService.acceptOldest(target, now);
@@ -139,6 +141,7 @@ public final class TeleportCommands {
         }
 
         private static int denyOldest(CommandSourceStack src) throws CommandSyntaxException {
+                if (mc.smpessentials.hardcore.HardcoreSavedData.denyIfInSession(src)) return 0;
                 ServerPlayer target = src.getPlayerOrException();
                 long now = System.currentTimeMillis();
                 Optional<UUID> rq = TeleportService.denyOldest(target, now);

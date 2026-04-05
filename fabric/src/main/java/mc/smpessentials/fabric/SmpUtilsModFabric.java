@@ -62,6 +62,7 @@ public final class SmpUtilsModFabric implements ModInitializer {
             }
             mc.smpessentials.dashboard.DashboardManager.broadcastPlayerJoin(player.getGameProfile().name());
             mc.smpessentials.votifier.VoteHandler.onPlayerJoin(player);
+            mc.smpessentials.hardcore.HardcoreSavedData.get(server).onPlayerReconnect(player);
         });
         net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> {
             net.minecraft.server.level.ServerPlayer player = handler.getPlayer();
@@ -73,8 +74,14 @@ public final class SmpUtilsModFabric implements ModInitializer {
         // 9. Keep Inventory — drop items on death for opted-out players
         net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents.AFTER_DEATH.register((entity, source) -> {
             if (entity instanceof net.minecraft.server.level.ServerPlayer sp) {
+                mc.smpessentials.hardcore.HardcoreSavedData.get(((net.minecraft.server.level.ServerLevel) sp.level()).getServer()).onPlayerDeath(sp);
                 mc.smpessentials.keepinv.KeepInvSavedData.onPlayerDeath(sp);
             }
+        });
+
+        // 10. Hardcore — set spectator on respawn
+        net.fabricmc.fabric.api.entity.event.v1.ServerPlayerEvents.AFTER_RESPAWN.register((oldPlayer, newPlayer, alive) -> {
+            mc.smpessentials.hardcore.HardcoreSavedData.get(((net.minecraft.server.level.ServerLevel) newPlayer.level()).getServer()).onPlayerRespawn(newPlayer);
         });
 
         // 4. Server Tick + Player Tick processing

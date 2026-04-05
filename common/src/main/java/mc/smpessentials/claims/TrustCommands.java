@@ -34,6 +34,7 @@ public final class TrustCommands {
                 .requires(src -> SmpConfig.CLAIMS_ENABLED && src.getEntity() instanceof ServerPlayer)
                 .then(Commands.argument("player", EntityArgument.player())
                         .executes(ctx -> {
+                            if (mc.smpessentials.hardcore.HardcoreSavedData.denyIfInSession(ctx.getSource())) return 0;
                             ServerPlayer self = ctx.getSource().getPlayerOrException();
                             ServerLevel level = (ServerLevel) self.level();
                             ServerPlayer target = EntityArgument.getPlayer(ctx, "player");
@@ -54,6 +55,7 @@ public final class TrustCommands {
                 .requires(src -> SmpConfig.CLAIMS_ENABLED && src.getEntity() instanceof ServerPlayer)
                 .then(Commands.argument("player", EntityArgument.player())
                         .executes(ctx -> {
+                            if (mc.smpessentials.hardcore.HardcoreSavedData.denyIfInSession(ctx.getSource())) return 0;
                             ServerPlayer self = ctx.getSource().getPlayerOrException();
                             ServerLevel level = (ServerLevel) self.level();
                             ServerPlayer target = EntityArgument.getPlayer(ctx, "player");
@@ -73,6 +75,7 @@ public final class TrustCommands {
         return Commands.literal("trustlist")
                 .requires(src -> SmpConfig.CLAIMS_ENABLED && src.getEntity() instanceof ServerPlayer)
                 .executes(ctx -> {
+                    if (mc.smpessentials.hardcore.HardcoreSavedData.denyIfInSession(ctx.getSource())) return 0;
                     ServerPlayer self = ctx.getSource().getPlayerOrException();
                     ServerLevel level = (ServerLevel) self.level();
                     Set<UUID> trusted = WhitelistSavedData.get(level).list(self.getUUID());

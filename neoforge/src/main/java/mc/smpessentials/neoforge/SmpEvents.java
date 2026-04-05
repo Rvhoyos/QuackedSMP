@@ -73,6 +73,7 @@ public class SmpEvents {
             }
             mc.smpessentials.dashboard.DashboardManager.broadcastPlayerJoin(player.getGameProfile().name());
             mc.smpessentials.votifier.VoteHandler.onPlayerJoin(player);
+            mc.smpessentials.hardcore.HardcoreSavedData.get(((net.minecraft.server.level.ServerLevel) player.level()).getServer()).onPlayerReconnect(player);
         }
     }
 
@@ -86,7 +87,15 @@ public class SmpEvents {
     @SubscribeEvent
     public static void onLivingDeath(net.neoforged.neoforge.event.entity.living.LivingDeathEvent event) {
         if (event.getEntity() instanceof ServerPlayer sp) {
+            mc.smpessentials.hardcore.HardcoreSavedData.get(((net.minecraft.server.level.ServerLevel) sp.level()).getServer()).onPlayerDeath(sp);
             mc.smpessentials.keepinv.KeepInvSavedData.onPlayerDeath(sp);
+        }
+    }
+
+    @SubscribeEvent
+    public static void onPlayerRespawn(PlayerEvent.PlayerRespawnEvent event) {
+        if (event.getEntity() instanceof ServerPlayer sp) {
+            mc.smpessentials.hardcore.HardcoreSavedData.get(((net.minecraft.server.level.ServerLevel) sp.level()).getServer()).onPlayerRespawn(sp);
         }
     }
 

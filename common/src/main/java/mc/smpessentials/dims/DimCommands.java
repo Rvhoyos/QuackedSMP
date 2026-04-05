@@ -322,6 +322,7 @@ public final class DimCommands {
         String label = dimId.toString();
         if (generatorConfig.isPresent()) label += " (" + generatorConfig.get() + ")";
         source.sendSystemMessage(Component.literal("Created dimension: " + label));
+        source.sendSystemMessage(Component.literal("§6[!] A server restart is required for full block interaction (breaking/placing) in this dimension. Until then, it is read-only."));
         return 1;
     }
 

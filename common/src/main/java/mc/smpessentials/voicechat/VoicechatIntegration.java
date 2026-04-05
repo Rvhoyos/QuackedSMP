@@ -4,6 +4,11 @@ import mc.smpessentials.SmpUtilsMod;
 import mc.smpessentials.config.SmpConfig;
 import net.minecraft.server.MinecraftServer;
 
+import java.util.Collections;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+
 /**
  * Optional Simple Voice Chat integration guard.
  * Follows the same pattern as BlueMapIntegration: uses Class.forName to safely
@@ -17,6 +22,7 @@ public final class VoicechatIntegration {
 
     private static boolean available = false;
     private static MinecraftServer server;
+    private static final Set<UUID> connectedClients = ConcurrentHashMap.newKeySet();
 
     /**
      * Called once during mod startup. Uses {@link Class#forName} to safely detect the
@@ -61,5 +67,20 @@ public final class VoicechatIntegration {
      */
     public static MinecraftServer getServer() {
         return server;
+    }
+
+    /** Called by {@link QuackedVoicechatPlugin} when a player's client connects to voice chat. */
+    public static void onPlayerVoicechatConnected(UUID uuid) {
+        connectedClients.add(uuid);
+    }
+
+    /** Called by {@link QuackedVoicechatPlugin} when a player's client disconnects from voice chat. */
+    public static void onPlayerVoicechatDisconnected(UUID uuid) {
+        connectedClients.remove(uuid);
+    }
+
+    /** Returns true if the player's client has Simple Voice Chat connected. */
+    public static boolean hasVoicechatClient(UUID uuid) {
+        return connectedClients.contains(uuid);
     }
 }

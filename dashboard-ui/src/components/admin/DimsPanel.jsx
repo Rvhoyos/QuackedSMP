@@ -61,6 +61,7 @@ export default function DimsPanel({ token, onExpired }) {
   const [biomeWeight,    setBiomeWeight]    = useState('1')
   const [biomeOpen,      setBiomeOpen]      = useState(false)
   const [creating,       setCreating]       = useState(false)
+  const [warning,        setWarning]        = useState(null)
 
   // Portal set
   const [portalEditing,  setPortalEditing]  = useState(null)
@@ -136,6 +137,7 @@ export default function DimsPanel({ token, onExpired }) {
     e.preventDefault()
     setCreating(true)
     setError(null)
+    setWarning(null)
     try {
       const { type, config } = buildApiPayload(createUiType, flatConfig, selectedBiomes)
       const body = { id: createId.trim(), type }
@@ -149,6 +151,7 @@ export default function DimsPanel({ token, onExpired }) {
       const data = await res.json()
       if (data.error) { setError(data.error); return }
       setCreateId(''); setFlatConfig(''); setSelectedBiomes([])
+      setWarning('Server restart required for block breaking/placing in the new dimension. Until then it is read-only.')
       await fetchDims()
     } catch {
       setError('Create failed')
@@ -355,6 +358,12 @@ export default function DimsPanel({ token, onExpired }) {
           <div className={styles.error}>
             {error}
             <button className={styles.dismiss} onClick={() => setError(null)}>x</button>
+          </div>
+        )}
+        {warning && (
+          <div className={styles.warning}>
+            {warning}
+            <button className={styles.dismiss} onClick={() => setWarning(null)}>x</button>
           </div>
         )}
       </div>

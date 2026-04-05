@@ -305,22 +305,32 @@ public final class SkillEvents {
     }
 
     /**
-     * Called every tick per online player. Re-sends the age verification prompt
-     * every {@link #AGE_REPROMPT_INTERVAL} ticks to players who have never responded.
-     * Players who explicitly denied are not re-prompted — they can type
-     * {@code /verify confirm} if they change their mind.
+     * Called every tick per online player. Only acts on players whose Simple Voice Chat
+     * client is connected. Sends the age verification prompt immediately on first
+     * detection, then re-sends every {@link #AGE_REPROMPT_INTERVAL} ticks until answered.
+     * Players who explicitly denied are not re-prompted.
      */
     private static void tickAgeVerify(ServerPlayer sp, UUID uuid) {
         if (!mc.smpessentials.voicechat.VoicechatIntegration.isAvailable())
             return;
+        if (!mc.smpessentials.voicechat.VoicechatIntegration.hasVoicechatClient(uuid)) {
+            agePromptTicks.remove(uuid);
+            return;
+        }
         mc.smpessentials.ageverify.AgeVerifyData data = mc.smpessentials.ageverify.AgeVerifyData
                 .get(sp.level().getServer());
-        // Verified or denied — no periodic action needed
         if (data.hasAnswered(uuid)) {
             agePromptTicks.remove(uuid);
             return;
         }
-        int ticks = agePromptTicks.getOrDefault(uuid, 0) + 1;
+        // -1 means SVC client detected but first prompt not yet sent
+        int ticks = agePromptTicks.getOrDefault(uuid, -1);
+        if (ticks < 0) {
+            sendAgeVerifyPrompt(sp);
+            agePromptTicks.put(uuid, 0);
+            return;
+        }
+        ticks++;
         if (ticks >= AGE_REPROMPT_INTERVAL) {
             sendAgeVerifyPrompt(sp);
             agePromptTicks.put(uuid, 0);
@@ -382,20 +392,14 @@ public final class SkillEvents {
                 sp.sendSystemMessage(net.minecraft.network.chat.Component.literal("\u00a7cYour inventory and claims were cleared while you were away due to a recently applied punishment."));
             }
 
-            // Age verification prompt for voice chat
+            // Seed age-verify tracker with -1 (prompt not yet sent).
+            // Actual prompting is deferred to tickAgeVerify, which waits
+            // until the SVC client connects before sending anything.
             if (mc.smpessentials.voicechat.VoicechatIntegration.isAvailable()) {
                 mc.smpessentials.ageverify.AgeVerifyData verifyData = mc.smpessentials.ageverify.AgeVerifyData
                         .get(sl.getServer());
-                if (!verifyData.isVerified(sp.getUUID())) {
-                    if (!verifyData.hasAnswered(sp.getUUID())) {
-                        // Never responded — show full prompt and start reprompt timer
-                        agePromptTicks.put(sp.getUUID(), 0);
-                        sendAgeVerifyPrompt(sp);
-                    } else {
-                        // Previously denied — one-time reminder per login
-                        sp.sendSystemMessage(Component.literal(
-                                "\u00a77[Voice Chat] Voice chat is currently disabled for you. Type \u00a7a/verify confirm \u00a77if you are 18+ and wish to enable it."));
-                    }
+                if (!verifyData.hasAnswered(sp.getUUID())) {
+                    agePromptTicks.put(sp.getUUID(), -1);
                 }
             }
         }

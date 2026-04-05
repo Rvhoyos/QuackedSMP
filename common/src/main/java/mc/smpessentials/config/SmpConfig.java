@@ -56,6 +56,10 @@ public final class SmpConfig {
     public static String BLUEMAP_OP_CLAIM_COLOR = "FFD700"; // Gold
     public static String BLUEMAP_VIP_CLAIM_COLOR = "8A2BE2"; // Purple
 
+    // ---- Hardcore ----
+    public static boolean HARDCORE_ENABLED = false;
+    public static int HARDCORE_DEATH_PERCENT = 50;
+
     // ---- Skills ----
     public static double SKILL_XP_EXPONENT = 1.5;
     public static java.util.Map<String, Long> SKILL_COOLDOWNS = new java.util.HashMap<>();
@@ -155,6 +159,9 @@ public final class SmpConfig {
         DISCORD_WEBHOOK_URL = d.discord.webhookUrl;
         DISCORD_JOIN_LEAVE = d.discord.joinLeave;
         DISCORD_CHAT = d.discord.chat;
+
+        HARDCORE_ENABLED = d.hardcoreEnabled;
+        HARDCORE_DEATH_PERCENT = d.hardcoreDeathPercent;
 
         SKILL_XP_EXPONENT = d.skills.xpExponent;
         SKILL_COOLDOWNS = d.skills.cooldowns;
