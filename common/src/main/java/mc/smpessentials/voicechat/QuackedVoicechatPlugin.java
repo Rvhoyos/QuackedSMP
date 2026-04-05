@@ -6,6 +6,8 @@ import de.maxhenkel.voicechat.api.VoicechatPlugin;
 import de.maxhenkel.voicechat.api.events.EntitySoundPacketEvent;
 import de.maxhenkel.voicechat.api.events.EventRegistration;
 import de.maxhenkel.voicechat.api.events.MicrophonePacketEvent;
+import de.maxhenkel.voicechat.api.events.PlayerConnectedEvent;
+import de.maxhenkel.voicechat.api.events.PlayerDisconnectedEvent;
 import mc.smpessentials.ageverify.AgeVerifyData;
 import net.minecraft.server.MinecraftServer;
 
@@ -31,6 +33,8 @@ public class QuackedVoicechatPlugin implements VoicechatPlugin {
     public void registerEvents(EventRegistration registration) {
         registration.registerEvent(MicrophonePacketEvent.class, this::onMicrophonePacket);
         registration.registerEvent(EntitySoundPacketEvent.class, this::onEntitySoundPacket);
+        registration.registerEvent(PlayerConnectedEvent.class, this::onPlayerConnected);
+        registration.registerEvent(PlayerDisconnectedEvent.class, this::onPlayerDisconnected);
     }
 
     private void onMicrophonePacket(MicrophonePacketEvent event) {
@@ -51,6 +55,17 @@ public class QuackedVoicechatPlugin implements VoicechatPlugin {
             return;
         if (!isVerified(receiver.getPlayer().getUuid()))
             event.cancel();
+    }
+
+    private void onPlayerConnected(PlayerConnectedEvent event) {
+        VoicechatConnection conn = event.getConnection();
+        if (conn != null && conn.getPlayer() != null) {
+            VoicechatIntegration.onPlayerVoicechatConnected(conn.getPlayer().getUuid());
+        }
+    }
+
+    private void onPlayerDisconnected(PlayerDisconnectedEvent event) {
+        VoicechatIntegration.onPlayerVoicechatDisconnected(event.getPlayerUuid());
     }
 
     private boolean isVerified(UUID uuid) {

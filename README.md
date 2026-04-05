@@ -286,11 +286,38 @@ All toggleable and color-configurable from the admin panel.
 
 ---
 
+### Hardcore Mode
+
+Password-protected hardcore sessions. Any player can create a session, share the password, and others join in. Inventory is stashed on join and restored when the session ends or you leave.
+
+**How it works:**
+- Creator picks a random start location (1,000+ blocks from spawn, within the world border)
+- All participants are teleported there with empty inventories
+- Deaths are tracked. When deaths reach the threshold (configurable % of peak players), the session ends for everyone
+- Dead players become spectators at the session start until they leave or the session ends
+- Leaving mid-session is always allowed; your inventory is restored immediately
+- Players who left cannot rejoin the same session
+- Sessions survive server restarts and long periods of downtime
+
+| Command | Description | Permission |
+| :--- | :--- | :--- |
+| `/smp hardcore create <name> <password>` | Create and auto-join a session | Everyone |
+| `/smp hardcore join <name> <password>` | Join an existing session | Everyone |
+| `/smp hardcore leave` | Leave your current session | Everyone |
+| `/smp hardcore status` | View your session's status | Everyone |
+| `/smp hardcore status <name>` | View a specific session's status | Everyone |
+| `/smp hardcore list` | List all active sessions | Everyone |
+
+Sessions can also be viewed and force-ended from the admin panel.
+
+---
+
 ### Simple Voice Chat Integration
 
 Optional age-gate for [Simple Voice Chat](https://modrinth.com/plugin/simple-voice-chat). When enabled:
 
-- Players receive a clickable prompt on first join to confirm they are 18+
+- Only players with the Simple Voice Chat client installed are prompted
+- Prompted shortly after joining once the voice chat client connects
 - Unverified players cannot speak or hear others
 - Re-prompted every 5 minutes until they respond
 - Players can verify at any time with `/smp verify confirm` (or `/verify confirm`)
@@ -353,6 +380,11 @@ Optional age-gate for [Simple Voice Chat](https://modrinth.com/plugin/simple-voi
 | `/smp keepinv off` | Drop on death — vanilla (also: `/keepinv off`) | Everyone |
 | `/smp verify confirm` | Confirm 18+ for voice chat (also: `/verify confirm`) | Everyone |
 | `/smp verify deny` | Decline voice chat (also: `/verify deny`) | Everyone |
+| `/smp hardcore create <name> <password>` | Create and auto-join a hardcore session | Everyone |
+| `/smp hardcore join <name> <password>` | Join an existing hardcore session | Everyone |
+| `/smp hardcore leave` | Leave current hardcore session | Everyone |
+| `/smp hardcore status [name]` | View session status | Everyone |
+| `/smp hardcore list` | List all active sessions | Everyone |
 | `/dim create <id> <type> [sub-params]` | Create a custom dimension | OP |
 | `/dim delete <id>` | Delete a custom dimension | OP |
 | `/dim list` | List all active dimensions | Everyone |
@@ -394,6 +426,8 @@ Config lives at `config/quackedsmp.json`. Most settings are editable live from t
 | `bluemap_vip_claim_color` | `8A2BE2` | Hex color for VIP claims |
 | `bluemap_show_worldborder` | `true` | Show world border on BlueMap |
 | `bluemap_worldborder_color` | `FF3C3C` | Hex color for world border |
+| `hardcore_enabled` | `false` | Enable the hardcore session system |
+| `hardcore_death_percent` | `50` | Deaths as % of peak players to end a session |
 | `skills.xp_exponent` | `1.5` | Exponential factor for skill leveling |
 | `skills.ability_unlock_levels` | see JSON | Minimum level per skill to unlock active ability |
 | `skills.cooldowns` | see JSON | Base cooldowns in seconds per ability |
