@@ -154,7 +154,7 @@ public final class HardcoreSavedData extends SavedData {
             return "You already participated in this session and cannot rejoin.";
         }
 
-        // Stash inventory, game mode, and XP
+        // Stash full player state (inventory, equipment, game mode, XP, respawn point)
         stashes.put(uuid, savePlayerState(player));
         playerSessions.put(uuid, name);
 
@@ -315,7 +315,7 @@ public final class HardcoreSavedData extends SavedData {
         return null;
     }
 
-    // Restores inventory, teleports to spawn, and messages all online participants.
+    // Restores full player state, teleports to spawn, and messages all online participants.
     // Offline players stay in playerSessions so onPlayerReconnect can restore them.
     private void restoreAllParticipants(SessionData session, MinecraftServer server, String message) {
         Set<UUID> allParticipants = new HashSet<>();
@@ -354,6 +354,7 @@ public final class HardcoreSavedData extends SavedData {
             EquipmentSlot.FEET, EquipmentSlot.OFFHAND
     };
 
+    // Saves inventory, equipment, game mode, XP, and respawn point to a CompoundTag.
     private CompoundTag savePlayerState(ServerPlayer player) {
         CompoundTag tag = new CompoundTag();
         var registryOps = ((ServerLevel) player.level()).getServer()
@@ -394,9 +395,17 @@ public final class HardcoreSavedData extends SavedData {
         tag.putFloat("XpProgress", player.experienceProgress);
         tag.putInt("TotalXp", player.totalExperience);
 
+        // Respawn point (bed/anchor)
+        ServerPlayer.RespawnConfig respawnCfg = player.getRespawnConfig();
+        if (respawnCfg != null) {
+            ServerPlayer.RespawnConfig.CODEC.encodeStart(NbtOps.INSTANCE, respawnCfg)
+                    .result().ifPresent(nbt -> tag.put("RespawnConfig", nbt));
+        }
+
         return tag;
     }
 
+    // Restores inventory, equipment, game mode, XP, and respawn point from the stash.
     private void restorePlayerState(ServerPlayer player) {
         UUID uuid = player.getUUID();
         CompoundTag tag = stashes.remove(uuid);
@@ -454,6 +463,16 @@ public final class HardcoreSavedData extends SavedData {
         player.experienceLevel = tag.getInt("XpLevel").orElse(0);
         player.experienceProgress = tag.getFloat("XpProgress").orElse(0f);
         player.totalExperience = tag.getInt("TotalXp").orElse(0);
+
+        // Restore respawn point (bed/anchor)
+        Tag respawnTag = tag.get("RespawnConfig");
+        if (respawnTag != null) {
+            ServerPlayer.RespawnConfig restored = ServerPlayer.RespawnConfig.CODEC
+                    .parse(NbtOps.INSTANCE, respawnTag).result().orElse(null);
+            player.setRespawnPosition(restored, false);
+        } else {
+            player.setRespawnPosition(null, false);
+        }
     }
 
     private static void clearEquipment(ServerPlayer player) {
