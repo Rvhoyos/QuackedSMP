@@ -3,7 +3,8 @@ import {
   IconGrassBlock, IconEnderPearl, IconBookQuill,
   IconBallot, IconDiscord, IconMapScroll, IconShield,
   IconPlayerHead, IconChest, IconSign, IconClock,
-  IconVoiceChat, IconSword,
+  IconVoiceChat, IconCrown, IconLoot, IconTierStar,
+  IconHelmetGhost, IconChestplateGhost, IconLeggingsGhost, IconBootsGhost,
 } from './MinecraftIcons'
 import styles from './ConfigEditor.module.css'
 
@@ -633,6 +634,8 @@ function ListEditor({ value = [], onChange, placeholder }) {
   )
 }
 
+const TIER_COLORS = ['#cba6f7', '#fab387', '#f9e2af', '#a6e3a1', '#89b4fa', '#f5c2e7', '#94e2d5', '#89dceb']
+
 function TierDefsEditor({ value = [], onChange }) {
   function update(i, field, val) {
     const next = [...value]
@@ -644,7 +647,12 @@ function TierDefsEditor({ value = [], onChange }) {
     <div className={styles.listEditor}>
       {value.map((item, i) => (
         <div key={i} className={styles.tierDefRow}>
-          <span className={styles.tierDefNum}>T{item.tier}</span>
+          <span className={styles.tierBadgeInline}>
+            <span className={styles.tierStarWrap}>
+              <IconTierStar size={16} color={TIER_COLORS[i % TIER_COLORS.length]} />
+            </span>
+            <span className={styles.tierDefNum} style={{ color: TIER_COLORS[i % TIER_COLORS.length] }}>T{item.tier}</span>
+          </span>
           <div style={{ flex: 1, minWidth: 60 }}>
             <TextInput value={item.name} onChange={v => update(i, 'name', v)} placeholder="Name" />
           </div>
@@ -689,7 +697,7 @@ function MuteLevels({ value = [], onChange }) {
 function VipTab({ draft, patch }) {
   return (
     <>
-      <Group icon={<IconPlayerHead />} title="Tiers" accent="mauve">
+      <Group icon={<IconCrown />} title="Tiers" accent="mauve">
         <StackedRow label="Tier Definitions" hint="Each tier: level number, display name, min playtime to auto-earn, bonus claims granted">
           <TierDefsEditor value={draft.tiers} onChange={v => patch('tiers', v)} />
         </StackedRow>
@@ -701,7 +709,7 @@ function VipTab({ draft, patch }) {
         </Row>
       </Group>
 
-      <Group icon={<IconSword />} title="Kit Definitions" accent="peach">
+      <Group icon={<IconLoot />} title="Kit Definitions" accent="peach">
         <StackedRow label="Kits" hint="Each kit: name (used in /smp kit command), display name (& color codes), min tier, armor, and items.">
           <KitDefsEditor value={draft.kit_definitions} onChange={v => patch('kit_definitions', v)} />
         </StackedRow>
@@ -765,11 +773,26 @@ function SuggestInput({ value, onChange, placeholder, listId, suggestions = ITEM
   )
 }
 
+const ARMOR_GHOST_ICONS = {
+  head:  IconHelmetGhost,
+  chest: IconChestplateGhost,
+  legs:  IconLeggingsGhost,
+  feet:  IconBootsGhost,
+}
+
+function shortItemName(id) {
+  if (!id) return ''
+  const name = id.replace(/^minecraft:/, '')
+  return name.length > 10 ? name.slice(0, 9) + '\u2026' : name
+}
+
 function KitDefsEditor({ value = [], onChange }) {
   const [expanded, setExpanded] = useState({})
+  const [editingItem, setEditingItem] = useState({})
 
   function toggle(i) {
     setExpanded(e => ({ ...e, [i]: !e[i] }))
+    setEditingItem(e => ({ ...e, [i]: null }))
   }
 
   function update(i, field, val) {
@@ -797,6 +820,7 @@ function KitDefsEditor({ value = [], onChange }) {
       return { ...k, items: [...k.items, { item: '', count: 1 }] }
     })
     onChange(next)
+    setEditingItem(e => ({ ...e, [kitIdx]: value[kitIdx].items.length }))
   }
 
   function removeItem(kitIdx, itemIdx) {
@@ -805,6 +829,7 @@ function KitDefsEditor({ value = [], onChange }) {
       return { ...k, items: k.items.filter((_, ii) => ii !== itemIdx) }
     })
     onChange(next)
+    setEditingItem(e => ({ ...e, [kitIdx]: null }))
   }
 
   function addKit() {
@@ -827,7 +852,12 @@ function KitDefsEditor({ value = [], onChange }) {
           <div className={styles.kitHeader} onClick={() => toggle(i)}>
             <span className={styles.kitCaret}>{expanded[i] ? '▾' : '▸'}</span>
             <span className={styles.kitName}>{kit.name || '(unnamed)'}</span>
-            {kit.minTier > 0 && <span className={styles.kitTierBadge}>Tier {kit.minTier}</span>}
+            {kit.minTier > 0 && (
+              <span className={styles.kitTierBadge}>
+                <IconTierStar size={12} color="#cba6f7" />
+                Tier {kit.minTier}
+              </span>
+            )}
             <button className={styles.listRemove} onClick={e => { e.stopPropagation(); removeKit(i) }} type="button">✕</button>
           </div>
 
@@ -847,35 +877,60 @@ function KitDefsEditor({ value = [], onChange }) {
               </div>
 
               <div className={styles.kitSectionLabel}>Armor</div>
-              <div className={styles.kitArmorGrid}>
-                {['head', 'chest', 'legs', 'feet'].map(slot => (
-                  <div key={slot} className={styles.kitFieldRow}>
-                    <label className={styles.kitFieldLabel}>{slot.charAt(0).toUpperCase() + slot.slice(1)}</label>
-                    <SuggestInput
-                      value={kit.armor?.[slot] ?? ''}
-                      onChange={v => updateArmor(i, slot, v)}
-                      placeholder={ARMOR_SUGGESTIONS[slot]?.[2] ?? ''}
-                      listId={`armor-${i}-${slot}`}
-                      suggestions={ARMOR_SUGGESTIONS[slot] ?? []}
-                    />
-                  </div>
-                ))}
+              <div className={styles.armorColumn}>
+                {['head', 'chest', 'legs', 'feet'].map(slot => {
+                  const GhostIcon = ARMOR_GHOST_ICONS[slot]
+                  const filled = !!(kit.armor?.[slot])
+                  return (
+                    <div key={slot} className={styles.armorRow}>
+                      <div className={`${styles.invSlot} ${filled ? styles.invSlotFilled : ''}`}>
+                        <span className={styles.invSlotGhost}>
+                          <GhostIcon size={24} />
+                        </span>
+                      </div>
+                      <SuggestInput
+                        value={kit.armor?.[slot] ?? ''}
+                        onChange={v => updateArmor(i, slot, v)}
+                        placeholder={ARMOR_SUGGESTIONS[slot]?.[2] ?? ''}
+                        listId={`armor-${i}-${slot}`}
+                        suggestions={ARMOR_SUGGESTIONS[slot] ?? []}
+                      />
+                    </div>
+                  )
+                })}
               </div>
 
               <div className={styles.kitSectionLabel}>Items</div>
-              {kit.items.map((it, j) => (
-                <div key={j} className={styles.kitItemRow}>
-                  <SuggestInput
-                    value={it.item}
-                    onChange={v => updateItem(i, j, 'item', v)}
-                    placeholder="minecraft:diamond"
-                    listId={`item-${i}-${j}`}
-                  />
-                  <NumInput value={it.count} onChange={v => updateItem(i, j, 'count', v)} />
-                  <button className={styles.listRemove} onClick={() => removeItem(i, j)} type="button">✕</button>
+              <div className={styles.itemGridWrap}>
+                <div className={styles.itemGrid}>
+                  {kit.items.map((it, j) => (
+                    <div
+                      key={j}
+                      className={`${styles.itemSlot} ${editingItem[i] === j ? styles.itemSlotSelected : ''}`}
+                      onClick={() => setEditingItem(e => ({ ...e, [i]: e[i] === j ? null : j }))}
+                      title={it.item || 'Empty'}
+                    >
+                      <span className={styles.itemSlotLabel}>{shortItemName(it.item)}</span>
+                      {it.count > 1 && <span className={styles.itemSlotCount}>{it.count}</span>}
+                    </div>
+                  ))}
+                  <div className={styles.itemSlot} onClick={() => addItem(i)} title="Add item">
+                    <span className={styles.itemSlotAdd}>+</span>
+                  </div>
                 </div>
-              ))}
-              <button className={styles.listAdd} onClick={() => addItem(i)} type="button">+ Add Item</button>
+              </div>
+              {editingItem[i] != null && kit.items[editingItem[i]] && (
+                <div className={styles.itemEditBar}>
+                  <SuggestInput
+                    value={kit.items[editingItem[i]].item}
+                    onChange={v => updateItem(i, editingItem[i], 'item', v)}
+                    placeholder="minecraft:diamond"
+                    listId={`item-${i}-${editingItem[i]}`}
+                  />
+                  <NumInput value={kit.items[editingItem[i]].count} onChange={v => updateItem(i, editingItem[i], 'count', v)} />
+                  <button className={styles.listRemove} onClick={() => removeItem(i, editingItem[i])} type="button">✕</button>
+                </div>
+              )}
             </div>
           )}
         </div>

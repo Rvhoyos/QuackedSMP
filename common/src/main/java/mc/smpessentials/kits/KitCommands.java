@@ -66,6 +66,7 @@ public final class KitCommands {
     }
 
     private static int claimKit(CommandSourceStack src, String name) {
+        if (mc.smpessentials.hardcore.HardcoreSavedData.denyIfInSession(src)) return 0;
         ServerPlayer player = (ServerPlayer) src.getEntity();
         MinecraftServer server = src.getServer();
 

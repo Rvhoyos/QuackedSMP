@@ -606,6 +606,171 @@ export function IconMod({ size = 18 }) {
   )
 }
 
+// ── VIP tab icons ────────────────────────────────────────────────────────────
+
+export function IconCrown({ size = 20 }) {
+  return (
+    <svg viewBox="0 0 16 16" width={size} height={size} shapeRendering="crispEdges">
+      {/* Base band */}
+      {px(2, 11, 12, 3, '#B8860B')}
+      {px(2, 11, 12, 1, '#D4A017')}
+      {px(2, 13, 12, 1, '#9A7000')}
+      {/* Crown body */}
+      {px(2, 6, 12, 5, '#FFD700')}
+      {/* Three points */}
+      {px(3, 3, 2, 3, '#FFD700')}
+      {px(7, 1, 2, 5, '#FFD700')}
+      {px(11, 3, 2, 3, '#FFD700')}
+      {/* Point tips */}
+      {px(3, 2, 2, 1, '#FFEC70')}
+      {px(7, 0, 2, 1, '#FFEC70')}
+      {px(11, 2, 2, 1, '#FFEC70')}
+      {/* Center gem */}
+      {px(7, 7, 2, 2, '#E91E63')}
+      {px(7, 7, 1, 1, '#FF4081')}
+      {/* Side gems */}
+      {px(4, 8, 1, 1, '#4FC3F7')}
+      {px(11, 8, 1, 1, '#4FC3F7')}
+      {/* Highlight */}
+      {px(3, 6, 2, 1, '#FFEC70')}
+    </svg>
+  )
+}
+
+export function IconHelmetGhost({ size = 20 }) {
+  return (
+    <svg viewBox="0 0 16 16" width={size} height={size} shapeRendering="crispEdges">
+      {/* Crown */}
+      {px(3, 1, 10, 2, '#666')}
+      {px(2, 3, 12, 2, '#5A5A5A')}
+      {/* Sides */}
+      {px(1, 5, 14, 4, '#555')}
+      {/* Brim */}
+      {px(0, 9, 16, 2, '#666')}
+      {/* Visor opening */}
+      {px(3, 7, 10, 3, '#333')}
+      {/* Nose guard */}
+      {px(7, 7, 2, 2, '#5A5A5A')}
+      {/* Top highlight */}
+      {px(5, 1, 3, 1, '#777')}
+    </svg>
+  )
+}
+
+export function IconChestplateGhost({ size = 20 }) {
+  return (
+    <svg viewBox="0 0 16 16" width={size} height={size} shapeRendering="crispEdges">
+      {/* Shoulders */}
+      {px(0, 1, 4, 4, '#666')}
+      {px(12, 1, 4, 4, '#666')}
+      {/* Collar */}
+      {px(4, 0, 8, 2, '#5A5A5A')}
+      {/* Neck opening */}
+      {px(5, 0, 6, 2, '#333')}
+      {/* Torso */}
+      {px(2, 3, 12, 10, '#555')}
+      {/* Side taper */}
+      {px(3, 13, 10, 2, '#555')}
+      {/* Chest highlight */}
+      {px(4, 4, 3, 2, '#666')}
+      {/* Arm holes */}
+      {px(0, 5, 2, 8, '#333')}
+      {px(14, 5, 2, 8, '#333')}
+    </svg>
+  )
+}
+
+export function IconLeggingsGhost({ size = 20 }) {
+  return (
+    <svg viewBox="0 0 16 16" width={size} height={size} shapeRendering="crispEdges">
+      {/* Waistband */}
+      {px(2, 0, 12, 3, '#666')}
+      {/* Belt */}
+      {px(3, 1, 10, 1, '#777')}
+      {/* Left leg */}
+      {px(2, 3, 5, 12, '#555')}
+      {px(3, 15, 4, 1, '#555')}
+      {/* Right leg */}
+      {px(9, 3, 5, 12, '#555')}
+      {px(9, 15, 4, 1, '#555')}
+      {/* Gap between legs */}
+      {px(7, 6, 2, 10, '#333')}
+      {/* Knee highlights */}
+      {px(3, 9, 3, 1, '#666')}
+      {px(10, 9, 3, 1, '#666')}
+    </svg>
+  )
+}
+
+export function IconBootsGhost({ size = 20 }) {
+  return (
+    <svg viewBox="0 0 16 16" width={size} height={size} shapeRendering="crispEdges">
+      {/* Left boot shaft */}
+      {px(1, 2, 5, 8, '#555')}
+      {/* Left boot foot */}
+      {px(0, 10, 7, 4, '#666')}
+      {px(0, 14, 7, 2, '#5A5A5A')}
+      {/* Left boot top */}
+      {px(1, 2, 5, 1, '#777')}
+      {/* Right boot shaft */}
+      {px(10, 2, 5, 8, '#555')}
+      {/* Right boot foot */}
+      {px(9, 10, 7, 4, '#666')}
+      {px(9, 14, 7, 2, '#5A5A5A')}
+      {/* Right boot top */}
+      {px(10, 2, 5, 1, '#777')}
+    </svg>
+  )
+}
+
+export function IconLoot({ size = 20 }) {
+  return (
+    <svg viewBox="0 0 16 16" width={size} height={size} shapeRendering="crispEdges">
+      {/* Chest body */}
+      {px(1, 7, 14, 8, '#9A6028')}
+      {/* Chest body highlight */}
+      {px(2, 8, 12, 1, '#AB7030')}
+      {/* Hinge line */}
+      {px(1, 7, 14, 1, '#5E3010')}
+      {/* Lock plate */}
+      {px(6, 9, 4, 3, '#5E3010')}
+      {px(7, 10, 2, 1, '#CDA040')}
+      {/* Open lid (angled up-left) */}
+      {px(0, 2, 12, 5, '#B8773A')}
+      {px(1, 3, 10, 1, '#C8883F')}
+      {px(0, 6, 12, 1, '#5E3010')}
+      {/* Loot: gold ingot poking out */}
+      {px(3, 4, 3, 3, '#FFD700')}
+      {px(3, 4, 3, 1, '#FFEC70')}
+      {/* Loot: emerald */}
+      {px(10, 3, 3, 4, '#50C878')}
+      {px(10, 3, 3, 1, '#70E898')}
+      {/* Loot: diamond peeking */}
+      {px(7, 5, 2, 2, '#4FC3F7')}
+    </svg>
+  )
+}
+
+export function IconTierStar({ size = 16, color = '#cba6f7' }) {
+  return (
+    <svg viewBox="0 0 16 16" width={size} height={size} shapeRendering="crispEdges">
+      {/* Star body */}
+      {px(6, 0, 4, 4, color)}
+      {px(0, 5, 16, 5, color)}
+      {px(2, 4, 12, 2, color)}
+      {px(2, 10, 12, 2, color)}
+      {/* Bottom points */}
+      {px(3, 12, 4, 3, color)}
+      {px(9, 12, 4, 3, color)}
+      {px(4, 15, 2, 1, color)}
+      {px(10, 15, 2, 1, color)}
+      {/* Bright center highlight */}
+      <rect key="hl1" x="5" y="5" width="6" height="4" fill="#FFFFFF" opacity="0.3" />
+      <rect key="hl2" x="6" y="3" width="4" height="2" fill="#FFFFFF" opacity="0.2" />
+    </svg>
+  )
+}
+
 export function IconSign({ size = 20 }) {
   return (
     <svg viewBox="0 0 16 16" width={size} height={size} shapeRendering="crispEdges">

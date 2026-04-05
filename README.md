@@ -312,6 +312,24 @@ Sessions can also be viewed and force-ended from the admin panel.
 
 ---
 
+### Kits
+
+Daily kit claim system. Players choose one kit per cooldown period from their available pool. Kits contain an armor set and items, and can be tier-gated for VIP exclusives.
+
+- Global cooldown (default 24 hours) shared across all kits — pick one per day
+- Each kit has a minimum tier requirement (0 = everyone, 1+ = VIP)
+- Armor equips to the slot if empty, otherwise goes to inventory, otherwise drops at feet
+- Items overflow to the ground if inventory is full
+- Fully configurable from the admin panel VIP tab: armor slots with per-slot suggestions, item grid editor, cooldown, tier requirements
+
+| Command | Description | Permission |
+| :--- | :--- | :--- |
+| `/smp kit` | List available kits and cooldown status | Everyone |
+| `/smp kit list` | Same as above | Everyone |
+| `/smp kit <name>` | Claim a kit | Everyone |
+
+---
+
 ### Simple Voice Chat Integration
 
 Optional age-gate for [Simple Voice Chat](https://modrinth.com/plugin/simple-voice-chat). When enabled:
@@ -385,6 +403,9 @@ Optional age-gate for [Simple Voice Chat](https://modrinth.com/plugin/simple-voi
 | `/smp hardcore leave` | Leave current hardcore session | Everyone |
 | `/smp hardcore status [name]` | View session status | Everyone |
 | `/smp hardcore list` | List all active sessions | Everyone |
+| `/smp kit` | List available kits and cooldown status | Everyone |
+| `/smp kit list` | Same as above | Everyone |
+| `/smp kit <name>` | Claim a kit | Everyone |
 | `/dim create <id> <type> [sub-params]` | Create a custom dimension | OP |
 | `/dim delete <id>` | Delete a custom dimension | OP |
 | `/dim list` | List all active dimensions | Everyone |
@@ -426,6 +447,9 @@ Config lives at `config/quackedsmp.json`. Most settings are editable live from t
 | `bluemap_vip_claim_color` | `8A2BE2` | Hex color for VIP claims |
 | `bluemap_show_worldborder` | `true` | Show world border on BlueMap |
 | `bluemap_worldborder_color` | `FF3C3C` | Hex color for world border |
+| `kits_enabled` | `true` | Enable the kit claim system |
+| `kits.cooldownSeconds` | `86400` | Seconds between kit claims (default 24 hours) |
+| `kits.kits` | see JSON | Kit definitions: name, displayName, minTier, armor, items |
 | `hardcore_enabled` | `false` | Enable the hardcore session system |
 | `hardcore_death_percent` | `50` | Deaths as % of peak players to end a session |
 | `skills.xp_exponent` | `1.5` | Exponential factor for skill leveling |
