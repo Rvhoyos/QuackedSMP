@@ -235,7 +235,28 @@ public final class AdminHandler {
         sb.append(String.format("\"cap_knowledge_xp\":%.2f,", SmpConfig.CAP_KNOWLEDGE_XP));
         sb.append(String.format("\"cap_double_drop\":%.2f,", SmpConfig.CAP_DOUBLE_DROP));
         sb.append(String.format("\"cap_defense_armor\":%.2f,", SmpConfig.CAP_DEFENSE_ARMOR));
-        sb.append(String.format("\"cap_safe_landing\":%.2f", SmpConfig.CAP_SAFE_LANDING));
+        sb.append(String.format("\"cap_safe_landing\":%.2f,", SmpConfig.CAP_SAFE_LANDING));
+        // Kits
+        sb.append(String.format("\"kits_enabled\":%b,", SmpConfig.KITS_ENABLED));
+        sb.append(String.format("\"kit_cooldown_seconds\":%d,", SmpConfig.KIT_COOLDOWN_SECONDS));
+        sb.append("\"kit_definitions\":[");
+        for (int i = 0; i < SmpConfig.KIT_DEFINITIONS.size(); i++) {
+            if (i > 0) sb.append(',');
+            var kit = SmpConfig.KIT_DEFINITIONS.get(i);
+            sb.append(String.format("{\"name\":\"%s\",\"displayName\":\"%s\",\"minTier\":%d,",
+                    jsonEscape(kit.name), jsonEscape(kit.displayName), kit.minTier));
+            sb.append(String.format("\"armor\":{\"head\":\"%s\",\"chest\":\"%s\",\"legs\":\"%s\",\"feet\":\"%s\"},",
+                    jsonEscape(kit.armor.head), jsonEscape(kit.armor.chest),
+                    jsonEscape(kit.armor.legs), jsonEscape(kit.armor.feet)));
+            sb.append("\"items\":[");
+            for (int j = 0; j < kit.items.size(); j++) {
+                if (j > 0) sb.append(',');
+                var item = kit.items.get(j);
+                sb.append(String.format("{\"item\":\"%s\",\"count\":%d}", jsonEscape(item.item), item.count));
+            }
+            sb.append("]}");
+        }
+        sb.append("]");
         sb.append("}");
         return sb.toString();
     }
@@ -320,6 +341,39 @@ public final class AdminHandler {
             if (patch.has("cap_double_drop"))      { SmpConfig.CAP_DOUBLE_DROP      = patch.get("cap_double_drop").getAsDouble();      changed++; }
             if (patch.has("cap_defense_armor"))    { SmpConfig.CAP_DEFENSE_ARMOR    = patch.get("cap_defense_armor").getAsDouble();    changed++; }
             if (patch.has("cap_safe_landing"))     { SmpConfig.CAP_SAFE_LANDING     = patch.get("cap_safe_landing").getAsDouble();     changed++; }
+            // Kits
+            if (patch.has("kits_enabled"))         { SmpConfig.KITS_ENABLED         = patch.get("kits_enabled").getAsBoolean();       changed++; }
+            if (patch.has("kit_cooldown_seconds"))  { SmpConfig.KIT_COOLDOWN_SECONDS  = patch.get("kit_cooldown_seconds").getAsLong();  changed++; }
+            if (patch.has("kit_definitions") && patch.get("kit_definitions").isJsonArray()) {
+                SmpConfig.KIT_DEFINITIONS.clear();
+                for (var el : patch.getAsJsonArray("kit_definitions")) {
+                    if (!el.isJsonObject()) continue;
+                    JsonObject ko = el.getAsJsonObject();
+                    var kit = new mc.smpessentials.config.ConfigData.KitDef();
+                    kit.name        = ko.has("name")        ? ko.get("name").getAsString()        : "";
+                    kit.displayName = ko.has("displayName") ? ko.get("displayName").getAsString() : "";
+                    kit.minTier     = ko.has("minTier")     ? ko.get("minTier").getAsInt()        : 0;
+                    if (ko.has("armor") && ko.get("armor").isJsonObject()) {
+                        JsonObject ao = ko.getAsJsonObject("armor");
+                        kit.armor.head  = ao.has("head")  ? ao.get("head").getAsString()  : "";
+                        kit.armor.chest = ao.has("chest") ? ao.get("chest").getAsString() : "";
+                        kit.armor.legs  = ao.has("legs")  ? ao.get("legs").getAsString()  : "";
+                        kit.armor.feet  = ao.has("feet")  ? ao.get("feet").getAsString()  : "";
+                    }
+                    if (ko.has("items") && ko.get("items").isJsonArray()) {
+                        kit.items.clear();
+                        for (var ie : ko.getAsJsonArray("items")) {
+                            if (!ie.isJsonObject()) continue;
+                            JsonObject itemObj = ie.getAsJsonObject();
+                            String itemId = itemObj.has("item")  ? itemObj.get("item").getAsString() : "";
+                            int count     = itemObj.has("count") ? itemObj.get("count").getAsInt()   : 1;
+                            kit.items.add(new mc.smpessentials.config.ConfigData.KitItem(itemId, count));
+                        }
+                    }
+                    if (!kit.name.isBlank()) SmpConfig.KIT_DEFINITIONS.add(kit);
+                }
+                changed++;
+            }
 
             if (changed > 0) {
                 ConfigIO.save();

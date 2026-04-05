@@ -109,6 +109,8 @@ public final class ConfigData {
     public SkillsConfig skills = new SkillsConfig();
     // Import queue: loaded into NBT on startup/reload, then cleared from the file by ConfigIO.save().
     public ChatFilterData chatfilter = new ChatFilterData();
+    public boolean kitsEnabled = true;
+    public KitsConfig kits = new KitsConfig();
 
     public static final class VotifierConfig {
         public boolean enabled = false;
@@ -181,5 +183,77 @@ public final class ConfigData {
     public static final class ChatFilterData {
         public List<String> contents = new ArrayList<>();
         public List<String> whitelist = new ArrayList<>();
+    }
+
+    public static final class KitsConfig {
+        public long cooldownSeconds = 86400;
+        public List<KitDef> kits = new ArrayList<>(List.of(
+                new KitDef("starter", "&aStarter Kit", 0,
+                        new KitArmor("minecraft:leather_helmet", "minecraft:leather_chestplate",
+                                "minecraft:leather_leggings", "minecraft:leather_boots"),
+                        new ArrayList<>(List.of(
+                                new KitItem("minecraft:wooden_sword", 1),
+                                new KitItem("minecraft:bread", 16),
+                                new KitItem("minecraft:torch", 16),
+                                new KitItem("minecraft:oak_log", 16),
+                                new KitItem("minecraft:crafting_table", 1),
+                                new KitItem("minecraft:wheat_seeds", 8),
+                                new KitItem("minecraft:carrot", 4)))),
+                new KitDef("vip", "&6VIP Kit", 1,
+                        new KitArmor("minecraft:iron_helmet", "minecraft:iron_chestplate",
+                                "minecraft:iron_leggings", "minecraft:iron_boots"),
+                        new ArrayList<>(List.of(
+                                new KitItem("minecraft:iron_sword", 1),
+                                new KitItem("minecraft:cooked_beef", 32),
+                                new KitItem("minecraft:torch", 32),
+                                new KitItem("minecraft:oak_log", 32),
+                                new KitItem("minecraft:golden_apple", 2),
+                                new KitItem("minecraft:iron_pickaxe", 1))))));
+    }
+
+    public static final class KitDef {
+        public String name = "starter";
+        public String displayName = "&aStarter Kit";
+        public int minTier = 0;
+        public KitArmor armor = new KitArmor();
+        public List<KitItem> items = new ArrayList<>();
+
+        public KitDef() {}
+
+        public KitDef(String name, String displayName, int minTier, KitArmor armor, List<KitItem> items) {
+            this.name = name;
+            this.displayName = displayName;
+            this.minTier = minTier;
+            this.armor = armor;
+            this.items = items;
+        }
+    }
+
+    public static final class KitArmor {
+        public String head = "";
+        public String chest = "";
+        public String legs = "";
+        public String feet = "";
+
+        public KitArmor() {}
+
+        public KitArmor(String head, String chest, String legs, String feet) {
+            this.head = head;
+            this.chest = chest;
+            this.legs = legs;
+            this.feet = feet;
+        }
+    }
+
+    public static final class KitItem {
+        public String item = "minecraft:stone";
+        public int count = 1;
+
+        public KitItem() {}
+
+        public KitItem(String item, int count) {
+            this.item = item;
+            this.count = count;
+        }
     }
 }

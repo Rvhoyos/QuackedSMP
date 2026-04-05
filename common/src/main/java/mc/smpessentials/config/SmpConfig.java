@@ -60,6 +60,11 @@ public final class SmpConfig {
     public static boolean HARDCORE_ENABLED = false;
     public static int HARDCORE_DEATH_PERCENT = 50;
 
+    // ---- Kits ----
+    public static boolean KITS_ENABLED = true;
+    public static long KIT_COOLDOWN_SECONDS = 86400;
+    public static java.util.List<ConfigData.KitDef> KIT_DEFINITIONS = new java.util.ArrayList<>();
+
     // ---- Skills ----
     public static double SKILL_XP_EXPONENT = 1.5;
     public static java.util.Map<String, Long> SKILL_COOLDOWNS = new java.util.HashMap<>();
@@ -162,6 +167,10 @@ public final class SmpConfig {
 
         HARDCORE_ENABLED = d.hardcoreEnabled;
         HARDCORE_DEATH_PERCENT = d.hardcoreDeathPercent;
+
+        KITS_ENABLED = d.kitsEnabled;
+        KIT_COOLDOWN_SECONDS = d.kits.cooldownSeconds;
+        KIT_DEFINITIONS = d.kits.kits;
 
         SKILL_XP_EXPONENT = d.skills.xpExponent;
         SKILL_COOLDOWNS = d.skills.cooldowns;

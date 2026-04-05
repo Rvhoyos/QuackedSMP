@@ -733,3 +733,96 @@
   font-weight: 500;
   text-shadow: 1px 1px 0 rgba(0,0,0,0.8);
 }
+
+/* ── Kit Definitions Editor ── */
+.kitCard {
+  border: 1px solid #1A1A1A;
+  background: #1E1E1E;
+  overflow: hidden;
+}
+
+.kitHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  cursor: pointer;
+  background: #1A1A1A;
+  transition: background var(--t-fast);
+}
+
+.kitHeader:hover { background: #222; }
+
+.kitCaret {
+  font-size: 8px;
+  color: #555;
+  flex-shrink: 0;
+  width: 10px;
+}
+
+.kitName {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text);
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.kitTierBadge {
+  font-family: var(--font-pixel);
+  font-size: 5px;
+  letter-spacing: 0.5px;
+  color: var(--mauve);
+  background: rgba(203, 166, 247, 0.1);
+  padding: 3px 8px;
+  flex-shrink: 0;
+}
+
+.kitBody {
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border-top: 1px solid #111;
+}
+
+.kitFieldRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.kitFieldLabel {
+  font-size: 11px;
+  color: #666;
+  min-width: 80px;
+  flex-shrink: 0;
+}
+
+.kitSectionLabel {
+  font-family: var(--font-pixel);
+  font-size: 5px;
+  letter-spacing: 0.5px;
+  color: #444;
+  text-transform: uppercase;
+  padding-top: 6px;
+  border-top: 1px solid #1A1A1A;
+}
+
+.kitArmorGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.kitItemRow {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.kitItemRow > input { flex: 1; }
+.kitItemRow > .numWrap { flex-shrink: 0; }

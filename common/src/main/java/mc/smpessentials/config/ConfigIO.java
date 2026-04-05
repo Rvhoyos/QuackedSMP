@@ -123,6 +123,10 @@ public final class ConfigIO {
         data.discord.joinLeave = SmpConfig.DISCORD_JOIN_LEAVE;
         data.discord.chat = SmpConfig.DISCORD_CHAT;
 
+        data.kitsEnabled = SmpConfig.KITS_ENABLED;
+        data.kits.cooldownSeconds = SmpConfig.KIT_COOLDOWN_SECONDS;
+        data.kits.kits = new java.util.ArrayList<>(SmpConfig.KIT_DEFINITIONS);
+
         data.skills.xpExponent = SmpConfig.SKILL_XP_EXPONENT;
         data.skills.cooldowns = new java.util.HashMap<>(SmpConfig.SKILL_COOLDOWNS);
         data.skills.abilityUnlockLevels = new java.util.HashMap<>(SmpConfig.SKILL_UNLOCK_LEVELS);

@@ -3,7 +3,7 @@ import {
   IconGrassBlock, IconEnderPearl, IconBookQuill,
   IconBallot, IconDiscord, IconMapScroll, IconShield,
   IconPlayerHead, IconChest, IconSign, IconClock,
-  IconVoiceChat,
+  IconVoiceChat, IconSword,
 } from './MinecraftIcons'
 import styles from './ConfigEditor.module.css'
 
@@ -24,10 +24,14 @@ const TABS = [
   {
     id: 'general', label: 'General',
     keys: [
-      'max_claims', 'allow_lava_wilderness', 'tiers',
+      'max_claims', 'allow_lava_wilderness',
       'tp_warmup', 'mute_levels_minutes', 'hardcore_death_percent',
       'admin_enabled', 'dashboard_port', 'server_name',
     ],
+  },
+  {
+    id: 'vip', label: 'VIP',
+    keys: ['tiers', 'kit_cooldown_seconds', 'kit_definitions'],
   },
   {
     id: 'chat', label: 'Chat',
@@ -159,6 +163,7 @@ export default function ConfigEditor({ token, onExpired }) {
 
       <div className={styles.scroll}>
         {tab === 'general'      && <GeneralTab      draft={draft} patch={patch} onDisable={disableDashboard} disabling={disabling} disableMsg={disableMsg} />}
+        {tab === 'vip'          && <VipTab           draft={draft} patch={patch} />}
         {tab === 'chat'         && <ChatTab          draft={draft} patch={patch} />}
         {tab === 'integrations' && <IntegrationsTab  draft={draft} patch={patch} />}
       </div>
@@ -190,12 +195,6 @@ function GeneralTab({ draft, patch, onDisable, disabling, disableMsg }) {
         <Row label="Lava in Wilderness" hint="Allow lava source placement outside claimed land">
           <Toggle value={draft.allow_lava_wilderness} onChange={v => patch('allow_lava_wilderness', v)} />
         </Row>
-      </Group>
-
-      <Group icon={<IconPlayerHead />} title="Tiers" accent="mauve">
-        <StackedRow label="Tier Definitions" hint="Each tier: level number, display name, min playtime to auto-earn, bonus claims granted">
-          <TierDefsEditor value={draft.tiers} onChange={v => patch('tiers', v)} />
-        </StackedRow>
       </Group>
 
       <Group icon={<IconEnderPearl />} title="Teleport" accent="teal">
@@ -681,6 +680,207 @@ function MuteLevels({ value = [], onChange }) {
           />
         </div>
       ))}
+    </div>
+  )
+}
+
+// ── Tab: Kits ────────────────────────────────────────────────────────────────
+
+function VipTab({ draft, patch }) {
+  return (
+    <>
+      <Group icon={<IconPlayerHead />} title="Tiers" accent="mauve">
+        <StackedRow label="Tier Definitions" hint="Each tier: level number, display name, min playtime to auto-earn, bonus claims granted">
+          <TierDefsEditor value={draft.tiers} onChange={v => patch('tiers', v)} />
+        </StackedRow>
+      </Group>
+
+      <Group icon={<IconClock />} title="Kit Settings" accent="teal">
+        <Row label="Cooldown Duration" hint="Seconds between kit claims. Default 86400 = 24 hours.">
+          <NumInput value={draft.kit_cooldown_seconds} onChange={v => patch('kit_cooldown_seconds', v)} suffix="s" />
+        </Row>
+      </Group>
+
+      <Group icon={<IconSword />} title="Kit Definitions" accent="peach">
+        <StackedRow label="Kits" hint="Each kit: name (used in /smp kit command), display name (& color codes), min tier, armor, and items.">
+          <KitDefsEditor value={draft.kit_definitions} onChange={v => patch('kit_definitions', v)} />
+        </StackedRow>
+      </Group>
+    </>
+  )
+}
+
+// ── Kit Definitions Editor ───────────────────────────────────────────────────
+
+const MATERIALS = ['leather', 'chainmail', 'iron', 'golden', 'diamond', 'netherite']
+
+const ARMOR_SUGGESTIONS = {
+  head:  MATERIALS.map(m => `minecraft:${m}_helmet`),
+  chest: MATERIALS.map(m => `minecraft:${m}_chestplate`),
+  legs:  MATERIALS.map(m => `minecraft:${m}_leggings`),
+  feet:  MATERIALS.map(m => `minecraft:${m}_boots`),
+}
+
+const ITEM_SUGGESTIONS = [
+  // Weapons
+  'minecraft:wooden_sword', 'minecraft:stone_sword', 'minecraft:iron_sword', 'minecraft:golden_sword',
+  'minecraft:diamond_sword', 'minecraft:netherite_sword', 'minecraft:bow', 'minecraft:crossbow', 'minecraft:trident',
+  // Tools
+  'minecraft:wooden_pickaxe', 'minecraft:stone_pickaxe', 'minecraft:iron_pickaxe', 'minecraft:diamond_pickaxe', 'minecraft:netherite_pickaxe',
+  'minecraft:wooden_axe', 'minecraft:stone_axe', 'minecraft:iron_axe', 'minecraft:diamond_axe', 'minecraft:netherite_axe',
+  'minecraft:wooden_shovel', 'minecraft:stone_shovel', 'minecraft:iron_shovel', 'minecraft:diamond_shovel', 'minecraft:netherite_shovel',
+  'minecraft:wooden_hoe', 'minecraft:stone_hoe', 'minecraft:iron_hoe', 'minecraft:diamond_hoe', 'minecraft:netherite_hoe',
+  // Food
+  'minecraft:bread', 'minecraft:cooked_beef', 'minecraft:cooked_porkchop', 'minecraft:cooked_chicken', 'minecraft:cooked_salmon',
+  'minecraft:baked_potato', 'minecraft:golden_apple', 'minecraft:enchanted_golden_apple', 'minecraft:golden_carrot',
+  // Resources
+  'minecraft:oak_log', 'minecraft:cobblestone', 'minecraft:iron_ingot', 'minecraft:gold_ingot', 'minecraft:diamond',
+  'minecraft:emerald', 'minecraft:coal', 'minecraft:oak_planks', 'minecraft:stick',
+  // Utility
+  'minecraft:torch', 'minecraft:crafting_table', 'minecraft:furnace', 'minecraft:chest', 'minecraft:ender_pearl',
+  'minecraft:white_bed', 'minecraft:shield', 'minecraft:bucket', 'minecraft:fishing_rod', 'minecraft:compass',
+  'minecraft:map', 'minecraft:spyglass', 'minecraft:flint_and_steel',
+  // Farming
+  'minecraft:wheat_seeds', 'minecraft:melon_seeds', 'minecraft:pumpkin_seeds', 'minecraft:carrot',
+  'minecraft:potato', 'minecraft:beetroot_seeds', 'minecraft:bone_meal',
+]
+
+function SuggestInput({ value, onChange, placeholder, listId, suggestions = ITEM_SUGGESTIONS }) {
+  return (
+    <>
+      <input
+        className={styles.textInput}
+        type="text"
+        value={value ?? ''}
+        onChange={e => onChange(e.target.value)}
+        placeholder={placeholder}
+        list={listId}
+        spellCheck={false}
+        autoComplete="off"
+      />
+      <datalist id={listId}>
+        {suggestions.map(s => <option key={s} value={s} />)}
+      </datalist>
+    </>
+  )
+}
+
+function KitDefsEditor({ value = [], onChange }) {
+  const [expanded, setExpanded] = useState({})
+
+  function toggle(i) {
+    setExpanded(e => ({ ...e, [i]: !e[i] }))
+  }
+
+  function update(i, field, val) {
+    const next = value.map((k, j) => j === i ? { ...k, [field]: val } : k)
+    onChange(next)
+  }
+
+  function updateArmor(i, slot, val) {
+    const next = value.map((k, j) => j === i ? { ...k, armor: { ...k.armor, [slot]: val } } : k)
+    onChange(next)
+  }
+
+  function updateItem(kitIdx, itemIdx, field, val) {
+    const next = value.map((k, j) => {
+      if (j !== kitIdx) return k
+      const items = k.items.map((it, ii) => ii === itemIdx ? { ...it, [field]: val } : it)
+      return { ...k, items }
+    })
+    onChange(next)
+  }
+
+  function addItem(kitIdx) {
+    const next = value.map((k, j) => {
+      if (j !== kitIdx) return k
+      return { ...k, items: [...k.items, { item: '', count: 1 }] }
+    })
+    onChange(next)
+  }
+
+  function removeItem(kitIdx, itemIdx) {
+    const next = value.map((k, j) => {
+      if (j !== kitIdx) return k
+      return { ...k, items: k.items.filter((_, ii) => ii !== itemIdx) }
+    })
+    onChange(next)
+  }
+
+  function addKit() {
+    onChange([...value, {
+      name: '', displayName: '', minTier: 0,
+      armor: { head: '', chest: '', legs: '', feet: '' },
+      items: [],
+    }])
+    setExpanded(e => ({ ...e, [value.length]: true }))
+  }
+
+  function removeKit(i) {
+    onChange(value.filter((_, j) => j !== i))
+  }
+
+  return (
+    <div className={styles.listEditor}>
+      {value.map((kit, i) => (
+        <div key={i} className={styles.kitCard}>
+          <div className={styles.kitHeader} onClick={() => toggle(i)}>
+            <span className={styles.kitCaret}>{expanded[i] ? '▾' : '▸'}</span>
+            <span className={styles.kitName}>{kit.name || '(unnamed)'}</span>
+            {kit.minTier > 0 && <span className={styles.kitTierBadge}>Tier {kit.minTier}</span>}
+            <button className={styles.listRemove} onClick={e => { e.stopPropagation(); removeKit(i) }} type="button">✕</button>
+          </div>
+
+          {expanded[i] && (
+            <div className={styles.kitBody}>
+              <div className={styles.kitFieldRow}>
+                <label className={styles.kitFieldLabel}>Name</label>
+                <TextInput value={kit.name} onChange={v => update(i, 'name', v)} placeholder="starter" />
+              </div>
+              <div className={styles.kitFieldRow}>
+                <label className={styles.kitFieldLabel}>Display Name</label>
+                <TextInput value={kit.displayName} onChange={v => update(i, 'displayName', v)} placeholder="&aStarter Kit" />
+              </div>
+              <div className={styles.kitFieldRow}>
+                <label className={styles.kitFieldLabel}>Min Tier</label>
+                <NumInput value={kit.minTier} onChange={v => update(i, 'minTier', v)} />
+              </div>
+
+              <div className={styles.kitSectionLabel}>Armor</div>
+              <div className={styles.kitArmorGrid}>
+                {['head', 'chest', 'legs', 'feet'].map(slot => (
+                  <div key={slot} className={styles.kitFieldRow}>
+                    <label className={styles.kitFieldLabel}>{slot.charAt(0).toUpperCase() + slot.slice(1)}</label>
+                    <SuggestInput
+                      value={kit.armor?.[slot] ?? ''}
+                      onChange={v => updateArmor(i, slot, v)}
+                      placeholder={ARMOR_SUGGESTIONS[slot]?.[2] ?? ''}
+                      listId={`armor-${i}-${slot}`}
+                      suggestions={ARMOR_SUGGESTIONS[slot] ?? []}
+                    />
+                  </div>
+                ))}
+              </div>
+
+              <div className={styles.kitSectionLabel}>Items</div>
+              {kit.items.map((it, j) => (
+                <div key={j} className={styles.kitItemRow}>
+                  <SuggestInput
+                    value={it.item}
+                    onChange={v => updateItem(i, j, 'item', v)}
+                    placeholder="minecraft:diamond"
+                    listId={`item-${i}-${j}`}
+                  />
+                  <NumInput value={it.count} onChange={v => updateItem(i, j, 'count', v)} />
+                  <button className={styles.listRemove} onClick={() => removeItem(i, j)} type="button">✕</button>
+                </div>
+              ))}
+              <button className={styles.listAdd} onClick={() => addItem(i)} type="button">+ Add Item</button>
+            </div>
+          )}
+        </div>
+      ))}
+      <button className={styles.listAdd} onClick={addKit} type="button">+ Add Kit</button>
     </div>
   )
 }
