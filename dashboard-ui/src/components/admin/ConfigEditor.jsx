@@ -25,7 +25,7 @@ const TABS = [
   {
     id: 'general', label: 'General',
     keys: [
-      'max_claims', 'allow_lava_wilderness',
+      'max_claims', 'allow_lava_wilderness', 'allow_fire_wilderness',
       'tp_warmup', 'mute_levels_minutes', 'hardcore_death_percent',
       'admin_enabled', 'dashboard_port', 'server_name',
     ],
@@ -195,6 +195,9 @@ function GeneralTab({ draft, patch, onDisable, disabling, disableMsg }) {
         </Row>
         <Row label="Lava in Wilderness" hint="Allow lava source placement outside claimed land">
           <Toggle value={draft.allow_lava_wilderness} onChange={v => patch('allow_lava_wilderness', v)} />
+        </Row>
+        <Row label="Fire in Wilderness" hint="Allow fire to spread in unclaimed wilderness">
+          <Toggle value={draft.allow_fire_wilderness} onChange={v => patch('allow_fire_wilderness', v)} />
         </Row>
       </Group>
 

@@ -1,7 +1,6 @@
 package mc.smpessentials.claims;
 
 import net.minecraft.world.level.Explosion;
-import net.minecraft.world.level.block.BaseFireBlock;
 
 import mc.smpessentials.claims.storage.ClaimedSavedData;
 import net.minecraft.core.BlockPos;
@@ -91,8 +90,6 @@ public final class ClaimProtection {
                 if (state.getBlock() instanceof net.minecraft.world.level.block.CactusBlock)
                     return true;
 
-                if (state.getBlock() instanceof BaseFireBlock)
-                    return false;
                 if (state.getFluidState().getType() == net.minecraft.world.level.material.Fluids.LAVA)
                     return false;
                 if (state.getBlock() instanceof net.minecraft.world.level.block.SnowLayerBlock)

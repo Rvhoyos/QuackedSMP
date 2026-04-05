@@ -174,6 +174,7 @@ public final class AdminHandler {
         sb.append(String.format("\"welcome_message\":\"%s\",", jsonEscape(SmpConfig.WELCOME_MESSAGE)));
         sb.append(String.format("\"message_interval\":%d,", SmpConfig.MESSAGE_INTERVAL));
         sb.append(String.format("\"allow_lava_wilderness\":%b,", SmpConfig.ALLOW_LAVA_WILDERNESS));
+        sb.append(String.format("\"allow_fire_wilderness\":%b,", SmpConfig.ALLOW_FIRE_WILDERNESS));
         // Feature toggles
         sb.append(String.format("\"claims_enabled\":%b,", SmpConfig.CLAIMS_ENABLED));
         sb.append(String.format("\"skills_enabled\":%b,", SmpConfig.SKILLS_ENABLED));
@@ -276,6 +277,7 @@ public final class AdminHandler {
             if (patch.has("welcome_message"))       { SmpConfig.WELCOME_MESSAGE       = patch.get("welcome_message").getAsString();       changed++; }
             if (patch.has("message_interval"))      { SmpConfig.MESSAGE_INTERVAL      = patch.get("message_interval").getAsInt();         changed++; }
             if (patch.has("allow_lava_wilderness")) { SmpConfig.ALLOW_LAVA_WILDERNESS = patch.get("allow_lava_wilderness").getAsBoolean(); changed++; }
+            if (patch.has("allow_fire_wilderness")) { SmpConfig.ALLOW_FIRE_WILDERNESS = patch.get("allow_fire_wilderness").getAsBoolean(); changed++; }
             // Feature toggles
             if (patch.has("claims_enabled"))     { SmpConfig.CLAIMS_ENABLED     = patch.get("claims_enabled").getAsBoolean();     changed++; }
             if (patch.has("skills_enabled"))     { SmpConfig.SKILLS_ENABLED     = patch.get("skills_enabled").getAsBoolean();     changed++; }

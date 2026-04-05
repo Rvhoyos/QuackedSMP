@@ -157,6 +157,7 @@ Chunk-based land protection. Claim a chunk and no one else can build, break, or 
 **Anti-grief measures:**
 - Explosions blocked if they affect claimed chunks
 - Fire and lava spread/flow prevented inside claims
+- Optional wilderness fire throttle to prevent arson griefing (toggle `allow_fire_wilderness`)
 - Water only flows into a claim from the same owner's source
 - Armor Stands, Item Frames, Paintings, and Villagers protected from damage and theft
 - PvP immunity inside own claims
@@ -430,6 +431,7 @@ Config lives at `config/quackedsmp.json`. Most settings are editable live from t
 | `tp_warmup` | `5` | Seconds to stand still before teleporting |
 | `message_interval` | `300` | Seconds between periodic tip broadcasts |
 | `allow_lava_wilderness` | `false` | Allow lava placement outside claims |
+| `allow_fire_wilderness` | `true` | Allow fire to spread in unclaimed wilderness |
 | `claims_enabled` | `true` | Enable the claiming system |
 | `skills_enabled` | `true` | Enable the skills system |
 | `chatfilter_enabled` | `true` | Enable the chat filter |

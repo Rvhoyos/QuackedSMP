@@ -14,6 +14,7 @@ public final class ConfigData {
     public String welcomeMessage = "&6Welcome to QuackedSMP, {player}!";
     public int messageInterval = 300;
     public boolean allowLavaWilderness = false;
+    public boolean allowFireWilderness = true;
     public boolean claimsEnabled = true;
     public boolean skillsEnabled = true;
     public boolean chatfilterEnabled = true;
@@ -61,7 +62,9 @@ public final class ConfigData {
             "&b[Tip] &fWe have proximity voice chat! If you're 18+, type &a/verify confirm&f to enable it and start talking!",
             "&b[Tip] &fWant to see who has the highest skills? Type &a/skills top&f to view the server leaderboards!",
             "&b[Tip] &fCheck out our live web-map! You can see your &a/home&f and even name your claims using &a/claim name <name>&f!",
-            "&b[Tip] &fGet our recommended modpack for &ashaders&f, &aminimap&f, &avoice chat &fand more! [&bDownload Here](https://www.curseforge.com/minecraft/modpacks/play-quackedmod-wiki)"));
+            "&b[Tip] &fGet our recommended modpack for &ashaders&f, &aminimap&f, &avoice chat &fand more! [&bDownload Here](https://www.curseforge.com/minecraft/modpacks/play-quackedmod-wiki)",
+            "&b[Tip] &fClaim your daily kit! &a/smp kit list &fto see what's available for you!",
+            "&b[Tip] &fGetting bored? Try &ahardcore mode&f! &a/smp hardcore create &fto start a session!"));
 
     public Map<String, String> messages = new HashMap<>(Map.ofEntries(
             // Claiming

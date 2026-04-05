@@ -30,6 +30,7 @@ public class ConfigGui {
 
     // Row 0: World & Claims
     private static final int SLOT_TOGGLE_LAVA = 0;
+    private static final int SLOT_TOGGLE_FIRE = 1;
 
     private static final int SLOT_MAX_CLAIMS_MINUS = 2;
     private static final int SLOT_MAX_CLAIMS_DISPLAY = 3;
@@ -110,6 +111,8 @@ public class ConfigGui {
         // --- Row 0: World & Claims ---
         container.setItem(SLOT_TOGGLE_LAVA,
                 createBooleanItem("Allow Lava Wilderness", SmpConfig.ALLOW_LAVA_WILDERNESS));
+        container.setItem(SLOT_TOGGLE_FIRE,
+                createBooleanItem("Allow Fire Wilderness", SmpConfig.ALLOW_FIRE_WILDERNESS));
 
         container.setItem(SLOT_MAX_CLAIMS_MINUS, createActionItem(Items.RED_CONCRETE, "\u00a7c-5 Claims"));
         container.setItem(SLOT_MAX_CLAIMS_DISPLAY,
@@ -259,6 +262,9 @@ public class ConfigGui {
         // Row 0
         if (slotId == SLOT_TOGGLE_LAVA) {
             SmpConfig.ALLOW_LAVA_WILDERNESS = !SmpConfig.ALLOW_LAVA_WILDERNESS;
+            refresh = true;
+        } else if (slotId == SLOT_TOGGLE_FIRE) {
+            SmpConfig.ALLOW_FIRE_WILDERNESS = !SmpConfig.ALLOW_FIRE_WILDERNESS;
             refresh = true;
         } else if (slotId == SLOT_MAX_CLAIMS_MINUS) {
             SmpConfig.MAX_CLAIMS = Math.max(0, SmpConfig.MAX_CLAIMS - 5);
