@@ -3,7 +3,9 @@ package mc.smpessentials.dashboard;
 import mc.smpessentials.SmpUtilsMod;
 import mc.smpessentials.config.SmpConfig;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.world.level.storage.LevelResource;
 
+import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -25,6 +27,7 @@ public final class DashboardManager {
     private static volatile MinecraftServer mcServer;
     private static volatile boolean running = false;
     private static boolean sparkLoaded = false;
+    private static volatile long cachedWorldSize = -1;
 
     // ── Lifecycle ──────────────────────────────────────────────────────────────
 
@@ -98,6 +101,7 @@ public final class DashboardManager {
                 return t;
             });
             scheduler.scheduleAtFixedRate(DashboardManager::broadcastTpsUpdate, 10, 10, TimeUnit.SECONDS);
+            scheduler.scheduleAtFixedRate(DashboardManager::refreshWorldSize, 0, 5, TimeUnit.MINUTES);
         }
 
         running = true;
@@ -144,9 +148,10 @@ public final class DashboardManager {
             } catch (Exception ignored) {}
             long uptimeMs = ManagementFactory.getRuntimeMXBean().getUptime();
             int  threads  = ManagementFactory.getThreadMXBean().getThreadCount();
+            long worldSize = cachedWorldSize;
             return String.format(Locale.US,
-                    "{\"heapUsed\":%d,\"heapMax\":%d,\"ramTotal\":%d,\"ramFree\":%d,\"diskTotal\":%d,\"diskUsable\":%d,\"uptimeMs\":%d,\"threads\":%d}",
-                    heapUsed, heapMax, ramTotal, ramFree, diskTotal, diskUsable, uptimeMs, threads);
+                    "{\"heapUsed\":%d,\"heapMax\":%d,\"ramTotal\":%d,\"ramFree\":%d,\"diskTotal\":%d,\"diskUsable\":%d,\"uptimeMs\":%d,\"threads\":%d,\"worldSize\":%d}",
+                    heapUsed, heapMax, ramTotal, ramFree, diskTotal, diskUsable, uptimeMs, threads, worldSize);
         });
         // Spark routes: only reference SparkMetrics if Spark is on the classpath.
         // SparkMetrics imports Spark types directly; loading it without Spark present
@@ -248,6 +253,24 @@ public final class DashboardManager {
                     "{\"type\":\"tps_update\",\"data\":%s,\"timestamp\":%d}",
                     SparkMetrics.getTpsJson(), System.currentTimeMillis()));
         } catch (Exception ignored) {}
+    }
+
+    private static void refreshWorldSize() {
+        MinecraftServer srv = mcServer;
+        if (srv == null) return;
+        try {
+            Path worldRoot = srv.getWorldPath(LevelResource.ROOT);
+            long total = 0;
+            try (var walk = Files.walk(worldRoot)) {
+                for (var it = walk.iterator(); it.hasNext(); ) {
+                    Path p = it.next();
+                    if (Files.isRegularFile(p)) {
+                        total += Files.size(p);
+                    }
+                }
+            }
+            cachedWorldSize = total;
+        } catch (IOException ignored) {}
     }
 
     // ── Event broadcast ────────────────────────────────────────────────────────

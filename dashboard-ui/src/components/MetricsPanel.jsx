@@ -73,6 +73,7 @@ export default function MetricsPanel({ tps, cpu, mspt, online, sys }) {
   const diskTotal = sys?.diskTotal ?? null
   const diskUsable = sys?.diskUsable ?? null
   const diskUsed  = (diskTotal != null && diskUsable != null) ? diskTotal - diskUsable : null
+  const worldSize = sys?.worldSize != null && sys.worldSize >= 0 ? sys.worldSize : null
   const ramPct    = (ramUsed != null && ramTotal != null && ramTotal > 0) ? ramUsed / ramTotal : null
   const heapPct   = (heapUsed != null && heapMax != null && heapMax > 0) ? heapUsed / heapMax : null
   const diskPct   = (diskUsed != null && diskTotal != null && diskTotal > 0) ? diskUsed / diskTotal : null
@@ -215,6 +216,7 @@ export default function MetricsPanel({ tps, cpu, mspt, online, sys }) {
         <div className={styles.cardSub}>
           <SubStat label="free"  value={fmtBytes(diskUsable)} />
           <SubStat label="total" value={fmtBytes(diskTotal)} />
+          <SubStat label="world" value={fmtBytes(worldSize)} />
         </div>
         <div className={styles.cardWindow}>disk space</div>
       </div>
