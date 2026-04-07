@@ -87,6 +87,7 @@ public final class ConfigIO {
         data.messageInterval = SmpConfig.MESSAGE_INTERVAL;
         data.allowLavaWilderness = SmpConfig.ALLOW_LAVA_WILDERNESS;
         data.allowFireWilderness = SmpConfig.ALLOW_FIRE_WILDERNESS;
+        data.spawnNoPvp = SmpConfig.SPAWN_NO_PVP;
         data.claimsEnabled = SmpConfig.CLAIMS_ENABLED;
         data.skillsEnabled = SmpConfig.SKILLS_ENABLED;
         data.chatfilterEnabled = SmpConfig.CHATFILTER_ENABLED;

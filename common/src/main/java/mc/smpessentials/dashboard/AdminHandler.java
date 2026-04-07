@@ -175,6 +175,7 @@ public final class AdminHandler {
         sb.append(String.format("\"message_interval\":%d,", SmpConfig.MESSAGE_INTERVAL));
         sb.append(String.format("\"allow_lava_wilderness\":%b,", SmpConfig.ALLOW_LAVA_WILDERNESS));
         sb.append(String.format("\"allow_fire_wilderness\":%b,", SmpConfig.ALLOW_FIRE_WILDERNESS));
+        sb.append(String.format("\"spawn_no_pvp\":%b,", SmpConfig.SPAWN_NO_PVP));
         // Feature toggles
         sb.append(String.format("\"claims_enabled\":%b,", SmpConfig.CLAIMS_ENABLED));
         sb.append(String.format("\"skills_enabled\":%b,", SmpConfig.SKILLS_ENABLED));
@@ -278,6 +279,7 @@ public final class AdminHandler {
             if (patch.has("message_interval"))      { SmpConfig.MESSAGE_INTERVAL      = patch.get("message_interval").getAsInt();         changed++; }
             if (patch.has("allow_lava_wilderness")) { SmpConfig.ALLOW_LAVA_WILDERNESS = patch.get("allow_lava_wilderness").getAsBoolean(); changed++; }
             if (patch.has("allow_fire_wilderness")) { SmpConfig.ALLOW_FIRE_WILDERNESS = patch.get("allow_fire_wilderness").getAsBoolean(); changed++; }
+            if (patch.has("spawn_no_pvp"))          { SmpConfig.SPAWN_NO_PVP          = patch.get("spawn_no_pvp").getAsBoolean();          changed++; }
             // Feature toggles
             if (patch.has("claims_enabled"))     { SmpConfig.CLAIMS_ENABLED     = patch.get("claims_enabled").getAsBoolean();     changed++; }
             if (patch.has("skills_enabled"))     { SmpConfig.SKILLS_ENABLED     = patch.get("skills_enabled").getAsBoolean();     changed++; }
@@ -1310,6 +1312,40 @@ public final class AdminHandler {
         } catch (Exception e) {
             return err(400, "Invalid request: " + jsonEscape(e.getMessage()));
         }
+    }
+
+    // GET /api/admin/regen — check pending status.
+    // POST /api/admin/regen — queue wilderness regen.
+    // DELETE /api/admin/regen — cancel pending regen.
+    public static String handleRegen(String method, Map<String, String> headers, String body,
+                                     MinecraftServer server) {
+        if (!SmpConfig.ADMIN_ENABLED)         return err(403, "Admin panel disabled");
+        if (!AdminAuth.isAuthorized(headers)) return err(403, "Unauthorized");
+
+        if ("GET".equals(method)) {
+            boolean pending = mc.smpessentials.regen.ChunkRegenManager.isPending(server);
+            return String.format("{\"pending\":%b}", pending);
+        }
+
+        if ("POST".equals(method)) {
+            try {
+                mc.smpessentials.regen.ChunkRegenManager.queueRegen(server);
+                return "{\"ok\":true}";
+            } catch (Exception e) {
+                return err(500, "Failed to queue regen: " + jsonEscape(e.getMessage()));
+            }
+        }
+
+        if ("DELETE".equals(method)) {
+            try {
+                mc.smpessentials.regen.ChunkRegenManager.cancelRegen(server);
+                return "{\"ok\":true}";
+            } catch (Exception e) {
+                return err(500, "Failed to cancel regen: " + jsonEscape(e.getMessage()));
+            }
+        }
+
+        return err(405, "Method not allowed");
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────

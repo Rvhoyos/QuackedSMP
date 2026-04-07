@@ -45,7 +45,8 @@ public class GeneralCommands {
                 .then(mc.smpessentials.ageverify.AgeVerifyCommand.verifySubtree())
                 .then(mc.smpessentials.keepinv.KeepInvCommand.keepInvSubtree())
                 .then(mc.smpessentials.hardcore.HardcoreCommands.hardcoreSubtree())
-                .then(mc.smpessentials.kits.KitCommands.kitSubtree()));
+                .then(mc.smpessentials.kits.KitCommands.kitSubtree())
+                .then(mc.smpessentials.regen.ChunkRegenCommands.regenSubtree()));
 
         dispatcher.register(Commands.literal("mute")
                 .requires(s -> net.minecraft.commands.Commands.LEVEL_GAMEMASTERS.check(s.permissions()))

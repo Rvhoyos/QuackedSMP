@@ -15,6 +15,7 @@ public final class ConfigData {
     public int messageInterval = 300;
     public boolean allowLavaWilderness = false;
     public boolean allowFireWilderness = true;
+    public boolean spawnNoPvp = true;
     public boolean claimsEnabled = true;
     public boolean skillsEnabled = true;
     public boolean chatfilterEnabled = true;

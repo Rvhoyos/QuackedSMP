@@ -241,6 +241,10 @@ public final class DashboardManager {
                 (m, h, b) -> AdminHandler.handleHardcoreGet(m, h, b, mcServer));
         s.addRoute("/api/admin/hardcore/end",
                 (m, h, b) -> AdminHandler.handleHardcoreEnd(m, h, b, mcServer));
+
+        // Wilderness regen
+        s.addRoute("/api/admin/regen",
+                (m, h, b) -> AdminHandler.handleRegen(m, h, b, mcServer));
     }
 
     // ── Scheduled ─────────────────────────────────────────────────────────────

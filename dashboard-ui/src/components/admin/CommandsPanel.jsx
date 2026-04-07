@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import styles from './CommandsPanel.module.css'
 
 function authHeaders(token) {
@@ -25,7 +25,6 @@ const QUICK_ACTIONS = [
     actions: [
       { label: 'Reload Config',    icon: '↻',  cmd: 'smp reload' },
       { label: 'Reset Dragon',     icon: '🐉', cmd: 'smp end reset dragon' },
-      { label: 'Queue End Reset',  icon: '🌍', cmd: 'smp end reset world' },
       { label: 'Set Day',          icon: '☀',  cmd: 'time set day' },
       { label: 'Set Night',        icon: '🌙', cmd: 'time set night' },
       { label: 'Clear Weather',    icon: '🌤', cmd: 'weather clear' },
@@ -41,7 +40,45 @@ export default function CommandsPanel({ token, onExpired }) {
   const [broadcast, setBc]      = useState('')
   const [bcOpen,    setBcOpen]  = useState(false)
   const [stopOpen,  setStopOpen] = useState(false)
+  const [endResetOpen, setEndResetOpen] = useState(false)
+  const [regenOpen,    setRegenOpen]    = useState(false)
+  const [regenPending, setRegenPending] = useState(false)
   const [loading,   setLoading] = useState(false)
+
+  const loadRegenStatus = useCallback(async () => {
+    try {
+      const r = await fetch('/api/admin/regen', { headers: authHeaders(token) })
+      if (r.ok) {
+        const d = await r.json()
+        setRegenPending(d.pending === true)
+      }
+    } catch {}
+  }, [token])
+
+  useEffect(() => { loadRegenStatus() }, [loadRegenStatus])
+
+  async function queueRegen() {
+    try {
+      const r = await fetch('/api/admin/regen', {
+        method: 'POST',
+        headers: authHeaders(token),
+      })
+      if (r.status === 403) { onExpired(); return }
+      setRegenPending(true)
+      setRegenOpen(false)
+    } catch {}
+  }
+
+  async function cancelRegen() {
+    try {
+      const r = await fetch('/api/admin/regen', {
+        method: 'DELETE',
+        headers: authHeaders(token),
+      })
+      if (r.status === 403) { onExpired(); return }
+      setRegenPending(false)
+    } catch {}
+  }
 
   async function exec(cmd) {
     if (!cmd.trim()) return
@@ -110,6 +147,20 @@ export default function CommandsPanel({ token, onExpired }) {
               Broadcast
             </button>
             <button
+              className={`${styles.quickBtn} ${styles.quickWarn}`}
+              onClick={() => setEndResetOpen(true)}
+            >
+              <span className={styles.quickIcon}>🌍</span>
+              Queue End Reset
+            </button>
+            <button
+              className={`${styles.quickBtn} ${styles.quickWarn}`}
+              onClick={() => regenPending ? cancelRegen() : setRegenOpen(true)}
+            >
+              <span className={styles.quickIcon}>🌿</span>
+              {regenPending ? 'Cancel Regen' : 'Regen Wilderness'}
+            </button>
+            <button
               className={`${styles.quickBtn} ${styles.quickStop}`}
               onClick={() => setStopOpen(true)}
             >
@@ -176,6 +227,56 @@ export default function CommandsPanel({ token, onExpired }) {
                 onClick={() => { setStopOpen(false); exec('stop') }}
               >
                 Stop Server
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* End Reset confirmation */}
+      {endResetOpen && (
+        <div className={styles.bcOverlay} onClick={() => setEndResetOpen(false)}>
+          <div className={styles.bcBox} onClick={e => e.stopPropagation()}>
+            <h3 className={`${styles.bcTitle} ${styles.warnTitle}`}>🌍 Queue End Reset</h3>
+            <p className={styles.warnText}>
+              This will queue the End dimension for a full terrain reset.
+              All builds, chests, and entities in the End will be permanently destroyed.
+            </p>
+            <p className={styles.warnNote}>
+              The reset will execute on the next server shutdown.
+            </p>
+            <div className={styles.bcBtns}>
+              <button className={styles.bcCancel} onClick={() => setEndResetOpen(false)}>Cancel</button>
+              <button
+                className={styles.stopConfirm}
+                onClick={() => { setEndResetOpen(false); exec('smp end reset world') }}
+              >
+                Queue Reset
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Wilderness Regen confirmation */}
+      {regenOpen && (
+        <div className={styles.bcOverlay} onClick={() => setRegenOpen(false)}>
+          <div className={styles.bcBox} onClick={e => e.stopPropagation()}>
+            <h3 className={`${styles.bcTitle} ${styles.warnTitle}`}>🌿 Regenerate Wilderness</h3>
+            <p className={styles.warnText}>
+              This will regenerate ALL unclaimed chunks across all dimensions.
+              Claimed chunks and a 3-chunk buffer around them will be preserved.
+            </p>
+            <p className={styles.warnDanger}>
+              Unclaimed builds, chests, and entities will be permanently lost. This is irreversible.
+            </p>
+            <p className={styles.warnNote}>
+              The regen will execute on the next server shutdown.
+            </p>
+            <div className={styles.bcBtns}>
+              <button className={styles.bcCancel} onClick={() => setRegenOpen(false)}>Cancel</button>
+              <button className={styles.stopConfirm} onClick={queueRegen}>
+                Queue Regen
               </button>
             </div>
           </div>

@@ -15,6 +15,7 @@ public final class SmpConfig {
     public record TierDef(int tier, String name, long minPlaytimeHours, int bonusClaims) {}
     public static boolean ALLOW_LAVA_WILDERNESS = false;
     public static boolean ALLOW_FIRE_WILDERNESS = true;
+    public static boolean SPAWN_NO_PVP = true;
     public static java.util.Map<String, String> MESSAGES = new java.util.HashMap<>();
 
     // ---- Feature toggles ----
@@ -133,6 +134,7 @@ public final class SmpConfig {
         MESSAGE_INTERVAL = d.messageInterval;
         ALLOW_LAVA_WILDERNESS = d.allowLavaWilderness;
         ALLOW_FIRE_WILDERNESS = d.allowFireWilderness;
+        SPAWN_NO_PVP = d.spawnNoPvp;
         CLAIMS_ENABLED = d.claimsEnabled;
         SKILLS_ENABLED = d.skillsEnabled;
         CHATFILTER_ENABLED = d.chatfilterEnabled;

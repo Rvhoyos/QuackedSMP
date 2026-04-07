@@ -5,7 +5,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.RandomSource;
-import net.minecraft.core.Direction;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.FireBlock;
@@ -44,7 +43,7 @@ public abstract class FireBlockMixin {
     // Fully cancels block destruction inside claims.
     // Wilderness burns normally so throttled fire still dies out naturally.
     @Inject(method = "checkBurnOut", at = @At("HEAD"), cancellable = true)
-    private void blockBurnInClaim(Level level, BlockPos pos, int chance, RandomSource random, int age, Direction face, CallbackInfo ci) {
+    private void blockBurnInClaim(Level level, BlockPos pos, int chance, RandomSource random, int age, CallbackInfo ci) {
         if (mc.smpessentials.config.SmpConfig.CLAIMS_ENABLED && level instanceof ServerLevel sl) {
             if (ClaimedSavedData.get(sl).isClaimed(sl, new ChunkPos(pos))) {
                 ci.cancel();
