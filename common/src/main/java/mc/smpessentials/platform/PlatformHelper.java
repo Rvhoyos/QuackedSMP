@@ -11,4 +11,9 @@ public interface PlatformHelper {
     default Optional<Path> getActiveModJarPath() {
         return Optional.empty();
     }
+
+    // Returns the mod version string from the platform's mod loader.
+    default String getModVersion() {
+        return "unknown";
+    }
 }

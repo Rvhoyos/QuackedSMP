@@ -193,6 +193,14 @@ public final class AdminHandler {
         sb.append(String.format("\"votifier_token\":\"%s\",", jsonEscape(SmpConfig.VOTIFIER_TOKEN)));
         sb.append(String.format("\"vote_broadcast\":\"%s\",", jsonEscape(SmpConfig.VOTE_BROADCAST)));
         sb.append("\"vote_rewards\":").append(jsonStrArr(SmpConfig.VOTE_REWARDS)).append(",");
+        sb.append("\"vote_vip_rewards\":{");
+        boolean firstVip = true;
+        for (var entry : SmpConfig.VOTE_VIP_REWARDS.entrySet()) {
+            if (!firstVip) sb.append(",");
+            sb.append("\"").append(entry.getKey()).append("\":").append(jsonStrArr(entry.getValue()));
+            firstVip = false;
+        }
+        sb.append("},");
         // Discord
         sb.append(String.format("\"discord_enabled\":%b,", !SmpConfig.DISCORD_WEBHOOK_URL.isBlank()));
         sb.append(String.format("\"discord_webhook_url\":\"%s\",", jsonEscape(SmpConfig.DISCORD_WEBHOOK_URL)));
@@ -313,6 +321,20 @@ public final class AdminHandler {
             if (patch.has("bluemap_worldborder_color")) { SmpConfig.BLUEMAP_WORLDBORDER_COLOR = patch.get("bluemap_worldborder_color").getAsString();  changed++; blueMapChanged = true; }
             // Lists
             if (patch.has("vote_rewards") && patch.get("vote_rewards").isJsonArray())          { loadStrArr(patch.getAsJsonArray("vote_rewards"),         SmpConfig.VOTE_REWARDS);       changed++; }
+            if (patch.has("vote_vip_rewards") && patch.get("vote_vip_rewards").isJsonObject()) {
+                SmpConfig.VOTE_VIP_REWARDS.clear();
+                for (var entry : patch.getAsJsonObject("vote_vip_rewards").entrySet()) {
+                    try {
+                        int t = Integer.parseInt(entry.getKey());
+                        if (entry.getValue().isJsonArray()) {
+                            java.util.List<String> cmds = new java.util.ArrayList<>();
+                            for (var el : entry.getValue().getAsJsonArray()) cmds.add(el.getAsString());
+                            SmpConfig.VOTE_VIP_REWARDS.put(t, cmds);
+                        }
+                    } catch (NumberFormatException ignored) {}
+                }
+                changed++;
+            }
             if (patch.has("tiers") && patch.get("tiers").isJsonArray()) {
                 SmpConfig.TIERS.clear();
                 for (var el : patch.getAsJsonArray("tiers")) {

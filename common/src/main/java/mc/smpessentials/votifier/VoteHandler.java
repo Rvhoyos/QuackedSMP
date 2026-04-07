@@ -2,11 +2,13 @@ package mc.smpessentials.votifier;
 
 import mc.smpessentials.SmpUtilsMod;
 import mc.smpessentials.config.SmpConfig;
+import mc.smpessentials.tier.TierService;
 import mc.smpessentials.util.TextUtil;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
 // Processes validated votes: dispatches rewards and manages the offline queue.
@@ -28,7 +30,7 @@ public final class VoteHandler {
         srv.execute(() -> {
             ServerPlayer player = srv.getPlayerList().getPlayerByName(vote.username());
             if (player != null) {
-                dispatchReward(srv, vote.username());
+                dispatchReward(srv, player);
                 broadcast(srv, vote);
             } else {
                 VoteQueueData.get(srv).queue(vote.username());
@@ -40,23 +42,43 @@ public final class VoteHandler {
     public static void onPlayerJoin(ServerPlayer player) {
         MinecraftServer srv = server; // capture volatile once
         if (srv == null) return;
-        String name = player.getGameProfile().name();
-        int pending = VoteQueueData.get(srv).take(name);
+        int pending = VoteQueueData.get(srv).take(player.getGameProfile().name());
         for (int i = 0; i < pending; i++) {
-            dispatchReward(srv, name);
+            dispatchReward(srv, player);
         }
         if (pending > 0) {
-            int n = pending;
             player.sendSystemMessage(TextUtil.format(
-                    "&aYou had &e" + n + " &apending vote reward" + (n > 1 ? "s" : "") + "!"));
+                    "&aYou had &e" + pending + " &apending vote reward" + (pending > 1 ? "s" : "") + "!"));
         }
     }
 
-    private static void dispatchReward(MinecraftServer srv, String username) {
-        List<String> rewards = List.copyOf(SmpConfig.VOTE_REWARDS); // snapshot before use
-        if (rewards.isEmpty()) return;
-        String cmd = rewards.get(RNG.nextInt(rewards.size())).replace("{player}", username);
-        srv.getCommands().performPrefixedCommand(srv.createCommandSourceStack(), cmd);
+    // Dispatches the base reward plus stacked VIP bonus rewards for each tier <= player's tier.
+    private static void dispatchReward(MinecraftServer srv, ServerPlayer player) {
+        String username = player.getGameProfile().name();
+
+        // Base reward (all players)
+        List<String> rewards = List.copyOf(SmpConfig.VOTE_REWARDS);
+        if (!rewards.isEmpty()) {
+            String cmd = rewards.get(RNG.nextInt(rewards.size())).replace("{player}", username);
+            srv.getCommands().performPrefixedCommand(srv.createCommandSourceStack(), cmd);
+        }
+
+        // Stacked VIP bonus rewards — isolated so a tier lookup failure can't block base rewards
+        try {
+            Map<Integer, List<String>> vipRewards = SmpConfig.VOTE_VIP_REWARDS;
+            if (vipRewards.isEmpty()) return;
+            int tier = TierService.getTier(player.getUUID(), srv);
+            if (tier <= 0) return;
+            for (int t = 1; t <= tier; t++) {
+                List<String> tierRewards = vipRewards.get(t);
+                if (tierRewards != null && !tierRewards.isEmpty()) {
+                    String cmd = tierRewards.get(RNG.nextInt(tierRewards.size())).replace("{player}", username);
+                    srv.getCommands().performPrefixedCommand(srv.createCommandSourceStack(), cmd);
+                }
+            }
+        } catch (Exception e) {
+            SmpUtilsMod.LOGGER.warn("[Votifier] VIP reward dispatch failed for {}: {}", username, e.getMessage());
+        }
     }
 
     private static void broadcast(MinecraftServer srv, VoteData vote) {

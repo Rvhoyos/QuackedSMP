@@ -125,6 +125,9 @@ public final class ConfigData {
                 "give {player} diamond 2",
                 "give {player} emerald 5",
                 "give {player} gold_ingot 10"));
+        // Tier-keyed bonus rewards. Each tier's list stacks on top of all lower tiers.
+        // e.g. a tier 2 player gets: base reward + tier 1 bonus + tier 2 bonus.
+        public Map<String, List<String>> vipRewards = new HashMap<>();
     }
 
     public static final class DashboardConfig {

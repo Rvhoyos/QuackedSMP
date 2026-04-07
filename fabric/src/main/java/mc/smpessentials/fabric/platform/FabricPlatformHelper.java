@@ -13,11 +13,14 @@ public class FabricPlatformHelper implements PlatformHelper {
         return FabricLoader.getInstance().getConfigDir();
     }
 
-    /**
-     * Returns the JAR (or directory in dev) that FabricLoader loaded for this mod.
-     * Returns empty if the mod container cannot be found — treated as a no-op by
-     * {@link mc.smpessentials.SmpUtilsMod#purgeOldModVersions()}.
-     */
+    @Override
+    public String getModVersion() {
+        return FabricLoader.getInstance()
+                .getModContainer(SmpUtilsMod.MOD_ID)
+                .map(c -> c.getMetadata().getVersion().getFriendlyString())
+                .orElse("unknown");
+    }
+
     @Override
     public Optional<Path> getActiveModJarPath() {
         try {

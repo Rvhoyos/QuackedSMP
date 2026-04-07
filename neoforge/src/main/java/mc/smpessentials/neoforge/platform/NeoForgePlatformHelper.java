@@ -14,11 +14,17 @@ public class NeoForgePlatformHelper implements PlatformHelper {
         return FMLPaths.CONFIGDIR.get();
     }
 
-    /**
-     * Returns the JAR path from NeoForge's ModList for the running QuackedSMP mod file.
-     * Returns empty if the mod file cannot be resolved — treated as a no-op by
-     * {@link mc.smpessentials.SmpUtilsMod#purgeOldModVersions()}.
-     */
+    @Override
+    public String getModVersion() {
+        try {
+            return ModList.get().getModContainerById(SmpUtilsMod.MOD_ID)
+                    .map(c -> c.getModInfo().getVersion().toString())
+                    .orElse("unknown");
+        } catch (Exception e) {
+            return "unknown";
+        }
+    }
+
     @Override
     public Optional<Path> getActiveModJarPath() {
         try {

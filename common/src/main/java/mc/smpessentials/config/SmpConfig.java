@@ -31,6 +31,8 @@ public final class SmpConfig {
     public static String VOTIFIER_TOKEN = "";
     public static String VOTE_BROADCAST = "&6\u2736 {player} &ejust voted for the server! Thanks for the support!";
     public static java.util.List<String> VOTE_REWARDS = new java.util.ArrayList<>();
+    // Tier number -> bonus reward commands. Stacks: tier 2 players get tier 1 + tier 2 bonuses.
+    public static java.util.Map<Integer, java.util.List<String>> VOTE_VIP_REWARDS = new java.util.HashMap<>();
 
     // ---- Dashboard ----
     public static boolean DASHBOARD_ENABLED = false;
@@ -158,6 +160,12 @@ public final class SmpConfig {
         VOTIFIER_TOKEN = d.votifier.token;
         VOTE_BROADCAST = d.votifier.broadcast;
         VOTE_REWARDS = d.votifier.rewards;
+        VOTE_VIP_REWARDS = new java.util.HashMap<>();
+        for (var entry : d.votifier.vipRewards.entrySet()) {
+            try {
+                VOTE_VIP_REWARDS.put(Integer.parseInt(entry.getKey()), new java.util.ArrayList<>(entry.getValue()));
+            } catch (NumberFormatException ignored) {}
+        }
 
         DASHBOARD_ENABLED = d.dashboard.enabled;
         DASHBOARD_PORT = d.dashboard.port;

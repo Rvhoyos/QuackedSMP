@@ -42,7 +42,7 @@ const TABS = [
     id: 'integrations', label: 'Integrations',
     keys: [
       'discord_webhook_url', 'discord_join_leave', 'discord_chat', 'voicechat_enable',
-      'votifier_enabled', 'votifier_port', 'votifier_token', 'vote_broadcast', 'vote_rewards',
+      'votifier_enabled', 'votifier_port', 'votifier_token', 'vote_broadcast', 'vote_rewards', 'vote_vip_rewards',
       'bluemap_enabled', 'bluemap_show_homes', 'bluemap_show_claims', 'bluemap_show_worldborder',
       'bluemap_claim_color', 'bluemap_op_claim_color', 'bluemap_vip_claim_color', 'bluemap_worldborder_color',
     ],
@@ -81,7 +81,7 @@ export default function ConfigEditor({ token, onExpired }) {
     const keys = TABS.find(t => t.id === tabId)?.keys ?? []
     return keys.some(k => {
       const d = draft[k], c = cfg[k]
-      if (Array.isArray(d) || Array.isArray(c)) return JSON.stringify(d) !== JSON.stringify(c)
+      if (typeof d === 'object' || typeof c === 'object') return JSON.stringify(d) !== JSON.stringify(c)
       return String(d) !== String(c)
     })
   }
@@ -450,13 +450,18 @@ function IntegrationsTab({ draft, patch }) {
         <StackedRow label="Vote Broadcast" hint="Sent on vote. {player} = voter name. Supports & color codes.">
           <TextInput value={draft.vote_broadcast} onChange={v => patch('vote_broadcast', v)} />
         </StackedRow>
-        <StackedRow label="Vote Reward Commands" hint="Run on every vote. {player} = voter name. One command per entry.">
+        <StackedRow label="Vote Reward Commands" hint="Run on every vote. {player} = voter name. One random command per vote.">
           <ListEditor
             value={draft.vote_rewards}
             onChange={v => patch('vote_rewards', v)}
             placeholder="give {player} diamond 2"
           />
         </StackedRow>
+        <VipRewardsEditor
+          tiers={draft.tiers || []}
+          value={draft.vote_vip_rewards || {}}
+          onChange={v => patch('vote_vip_rewards', v)}
+        />
       </Group>
 
       <Group icon={<IconMapScroll />} title="BlueMap" accent="sky">
@@ -635,6 +640,28 @@ function ListEditor({ value = [], onChange, placeholder }) {
       >+ Add</button>
     </div>
   )
+}
+
+// Tier-keyed VIP vote reward editor. Shows one command list per defined tier, stacking upward.
+function VipRewardsEditor({ tiers = [], value = {}, onChange }) {
+  if (!tiers.length) return (
+    <StackedRow label="VIP Vote Bonuses" hint="Define tiers first (Server tab) to add VIP vote rewards.">
+      <span className={styles.hintText}>No tiers configured</span>
+    </StackedRow>
+  )
+  return tiers.map(t => (
+    <StackedRow
+      key={t.tier}
+      label={`${t.name || 'Tier ' + t.tier} Vote Bonus`}
+      hint={`Extra random reward for tier ${t.tier}+ voters. Stacks with all lower tiers.`}
+    >
+      <ListEditor
+        value={value[String(t.tier)] || []}
+        onChange={v => onChange({ ...value, [String(t.tier)]: v })}
+        placeholder="give {player} netherite_ingot 1"
+      />
+    </StackedRow>
+  ))
 }
 
 const TIER_COLORS = ['#cba6f7', '#fab387', '#f9e2af', '#a6e3a1', '#89b4fa', '#f5c2e7', '#94e2d5', '#89dceb']

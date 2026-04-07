@@ -125,9 +125,10 @@ public final class DashboardManager {
             boolean adminOn     = SmpConfig.ADMIN_ENABLED;
             boolean hasPassword = !SmpConfig.ADMIN_PASSWORD_HASH.isBlank();
             String  serverName  = SmpConfig.SERVER_NAME;
+            String version = mc.smpessentials.SmpUtilsMod.VERSION;
             return String.format(
-                    "{\"status\":\"ok\",\"online\":%d,\"adminEnabled\":%b,\"hasPassword\":%b,\"serverName\":\"%s\"}",
-                    online, adminOn, hasPassword, jsonEscape(serverName));
+                    "{\"status\":\"ok\",\"online\":%d,\"adminEnabled\":%b,\"hasPassword\":%b,\"serverName\":\"%s\",\"version\":\"%s\"}",
+                    online, adminOn, hasPassword, jsonEscape(serverName), jsonEscape(version));
         });
         s.addRoute("/api/metrics", () -> {
             Runtime rt       = Runtime.getRuntime();

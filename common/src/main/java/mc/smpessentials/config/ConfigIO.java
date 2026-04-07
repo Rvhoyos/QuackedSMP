@@ -114,6 +114,10 @@ public final class ConfigIO {
         data.votifier.token = SmpConfig.VOTIFIER_TOKEN;
         data.votifier.broadcast = SmpConfig.VOTE_BROADCAST;
         data.votifier.rewards = new java.util.ArrayList<>(SmpConfig.VOTE_REWARDS);
+        data.votifier.vipRewards = new java.util.HashMap<>();
+        for (var entry : SmpConfig.VOTE_VIP_REWARDS.entrySet()) {
+            data.votifier.vipRewards.put(String.valueOf(entry.getKey()), new java.util.ArrayList<>(entry.getValue()));
+        }
 
         data.dashboard.enabled = SmpConfig.DASHBOARD_ENABLED;
         data.dashboard.port = SmpConfig.DASHBOARD_PORT;
