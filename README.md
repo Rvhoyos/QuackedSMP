@@ -33,7 +33,7 @@ The panel is a password-protected SPA served directly by the mod over an embedde
 | Tab | What you can do |
 | :--- | :--- |
 | **Players** | See all online players, their dimension, OP status. Grant/revoke OP directly. |
-| **Commands** | Run any server command from the browser. Full server-level permissions. |
+| **Commands** | Run any server command from the browser. Quick actions for weather, time, broadcast, end reset, wilderness regen, and server stop. |
 | **Dimensions** | Create, delete, and configure custom dimensions. Wire portal frame blocks. |
 | **Skills** | Browse every player's skill levels. Set or adjust XP and levels per skill. |
 | **Claims** | View all active claims on the server. Force-unclaim all chunks owned by a player. |
@@ -157,6 +157,7 @@ Chunk-based land protection. Claim a chunk and no one else can build, break, or 
 **Anti-grief measures:**
 - Explosions blocked if they affect claimed chunks
 - Fire and lava spread/flow prevented inside claims
+- Optional wilderness fire throttle to prevent arson griefing (toggle `allow_fire_wilderness`)
 - Water only flows into a claim from the same owner's source
 - Armor Stands, Item Frames, Paintings, and Villagers protected from damage and theft
 - PvP immunity inside own claims
@@ -276,7 +277,7 @@ Set a Discord webhook URL in the Config tab to mirror join/leave events and chat
 
 ### BlueMap Integration
 
-Optional integration with [BlueMap](https://modrinth.com/plugin/bluemap). When BlueMap is installed, QuackedSMP automatically syncs:
+Optional integration with [BlueMap](https://modrinth.com/plugin/bluemap) (built against API v2.7.3). Any BlueMap version shipping that API or newer should work. When BlueMap is installed, QuackedSMP automatically syncs:
 
 - Claim region outlines (color-coded by normal / VIP / OP)
 - Player home markers
@@ -312,9 +313,27 @@ Sessions can also be viewed and force-ended from the admin panel.
 
 ---
 
+### Kits
+
+Daily kit claim system. Players choose one kit per cooldown period from their available pool. Kits contain an armor set and items, and can be tier-gated for VIP exclusives.
+
+- Global cooldown (default 24 hours) shared across all kits — pick one per day
+- Each kit has a minimum tier requirement (0 = everyone, 1+ = VIP)
+- Armor equips to the slot if empty, otherwise goes to inventory, otherwise drops at feet
+- Items overflow to the ground if inventory is full
+- Fully configurable from the admin panel VIP tab: armor slots with per-slot suggestions, item grid editor, cooldown, tier requirements
+
+| Command | Description | Permission |
+| :--- | :--- | :--- |
+| `/smp kit` | List available kits and cooldown status | Everyone |
+| `/smp kit list` | Same as above | Everyone |
+| `/smp kit <name>` | Claim a kit | Everyone |
+
+---
+
 ### Simple Voice Chat Integration
 
-Optional age-gate for [Simple Voice Chat](https://modrinth.com/plugin/simple-voice-chat). When enabled:
+Optional age-gate for [Simple Voice Chat](https://modrinth.com/plugin/simple-voice-chat) (built against API v2.6.0). Any Simple Voice Chat version shipping that API or newer should work. When enabled:
 
 - Only players with the Simple Voice Chat client installed are prompted
 - Prompted shortly after joining once the voice chat client connects
@@ -328,6 +347,32 @@ Optional age-gate for [Simple Voice Chat](https://modrinth.com/plugin/simple-voi
 
 - `/smp end reset dragon`: respawn the Ender Dragon live without resetting the dimension
 - `/smp end reset world`: queue a full End dimension reset for next server restart
+
+---
+
+### Wilderness Regen
+
+Regenerate all unclaimed chunks across all dimensions. Claimed chunks and a 3-chunk buffer around them are preserved; everything else is wiped and regenerated from the world seed when players next visit.
+
+- Queued via `/smp regen` (in-game with clickable confirmation) or the dashboard Commands tab
+- Executes on the next server shutdown after worlds are saved
+- Region files with no remaining chunks are deleted entirely to reclaim disk space
+- Processes `region/`, `entities/`, and `poi/` subdirectories across overworld, nether, end, and custom dimensions
+
+| Command | Description | Permission |
+| :--- | :--- | :--- |
+| `/smp regen` | Show warning and clickable confirm | OP |
+| `/smp regen confirm` | Queue wilderness regen for next shutdown | OP |
+| `/smp regen cancel` | Cancel a pending regen | OP |
+| `/smp regen status` | Check if a regen is pending | OP |
+
+---
+
+### Spawn PvP Protection
+
+Blocks PvP damage inside the vanilla spawn protection radius (set via `spawn-protection` in `server.properties`). Independent of the claims system. If either the attacker or victim is within the spawn protection square, damage is cancelled.
+
+Toggle: `spawn_no_pvp` in config (default: `true`)
 
 </details>
 
@@ -363,6 +408,10 @@ Optional age-gate for [Simple Voice Chat](https://modrinth.com/plugin/simple-voi
 | `/tpa <player>` | Accept or deny teleport | Everyone |
 | `/smp end reset dragon` | Reset Ender Dragon fight | OP |
 | `/smp end reset world` | Queue End dimension reset | OP |
+| `/smp regen` | Show wilderness regen warning | OP |
+| `/smp regen confirm` | Queue wilderness regen | OP |
+| `/smp regen cancel` | Cancel pending regen | OP |
+| `/smp regen status` | Check regen status | OP |
 | `/vip set <player> <tier>` | Set player tier | OP |
 | `/vip remove <player>` | Remove assigned tier | OP |
 | `/vip list` | List all assigned tiers | OP |
@@ -385,6 +434,9 @@ Optional age-gate for [Simple Voice Chat](https://modrinth.com/plugin/simple-voi
 | `/smp hardcore leave` | Leave current hardcore session | Everyone |
 | `/smp hardcore status [name]` | View session status | Everyone |
 | `/smp hardcore list` | List all active sessions | Everyone |
+| `/smp kit` | List available kits and cooldown status | Everyone |
+| `/smp kit list` | Same as above | Everyone |
+| `/smp kit <name>` | Claim a kit | Everyone |
 | `/dim create <id> <type> [sub-params]` | Create a custom dimension | OP |
 | `/dim delete <id>` | Delete a custom dimension | OP |
 | `/dim list` | List all active dimensions | Everyone |
@@ -409,6 +461,8 @@ Config lives at `config/quackedsmp.json`. Most settings are editable live from t
 | `tp_warmup` | `5` | Seconds to stand still before teleporting |
 | `message_interval` | `300` | Seconds between periodic tip broadcasts |
 | `allow_lava_wilderness` | `false` | Allow lava placement outside claims |
+| `allow_fire_wilderness` | `true` | Allow fire to spread in unclaimed wilderness |
+| `spawn_no_pvp` | `true` | Block PvP inside vanilla spawn protection radius |
 | `claims_enabled` | `true` | Enable the claiming system |
 | `skills_enabled` | `true` | Enable the skills system |
 | `chatfilter_enabled` | `true` | Enable the chat filter |
@@ -426,6 +480,9 @@ Config lives at `config/quackedsmp.json`. Most settings are editable live from t
 | `bluemap_vip_claim_color` | `8A2BE2` | Hex color for VIP claims |
 | `bluemap_show_worldborder` | `true` | Show world border on BlueMap |
 | `bluemap_worldborder_color` | `FF3C3C` | Hex color for world border |
+| `kits_enabled` | `true` | Enable the kit claim system |
+| `kits.cooldownSeconds` | `86400` | Seconds between kit claims (default 24 hours) |
+| `kits.kits` | see JSON | Kit definitions: name, displayName, minTier, armor, items |
 | `hardcore_enabled` | `false` | Enable the hardcore session system |
 | `hardcore_death_percent` | `50` | Deaths as % of peak players to end a session |
 | `skills.xp_exponent` | `1.5` | Exponential factor for skill leveling |

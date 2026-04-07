@@ -45,7 +45,9 @@ public final class SmpUtilsModFabric implements ModInitializer {
             mc.smpessentials.votifier.VotifierListener.stop();
         });
         // SERVER_STOPPED fires after level.dat is written — safe to patch it here.
+        // Chunk regen runs first (needs dimension data intact), then scrubLevelDat cleans up deleted custom dims.
         net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents.SERVER_STOPPED.register(server -> {
+            mc.smpessentials.regen.ChunkRegenManager.onServerStopped(server);
             mc.smpessentials.dims.DimManager.scrubLevelDat(server);
         });
 

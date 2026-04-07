@@ -14,6 +14,8 @@ public final class SmpConfig {
 
     public record TierDef(int tier, String name, long minPlaytimeHours, int bonusClaims) {}
     public static boolean ALLOW_LAVA_WILDERNESS = false;
+    public static boolean ALLOW_FIRE_WILDERNESS = true;
+    public static boolean SPAWN_NO_PVP = true;
     public static java.util.Map<String, String> MESSAGES = new java.util.HashMap<>();
 
     // ---- Feature toggles ----
@@ -29,6 +31,8 @@ public final class SmpConfig {
     public static String VOTIFIER_TOKEN = "";
     public static String VOTE_BROADCAST = "&6\u2736 {player} &ejust voted for the server! Thanks for the support!";
     public static java.util.List<String> VOTE_REWARDS = new java.util.ArrayList<>();
+    // Tier number -> bonus reward commands. Stacks: tier 2 players get tier 1 + tier 2 bonuses.
+    public static java.util.Map<Integer, java.util.List<String>> VOTE_VIP_REWARDS = new java.util.HashMap<>();
 
     // ---- Dashboard ----
     public static boolean DASHBOARD_ENABLED = false;
@@ -59,6 +63,11 @@ public final class SmpConfig {
     // ---- Hardcore ----
     public static boolean HARDCORE_ENABLED = false;
     public static int HARDCORE_DEATH_PERCENT = 50;
+
+    // ---- Kits ----
+    public static boolean KITS_ENABLED = true;
+    public static long KIT_COOLDOWN_SECONDS = 86400;
+    public static java.util.List<ConfigData.KitDef> KIT_DEFINITIONS = new java.util.ArrayList<>();
 
     // ---- Skills ----
     public static double SKILL_XP_EXPONENT = 1.5;
@@ -126,6 +135,8 @@ public final class SmpConfig {
         WELCOME_MESSAGE = d.welcomeMessage;
         MESSAGE_INTERVAL = d.messageInterval;
         ALLOW_LAVA_WILDERNESS = d.allowLavaWilderness;
+        ALLOW_FIRE_WILDERNESS = d.allowFireWilderness;
+        SPAWN_NO_PVP = d.spawnNoPvp;
         CLAIMS_ENABLED = d.claimsEnabled;
         SKILLS_ENABLED = d.skillsEnabled;
         CHATFILTER_ENABLED = d.chatfilterEnabled;
@@ -149,6 +160,12 @@ public final class SmpConfig {
         VOTIFIER_TOKEN = d.votifier.token;
         VOTE_BROADCAST = d.votifier.broadcast;
         VOTE_REWARDS = d.votifier.rewards;
+        VOTE_VIP_REWARDS = new java.util.HashMap<>();
+        for (var entry : d.votifier.vipRewards.entrySet()) {
+            try {
+                VOTE_VIP_REWARDS.put(Integer.parseInt(entry.getKey()), new java.util.ArrayList<>(entry.getValue()));
+            } catch (NumberFormatException ignored) {}
+        }
 
         DASHBOARD_ENABLED = d.dashboard.enabled;
         DASHBOARD_PORT = d.dashboard.port;
@@ -162,6 +179,10 @@ public final class SmpConfig {
 
         HARDCORE_ENABLED = d.hardcoreEnabled;
         HARDCORE_DEATH_PERCENT = d.hardcoreDeathPercent;
+
+        KITS_ENABLED = d.kitsEnabled;
+        KIT_COOLDOWN_SECONDS = d.kits.cooldownSeconds;
+        KIT_DEFINITIONS = d.kits.kits;
 
         SKILL_XP_EXPONENT = d.skills.xpExponent;
         SKILL_COOLDOWNS = d.skills.cooldowns;

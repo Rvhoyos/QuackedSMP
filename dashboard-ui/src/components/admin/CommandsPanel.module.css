@@ -352,3 +352,34 @@
   letter-spacing: 0.5px;
 }
 .stopConfirm:hover { background: #4A1818; color: #FFCCCC; }
+
+/* Warning-style quick buttons (end reset, regen) */
+.quickWarn:hover {
+  color: #FFB74D;
+  background: rgba(255, 183, 77, 0.1);
+  border-bottom-color: rgba(255, 183, 77, 0.3);
+  border-right-color:  rgba(255, 183, 77, 0.3);
+}
+
+.warnTitle { color: #FFB74D !important; }
+
+.warnText {
+  font-size: 12px;
+  color: var(--subtext1);
+  line-height: 1.5;
+  margin: 0 0 6px 0;
+}
+
+.warnDanger {
+  font-size: 12px;
+  color: var(--red);
+  line-height: 1.5;
+  margin: 0 0 6px 0;
+}
+
+.warnNote {
+  font-size: 11px;
+  color: #666;
+  line-height: 1.4;
+  margin: 0;
+}

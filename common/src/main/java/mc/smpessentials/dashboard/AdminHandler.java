@@ -174,6 +174,8 @@ public final class AdminHandler {
         sb.append(String.format("\"welcome_message\":\"%s\",", jsonEscape(SmpConfig.WELCOME_MESSAGE)));
         sb.append(String.format("\"message_interval\":%d,", SmpConfig.MESSAGE_INTERVAL));
         sb.append(String.format("\"allow_lava_wilderness\":%b,", SmpConfig.ALLOW_LAVA_WILDERNESS));
+        sb.append(String.format("\"allow_fire_wilderness\":%b,", SmpConfig.ALLOW_FIRE_WILDERNESS));
+        sb.append(String.format("\"spawn_no_pvp\":%b,", SmpConfig.SPAWN_NO_PVP));
         // Feature toggles
         sb.append(String.format("\"claims_enabled\":%b,", SmpConfig.CLAIMS_ENABLED));
         sb.append(String.format("\"skills_enabled\":%b,", SmpConfig.SKILLS_ENABLED));
@@ -191,6 +193,14 @@ public final class AdminHandler {
         sb.append(String.format("\"votifier_token\":\"%s\",", jsonEscape(SmpConfig.VOTIFIER_TOKEN)));
         sb.append(String.format("\"vote_broadcast\":\"%s\",", jsonEscape(SmpConfig.VOTE_BROADCAST)));
         sb.append("\"vote_rewards\":").append(jsonStrArr(SmpConfig.VOTE_REWARDS)).append(",");
+        sb.append("\"vote_vip_rewards\":{");
+        boolean firstVip = true;
+        for (var entry : SmpConfig.VOTE_VIP_REWARDS.entrySet()) {
+            if (!firstVip) sb.append(",");
+            sb.append("\"").append(entry.getKey()).append("\":").append(jsonStrArr(entry.getValue()));
+            firstVip = false;
+        }
+        sb.append("},");
         // Discord
         sb.append(String.format("\"discord_enabled\":%b,", !SmpConfig.DISCORD_WEBHOOK_URL.isBlank()));
         sb.append(String.format("\"discord_webhook_url\":\"%s\",", jsonEscape(SmpConfig.DISCORD_WEBHOOK_URL)));
@@ -235,7 +245,28 @@ public final class AdminHandler {
         sb.append(String.format("\"cap_knowledge_xp\":%.2f,", SmpConfig.CAP_KNOWLEDGE_XP));
         sb.append(String.format("\"cap_double_drop\":%.2f,", SmpConfig.CAP_DOUBLE_DROP));
         sb.append(String.format("\"cap_defense_armor\":%.2f,", SmpConfig.CAP_DEFENSE_ARMOR));
-        sb.append(String.format("\"cap_safe_landing\":%.2f", SmpConfig.CAP_SAFE_LANDING));
+        sb.append(String.format("\"cap_safe_landing\":%.2f,", SmpConfig.CAP_SAFE_LANDING));
+        // Kits
+        sb.append(String.format("\"kits_enabled\":%b,", SmpConfig.KITS_ENABLED));
+        sb.append(String.format("\"kit_cooldown_seconds\":%d,", SmpConfig.KIT_COOLDOWN_SECONDS));
+        sb.append("\"kit_definitions\":[");
+        for (int i = 0; i < SmpConfig.KIT_DEFINITIONS.size(); i++) {
+            if (i > 0) sb.append(',');
+            var kit = SmpConfig.KIT_DEFINITIONS.get(i);
+            sb.append(String.format("{\"name\":\"%s\",\"displayName\":\"%s\",\"minTier\":%d,",
+                    jsonEscape(kit.name), jsonEscape(kit.displayName), kit.minTier));
+            sb.append(String.format("\"armor\":{\"head\":\"%s\",\"chest\":\"%s\",\"legs\":\"%s\",\"feet\":\"%s\"},",
+                    jsonEscape(kit.armor.head), jsonEscape(kit.armor.chest),
+                    jsonEscape(kit.armor.legs), jsonEscape(kit.armor.feet)));
+            sb.append("\"items\":[");
+            for (int j = 0; j < kit.items.size(); j++) {
+                if (j > 0) sb.append(',');
+                var item = kit.items.get(j);
+                sb.append(String.format("{\"item\":\"%s\",\"count\":%d}", jsonEscape(item.item), item.count));
+            }
+            sb.append("]}");
+        }
+        sb.append("]");
         sb.append("}");
         return sb.toString();
     }
@@ -255,6 +286,8 @@ public final class AdminHandler {
             if (patch.has("welcome_message"))       { SmpConfig.WELCOME_MESSAGE       = patch.get("welcome_message").getAsString();       changed++; }
             if (patch.has("message_interval"))      { SmpConfig.MESSAGE_INTERVAL      = patch.get("message_interval").getAsInt();         changed++; }
             if (patch.has("allow_lava_wilderness")) { SmpConfig.ALLOW_LAVA_WILDERNESS = patch.get("allow_lava_wilderness").getAsBoolean(); changed++; }
+            if (patch.has("allow_fire_wilderness")) { SmpConfig.ALLOW_FIRE_WILDERNESS = patch.get("allow_fire_wilderness").getAsBoolean(); changed++; }
+            if (patch.has("spawn_no_pvp"))          { SmpConfig.SPAWN_NO_PVP          = patch.get("spawn_no_pvp").getAsBoolean();          changed++; }
             // Feature toggles
             if (patch.has("claims_enabled"))     { SmpConfig.CLAIMS_ENABLED     = patch.get("claims_enabled").getAsBoolean();     changed++; }
             if (patch.has("skills_enabled"))     { SmpConfig.SKILLS_ENABLED     = patch.get("skills_enabled").getAsBoolean();     changed++; }
@@ -288,6 +321,20 @@ public final class AdminHandler {
             if (patch.has("bluemap_worldborder_color")) { SmpConfig.BLUEMAP_WORLDBORDER_COLOR = patch.get("bluemap_worldborder_color").getAsString();  changed++; blueMapChanged = true; }
             // Lists
             if (patch.has("vote_rewards") && patch.get("vote_rewards").isJsonArray())          { loadStrArr(patch.getAsJsonArray("vote_rewards"),         SmpConfig.VOTE_REWARDS);       changed++; }
+            if (patch.has("vote_vip_rewards") && patch.get("vote_vip_rewards").isJsonObject()) {
+                SmpConfig.VOTE_VIP_REWARDS.clear();
+                for (var entry : patch.getAsJsonObject("vote_vip_rewards").entrySet()) {
+                    try {
+                        int t = Integer.parseInt(entry.getKey());
+                        if (entry.getValue().isJsonArray()) {
+                            java.util.List<String> cmds = new java.util.ArrayList<>();
+                            for (var el : entry.getValue().getAsJsonArray()) cmds.add(el.getAsString());
+                            SmpConfig.VOTE_VIP_REWARDS.put(t, cmds);
+                        }
+                    } catch (NumberFormatException ignored) {}
+                }
+                changed++;
+            }
             if (patch.has("tiers") && patch.get("tiers").isJsonArray()) {
                 SmpConfig.TIERS.clear();
                 for (var el : patch.getAsJsonArray("tiers")) {
@@ -320,6 +367,39 @@ public final class AdminHandler {
             if (patch.has("cap_double_drop"))      { SmpConfig.CAP_DOUBLE_DROP      = patch.get("cap_double_drop").getAsDouble();      changed++; }
             if (patch.has("cap_defense_armor"))    { SmpConfig.CAP_DEFENSE_ARMOR    = patch.get("cap_defense_armor").getAsDouble();    changed++; }
             if (patch.has("cap_safe_landing"))     { SmpConfig.CAP_SAFE_LANDING     = patch.get("cap_safe_landing").getAsDouble();     changed++; }
+            // Kits
+            if (patch.has("kits_enabled"))         { SmpConfig.KITS_ENABLED         = patch.get("kits_enabled").getAsBoolean();       changed++; }
+            if (patch.has("kit_cooldown_seconds"))  { SmpConfig.KIT_COOLDOWN_SECONDS  = patch.get("kit_cooldown_seconds").getAsLong();  changed++; }
+            if (patch.has("kit_definitions") && patch.get("kit_definitions").isJsonArray()) {
+                SmpConfig.KIT_DEFINITIONS.clear();
+                for (var el : patch.getAsJsonArray("kit_definitions")) {
+                    if (!el.isJsonObject()) continue;
+                    JsonObject ko = el.getAsJsonObject();
+                    var kit = new mc.smpessentials.config.ConfigData.KitDef();
+                    kit.name        = ko.has("name")        ? ko.get("name").getAsString()        : "";
+                    kit.displayName = ko.has("displayName") ? ko.get("displayName").getAsString() : "";
+                    kit.minTier     = ko.has("minTier")     ? ko.get("minTier").getAsInt()        : 0;
+                    if (ko.has("armor") && ko.get("armor").isJsonObject()) {
+                        JsonObject ao = ko.getAsJsonObject("armor");
+                        kit.armor.head  = ao.has("head")  ? ao.get("head").getAsString()  : "";
+                        kit.armor.chest = ao.has("chest") ? ao.get("chest").getAsString() : "";
+                        kit.armor.legs  = ao.has("legs")  ? ao.get("legs").getAsString()  : "";
+                        kit.armor.feet  = ao.has("feet")  ? ao.get("feet").getAsString()  : "";
+                    }
+                    if (ko.has("items") && ko.get("items").isJsonArray()) {
+                        kit.items.clear();
+                        for (var ie : ko.getAsJsonArray("items")) {
+                            if (!ie.isJsonObject()) continue;
+                            JsonObject itemObj = ie.getAsJsonObject();
+                            String itemId = itemObj.has("item")  ? itemObj.get("item").getAsString() : "";
+                            int count     = itemObj.has("count") ? itemObj.get("count").getAsInt()   : 1;
+                            kit.items.add(new mc.smpessentials.config.ConfigData.KitItem(itemId, count));
+                        }
+                    }
+                    if (!kit.name.isBlank()) SmpConfig.KIT_DEFINITIONS.add(kit);
+                }
+                changed++;
+            }
 
             if (changed > 0) {
                 ConfigIO.save();
@@ -1254,6 +1334,40 @@ public final class AdminHandler {
         } catch (Exception e) {
             return err(400, "Invalid request: " + jsonEscape(e.getMessage()));
         }
+    }
+
+    // GET /api/admin/regen — check pending status.
+    // POST /api/admin/regen — queue wilderness regen.
+    // DELETE /api/admin/regen — cancel pending regen.
+    public static String handleRegen(String method, Map<String, String> headers, String body,
+                                     MinecraftServer server) {
+        if (!SmpConfig.ADMIN_ENABLED)         return err(403, "Admin panel disabled");
+        if (!AdminAuth.isAuthorized(headers)) return err(403, "Unauthorized");
+
+        if ("GET".equals(method)) {
+            boolean pending = mc.smpessentials.regen.ChunkRegenManager.isPending(server);
+            return String.format("{\"pending\":%b}", pending);
+        }
+
+        if ("POST".equals(method)) {
+            try {
+                mc.smpessentials.regen.ChunkRegenManager.queueRegen(server);
+                return "{\"ok\":true}";
+            } catch (Exception e) {
+                return err(500, "Failed to queue regen: " + jsonEscape(e.getMessage()));
+            }
+        }
+
+        if ("DELETE".equals(method)) {
+            try {
+                mc.smpessentials.regen.ChunkRegenManager.cancelRegen(server);
+                return "{\"ok\":true}";
+            } catch (Exception e) {
+                return err(500, "Failed to cancel regen: " + jsonEscape(e.getMessage()));
+            }
+        }
+
+        return err(405, "Method not allowed");
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────

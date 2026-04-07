@@ -86,6 +86,8 @@ public final class ConfigIO {
         data.welcomeMessage = SmpConfig.WELCOME_MESSAGE;
         data.messageInterval = SmpConfig.MESSAGE_INTERVAL;
         data.allowLavaWilderness = SmpConfig.ALLOW_LAVA_WILDERNESS;
+        data.allowFireWilderness = SmpConfig.ALLOW_FIRE_WILDERNESS;
+        data.spawnNoPvp = SmpConfig.SPAWN_NO_PVP;
         data.claimsEnabled = SmpConfig.CLAIMS_ENABLED;
         data.skillsEnabled = SmpConfig.SKILLS_ENABLED;
         data.chatfilterEnabled = SmpConfig.CHATFILTER_ENABLED;
@@ -112,6 +114,10 @@ public final class ConfigIO {
         data.votifier.token = SmpConfig.VOTIFIER_TOKEN;
         data.votifier.broadcast = SmpConfig.VOTE_BROADCAST;
         data.votifier.rewards = new java.util.ArrayList<>(SmpConfig.VOTE_REWARDS);
+        data.votifier.vipRewards = new java.util.HashMap<>();
+        for (var entry : SmpConfig.VOTE_VIP_REWARDS.entrySet()) {
+            data.votifier.vipRewards.put(String.valueOf(entry.getKey()), new java.util.ArrayList<>(entry.getValue()));
+        }
 
         data.dashboard.enabled = SmpConfig.DASHBOARD_ENABLED;
         data.dashboard.port = SmpConfig.DASHBOARD_PORT;
@@ -122,6 +128,10 @@ public final class ConfigIO {
         data.discord.webhookUrl = SmpConfig.DISCORD_WEBHOOK_URL;
         data.discord.joinLeave = SmpConfig.DISCORD_JOIN_LEAVE;
         data.discord.chat = SmpConfig.DISCORD_CHAT;
+
+        data.kitsEnabled = SmpConfig.KITS_ENABLED;
+        data.kits.cooldownSeconds = SmpConfig.KIT_COOLDOWN_SECONDS;
+        data.kits.kits = new java.util.ArrayList<>(SmpConfig.KIT_DEFINITIONS);
 
         data.skills.xpExponent = SmpConfig.SKILL_XP_EXPONENT;
         data.skills.cooldowns = new java.util.HashMap<>(SmpConfig.SKILL_COOLDOWNS);

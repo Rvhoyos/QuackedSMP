@@ -73,6 +73,13 @@ const FEATURES = [
     toggleable: true,
   },
   {
+    name: 'Kits',
+    desc: 'Daily kit claim system. Players pick one kit per cooldown period. Tier-gated VIP kits.',
+    tag: 'kits',
+    configKey: 'kits_enabled',
+    toggleable: true,
+  },
+  {
     name: 'Admin Panel',
     desc: 'Manage players, run commands, and edit server config from the browser. Password-protected.',
     tag: 'admin',

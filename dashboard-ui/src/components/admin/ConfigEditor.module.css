@@ -733,3 +733,254 @@
   font-weight: 500;
   text-shadow: 1px 1px 0 rgba(0,0,0,0.8);
 }
+
+/* ── Kit Definitions Editor ── */
+.kitCard {
+  border: 1px solid #1A1A1A;
+  background: #1E1E1E;
+  overflow: hidden;
+}
+
+.kitHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  cursor: pointer;
+  background: #1A1A1A;
+  transition: background var(--t-fast);
+}
+
+.kitHeader:hover { background: #222; }
+
+.kitCaret {
+  font-size: 8px;
+  color: #555;
+  flex-shrink: 0;
+  width: 10px;
+}
+
+.kitName {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text);
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.kitTierBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--font-pixel);
+  font-size: 5px;
+  letter-spacing: 0.5px;
+  color: var(--mauve);
+  background: rgba(203, 166, 247, 0.1);
+  padding: 3px 8px;
+  flex-shrink: 0;
+}
+
+.kitBody {
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border-top: 1px solid #111;
+}
+
+.kitFieldRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.kitFieldLabel {
+  font-size: 11px;
+  color: #666;
+  min-width: 80px;
+  flex-shrink: 0;
+}
+
+.kitSectionLabel {
+  font-family: var(--font-pixel);
+  font-size: 5px;
+  letter-spacing: 0.5px;
+  color: #444;
+  text-transform: uppercase;
+  padding-top: 6px;
+  border-top: 1px solid #1A1A1A;
+}
+
+/* ── Inventory Slot (shared) ── */
+.invSlot {
+  width: 36px;
+  height: 36px;
+  background: var(--mc-slot);
+  border-top:    2px solid #0A0A0A;
+  border-left:   2px solid #0A0A0A;
+  border-bottom: 2px solid #333;
+  border-right:  2px solid #333;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  position: relative;
+  image-rendering: pixelated;
+}
+
+.invSlotFilled {
+  border-bottom-color: var(--green);
+  border-right-color: var(--green);
+}
+
+.invSlotGhost {
+  opacity: 0.6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.invSlotFilled .invSlotGhost {
+  opacity: 0.2;
+}
+
+/* ── Armor Slot Row ── */
+.armorColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.armorRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.armorRow > input,
+.armorRow > span { flex: 1; min-width: 0; }
+
+/* ── Item Grid (chest-like) ── */
+.itemGridWrap {
+  background: #181818;
+  border-top:    2px solid #0A0A0A;
+  border-left:   2px solid #0A0A0A;
+  border-bottom: 2px solid var(--mc-stone-light);
+  border-right:  2px solid var(--mc-stone-light);
+  padding: 6px;
+}
+
+.itemGrid {
+  display: grid;
+  grid-template-columns: repeat(9, 52px);
+  gap: 2px;
+}
+
+.itemSlot {
+  width: 52px;
+  height: 52px;
+  background: var(--mc-slot);
+  border-top:    2px solid #0A0A0A;
+  border-left:   2px solid #0A0A0A;
+  border-bottom: 2px solid #333;
+  border-right:  2px solid #333;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  cursor: pointer;
+  transition: border-color var(--t-fast);
+}
+
+.itemSlot:hover {
+  border-bottom-color: #555;
+  border-right-color: #555;
+}
+
+.itemSlotSelected {
+  border-bottom-color: var(--blue);
+  border-right-color: var(--blue);
+  box-shadow: inset 0 0 6px rgba(137, 180, 250, 0.15);
+}
+
+.itemSlotLabel {
+  font-family: var(--font-pixel);
+  font-size: 5px;
+  letter-spacing: 0.3px;
+  color: #CCC;
+  text-align: center;
+  line-height: 1.3;
+  max-width: 46px;
+  overflow: hidden;
+  word-break: break-all;
+  padding: 2px;
+}
+
+.itemSlotCount {
+  position: absolute;
+  bottom: 2px;
+  right: 3px;
+  font-family: var(--font-pixel);
+  font-size: 6px;
+  color: var(--yellow);
+  text-shadow: 1px 1px 0 rgba(0,0,0,0.8);
+  line-height: 1;
+}
+
+.itemSlotAdd {
+  color: #333;
+  font-size: 18px;
+  font-weight: 300;
+  transition: color var(--t-fast);
+}
+
+.itemSlot:hover .itemSlotAdd {
+  color: var(--green);
+}
+
+/* ── Item Edit Bar ── */
+.itemEditBar {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  margin-top: 4px;
+  padding: 8px;
+  background: #1A1A1A;
+  border: 1px solid #111;
+}
+
+.itemEditBar > input { flex: 1; min-width: 0; }
+
+/* ── Tier Badge (inline) ── */
+.tierBadgeInline {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.tierStarWrap {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  image-rendering: pixelated;
+}
+
+.tierDefRow {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.tierDefNum {
+  font-family: var(--font-pixel);
+  font-size: 6px;
+  color: var(--mauve);
+  width: 18px;
+  flex-shrink: 0;
+  letter-spacing: 0.3px;
+}

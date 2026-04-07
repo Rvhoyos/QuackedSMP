@@ -21,7 +21,8 @@
     "PlayerActionMixin",
     "MinecraftServerMixin",
     "NetherPortalBlockMixin",
-    "PortalForcerMixin"
+    "PortalForcerMixin",
+    "FireBlockMixin"
   ],
   "injectors": {
     "defaultRequire": 1

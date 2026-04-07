@@ -14,6 +14,8 @@ public final class ConfigData {
     public String welcomeMessage = "&6Welcome to QuackedSMP, {player}!";
     public int messageInterval = 300;
     public boolean allowLavaWilderness = false;
+    public boolean allowFireWilderness = true;
+    public boolean spawnNoPvp = true;
     public boolean claimsEnabled = true;
     public boolean skillsEnabled = true;
     public boolean chatfilterEnabled = true;
@@ -61,7 +63,9 @@ public final class ConfigData {
             "&b[Tip] &fWe have proximity voice chat! If you're 18+, type &a/verify confirm&f to enable it and start talking!",
             "&b[Tip] &fWant to see who has the highest skills? Type &a/skills top&f to view the server leaderboards!",
             "&b[Tip] &fCheck out our live web-map! You can see your &a/home&f and even name your claims using &a/claim name <name>&f!",
-            "&b[Tip] &fGet our recommended modpack for &ashaders&f, &aminimap&f, &avoice chat &fand more! [&bDownload Here](https://www.curseforge.com/minecraft/modpacks/play-quackedmod-wiki)"));
+            "&b[Tip] &fGet our recommended modpack for &ashaders&f, &aminimap&f, &avoice chat &fand more! [&bDownload Here](https://www.curseforge.com/minecraft/modpacks/play-quackedmod-wiki)",
+            "&b[Tip] &fClaim your daily kit! &a/smp kit list &fto see what's available for you!",
+            "&b[Tip] &fGetting bored? Try &ahardcore mode&f! &a/smp hardcore create &fto start a session!"));
 
     public Map<String, String> messages = new HashMap<>(Map.ofEntries(
             // Claiming
@@ -109,6 +113,8 @@ public final class ConfigData {
     public SkillsConfig skills = new SkillsConfig();
     // Import queue: loaded into NBT on startup/reload, then cleared from the file by ConfigIO.save().
     public ChatFilterData chatfilter = new ChatFilterData();
+    public boolean kitsEnabled = true;
+    public KitsConfig kits = new KitsConfig();
 
     public static final class VotifierConfig {
         public boolean enabled = false;
@@ -119,6 +125,9 @@ public final class ConfigData {
                 "give {player} diamond 2",
                 "give {player} emerald 5",
                 "give {player} gold_ingot 10"));
+        // Tier-keyed bonus rewards. Each tier's list stacks on top of all lower tiers.
+        // e.g. a tier 2 player gets: base reward + tier 1 bonus + tier 2 bonus.
+        public Map<String, List<String>> vipRewards = new HashMap<>();
     }
 
     public static final class DashboardConfig {
@@ -181,5 +190,77 @@ public final class ConfigData {
     public static final class ChatFilterData {
         public List<String> contents = new ArrayList<>();
         public List<String> whitelist = new ArrayList<>();
+    }
+
+    public static final class KitsConfig {
+        public long cooldownSeconds = 86400;
+        public List<KitDef> kits = new ArrayList<>(List.of(
+                new KitDef("starter", "&aStarter Kit", 0,
+                        new KitArmor("minecraft:leather_helmet", "minecraft:leather_chestplate",
+                                "minecraft:leather_leggings", "minecraft:leather_boots"),
+                        new ArrayList<>(List.of(
+                                new KitItem("minecraft:wooden_sword", 1),
+                                new KitItem("minecraft:bread", 16),
+                                new KitItem("minecraft:torch", 16),
+                                new KitItem("minecraft:oak_log", 16),
+                                new KitItem("minecraft:crafting_table", 1),
+                                new KitItem("minecraft:wheat_seeds", 8),
+                                new KitItem("minecraft:carrot", 4)))),
+                new KitDef("vip", "&6VIP Kit", 1,
+                        new KitArmor("minecraft:iron_helmet", "minecraft:iron_chestplate",
+                                "minecraft:iron_leggings", "minecraft:iron_boots"),
+                        new ArrayList<>(List.of(
+                                new KitItem("minecraft:iron_sword", 1),
+                                new KitItem("minecraft:cooked_beef", 32),
+                                new KitItem("minecraft:torch", 32),
+                                new KitItem("minecraft:oak_log", 32),
+                                new KitItem("minecraft:golden_apple", 2),
+                                new KitItem("minecraft:iron_pickaxe", 1))))));
+    }
+
+    public static final class KitDef {
+        public String name = "starter";
+        public String displayName = "&aStarter Kit";
+        public int minTier = 0;
+        public KitArmor armor = new KitArmor();
+        public List<KitItem> items = new ArrayList<>();
+
+        public KitDef() {}
+
+        public KitDef(String name, String displayName, int minTier, KitArmor armor, List<KitItem> items) {
+            this.name = name;
+            this.displayName = displayName;
+            this.minTier = minTier;
+            this.armor = armor;
+            this.items = items;
+        }
+    }
+
+    public static final class KitArmor {
+        public String head = "";
+        public String chest = "";
+        public String legs = "";
+        public String feet = "";
+
+        public KitArmor() {}
+
+        public KitArmor(String head, String chest, String legs, String feet) {
+            this.head = head;
+            this.chest = chest;
+            this.legs = legs;
+            this.feet = feet;
+        }
+    }
+
+    public static final class KitItem {
+        public String item = "minecraft:stone";
+        public int count = 1;
+
+        public KitItem() {}
+
+        public KitItem(String item, int count) {
+            this.item = item;
+            this.count = count;
+        }
     }
 }

@@ -2,6 +2,7 @@ package mc.smpessentials.mixin;
 
 import mc.smpessentials.skills.SkillEvents;
 import mc.smpessentials.claims.ClaimProtection;
+import mc.smpessentials.claims.SpawnProtection;
 import mc.smpessentials.teleport.TeleportScheduler;
 import mc.smpessentials.skills.ActiveAbilities;
 import net.minecraft.server.level.ServerPlayer;
@@ -18,7 +19,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 // 1. Item drop -> ability activation (sneak+drop a tool).
 // 2. Fall damage -> Safe Landing absorption scaled by Agility level.
-// 3. Hurt/death -> skill XP, zoom cancellation, bleed, and claim PvP protection.
+// 3. Hurt/death -> spawn PvP protection, claim protection, skill XP, and teleport cancellation.
 @Mixin(LivingEntity.class)
 public abstract class LivingEntityMixin {
     @Inject(method = "drop(Lnet/minecraft/world/item/ItemStack;ZZ)Lnet/minecraft/world/entity/item/ItemEntity;", at = @At("RETURN"), cancellable = true)
@@ -43,6 +44,11 @@ public abstract class LivingEntityMixin {
         // Safe Landing: intercept fall damage before anything else.
         // If handled, original event is cancelled; reduced damage is re-applied internally.
         if (SkillEvents.onFallDamage(entity, source, amount)) {
+            cir.setReturnValue(false);
+            return;
+        }
+
+        if (!SpawnProtection.onLivingHurt(entity, source)) {
             cir.setReturnValue(false);
             return;
         }

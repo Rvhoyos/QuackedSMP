@@ -1,7 +1,6 @@
 package mc.smpessentials.claims;
 
 import net.minecraft.world.level.Explosion;
-import net.minecraft.world.level.block.BaseFireBlock;
 
 import mc.smpessentials.claims.storage.ClaimedSavedData;
 import net.minecraft.core.BlockPos;
@@ -23,7 +22,7 @@ import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.damagesource.DamageSource;
 
 // Entry point for claim protection checks. Called from mixins and platform events.
-// Returns true to allow, false to deny. No logic beyond the protection decision lives here.
+// Returns true to allow, false to deny.
 public final class ClaimProtection {
     private ClaimProtection() {
     }
@@ -91,8 +90,6 @@ public final class ClaimProtection {
                 if (state.getBlock() instanceof net.minecraft.world.level.block.CactusBlock)
                     return true;
 
-                if (state.getBlock() instanceof BaseFireBlock)
-                    return false;
                 if (state.getFluidState().getType() == net.minecraft.world.level.material.Fluids.LAVA)
                     return false;
                 if (state.getBlock() instanceof net.minecraft.world.level.block.SnowLayerBlock)
@@ -146,8 +143,7 @@ public final class ClaimProtection {
 
     public static boolean onLivingHurt(LivingEntity entity, DamageSource source, float amount) {
         if (!mc.smpessentials.config.SmpConfig.CLAIMS_ENABLED) return true;
-        if (entity.level().isClientSide())
-            return true;
+        if (entity.level().isClientSide()) return true;
         Entity attackerEntity = source.getEntity();
 
         if (entity instanceof ServerPlayer victim && attackerEntity instanceof ServerPlayer attacker) {
