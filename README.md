@@ -374,6 +374,19 @@ Blocks PvP damage inside the vanilla spawn protection radius (set via `spawn-pro
 
 Toggle: `spawn_no_pvp` in config (default: `true`)
 
+---
+
+### Anti-XRay
+
+Server-side ore obfuscation that defeats x-ray cheat clients. When enabled, all blocks fully surrounded by solid blocks are replaced with random ores in the data sent to clients. X-ray users see meaningless noise instead of real ore locations. Real blocks are revealed naturally as players mine adjacent blocks.
+
+- Dimension-aware palettes: stone ores (y >= 0), deepslate ores (y < 0), nether ores
+- Deterministic replacement prevents visual flickering on chunk re-sends
+- Zero impact on legitimate players: ores appear normally as you dig
+- No commands, no player interaction needed. Toggle on and forget.
+
+Toggle: `antixray_enabled` in config (default: `true`)
+
 </details>
 
 ---
@@ -480,6 +493,7 @@ Config lives at `config/quackedsmp.json`. Most settings are editable live from t
 | `bluemap_vip_claim_color` | `8A2BE2` | Hex color for VIP claims |
 | `bluemap_show_worldborder` | `true` | Show world border on BlueMap |
 | `bluemap_worldborder_color` | `FF3C3C` | Hex color for world border |
+| `antixray_enabled` | `true` | Enable server-side ore obfuscation against x-ray clients |
 | `kits_enabled` | `true` | Enable the kit claim system |
 | `kits.cooldownSeconds` | `86400` | Seconds between kit claims (default 24 hours) |
 | `kits.kits` | see JSON | Kit definitions: name, displayName, minTier, armor, items |

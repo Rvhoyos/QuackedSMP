@@ -138,6 +138,8 @@ public class SmpEvents {
             SkillEvents.onBlockBreak(level, event.getPos(), event.getState(), player);
             if (!ClaimProtection.onBlockBreak(level, event.getPos(), event.getState(), player)) {
                 event.setCanceled(true);
+            } else if (level instanceof net.minecraft.server.level.ServerLevel sl) {
+                mc.smpessentials.antixray.AntiXrayEngine.revealNeighbors(sl, event.getPos());
             }
         }
     }

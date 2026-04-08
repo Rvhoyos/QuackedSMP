@@ -64,6 +64,9 @@ public final class SmpConfig {
     public static boolean HARDCORE_ENABLED = false;
     public static int HARDCORE_DEATH_PERCENT = 50;
 
+    // ---- Anti-XRay ----
+    public static boolean ANTIXRAY_ENABLED = true;
+
     // ---- Kits ----
     public static boolean KITS_ENABLED = true;
     public static long KIT_COOLDOWN_SECONDS = 86400;
@@ -180,6 +183,7 @@ public final class SmpConfig {
         HARDCORE_ENABLED = d.hardcoreEnabled;
         HARDCORE_DEATH_PERCENT = d.hardcoreDeathPercent;
 
+        ANTIXRAY_ENABLED = d.antixrayEnabled;
         KITS_ENABLED = d.kitsEnabled;
         KIT_COOLDOWN_SECONDS = d.kits.cooldownSeconds;
         KIT_DEFINITIONS = d.kits.kits;

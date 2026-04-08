@@ -24,7 +24,8 @@
     ]
   },
   "mixins": [
-    "quacksmp.mixins.json"
+    "quacksmp.mixins.json",
+    "quacksmp-fabric.mixins.json"
   ],
   "depends": {
     "fabricloader": ">=0.17.3",

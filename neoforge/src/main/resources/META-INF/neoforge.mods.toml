@@ -33,3 +33,6 @@ side = "BOTH"
 
 [[mixins]]
 config = "quacksmp.mixins.json"
+
+[[mixins]]
+config = "quacksmp-neoforge.mixins.json"
