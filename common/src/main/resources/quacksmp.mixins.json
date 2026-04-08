@@ -22,7 +22,8 @@
     "MinecraftServerMixin",
     "NetherPortalBlockMixin",
     "PortalForcerMixin",
-    "FireBlockMixin"
+    "FireBlockMixin",
+    "ChunkPacketDataMixin"
   ],
   "injectors": {
     "defaultRequire": 1

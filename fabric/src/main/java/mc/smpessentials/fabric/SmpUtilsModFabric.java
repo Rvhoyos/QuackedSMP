@@ -113,7 +113,11 @@ public final class SmpUtilsModFabric implements ModInitializer {
         net.fabricmc.fabric.api.event.player.PlayerBlockBreakEvents.BEFORE
                 .register((world, p, pos, state, blockEntity) -> {
                     mc.smpessentials.skills.SkillEvents.onBlockBreak(world, pos, state, p);
-                    return mc.smpessentials.claims.ClaimProtection.onBlockBreak(world, pos, state, p);
+                    boolean allowed = mc.smpessentials.claims.ClaimProtection.onBlockBreak(world, pos, state, p);
+                    if (allowed && world instanceof net.minecraft.server.level.ServerLevel sl) {
+                        mc.smpessentials.antixray.AntiXrayEngine.revealNeighbors(sl, pos);
+                    }
+                    return allowed;
                 });
 
         // 7. Right Click Block

@@ -1,0 +1,12 @@
+{
+  "required": true,
+  "package": "mc.smpessentials.neoforge.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "minVersion": "0.8",
+  "mixins": [
+    "NeoForgeFireBlockMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
