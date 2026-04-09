@@ -70,6 +70,7 @@ public final class SmpUtilsModFabric implements ModInitializer {
             net.minecraft.server.level.ServerPlayer player = handler.getPlayer();
             mc.smpessentials.skills.SkillEvents.onPlayerLoggedOut(player);
             mc.smpessentials.teleport.TeleportService.clearForPlayer(player.getUUID());
+            mc.smpessentials.antixray.AntiXrayEngine.onPlayerDisconnect(player.getUUID());
             mc.smpessentials.dashboard.DashboardManager.broadcastPlayerLeave(player.getGameProfile().name());
         });
 
@@ -94,6 +95,7 @@ public final class SmpUtilsModFabric implements ModInitializer {
                 mc.smpessentials.teleport.TeleportScheduler.onPlayerTick(player);
                 mc.smpessentials.skills.SkillEvents.onPlayerTick(player);
                 mc.smpessentials.dims.EtherFallthrough.tick(player);
+                mc.smpessentials.antixray.AntiXrayEngine.tickPlayer(player);
             }
         });
 

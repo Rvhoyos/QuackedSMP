@@ -82,6 +82,7 @@ public class SmpEvents {
     public static void onPlayerLogout(PlayerEvent.PlayerLoggedOutEvent event) {
         SkillEvents.onPlayerLoggedOut(event.getEntity());
         mc.smpessentials.teleport.TeleportService.clearForPlayer(event.getEntity().getUUID());
+        mc.smpessentials.antixray.AntiXrayEngine.onPlayerDisconnect(event.getEntity().getUUID());
         mc.smpessentials.dashboard.DashboardManager.broadcastPlayerLeave(event.getEntity().getGameProfile().name());
     }
 
@@ -108,6 +109,7 @@ public class SmpEvents {
             TeleportScheduler.onPlayerTick(player);
             SkillEvents.onPlayerTick(player);
             mc.smpessentials.dims.EtherFallthrough.tick(player);
+            mc.smpessentials.antixray.AntiXrayEngine.tickPlayer(player);
         }
     }
 
