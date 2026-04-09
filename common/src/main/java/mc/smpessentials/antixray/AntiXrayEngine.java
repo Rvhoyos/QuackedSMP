@@ -15,8 +15,30 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.chunk.LevelChunkSection;
 
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+
+/**
+ * Server-side ore obfuscation engine.
+ *
+ * Replaces hidden blocks in outgoing chunk packets with random ores so x-ray clients see
+ * noise instead of real ore locations. Blocks are considered hidden when all 6 neighbors
+ * are opaque. Real block states are restored via three mechanisms:
+ * block-break reveal (neighbors of a broken block), proximity reveal (blocks within
+ * {@link #REVEAL_RADIUS} of a moving player), and normal chunk re-sends.
+ */
 public final class AntiXrayEngine {
     private AntiXrayEngine() {}
+
+    private static final int REVEAL_RADIUS = 4;
+    private static final int MAX_REVEALED_PER_PLAYER = 10_000;
+
+    // Per-player tracking for proximity reveal to avoid redundant packets.
+    private static final Map<UUID, BlockPos> lastPositions = new ConcurrentHashMap<>();
+    private static final Map<UUID, Set<Long>> revealedBlocks = new ConcurrentHashMap<>();
 
     private static final BlockState[] OVERWORLD_ORES = {
             Blocks.STONE.defaultBlockState(),
@@ -49,8 +71,11 @@ public final class AntiXrayEngine {
             Blocks.ANCIENT_DEBRIS.defaultBlockState(),
     };
 
-    // Builds an obfuscated chunk buffer to replace the packet's real data.
-    // Returns null if anti-xray is disabled, client-side, or nothing was hidden.
+    /**
+     * Builds an obfuscated copy of the chunk's section buffer. Called from
+     * {@link mc.smpessentials.mixin.ChunkPacketDataMixin} during chunk packet construction.
+     * Returns null if nothing was obfuscated.
+     */
     public static byte[] obfuscate(LevelChunk chunk) {
         if (!SmpConfig.ANTIXRAY_ENABLED) return null;
 
@@ -61,6 +86,8 @@ public final class AntiXrayEngine {
         ChunkPos chunkPos = chunk.getPos();
         LevelChunkSection[] sections = chunk.getSections();
         int minSectionY = chunk.getMinSectionY();
+        int baseX = chunkPos.x << 4;
+        int baseZ = chunkPos.z << 4;
         boolean modified = false;
         FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
         try {
@@ -71,10 +98,7 @@ public final class AntiXrayEngine {
                     continue;
                 }
 
-                int sectionY = minSectionY + i;
-                int baseY = sectionY << 4;
-                int baseX = chunkPos.x << 4;
-                int baseZ = chunkPos.z << 4;
+                int baseY = (minSectionY + i) << 4;
                 LevelChunkSection copy = section.copy();
                 boolean sectionModified = false;
 
@@ -85,9 +109,12 @@ public final class AntiXrayEngine {
                             if (state.isAir()) continue;
                             if (state.hasBlockEntity()) continue;
 
-                            if (isHidden(sections, level, i, baseY, x, y, z, chunkPos)) {
+                            int wx = baseX + x;
+                            int wy = baseY + y;
+                            int wz = baseZ + z;
+                            if (isHidden(level, wx, wy, wz)) {
                                 copy.setBlockState(x, y, z,
-                                        replacement(baseX | x, baseY | y, baseZ | z, isNether), false);
+                                        replacement(wx, wy, wz, isNether), false);
                                 sectionModified = true;
                             }
                         }
@@ -97,7 +124,9 @@ public final class AntiXrayEngine {
                 modified |= sectionModified;
             }
 
-            if (!modified) return null;
+            if (!modified) {
+                return null;
+            }
 
             byte[] result = new byte[buf.readableBytes()];
             buf.readBytes(result);
@@ -107,7 +136,10 @@ public final class AntiXrayEngine {
         }
     }
 
-    // Sends real block states for the 6 neighbors of a broken block to all tracking players.
+    /**
+     * Sends real block states for the 6 neighbors of a broken block to all players
+     * tracking that chunk. Called from platform block-break event handlers.
+     */
     public static void revealNeighbors(ServerLevel level, BlockPos pos) {
         if (!SmpConfig.ANTIXRAY_ENABLED) return;
 
@@ -128,32 +160,68 @@ public final class AntiXrayEngine {
         }
     }
 
-    private static boolean isHidden(LevelChunkSection[] sections, Level level,
-                                    int sectionIdx, int baseY, int x, int y, int z,
-                                    ChunkPos chunkPos) {
-        for (Direction dir : Direction.values()) {
-            int nx = x + dir.getStepX();
-            int ny = y + dir.getStepY();
-            int nz = z + dir.getStepZ();
+    /**
+     * Proximity reveal. Called once per server tick per player from both platform tick loops.
+     * When a player moves to a new block position, sends real block states for any hidden
+     * blocks within {@link #REVEAL_RADIUS}. Fixes surface blocks under structures that are
+     * technically hidden (all 6 opaque neighbors) but visually accessible through gaps.
+     */
+    public static void tickPlayer(ServerPlayer player) {
+        if (!SmpConfig.ANTIXRAY_ENABLED) return;
 
-            BlockState neighbor;
+        BlockPos currentPos = player.blockPosition();
+        UUID uuid = player.getUUID();
+        BlockPos lastPos = lastPositions.get(uuid);
 
-            if (nx >= 0 && nx < 16 && ny >= 0 && ny < 16 && nz >= 0 && nz < 16) {
-                neighbor = sections[sectionIdx].getBlockState(nx, ny, nz);
-            } else if (nx >= 0 && nx < 16 && nz >= 0 && nz < 16) {
-                int adjSection = sectionIdx + (ny < 0 ? -1 : 1);
-                if (adjSection < 0 || adjSection >= sections.length) return false;
-                neighbor = sections[adjSection].getBlockState(nx, ny & 0xF, nz);
-            } else {
-                int worldX = (chunkPos.x << 4) + x + dir.getStepX();
-                int worldY = baseY + y + dir.getStepY();
-                int worldZ = (chunkPos.z << 4) + z + dir.getStepZ();
-                BlockPos neighborPos = new BlockPos(worldX, worldY, worldZ);
-                if (!level.isLoaded(neighborPos)) return false;
-                neighbor = level.getBlockState(neighborPos);
+        if (lastPos != null && lastPos.equals(currentPos)) return;
+        lastPositions.put(uuid, currentPos);
+
+        Set<Long> revealed = revealedBlocks.computeIfAbsent(uuid, k -> new HashSet<>());
+        if (revealed.size() > MAX_REVEALED_PER_PLAYER) {
+            revealed.clear();
+        }
+
+        ServerLevel level = (ServerLevel) player.level();
+        int cx = currentPos.getX();
+        int cy = currentPos.getY();
+        int cz = currentPos.getZ();
+
+        for (int dx = -REVEAL_RADIUS; dx <= REVEAL_RADIUS; dx++) {
+            for (int dy = -REVEAL_RADIUS; dy <= REVEAL_RADIUS; dy++) {
+                for (int dz = -REVEAL_RADIUS; dz <= REVEAL_RADIUS; dz++) {
+                    int wx = cx + dx;
+                    int wy = cy + dy;
+                    int wz = cz + dz;
+                    long packed = BlockPos.asLong(wx, wy, wz);
+
+                    if (revealed.contains(packed)) continue;
+
+                    BlockPos pos = new BlockPos(wx, wy, wz);
+                    if (!level.isLoaded(pos)) continue;
+
+                    BlockState state = level.getBlockState(pos);
+                    if (state.isAir() || state.hasBlockEntity()) continue;
+
+                    if (isHidden(level, wx, wy, wz)) {
+                        player.connection.send(new ClientboundBlockUpdatePacket(pos, state));
+                        revealed.add(packed);
+                    }
+                }
             }
+        }
+    }
 
-            if (!neighbor.canOcclude()) return false;
+    public static void onPlayerDisconnect(UUID uuid) {
+        lastPositions.remove(uuid);
+        revealedBlocks.remove(uuid);
+    }
+
+    private static boolean isHidden(Level level, int worldX, int worldY, int worldZ) {
+        for (Direction dir : Direction.values()) {
+            BlockPos neighbor = new BlockPos(worldX + dir.getStepX(),
+                    worldY + dir.getStepY(), worldZ + dir.getStepZ());
+            if (!level.isLoaded(neighbor)) return false;
+            if (!level.getBlockState(neighbor).canOcclude()) return false;
         }
         return true;
     }

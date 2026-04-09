@@ -11,6 +11,10 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+/**
+ * Hooks the chunk packet data constructor to replace the section buffer with an obfuscated
+ * copy. Registered in quacksmp.mixins.json (common), loaded by both Fabric and NeoForge.
+ */
 @Mixin(ClientboundLevelChunkPacketData.class)
 public abstract class ChunkPacketDataMixin {
 
