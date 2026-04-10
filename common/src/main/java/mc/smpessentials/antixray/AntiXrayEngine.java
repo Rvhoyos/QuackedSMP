@@ -10,6 +10,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.LevelChunk;
@@ -33,7 +34,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public final class AntiXrayEngine {
     private AntiXrayEngine() {}
 
-    private static final int REVEAL_RADIUS = 4;
+    private static final int REVEAL_RADIUS = 2;
     private static final int MAX_REVEALED_PER_PLAYER = 10_000;
 
     // Per-player tracking for proximity reveal to avoid redundant packets.
@@ -71,6 +72,33 @@ public final class AntiXrayEngine {
             Blocks.ANCIENT_DEBRIS.defaultBlockState(),
     };
 
+    // Only these blocks get replaced when hidden. Everything else (dirt, gravel, granite, etc.)
+    // is left alone so the underground looks natural and only ores are masked.
+    private static final Set<Block> OBFUSCATABLE = Set.of(
+            Blocks.STONE,
+            Blocks.DEEPSLATE,
+            Blocks.NETHERRACK,
+            Blocks.DIAMOND_ORE,
+            Blocks.IRON_ORE,
+            Blocks.GOLD_ORE,
+            Blocks.COAL_ORE,
+            Blocks.EMERALD_ORE,
+            Blocks.LAPIS_ORE,
+            Blocks.COPPER_ORE,
+            Blocks.REDSTONE_ORE,
+            Blocks.DEEPSLATE_DIAMOND_ORE,
+            Blocks.DEEPSLATE_IRON_ORE,
+            Blocks.DEEPSLATE_GOLD_ORE,
+            Blocks.DEEPSLATE_COAL_ORE,
+            Blocks.DEEPSLATE_EMERALD_ORE,
+            Blocks.DEEPSLATE_LAPIS_ORE,
+            Blocks.DEEPSLATE_COPPER_ORE,
+            Blocks.DEEPSLATE_REDSTONE_ORE,
+            Blocks.NETHER_GOLD_ORE,
+            Blocks.NETHER_QUARTZ_ORE,
+            Blocks.ANCIENT_DEBRIS
+    );
+
     /**
      * Builds an obfuscated copy of the chunk's section buffer. Called from
      * {@link mc.smpessentials.mixin.ChunkPacketDataMixin} during chunk packet construction.
@@ -106,8 +134,7 @@ public final class AntiXrayEngine {
                     for (int y = 0; y < 16; y++) {
                         for (int z = 0; z < 16; z++) {
                             BlockState state = section.getBlockState(x, y, z);
-                            if (state.isAir()) continue;
-                            if (state.hasBlockEntity()) continue;
+                            if (!OBFUSCATABLE.contains(state.getBlock())) continue;
 
                             int wx = baseX + x;
                             int wy = baseY + y;
@@ -200,7 +227,7 @@ public final class AntiXrayEngine {
                     if (!level.isLoaded(pos)) continue;
 
                     BlockState state = level.getBlockState(pos);
-                    if (state.isAir() || state.hasBlockEntity()) continue;
+                    if (!OBFUSCATABLE.contains(state.getBlock())) continue;
 
                     if (isHidden(level, wx, wy, wz)) {
                         player.connection.send(new ClientboundBlockUpdatePacket(pos, state));
@@ -221,7 +248,10 @@ public final class AntiXrayEngine {
             BlockPos neighbor = new BlockPos(worldX + dir.getStepX(),
                     worldY + dir.getStepY(), worldZ + dir.getStepZ());
             if (!level.isLoaded(neighbor)) return false;
-            if (!level.getBlockState(neighbor).canOcclude()) return false;
+            // Check the neighbor's face pointing TOWARDS our block. Unlike canOcclude() which
+            // is just a property flag, isFaceSturdy checks the actual block shape — fences,
+            // carpets, slabs, stairs etc. correctly count as not covering.
+            if (!level.getBlockState(neighbor).isFaceSturdy(level, neighbor, dir.getOpposite())) return false;
         }
         return true;
     }
