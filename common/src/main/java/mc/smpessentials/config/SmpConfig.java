@@ -14,7 +14,7 @@ public final class SmpConfig {
 
     public record TierDef(int tier, String name, long minPlaytimeHours, int bonusClaims) {}
     public static boolean ALLOW_LAVA_WILDERNESS = false;
-    public static boolean ALLOW_FIRE_WILDERNESS = true;
+    public static boolean ALLOW_FIRE_WILDERNESS = false;
     public static boolean SPAWN_NO_PVP = true;
     public static java.util.Map<String, String> MESSAGES = new java.util.HashMap<>();
 
