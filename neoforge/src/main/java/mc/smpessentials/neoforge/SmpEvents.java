@@ -86,6 +86,7 @@ public class SmpEvents {
         mc.smpessentials.dashboard.DashboardManager.broadcastPlayerLeave(event.getEntity().getGameProfile().name());
     }
 
+    // Order matters: hardcore must run first. See SmpUtilsModFabric for explanation.
     @SubscribeEvent
     public static void onLivingDeath(net.neoforged.neoforge.event.entity.living.LivingDeathEvent event) {
         if (event.getEntity() instanceof ServerPlayer sp) {

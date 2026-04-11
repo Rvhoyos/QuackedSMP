@@ -14,11 +14,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-/**
- * Manages the dashboard server lifecycle and event broadcasting.
- * HTTP and WebSocket share a single port via {@link DashboardServer}.
- * Spark is optional; metrics endpoints degrade gracefully if absent.
- */
+// Manages the dashboard server lifecycle and event broadcasting.
+// HTTP and WebSocket share a single port. Spark is optional.
 public final class DashboardManager {
     private DashboardManager() {}
 
@@ -31,7 +28,7 @@ public final class DashboardManager {
 
     // ── Lifecycle ──────────────────────────────────────────────────────────────
 
-    /** Detects Spark at startup. Call once before {@link #onServerStart}. */
+    // Detects Spark at startup. Call once before onServerStart.
     public static void init() {
         try {
             Class.forName("me.lucko.spark.api.SparkProvider");
@@ -42,7 +39,6 @@ public final class DashboardManager {
         }
     }
 
-    /** Starts the dashboard HTTP/WebSocket server if enabled in config. */
     public static void onServerStart(MinecraftServer srv) {
         mcServer = srv;
         if (!SmpConfig.DASHBOARD_ENABLED) {
@@ -52,17 +48,12 @@ public final class DashboardManager {
         start(SmpConfig.DASHBOARD_PORT);
     }
 
-    /** Stops the dashboard server and clears the server reference. */
     public static void onServerStop() {
         stop();
         mcServer = null;
     }
 
-    /**
-     * Enables the dashboard: saves {@code dashboard_enabled=true} to config and
-     * starts the webserver if it is not already running.
-     * Called from {@code /smp admin setpassword}.
-     */
+    // Saves dashboard_enabled=true and starts the server if not already running.
     public static void scheduleEnable() {
         if (running) return;
         SmpConfig.DASHBOARD_ENABLED = true;
@@ -70,11 +61,8 @@ public final class DashboardManager {
         if (mcServer != null) start(SmpConfig.DASHBOARD_PORT);
     }
 
-    /**
-     * Disables the dashboard: saves {@code dashboard_enabled=false} to config,
-     * then stops the server on a daemon thread after a short delay so the
-     * in-flight HTTP response can be sent first.
-     */
+    // Saves dashboard_enabled=false, then stops after a short delay so the in-flight
+    // HTTP response can be sent first.
     public static void scheduleDisable() {
         SmpConfig.DASHBOARD_ENABLED = false;
         mc.smpessentials.config.ConfigIO.save();
@@ -280,7 +268,7 @@ public final class DashboardManager {
 
     // ── Event broadcast ────────────────────────────────────────────────────────
 
-    /** Broadcasts a player_join event to WebSocket clients and forwards to Discord. */
+    // Broadcasts to WebSocket clients and forwards to Discord.
     public static void broadcastPlayerJoin(String playerName) {
         broadcast(String.format(Locale.US,
                 "{\"type\":\"player_join\",\"player\":\"%s\",\"timestamp\":%d}",
@@ -288,7 +276,6 @@ public final class DashboardManager {
         DiscordWebhook.sendJoin(playerName);
     }
 
-    /** Broadcasts a player_leave event to WebSocket clients and forwards to Discord. */
     public static void broadcastPlayerLeave(String playerName) {
         broadcast(String.format(Locale.US,
                 "{\"type\":\"player_leave\",\"player\":\"%s\",\"timestamp\":%d}",
@@ -296,7 +283,6 @@ public final class DashboardManager {
         DiscordWebhook.sendLeave(playerName);
     }
 
-    /** Broadcasts a chat event to WebSocket clients and forwards to Discord. */
     public static void broadcastChat(String playerName, String message) {
         broadcast(String.format(Locale.US,
                 "{\"type\":\"chat\",\"player\":\"%s\",\"message\":\"%s\",\"timestamp\":%d}",
@@ -312,12 +298,8 @@ public final class DashboardManager {
 
     // ── Util ──────────────────────────────────────────────────────────────────
 
-    /**
-     * Returns the best available free-memory figure for the current platform.
-     * Linux:  reads MemAvailable from /proc/meminfo (includes reclaimable page cache).
-     * macOS:  parses vm_stat output (free + inactive + speculative pages).
-     * Other:  falls back to OperatingSystemMXBean.getFreeMemorySize().
-     */
+    // Returns best available free-memory figure.
+    // Linux: /proc/meminfo MemAvailable. macOS: vm_stat. Fallback: MXBean.
     private static long readPlatformFreeMemory(com.sun.management.OperatingSystemMXBean os) {
         long memAvail = readMemAvailable();
         if (memAvail > 0) return memAvail;
@@ -328,7 +310,7 @@ public final class DashboardManager {
         return os.getFreeMemorySize();
     }
 
-    /** Reads MemAvailable from /proc/meminfo (Linux only). Returns -1 if unavailable. */
+    // Reads MemAvailable from /proc/meminfo (Linux only). Returns -1 if unavailable.
     private static long readMemAvailable() {
         try {
             for (String line : java.nio.file.Files.readAllLines(java.nio.file.Path.of("/proc/meminfo"))) {
@@ -341,11 +323,7 @@ public final class DashboardManager {
         return -1;
     }
 
-    /**
-     * Parses vm_stat output on macOS to get available memory.
-     * Available = (free + inactive + speculative) * page_size.
-     * Returns -1 if parsing fails.
-     */
+    // macOS: (free + inactive + speculative) * page_size. Returns -1 on failure.
     private static long readVmStat() {
         try {
             Process p = Runtime.getRuntime().exec("vm_stat");
@@ -371,7 +349,6 @@ public final class DashboardManager {
         return -1;
     }
 
-    /** Extracts trailing integer from a vm_stat line like "Pages free:  1234." */
     private static long vmStatLong(String line) {
         String num = line.substring(line.lastIndexOf(' ') + 1).replace(".", "").trim();
         try { return Long.parseLong(num); } catch (Exception e) { return 0; }

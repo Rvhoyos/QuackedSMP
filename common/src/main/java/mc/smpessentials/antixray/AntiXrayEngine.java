@@ -25,11 +25,12 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * Server-side ore obfuscation engine.
  *
- * Replaces hidden blocks in outgoing chunk packets with random ores so x-ray clients see
- * noise instead of real ore locations. Blocks are considered hidden when all 6 neighbors
- * are opaque. Real block states are restored via three mechanisms:
- * block-break reveal (neighbors of a broken block), proximity reveal (blocks within
- * {@link #REVEAL_RADIUS} of a moving player), and normal chunk re-sends.
+ * Replaces hidden stone, deepslate, netherrack, and ore blocks in outgoing chunk packets
+ * with random ores so x-ray clients see noise instead of real ore locations. Only blocks
+ * in {@link #OBFUSCATABLE} are targeted; everything else (dirt, gravel, granite, etc.) is
+ * left untouched. A block is considered hidden when all 6 neighbor faces pointing toward
+ * it are sturdy (full square faces). Real block states are restored via block-break reveal,
+ * proximity reveal, and normal chunk re-sends.
  */
 public final class AntiXrayEngine {
     private AntiXrayEngine() {}
@@ -190,8 +191,7 @@ public final class AntiXrayEngine {
     /**
      * Proximity reveal. Called once per server tick per player from both platform tick loops.
      * When a player moves to a new block position, sends real block states for any hidden
-     * blocks within {@link #REVEAL_RADIUS}. Fixes surface blocks under structures that are
-     * technically hidden (all 6 opaque neighbors) but visually accessible through gaps.
+     * obfuscatable blocks within {@link #REVEAL_RADIUS}.
      */
     public static void tickPlayer(ServerPlayer player) {
         if (!SmpConfig.ANTIXRAY_ENABLED) return;

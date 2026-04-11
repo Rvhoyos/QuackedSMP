@@ -154,16 +154,22 @@ public final class HardcoreSavedData extends SavedData {
             return "You already participated in this session and cannot rejoin.";
         }
 
-        // Stash full player state (inventory, equipment, game mode, XP, respawn point)
+        // Stash full player state (inventory, equipment, game mode, XP, health, food, respawn point)
         stashes.put(uuid, savePlayerState(player));
         playerSessions.put(uuid, name);
 
-        // Clear inventory and XP
+        // Clear inventory, XP, and effects — start fresh
         player.getInventory().clearContent();
         clearEquipment(player);
         player.experienceLevel = 0;
         player.experienceProgress = 0f;
         player.totalExperience = 0;
+        player.removeAllEffects();
+
+        // Heal to full and reset hunger
+        player.setHealth(player.getMaxHealth());
+        player.getFoodData().setFoodLevel(20);
+        player.getFoodData().setSaturation(5.0f);
 
         // Set survival mode
         player.setGameMode(GameType.SURVIVAL);
@@ -354,7 +360,7 @@ public final class HardcoreSavedData extends SavedData {
             EquipmentSlot.FEET, EquipmentSlot.OFFHAND
     };
 
-    // Saves inventory, equipment, game mode, XP, and respawn point to a CompoundTag.
+    // Saves inventory, equipment, game mode, XP, health, food, and respawn point to a CompoundTag.
     private CompoundTag savePlayerState(ServerPlayer player) {
         CompoundTag tag = new CompoundTag();
         var registryOps = ((ServerLevel) player.level()).getServer()
@@ -395,6 +401,11 @@ public final class HardcoreSavedData extends SavedData {
         tag.putFloat("XpProgress", player.experienceProgress);
         tag.putInt("TotalXp", player.totalExperience);
 
+        // Health and hunger
+        tag.putFloat("Health", player.getHealth());
+        tag.putInt("FoodLevel", player.getFoodData().getFoodLevel());
+        tag.putFloat("Saturation", player.getFoodData().getSaturationLevel());
+
         // Respawn point (bed/anchor)
         ServerPlayer.RespawnConfig respawnCfg = player.getRespawnConfig();
         if (respawnCfg != null) {
@@ -405,7 +416,7 @@ public final class HardcoreSavedData extends SavedData {
         return tag;
     }
 
-    // Restores inventory, equipment, game mode, XP, and respawn point from the stash.
+    // Restores inventory, equipment, game mode, XP, health, food, and respawn point from the stash.
     private void restorePlayerState(ServerPlayer player) {
         UUID uuid = player.getUUID();
         CompoundTag tag = stashes.remove(uuid);
@@ -464,6 +475,15 @@ public final class HardcoreSavedData extends SavedData {
         player.experienceProgress = tag.getFloat("XpProgress").orElse(0f);
         player.totalExperience = tag.getInt("TotalXp").orElse(0);
 
+        // Restore health and hunger — skip for dead players (session-ending death calls
+        // restoreAllParticipants while the dying player is still in death state; setting
+        // health on a dead player desyncs client/server). Respawn gives them max health anyway.
+        if (player.isAlive()) {
+            player.setHealth(tag.getFloat("Health").orElse(player.getMaxHealth()));
+            player.getFoodData().setFoodLevel(tag.getInt("FoodLevel").orElse(20));
+            player.getFoodData().setSaturation(tag.getFloat("Saturation").orElse(5.0f));
+        }
+
         // Restore respawn point (bed/anchor)
         Tag respawnTag = tag.get("RespawnConfig");
         if (respawnTag != null) {
@@ -500,6 +520,8 @@ public final class HardcoreSavedData extends SavedData {
         return new BlockPos(x, y, z);
     }
 
+    // Picks a random surface position between MIN_DISTANCE_FROM_CENTER and the world border.
+    // Uses sqrt-weighted radius sampling for uniform distribution over the 2D annular area.
     static BlockPos randomPosInBorder(ServerLevel level) {
         WorldBorder border = level.getWorldBorder();
         double cx = border.getCenterX();
@@ -507,19 +529,20 @@ public final class HardcoreSavedData extends SavedData {
         double halfSize = (border.getSize() / 2.0) - BORDER_PADDING;
 
         if (halfSize <= MIN_DISTANCE_FROM_CENTER) {
-            // Border too small for minimum distance, fall back to edge
             int x = (int) (cx + halfSize * 0.8);
             int z = (int) (cz + halfSize * 0.8);
             return surfacePos(level, x, z);
         }
 
-        Random rng = new Random();
-        double dist = MIN_DISTANCE_FROM_CENTER + rng.nextDouble() * (halfSize - MIN_DISTANCE_FROM_CENTER);
+        java.util.concurrent.ThreadLocalRandom rng = java.util.concurrent.ThreadLocalRandom.current();
+        double minR = MIN_DISTANCE_FROM_CENTER;
+        double maxR = halfSize;
+        // sqrt sampling: r = sqrt(uniform(minR^2, maxR^2)) gives uniform density over area
+        double dist = Math.sqrt(minR * minR + rng.nextDouble() * (maxR * maxR - minR * minR));
         double angle = rng.nextDouble() * 2 * Math.PI;
         int x = (int) (cx + dist * Math.cos(angle));
         int z = (int) (cz + dist * Math.sin(angle));
 
-        // Clamp inside border with padding
         x = (int) Math.max(border.getMinX() + BORDER_PADDING, Math.min(border.getMaxX() - BORDER_PADDING, x));
         z = (int) Math.max(border.getMinZ() + BORDER_PADDING, Math.min(border.getMaxZ() - BORDER_PADDING, z));
 
