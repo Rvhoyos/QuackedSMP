@@ -23,7 +23,9 @@
     "NetherPortalBlockMixin",
     "PortalForcerMixin",
     "FireBlockMixin",
-    "ChunkPacketDataMixin"
+    "ChunkPacketDataMixin",
+    "EnderManTakeBlockMixin",
+    "EnderManLeaveBlockMixin"
   ],
   "injectors": {
     "defaultRequire": 1
