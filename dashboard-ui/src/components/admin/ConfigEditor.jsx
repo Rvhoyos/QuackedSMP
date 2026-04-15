@@ -734,8 +734,8 @@ function VipTab({ draft, patch }) {
       </Group>
 
       <Group icon={<IconClock />} title="Kit Settings" accent="teal">
-        <Row label="Cooldown Duration" hint="Seconds between kit claims. Default 86400 = 24 hours.">
-          <NumInput value={draft.kit_cooldown_seconds} onChange={v => patch('kit_cooldown_seconds', v)} suffix="s" />
+        <Row label="Cooldown Duration" hint="Hours between kit claims. Default 24 hours.">
+          <NumInput value={draft.kit_cooldown_seconds != null ? draft.kit_cooldown_seconds / 3600 : ''} onChange={v => patch('kit_cooldown_seconds', Math.round(v * 3600))} suffix="h" />
         </Row>
       </Group>
 
