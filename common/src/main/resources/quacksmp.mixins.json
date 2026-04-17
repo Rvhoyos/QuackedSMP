@@ -25,7 +25,8 @@
     "FireBlockMixin",
     "ChunkPacketDataMixin",
     "EnderManTakeBlockMixin",
-    "EnderManLeaveBlockMixin"
+    "EnderManLeaveBlockMixin",
+    "FarmBlockMixin"
   ],
   "injectors": {
     "defaultRequire": 1
