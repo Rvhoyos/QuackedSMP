@@ -8,8 +8,10 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.ChunkPos;
 
+import com.mojang.brigadier.arguments.IntegerArgumentType;
 import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.network.chat.MutableComponent;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -27,23 +29,47 @@ public final class ClaimCommands {
                     if (mc.smpessentials.hardcore.HardcoreSavedData.denyIfInSession(ctx.getSource())) return 0;
                     ServerPlayer p = ctx.getSource().getPlayerOrException();
                     ServerLevel lvl = p.level();
-                    ChunkPos pos = p.chunkPosition();
 
-                    ClaimService.Result result = ClaimService.claim(p, lvl, pos);
-                    switch (result) {
-                        case SUCCESS -> ctx.getSource().sendSystemMessage(Component.literal("Chunk claimed."));
-                        case ALREADY_CLAIMED -> ctx.getSource()
-                                .sendSystemMessage(Component.literal("This claim is already protected."));
-                        case REACHED_CAP -> {
+                    int brush = ClaimBrush.get(p.getUUID());
+                    List<ChunkPos> chunks = ClaimBrush.spiral(p.chunkPosition(), brush);
+
+                    int claimed = 0;
+                    int skipped = 0;
+                    boolean hitCap = false;
+
+                    for (ChunkPos cp : chunks) {
+                        ClaimService.Result result = ClaimService.claim(p, lvl, cp);
+                        switch (result) {
+                            case SUCCESS -> claimed++;
+                            case REACHED_CAP -> { hitCap = true; }
+                            default -> skipped++;
+                        }
+                        if (hitCap) break;
+                    }
+
+                    if (brush == 1) {
+                        // Single chunk: keep the original concise messages
+                        if (claimed == 1) {
+                            ctx.getSource().sendSystemMessage(Component.literal("Chunk claimed."));
+                        } else if (hitCap) {
                             int max = mc.smpessentials.config.SmpConfig.MAX_CLAIMS
                                     + mc.smpessentials.tier.TierService.getBonusClaims(
-                                            mc.smpessentials.tier.TierService.getTier(p.getUUID(),
-                                                    ((ServerLevel) p.level()).getServer()));
-                            ctx.getSource().sendSystemMessage(Component
-                                    .literal("You reached the claim limit (" + max + ")."));
+                                            mc.smpessentials.tier.TierService.getTier(p.getUUID(), lvl.getServer()));
+                            ctx.getSource().sendSystemMessage(
+                                    Component.literal("You reached the claim limit (" + max + ")."));
+                        } else {
+                            // skipped (already claimed or spawn protected)
+                            ctx.getSource().sendSystemMessage(
+                                    Component.literal("This claim is already protected."));
                         }
-                        case SPAWN_PROTECTED -> ctx.getSource().sendSystemMessage(
-                                Component.literal("You can't claim inside spawn protection."));
+                    } else {
+                        // Multi-chunk: summary message
+                        StringBuilder msg = new StringBuilder();
+                        msg.append("Claimed ").append(claimed).append(" chunk(s)");
+                        if (skipped > 0) msg.append(", skipped ").append(skipped).append(" (already claimed/protected)");
+                        if (hitCap) msg.append(". Hit claim limit");
+                        msg.append(".");
+                        ctx.getSource().sendSystemMessage(Component.literal(msg.toString()));
                     }
                     return 1;
                 })
@@ -216,6 +242,20 @@ public final class ClaimCommands {
                             ctx.getSource().sendSystemMessage(msg);
                             return 1;
                         }));
+
+        claim.then(Commands.literal("size")
+                .then(Commands.argument("value", IntegerArgumentType.integer(1, 7))
+                        .executes(ctx -> {
+                            ServerPlayer p = ctx.getSource().getPlayerOrException();
+                            int raw = IntegerArgumentType.getInteger(ctx, "value");
+                            ClaimBrush.set(p.getUUID(), raw);
+                            int actual = ClaimBrush.get(p.getUUID());
+                            String msg = "Claim brush set to " + actual + "x" + actual;
+                            if (raw != actual) msg += " (rounded down to odd)";
+                            msg += ".";
+                            ctx.getSource().sendSystemMessage(Component.literal(msg));
+                            return 1;
+                        })));
 
         // /claim trust|untrust|trustlist — aliases for discoverability; root /trust etc. still work
         claim.then(TrustCommands.trustNode());

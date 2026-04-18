@@ -6,6 +6,7 @@ import com.mojang.serialization.Dynamic;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import mc.smpessentials.config.SmpConfig;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.GlobalPos;
 import net.minecraft.core.UUIDUtil;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
@@ -248,15 +249,16 @@ public final class HardcoreSavedData extends SavedData {
 
         if (session.dead.contains(uuid)) {
             player.setGameMode(GameType.SPECTATOR);
-            // Teleport dead spectators to the session start so they can watch
-            ResourceKey<Level> dimKey = ResourceKey.create(Registries.DIMENSION,
-                    Identifier.parse(session.startDim));
-            MinecraftServer srv = ((ServerLevel) player.level()).getServer();
-            ServerLevel targetLevel = srv.getLevel(dimKey);
-            if (targetLevel == null) targetLevel = srv.overworld();
-            player.teleportTo(targetLevel,
-                    session.startX + 0.5, session.startY + 5, session.startZ + 0.5,
-                    Set.of(), player.getYRot(), player.getXRot(), false);
+            // Teleport dead spectators to their death location
+            player.getLastDeathLocation().ifPresent(deathPos -> {
+                MinecraftServer srv = ((ServerLevel) player.level()).getServer();
+                ServerLevel targetLevel = srv.getLevel(deathPos.dimension());
+                if (targetLevel == null) targetLevel = srv.overworld();
+                BlockPos pos = deathPos.pos();
+                player.teleportTo(targetLevel,
+                        pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5,
+                        Set.of(), player.getYRot(), player.getXRot(), false);
+            });
         }
     }
 

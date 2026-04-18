@@ -1370,6 +1370,444 @@ public final class AdminHandler {
         return err(405, "Method not allowed");
     }
 
+    // ── Teams ─────────────────────────────────────────────────────────────────
+
+    // GET /api/admin/teams. Returns all scoreboard teams with settings and members.
+    public static String handleTeamsGet(String method, Map<String, String> headers, String body,
+                                        MinecraftServer server) {
+        if (!SmpConfig.ADMIN_ENABLED)           return err(403, "Admin panel disabled");
+        if (!AdminAuth.isAuthorized(headers))   return err(403, "Unauthorized");
+        if (server == null)                     return err(503, "Server not ready");
+
+        CompletableFuture<String> future = new CompletableFuture<>();
+        server.execute(() -> {
+            try {
+                var scoreboard = server.getScoreboard();
+                var teams = scoreboard.getPlayerTeams();
+                StringBuilder sb = new StringBuilder("[");
+                boolean first = true;
+                for (var team : teams) {
+                    if (!first) sb.append(',');
+                    first = false;
+                    sb.append('{');
+                    sb.append("\"name\":\"").append(jsonEscape(team.getName())).append('"');
+                    sb.append(",\"displayName\":\"").append(jsonEscape(team.getDisplayName().getString())).append('"');
+                    sb.append(",\"color\":\"").append(jsonEscape(team.getColor().getName())).append('"');
+                    sb.append(",\"friendlyFire\":").append(team.isAllowFriendlyFire());
+                    sb.append(",\"seeFriendlyInvisibles\":").append(team.canSeeFriendlyInvisibles());
+                    sb.append(",\"nameTagVisibility\":\"").append(jsonEscape(team.getNameTagVisibility().name)).append('"');
+                    sb.append(",\"deathMessageVisibility\":\"").append(jsonEscape(team.getDeathMessageVisibility().name)).append('"');
+                    sb.append(",\"collisionRule\":\"").append(jsonEscape(team.getCollisionRule().name)).append('"');
+                    sb.append(",\"prefix\":\"").append(jsonEscape(team.getPlayerPrefix().getString())).append('"');
+                    sb.append(",\"prefixColor\":\"").append(jsonEscape(extractChatFormatting(team.getPlayerPrefix()))).append('"');
+                    sb.append(",\"suffix\":\"").append(jsonEscape(team.getPlayerSuffix().getString())).append('"');
+                    sb.append(",\"suffixColor\":\"").append(jsonEscape(extractChatFormatting(team.getPlayerSuffix()))).append('"');
+                    sb.append(",\"players\":[");
+                    boolean pFirst = true;
+                    for (String player : team.getPlayers()) {
+                        if (!pFirst) sb.append(',');
+                        pFirst = false;
+                        sb.append('"').append(jsonEscape(player)).append('"');
+                    }
+                    sb.append("]}");
+                }
+                sb.append(']');
+                future.complete(sb.toString());
+            } catch (Exception ex) {
+                future.complete(err(500, jsonEscape(ex.getMessage())));
+            }
+        });
+        try {
+            return future.get(5, TimeUnit.SECONDS);
+        } catch (Exception e) {
+            return err(500, "Timeout reading teams");
+        }
+    }
+
+    // POST /api/admin/teams/create. Creates a new team. Body: {name}.
+    public static String handleTeamCreate(String method, Map<String, String> headers, String body,
+                                          MinecraftServer server) {
+        if (!"POST".equals(method))             return err(405, "Method not allowed");
+        if (!SmpConfig.ADMIN_ENABLED)           return err(403, "Admin panel disabled");
+        if (!AdminAuth.isAuthorized(headers))   return err(403, "Unauthorized");
+        if (server == null)                     return err(503, "Server not ready");
+        try {
+            JsonObject req = JsonParser.parseString(body).getAsJsonObject();
+            String name = req.get("name").getAsString().strip();
+            if (name.isEmpty() || name.length() > 16)
+                return err(400, "Team name must be 1-16 characters");
+            if (!name.matches("[a-zA-Z0-9._+-]+"))
+                return err(400, "Team name may only contain letters, numbers, dots, underscores, plus, and hyphens");
+
+            CompletableFuture<String> future = new CompletableFuture<>();
+            server.execute(() -> {
+                try {
+                    var scoreboard = server.getScoreboard();
+                    if (scoreboard.getPlayerTeam(name) != null) {
+                        future.complete(err(400, "Team '" + jsonEscape(name) + "' already exists"));
+                        return;
+                    }
+                    scoreboard.addPlayerTeam(name);
+                    future.complete("{\"ok\":true}");
+                } catch (Exception ex) {
+                    future.complete(err(500, jsonEscape(ex.getMessage())));
+                }
+            });
+            return future.get(5, TimeUnit.SECONDS);
+        } catch (Exception e) {
+            return err(400, "Invalid request: " + jsonEscape(e.getMessage()));
+        }
+    }
+
+    // POST /api/admin/teams/update. Modifies team settings. Body: {name, ...fields}.
+    public static String handleTeamUpdate(String method, Map<String, String> headers, String body,
+                                          MinecraftServer server) {
+        if (!"POST".equals(method))             return err(405, "Method not allowed");
+        if (!SmpConfig.ADMIN_ENABLED)           return err(403, "Admin panel disabled");
+        if (!AdminAuth.isAuthorized(headers))   return err(403, "Unauthorized");
+        if (server == null)                     return err(503, "Server not ready");
+        try {
+            JsonObject req = JsonParser.parseString(body).getAsJsonObject();
+            String name = req.get("name").getAsString().strip();
+
+            CompletableFuture<String> future = new CompletableFuture<>();
+            server.execute(() -> {
+                try {
+                    var scoreboard = server.getScoreboard();
+                    var team = scoreboard.getPlayerTeam(name);
+                    if (team == null) {
+                        future.complete(err(404, "Team not found"));
+                        return;
+                    }
+                    if (req.has("displayName"))
+                        team.setDisplayName(net.minecraft.network.chat.Component.literal(
+                                req.get("displayName").getAsString()));
+                    if (req.has("color")) {
+                        var cf = net.minecraft.ChatFormatting.getByName(req.get("color").getAsString());
+                        if (cf != null) team.setColor(cf);
+                    }
+                    if (req.has("friendlyFire"))
+                        team.setAllowFriendlyFire(req.get("friendlyFire").getAsBoolean());
+                    if (req.has("seeFriendlyInvisibles"))
+                        team.setSeeFriendlyInvisibles(req.get("seeFriendlyInvisibles").getAsBoolean());
+                    if (req.has("nameTagVisibility")) {
+                        var v = parseVisibility(req.get("nameTagVisibility").getAsString());
+                        if (v != null) team.setNameTagVisibility(v);
+                    }
+                    if (req.has("deathMessageVisibility")) {
+                        var v = parseVisibility(req.get("deathMessageVisibility").getAsString());
+                        if (v != null) team.setDeathMessageVisibility(v);
+                    }
+                    if (req.has("collisionRule")) {
+                        var c = parseCollisionRule(req.get("collisionRule").getAsString());
+                        if (c != null) team.setCollisionRule(c);
+                    }
+                    if (req.has("prefix") || req.has("prefixColor")) {
+                        String pText = req.has("prefix")
+                                ? req.get("prefix").getAsString()
+                                : team.getPlayerPrefix().getString();
+                        var pComp = net.minecraft.network.chat.Component.literal(pText);
+                        if (req.has("prefixColor")) {
+                            var pcf = net.minecraft.ChatFormatting.getByName(req.get("prefixColor").getAsString());
+                            if (pcf != null && pcf.isColor()) pComp = pComp.withStyle(pcf);
+                        } else {
+                            var existing = team.getPlayerPrefix().getStyle().getColor();
+                            if (existing != null)
+                                pComp = pComp.withStyle(
+                                        net.minecraft.network.chat.Style.EMPTY.withColor(existing));
+                        }
+                        team.setPlayerPrefix(pComp);
+                    }
+                    if (req.has("suffix") || req.has("suffixColor")) {
+                        String sText = req.has("suffix")
+                                ? req.get("suffix").getAsString()
+                                : team.getPlayerSuffix().getString();
+                        var sComp = net.minecraft.network.chat.Component.literal(sText);
+                        if (req.has("suffixColor")) {
+                            var scf = net.minecraft.ChatFormatting.getByName(req.get("suffixColor").getAsString());
+                            if (scf != null && scf.isColor()) sComp = sComp.withStyle(scf);
+                        } else {
+                            var existing = team.getPlayerSuffix().getStyle().getColor();
+                            if (existing != null)
+                                sComp = sComp.withStyle(
+                                        net.minecraft.network.chat.Style.EMPTY.withColor(existing));
+                        }
+                        team.setPlayerSuffix(sComp);
+                    }
+                    future.complete("{\"ok\":true}");
+                } catch (Exception ex) {
+                    future.complete(err(500, jsonEscape(ex.getMessage())));
+                }
+            });
+            return future.get(5, TimeUnit.SECONDS);
+        } catch (Exception e) {
+            return err(400, "Invalid request: " + jsonEscape(e.getMessage()));
+        }
+    }
+
+    // POST /api/admin/teams/delete. Removes a team. Body: {name}.
+    public static String handleTeamDelete(String method, Map<String, String> headers, String body,
+                                          MinecraftServer server) {
+        if (!"POST".equals(method))             return err(405, "Method not allowed");
+        if (!SmpConfig.ADMIN_ENABLED)           return err(403, "Admin panel disabled");
+        if (!AdminAuth.isAuthorized(headers))   return err(403, "Unauthorized");
+        if (server == null)                     return err(503, "Server not ready");
+        try {
+            JsonObject req = JsonParser.parseString(body).getAsJsonObject();
+            String name = req.get("name").getAsString().strip();
+
+            CompletableFuture<String> future = new CompletableFuture<>();
+            server.execute(() -> {
+                try {
+                    var scoreboard = server.getScoreboard();
+                    var team = scoreboard.getPlayerTeam(name);
+                    if (team == null) {
+                        future.complete(err(404, "Team not found"));
+                        return;
+                    }
+                    scoreboard.removePlayerTeam(team);
+                    future.complete("{\"ok\":true}");
+                } catch (Exception ex) {
+                    future.complete(err(500, jsonEscape(ex.getMessage())));
+                }
+            });
+            return future.get(5, TimeUnit.SECONDS);
+        } catch (Exception e) {
+            return err(400, "Invalid request: " + jsonEscape(e.getMessage()));
+        }
+    }
+
+    // POST /api/admin/teams/addplayer. Adds a player to a team. Body: {team, player}.
+    public static String handleTeamAddPlayer(String method, Map<String, String> headers, String body,
+                                             MinecraftServer server) {
+        if (!"POST".equals(method))             return err(405, "Method not allowed");
+        if (!SmpConfig.ADMIN_ENABLED)           return err(403, "Admin panel disabled");
+        if (!AdminAuth.isAuthorized(headers))   return err(403, "Unauthorized");
+        if (server == null)                     return err(503, "Server not ready");
+        try {
+            JsonObject req = JsonParser.parseString(body).getAsJsonObject();
+            String teamName  = req.get("team").getAsString().strip();
+            String player    = req.get("player").getAsString().strip();
+            if (player.isEmpty()) return err(400, "Player name required");
+            if (!isKnownPlayer(player, server))
+                return err(400, "Unknown player: " + jsonEscape(player));
+
+            CompletableFuture<String> future = new CompletableFuture<>();
+            server.execute(() -> {
+                try {
+                    var scoreboard = server.getScoreboard();
+                    var team = scoreboard.getPlayerTeam(teamName);
+                    if (team == null) {
+                        future.complete(err(404, "Team not found"));
+                        return;
+                    }
+                    scoreboard.addPlayerToTeam(player, team);
+                    future.complete("{\"ok\":true}");
+                } catch (Exception ex) {
+                    future.complete(err(500, jsonEscape(ex.getMessage())));
+                }
+            });
+            return future.get(5, TimeUnit.SECONDS);
+        } catch (Exception e) {
+            return err(400, "Invalid request: " + jsonEscape(e.getMessage()));
+        }
+    }
+
+    // POST /api/admin/teams/removeplayer. Removes a player from their team. Body: {player}.
+    public static String handleTeamRemovePlayer(String method, Map<String, String> headers, String body,
+                                                MinecraftServer server) {
+        if (!"POST".equals(method))             return err(405, "Method not allowed");
+        if (!SmpConfig.ADMIN_ENABLED)           return err(403, "Admin panel disabled");
+        if (!AdminAuth.isAuthorized(headers))   return err(403, "Unauthorized");
+        if (server == null)                     return err(503, "Server not ready");
+        try {
+            JsonObject req = JsonParser.parseString(body).getAsJsonObject();
+            String player = req.get("player").getAsString().strip();
+            if (player.isEmpty()) return err(400, "Player name required");
+
+            CompletableFuture<String> future = new CompletableFuture<>();
+            server.execute(() -> {
+                try {
+                    var scoreboard = server.getScoreboard();
+                    if (!scoreboard.removePlayerFromTeam(player)) {
+                        future.complete(err(400, "Player is not on any team"));
+                        return;
+                    }
+                    future.complete("{\"ok\":true}");
+                } catch (Exception ex) {
+                    future.complete(err(500, jsonEscape(ex.getMessage())));
+                }
+            });
+            return future.get(5, TimeUnit.SECONDS);
+        } catch (Exception e) {
+            return err(400, "Invalid request: " + jsonEscape(e.getMessage()));
+        }
+    }
+
+    // GET /api/admin/dims/all. Returns ALL dimensions including vanilla (overworld, nether, end).
+    public static String handleDimsAll(String method, Map<String, String> headers, String body,
+                                       MinecraftServer server) {
+        if (!SmpConfig.ADMIN_ENABLED)           return err(403, "Admin panel disabled");
+        if (!AdminAuth.isAuthorized(headers))   return err(403, "Unauthorized");
+        if (server == null)                     return err(503, "Server not ready");
+
+        CompletableFuture<String> future = new CompletableFuture<>();
+        server.execute(() -> {
+            try {
+                List<ResourceKey<Level>> allLevels = DimManager.listAll(server);
+                StringBuilder sb = new StringBuilder("[");
+                boolean first = true;
+                for (ResourceKey<Level> key : allLevels) {
+                    if (!first) sb.append(',');
+                    first = false;
+                    sb.append('"').append(jsonEscape(key.identifier().toString())).append('"');
+                }
+                sb.append(']');
+                future.complete(sb.toString());
+            } catch (Exception ex) {
+                future.complete(err(500, jsonEscape(ex.getMessage())));
+            }
+        });
+        try {
+            return future.get(5, TimeUnit.SECONDS);
+        } catch (Exception e) {
+            return err(500, "Timeout reading dimensions");
+        }
+    }
+
+    // GET /api/admin/teams/autoassign. Returns current auto-assign config.
+    public static String handleAutoAssignGet(String method, Map<String, String> headers, String body) {
+        if (!SmpConfig.ADMIN_ENABLED)           return err(403, "Admin panel disabled");
+        if (!AdminAuth.isAuthorized(headers))   return err(403, "Unauthorized");
+
+        StringBuilder sb = new StringBuilder("{");
+        boolean first = true;
+        for (var entry : SmpConfig.TEAM_AUTO_ASSIGN.entrySet()) {
+            if (!first) sb.append(',');
+            first = false;
+            sb.append('"').append(jsonEscape(entry.getKey())).append("\":");
+            sb.append(jsonStrArr(entry.getValue()));
+        }
+        sb.append('}');
+        return sb.toString();
+    }
+
+    // POST /api/admin/teams/autoassign. Updates auto-assign dims for a team.
+    // Body: {team, dimensions: [...]}. Empty dimensions list removes auto-assign for that team.
+    public static String handleAutoAssignPost(String method, Map<String, String> headers, String body,
+                                              MinecraftServer server) {
+        if (!"POST".equals(method))             return err(405, "Method not allowed");
+        if (!SmpConfig.ADMIN_ENABLED)           return err(403, "Admin panel disabled");
+        if (!AdminAuth.isAuthorized(headers))   return err(403, "Unauthorized");
+        if (server == null)                     return err(503, "Server not ready");
+        try {
+            JsonObject req = JsonParser.parseString(body).getAsJsonObject();
+            String teamName = req.get("team").getAsString().strip();
+            if (teamName.isEmpty()) return err(400, "Team name required");
+
+            List<String> dims = new ArrayList<>();
+            if (req.has("dimensions")) {
+                for (var el : req.getAsJsonArray("dimensions")) {
+                    dims.add(el.getAsString().strip());
+                }
+            }
+
+            // Validate no dimension is assigned to a different team
+            for (String dim : dims) {
+                for (var entry : SmpConfig.TEAM_AUTO_ASSIGN.entrySet()) {
+                    if (!entry.getKey().equals(teamName) && entry.getValue().contains(dim)) {
+                        return err(400, "Dimension " + dim + " is already assigned to team " + entry.getKey());
+                    }
+                }
+            }
+
+            if (dims.isEmpty()) {
+                SmpConfig.TEAM_AUTO_ASSIGN.remove(teamName);
+            } else {
+                SmpConfig.TEAM_AUTO_ASSIGN.put(teamName, dims);
+            }
+            mc.smpessentials.teams.TeamAutoAssign.buildReverseMap();
+            ConfigIO.save();
+            return "{\"ok\":true}";
+        } catch (Exception e) {
+            return err(400, "Invalid request: " + jsonEscape(e.getMessage()));
+        }
+    }
+
+    // Returns the ChatFormatting name for the color applied to a Component's style, or "reset" if none.
+    private static String extractChatFormatting(net.minecraft.network.chat.Component comp) {
+        var textColor = comp.getStyle().getColor();
+        if (textColor == null) return "reset";
+        for (var cf : net.minecraft.ChatFormatting.values()) {
+            if (cf.isColor() && java.util.Objects.equals(
+                    net.minecraft.network.chat.TextColor.fromLegacyFormat(cf), textColor)) {
+                return cf.getName();
+            }
+        }
+        return "reset";
+    }
+
+    private static net.minecraft.world.scores.Team.Visibility parseVisibility(String s) {
+        for (var v : net.minecraft.world.scores.Team.Visibility.values()) {
+            if (v.name.equals(s)) return v;
+        }
+        return null;
+    }
+
+    private static net.minecraft.world.scores.Team.CollisionRule parseCollisionRule(String s) {
+        for (var c : net.minecraft.world.scores.Team.CollisionRule.values()) {
+            if (c.name.equals(s)) return c;
+        }
+        return null;
+    }
+
+    // GET /api/admin/playernames. Returns sorted array of all known player names
+    // from usercache.json merged with currently online players.
+    public static String handlePlayerNames(String method, Map<String, String> headers, String body,
+                                           MinecraftServer server) {
+        if (!SmpConfig.ADMIN_ENABLED)           return err(403, "Admin panel disabled");
+        if (!AdminAuth.isAuthorized(headers))   return err(403, "Unauthorized");
+        try {
+            Set<String> names = new java.util.TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+            Path cacheFile = Path.of("usercache.json");
+            if (Files.exists(cacheFile)) {
+                String raw = Files.readString(cacheFile);
+                JsonArray arr = JsonParser.parseString(raw).getAsJsonArray();
+                for (var el : arr) {
+                    JsonObject entry = el.getAsJsonObject();
+                    if (entry.has("name")) names.add(entry.get("name").getAsString());
+                }
+            }
+            if (server != null) {
+                for (ServerPlayer p : server.getPlayerList().getPlayers()) {
+                    names.add(p.getGameProfile().name());
+                }
+            }
+            return jsonStrArr(new ArrayList<>(names));
+        } catch (Exception e) {
+            return err(500, "Failed to read player cache: " + jsonEscape(e.getMessage()));
+        }
+    }
+
+    // Returns true if the player name exists in usercache.json or is currently online.
+    private static boolean isKnownPlayer(String name, MinecraftServer server) {
+        // Check online first
+        if (server.getPlayerList().getPlayerByName(name) != null) return true;
+        // Check usercache
+        try {
+            Path cacheFile = Path.of("usercache.json");
+            if (!Files.exists(cacheFile)) return false;
+            String raw = Files.readString(cacheFile);
+            JsonArray arr = JsonParser.parseString(raw).getAsJsonArray();
+            for (var el : arr) {
+                JsonObject entry = el.getAsJsonObject();
+                if (entry.has("name") && entry.get("name").getAsString().equalsIgnoreCase(name))
+                    return true;
+            }
+        } catch (Exception ignored) {}
+        return false;
+    }
+
     // ── Helpers ───────────────────────────────────────────────────────────────
 
     // Builds a JSON error string. The status code is embedded so DashboardServer can read it.

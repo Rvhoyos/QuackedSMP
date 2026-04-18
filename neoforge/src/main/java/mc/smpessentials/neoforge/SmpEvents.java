@@ -111,6 +111,14 @@ public class SmpEvents {
             SkillEvents.onPlayerTick(player);
             mc.smpessentials.dims.EtherFallthrough.tick(player);
             mc.smpessentials.antixray.AntiXrayEngine.tickPlayer(player);
+            mc.smpessentials.teams.TeamAutoAssign.tick(player);
+        }
+    }
+
+    @SubscribeEvent
+    public static void onPlayerChangedDimension(PlayerEvent.PlayerChangedDimensionEvent event) {
+        if (event.getEntity() instanceof ServerPlayer player) {
+            mc.smpessentials.teams.TeamAutoAssign.onDimensionChange(player, event.getTo());
         }
     }
 
