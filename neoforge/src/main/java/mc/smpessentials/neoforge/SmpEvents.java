@@ -150,6 +150,7 @@ public class SmpEvents {
             if (!ClaimProtection.onBlockBreak(level, event.getPos(), event.getState(), player)) {
                 event.setCanceled(true);
             } else if (level instanceof net.minecraft.server.level.ServerLevel sl) {
+                mc.smpessentials.shops.ShopService.onBlockBreak(sl, event.getPos());
                 mc.smpessentials.antixray.AntiXrayEngine.revealNeighbors(sl, event.getPos());
             }
         }
@@ -163,6 +164,16 @@ public class SmpEvents {
             if (portal == InteractionResult.SUCCESS) {
                 event.setCanceled(true);
                 return;
+            }
+            // Shop check runs before claim check so non-owners can buy from shops in claims
+            // Only process main hand to avoid double-firing (opens GUI then immediately replaces it)
+            if (event.getHand() == net.minecraft.world.InteractionHand.MAIN_HAND) {
+                InteractionResult shop = mc.smpessentials.shops.ShopService.onRightClickBlock(
+                        player, event.getLevel(), event.getPos());
+                if (shop == InteractionResult.SUCCESS) {
+                    event.setCanceled(true);
+                    return;
+                }
             }
             if (ClaimProtection.onRightClickBlock(player, event.getPos()) == InteractionResult.FAIL) {
                 event.setCanceled(true);

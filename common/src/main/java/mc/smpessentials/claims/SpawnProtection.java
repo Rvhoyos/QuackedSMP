@@ -42,7 +42,7 @@ public final class SpawnProtection {
 
     // Block-position variant of the spawn protection check. Unlike isInSpawnProtection(ServerPlayer),
     // this does not require a player reference so it can be called from mob AI hooks.
-    private static boolean isBlockInSpawnProtection(ServerLevel level, BlockPos pos) {
+    public static boolean isBlockInSpawnProtection(ServerLevel level, BlockPos pos) {
         if (level.dimension() != level.getRespawnData().dimension()) return false;
         if (!(level.getServer() instanceof DedicatedServer ds)) return false;
         int radius = ds.spawnProtectionRadius();

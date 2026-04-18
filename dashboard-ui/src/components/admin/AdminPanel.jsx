@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import AdminGate from './AdminGate'
 import PlayersPanel from './PlayersPanel'
 import CommandsPanel from './CommandsPanel'
@@ -11,18 +11,20 @@ import ChatFilterPanel from './ChatFilterPanel'
 import ModsPanel from './ModsPanel'
 import HardcorePanel from './HardcorePanel'
 import TeamsPanel from './TeamsPanel'
-import { IconPlayerHead, IconCommandBlock, IconChest, IconBookshelf, IconPortal, IconSkills, IconFlag, IconChatFilter, IconMod, IconShield, IconSword } from './MinecraftIcons'
+import ShopsPanel from './ShopsPanel'
+import { IconPlayerHead, IconCommandBlock, IconChest, IconBookshelf, IconPortal, IconSkills, IconFlag, IconChatFilter, IconMod, IconShield, IconSword, IconEmerald } from './MinecraftIcons'
 import styles from './AdminPanel.module.css'
 
 const TABS = [
   { id: 'players',    label: 'Players',     Icon: IconPlayerHead },
   { id: 'commands',   label: 'Commands',    Icon: IconCommandBlock },
   { id: 'dims',       label: 'Dimensions',  Icon: IconPortal },
-  { id: 'skills',     label: 'Skills',      Icon: IconSkills },
-  { id: 'claims',     label: 'Claims',      Icon: IconFlag },
-  { id: 'chatfilter', label: 'Chat Filter', Icon: IconChatFilter },
-  { id: 'hardcore',   label: 'Hardcore',    Icon: IconShield },
+  { id: 'skills',     label: 'Skills',      Icon: IconSkills,      configKey: 'skills_enabled' },
+  { id: 'claims',     label: 'Claims',      Icon: IconFlag,        configKey: 'claims_enabled' },
+  { id: 'chatfilter', label: 'Chat Filter', Icon: IconChatFilter,  configKey: 'chatfilter_enabled' },
+  { id: 'hardcore',   label: 'Hardcore',    Icon: IconShield,      configKey: 'hardcore_enabled' },
   { id: 'teams',      label: 'Teams',       Icon: IconSword },
+  { id: 'shops',      label: 'Shops',       Icon: IconEmerald,     configKey: 'shops_enabled' },
   { id: 'mods',       label: 'Mods',        Icon: IconMod },
   { id: 'config',     label: 'Config',      Icon: IconChest },
   { id: 'features',   label: 'Features',    Icon: IconBookshelf },
@@ -33,6 +35,24 @@ const TOKEN_KEY = 'quack_admin_token'
 export default function AdminPanel({ health }) {
   const [token,      setToken]  = useState(() => sessionStorage.getItem(TOKEN_KEY) || '')
   const [activeTab,  setTab]    = useState('players')
+  const [cfg,        setCfg]    = useState(null)
+
+  useEffect(() => {
+    if (!token) return
+    fetch('/api/admin/config', { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => {
+        if (r.status === 401 || r.status === 403) return null
+        return r.json()
+      })
+      .then(d => { if (d && !d.error) setCfg(d) })
+      .catch(() => {})
+  }, [token])
+
+  const visibleTabs = TABS.filter(t => !t.configKey || cfg?.[t.configKey] !== false)
+
+  // If active tab got hidden, fall back to first visible
+  const activeVisible = visibleTabs.some(t => t.id === activeTab)
+  const resolvedTab = activeVisible ? activeTab : visibleTabs[0]?.id || 'players'
 
   // If a password is set and we have no token, require login.
   // If no password is set, the server bypasses auth — go straight to the panel.
@@ -62,10 +82,10 @@ export default function AdminPanel({ health }) {
     <div className={styles.panel}>
       <div className={styles.header}>
         <div className={styles.tabs}>
-          {TABS.map(({ id, label, Icon }) => (
+          {visibleTabs.map(({ id, label, Icon }) => (
             <button
               key={id}
-              className={`${styles.tab} ${activeTab === id ? styles.tabActive : ''}`}
+              className={`${styles.tab} ${resolvedTab === id ? styles.tabActive : ''}`}
               onClick={() => setTab(id)}
             >
               <span className={styles.tabIcon}><Icon size={16} /></span>
@@ -81,17 +101,18 @@ export default function AdminPanel({ health }) {
       </div>
 
       <div className={styles.body}>
-        {activeTab === 'players'    && <PlayersPanel token={token} onExpired={logout} />}
-        {activeTab === 'commands'   && <CommandsPanel token={token} onExpired={logout} />}
-        {activeTab === 'dims'       && <DimsPanel token={token} onExpired={logout} />}
-        {activeTab === 'skills'     && <SkillsPanel token={token} onExpired={logout} />}
-        {activeTab === 'claims'     && <ClaimsPanel token={token} onExpired={logout} />}
-        {activeTab === 'chatfilter' && <ChatFilterPanel token={token} onExpired={logout} />}
-        {activeTab === 'hardcore'   && <HardcorePanel token={token} onExpired={logout} />}
-        {activeTab === 'teams'      && <TeamsPanel token={token} onExpired={logout} />}
-        {activeTab === 'mods'       && <ModsPanel token={token} onExpired={logout} />}
-        {activeTab === 'config'     && <ConfigEditor token={token} onExpired={logout} />}
-        {activeTab === 'features'   && <FeatureShowcase token={token} onExpired={logout} />}
+        {resolvedTab === 'players'    && <PlayersPanel token={token} onExpired={logout} />}
+        {resolvedTab === 'commands'   && <CommandsPanel token={token} onExpired={logout} />}
+        {resolvedTab === 'dims'       && <DimsPanel token={token} onExpired={logout} />}
+        {resolvedTab === 'skills'     && <SkillsPanel token={token} onExpired={logout} />}
+        {resolvedTab === 'claims'     && <ClaimsPanel token={token} onExpired={logout} />}
+        {resolvedTab === 'chatfilter' && <ChatFilterPanel token={token} onExpired={logout} />}
+        {resolvedTab === 'hardcore'   && <HardcorePanel token={token} onExpired={logout} />}
+        {resolvedTab === 'teams'      && <TeamsPanel token={token} onExpired={logout} />}
+        {resolvedTab === 'shops'      && <ShopsPanel token={token} onExpired={logout} />}
+        {resolvedTab === 'mods'       && <ModsPanel token={token} onExpired={logout} />}
+        {resolvedTab === 'config'     && <ConfigEditor token={token} onExpired={logout} />}
+        {resolvedTab === 'features'   && <FeatureShowcase token={token} onExpired={logout} />}
       </div>
     </div>
   )

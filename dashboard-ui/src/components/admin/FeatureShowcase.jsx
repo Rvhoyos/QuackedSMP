@@ -80,6 +80,13 @@ const FEATURES = [
     toggleable: true,
   },
   {
+    name: 'Shops',
+    desc: 'Chest-based player shops. Configurable currency per shop. Spawn shops have unlimited stock.',
+    tag: 'shops',
+    configKey: 'shops_enabled',
+    toggleable: true,
+  },
+  {
     name: 'Admin Panel',
     desc: 'Manage players, run commands, and edit server config from the browser. Password-protected.',
     tag: 'admin',

@@ -256,6 +256,14 @@ public final class DashboardManager {
         // Wilderness regen
         s.addRoute("/api/admin/regen",
                 (m, h, b) -> AdminHandler.handleRegen(m, h, b, mcServer));
+
+        // Shops management
+        s.addRoute("/api/admin/shops",
+                (m, h, b) -> AdminHandler.handleShopsGet(m, h, b, mcServer));
+        s.addRoute("/api/admin/shops/delete",
+                (m, h, b) -> AdminHandler.handleShopsDelete(m, h, b, mcServer));
+        s.addRoute("/api/admin/economy",
+                (m, h, b) -> AdminHandler.handleEconomyGet(m, h, b, mcServer));
     }
 
     // ── Scheduled ─────────────────────────────────────────────────────────────

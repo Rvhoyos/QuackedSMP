@@ -791,3 +791,22 @@ export function IconSign({ size = 20 }) {
     </svg>
   )
 }
+
+export function IconEmerald({ size = 18 }) {
+  return (
+    <svg viewBox="0 0 16 16" width={size} height={size} shapeRendering="crispEdges">
+      {/* Emerald gem shape */}
+      {px(6, 1, 4, 1, '#2D9E2D')}
+      {px(5, 2, 6, 1, '#3DBF3D')}
+      {px(4, 3, 8, 2, '#50D050')}
+      {px(3, 5, 10, 2, '#3DBF3D')}
+      {px(3, 7, 10, 2, '#2D9E2D')}
+      {px(4, 9, 8, 2, '#208020')}
+      {px(5, 11, 6, 1, '#186018')}
+      {px(6, 12, 4, 1, '#104010')}
+      {/* Highlight */}
+      {px(6, 3, 2, 1, '#80FF80')}
+      {px(5, 5, 2, 1, '#60E060')}
+    </svg>
+  )
+}

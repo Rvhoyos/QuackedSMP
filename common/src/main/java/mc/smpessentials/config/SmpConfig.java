@@ -67,6 +67,10 @@ public final class SmpConfig {
     // ---- Anti-XRay ----
     public static boolean ANTIXRAY_ENABLED = true;
 
+    // ---- Shops ----
+    public static boolean SHOPS_ENABLED = false;
+    public static boolean ECONOMY_ENABLED = false;
+
     // ---- Kits ----
     public static boolean KITS_ENABLED = true;
     public static long KIT_COOLDOWN_SECONDS = 86400;
@@ -192,6 +196,8 @@ public final class SmpConfig {
         }
 
         ANTIXRAY_ENABLED = d.antixrayEnabled;
+        SHOPS_ENABLED = d.shopsEnabled;
+        ECONOMY_ENABLED = d.economyEnabled;
         KITS_ENABLED = d.kitsEnabled;
         KIT_COOLDOWN_SECONDS = d.kits.cooldownSeconds;
         KIT_DEFINITIONS = d.kits.kits;
