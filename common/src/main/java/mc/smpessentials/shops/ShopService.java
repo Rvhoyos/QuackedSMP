@@ -49,6 +49,9 @@ public final class ShopService {
 
         ShopEntry shop = shopOpt.get();
         if (player.getUUID().equals(shop.owner())) return InteractionResult.PASS;
+        // OPs can open spawn shop chests to restock or change items
+        if (shop.spawnShop() && CommandRegistrar.isOp(player.createCommandSourceStack()))
+            return InteractionResult.PASS;
 
         int stock = getStockCount(sl, shop);
         ShopGui.open(player, shop, stock);
@@ -216,13 +219,22 @@ public final class ShopService {
             return false;
         }
 
-        // Execute transaction
-        removeCurrencyFromInventory(buyer, currencyId, (int) totalCost);
-
+        // Capacity check: block purchase if currency won't fit in the chest
         if (!shop.spawnShop() && be instanceof Container container) {
+            int capacity = calculateCurrencyCapacity(container, currencyId, shop.itemId(), quantity);
+            if (capacity < totalCost) {
+                buyer.sendSystemMessage(Component.literal("\u00a7cShop chest is too full to accept payment."));
+                return false;
+            }
+
+            // Execute transaction
+            removeCurrencyFromInventory(buyer, currencyId, (int) totalCost);
             removeItemsFromContainer(container, shop.itemId(), quantity);
             addCurrencyToContainer(container, currencyId, (int) totalCost, level, pos);
             if (be instanceof ChestBlockEntity cbe) cbe.setChanged();
+        } else {
+            // Spawn shop (infinite stock, no chest mutation needed)
+            removeCurrencyFromInventory(buyer, currencyId, (int) totalCost);
         }
 
         // Give items to buyer
@@ -319,6 +331,36 @@ public final class ShopService {
         return total;
     }
 
+    // Calculates how many currency items the container can accept,
+    // accounting for slots that will be freed by removing sale items.
+    private static int calculateCurrencyCapacity(Container container, String currencyId,
+                                                  String saleItemId, int removeCount) {
+        Item currency = resolveItem(currencyId);
+        if (currency == null) return 0;
+        int maxStack = currency.getDefaultMaxStackSize();
+        int capacity = 0;
+        int removing = removeCount;
+
+        for (int i = 0; i < container.getContainerSize(); i++) {
+            ItemStack stack = container.getItem(i);
+            if (stack.isEmpty()) {
+                capacity += maxStack;
+            } else {
+                String id = BuiltInRegistries.ITEM.getKey(stack.getItem()).toString();
+                if (id.equals(currencyId)) {
+                    capacity += maxStack - stack.getCount();
+                } else if (id.equals(saleItemId) && removing > 0) {
+                    int take = Math.min(removing, stack.getCount());
+                    removing -= take;
+                    if (take == stack.getCount()) {
+                        capacity += maxStack;
+                    }
+                }
+            }
+        }
+        return capacity;
+    }
+
     private static void removeItemsFromContainer(Container container, String itemId, int amount) {
         int remaining = amount;
         for (int i = 0; i < container.getContainerSize() && remaining > 0; i++) {
@@ -355,14 +397,9 @@ public final class ShopService {
                 remaining -= batch;
             }
         }
-        // Overflow: drop near chest
-        while (remaining > 0) {
-            int batch = Math.min(remaining, currency.getDefaultMaxStackSize());
-            ItemStack overflow = new ItemStack(currency, batch);
-            net.minecraft.world.entity.item.ItemEntity ie = new net.minecraft.world.entity.item.ItemEntity(
-                    level, pos.getX() + 0.5, pos.getY() + 1, pos.getZ() + 0.5, overflow);
-            level.addFreshEntity(ie);
-            remaining -= batch;
+        // Should never happen — capacity is checked before purchase
+        if (remaining > 0) {
+            mc.smpessentials.SmpUtilsMod.LOGGER.warn("[Shops] Currency overflow of {} at {} — this shouldn't happen", remaining, pos);
         }
     }
 
