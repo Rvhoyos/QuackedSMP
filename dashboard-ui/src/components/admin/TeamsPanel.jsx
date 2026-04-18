@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import styles from './TeamsPanel.module.css'
 
 function authHeaders(token) {
@@ -72,6 +72,11 @@ export default function TeamsPanel({ token, onExpired }) {
   // Member search per team
   const [memberSearch, setMemberSearch] = useState({})
 
+  // Auto-assign dimensions
+  const [autoAssign,  setAutoAssign]  = useState({})   // team -> [dim, ...]
+  const [allDims,     setAllDims]     = useState([])
+  const [dimsLoaded,  setDimsLoaded]  = useState(false)
+
   // Close player dropdown on outside click
   useEffect(() => {
     function onMouseDown(e) {
@@ -92,6 +97,25 @@ export default function TeamsPanel({ token, onExpired }) {
     } catch {}
   }, [playersLoaded, token, onExpired])
 
+  const fetchDims = useCallback(async () => {
+    if (dimsLoaded) return
+    try {
+      const res = await fetch('/api/admin/dims/all', { headers: authHeaders(token) })
+      if (res.status === 401 || res.status === 403) { onExpired(); return }
+      const data = await res.json()
+      if (Array.isArray(data)) { setAllDims(data); setDimsLoaded(true) }
+    } catch {}
+  }, [dimsLoaded, token, onExpired])
+
+  const fetchAutoAssign = useCallback(async () => {
+    try {
+      const res = await fetch('/api/admin/teams/autoassign', { headers: authHeaders(token) })
+      if (res.status === 401 || res.status === 403) { onExpired(); return }
+      const data = await res.json()
+      if (!data.error) setAutoAssign(data)
+    } catch {}
+  }, [token, onExpired])
+
   const fetchTeams = useCallback(async () => {
     setLoading(true)
     setError(null)
@@ -110,9 +134,13 @@ export default function TeamsPanel({ token, onExpired }) {
 
   useEffect(() => { fetchTeams() }, [fetchTeams])
 
-  // Lazy-load player names when any team is expanded
+  // Lazy-load player names and dims when any team is expanded
   useEffect(() => {
-    if (Object.values(expanded).some(Boolean)) fetchPlayerNames()
+    if (Object.values(expanded).some(Boolean)) {
+      fetchPlayerNames()
+      fetchDims()
+      fetchAutoAssign()
+    }
   }, [expanded]) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function handleCreate(e) {
@@ -214,6 +242,32 @@ export default function TeamsPanel({ token, onExpired }) {
       setError('Remove player failed')
     }
   }
+
+  async function handleAutoAssignUpdate(teamName, dimensions) {
+    setError(null)
+    try {
+      const res = await fetch('/api/admin/teams/autoassign', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...authHeaders(token) },
+        body: JSON.stringify({ team: teamName, dimensions }),
+      })
+      if (res.status === 401 || res.status === 403) { onExpired(); return }
+      const data = await res.json()
+      if (data.error) { setError(data.error); return }
+      await fetchAutoAssign()
+    } catch {
+      setError('Auto-assign update failed')
+    }
+  }
+
+  // Build a reverse map: dim -> team name (for showing which team owns a dim)
+  const dimToTeam = useMemo(() => {
+    const map = {}
+    for (const [team, dims] of Object.entries(autoAssign)) {
+      for (const dim of dims) map[dim] = team
+    }
+    return map
+  }, [autoAssign])
 
   function toggle(name) {
     setExpanded(prev => ({ ...prev, [name]: !prev[name] }))
@@ -532,6 +586,59 @@ export default function TeamsPanel({ token, onExpired }) {
                       <div className={styles.noMembers}>No members</div>
                     )}
                   </div>
+                </div>
+
+                {/* Auto-Assign Dimensions */}
+                <div className={styles.autoAssignSection}>
+                  <div className={styles.membersHeader}>
+                    <span className={styles.membersTitle}>Auto-Assign Dimensions</span>
+                  </div>
+                  <div className={styles.dimChips}>
+                    {(autoAssign[team.name] || []).map(dim => (
+                      <span key={dim} className={styles.dimChip}>
+                        <span className={styles.dimChipLabel}>{dim}</span>
+                        <button
+                          className={styles.dimChipRemove}
+                          onClick={() => handleAutoAssignUpdate(
+                            team.name,
+                            (autoAssign[team.name] || []).filter(d => d !== dim)
+                          )}
+                        >
+                          x
+                        </button>
+                      </span>
+                    ))}
+                    {!(autoAssign[team.name] || []).length && (
+                      <span className={styles.noMembers}>No dimensions assigned</span>
+                    )}
+                  </div>
+                  {dimsLoaded && (
+                    <select
+                      className={styles.select}
+                      value=""
+                      onChange={e => {
+                        const dim = e.target.value
+                        if (!dim) return
+                        handleAutoAssignUpdate(
+                          team.name,
+                          [...(autoAssign[team.name] || []), dim]
+                        )
+                      }}
+                    >
+                      <option value="">Add dimension...</option>
+                      {allDims
+                        .filter(dim => !(autoAssign[team.name] || []).includes(dim))
+                        .map(dim => {
+                          const owner = dimToTeam[dim]
+                          const taken = owner && owner !== team.name
+                          return (
+                            <option key={dim} value={dim} disabled={taken}>
+                              {dim}{taken ? ` (on ${owner})` : ''}
+                            </option>
+                          )
+                        })}
+                    </select>
+                  )}
                 </div>
 
                 {/* Delete */}

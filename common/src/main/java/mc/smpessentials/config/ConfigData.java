@@ -114,6 +114,8 @@ public final class ConfigData {
     // Import queue: loaded into NBT on startup/reload, then cleared from the file by ConfigIO.save().
     public ChatFilterData chatfilter = new ChatFilterData();
     public boolean kitsEnabled = true;
+    public Map<String, List<String>> teamAutoAssign = new HashMap<>();
+
     public boolean antixrayEnabled = true;
     public KitsConfig kits = new KitsConfig();
 

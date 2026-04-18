@@ -98,10 +98,13 @@ public final class SmpUtilsModFabric implements ModInitializer {
                 mc.smpessentials.skills.SkillEvents.onPlayerTick(player);
                 mc.smpessentials.dims.EtherFallthrough.tick(player);
                 mc.smpessentials.antixray.AntiXrayEngine.tickPlayer(player);
+                mc.smpessentials.teams.TeamAutoAssign.tick(player);
             }
         });
 
         // Scout Zoom activation is handled by PlayerActionMixin (common module)
+        // Note: team auto-assign on dimension change is handled by the tick loop above.
+        // Fabric API does not have a dimension change event; NeoForge uses PlayerChangedDimensionEvent.
 
         // 5. Chat Decorator
         net.fabricmc.fabric.api.message.v1.ServerMessageDecoratorEvent.EVENT.register(

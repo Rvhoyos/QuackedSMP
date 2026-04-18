@@ -72,6 +72,9 @@ public final class SmpConfig {
     public static long KIT_COOLDOWN_SECONDS = 86400;
     public static java.util.List<ConfigData.KitDef> KIT_DEFINITIONS = new java.util.ArrayList<>();
 
+    // ---- Team Auto-Assign ----
+    public static java.util.Map<String, java.util.List<String>> TEAM_AUTO_ASSIGN = new java.util.HashMap<>();
+
     // ---- Skills ----
     public static double SKILL_XP_EXPONENT = 1.5;
     public static java.util.Map<String, Long> SKILL_COOLDOWNS = new java.util.HashMap<>();
@@ -183,6 +186,11 @@ public final class SmpConfig {
         HARDCORE_ENABLED = d.hardcoreEnabled;
         HARDCORE_DEATH_PERCENT = d.hardcoreDeathPercent;
 
+        TEAM_AUTO_ASSIGN = new java.util.HashMap<>();
+        for (var entry : d.teamAutoAssign.entrySet()) {
+            TEAM_AUTO_ASSIGN.put(entry.getKey(), new java.util.ArrayList<>(entry.getValue()));
+        }
+
         ANTIXRAY_ENABLED = d.antixrayEnabled;
         KITS_ENABLED = d.kitsEnabled;
         KIT_COOLDOWN_SECONDS = d.kits.cooldownSeconds;
@@ -198,5 +206,7 @@ public final class SmpConfig {
         CAP_DOUBLE_DROP = d.skills.caps.doubleDrop;
         CAP_DEFENSE_ARMOR = d.skills.caps.defenseArmor;
         CAP_SAFE_LANDING = d.skills.caps.safeLanding;
+
+        mc.smpessentials.teams.TeamAutoAssign.buildReverseMap();
     }
 }

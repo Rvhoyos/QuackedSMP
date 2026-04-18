@@ -492,6 +492,47 @@
   padding: 6px;
 }
 
+/* ── Auto-assign section ──────────────────────────────────────── */
+.autoAssignSection {
+  border-top: 1px solid #222;
+  padding-top: 10px;
+  margin-bottom: 10px;
+}
+
+.dimChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 6px;
+}
+
+.dimChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(88, 26, 140, 0.25);
+  border: 1px solid #3A1A5C;
+  padding: 2px 6px;
+}
+
+.dimChipLabel {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: #C084FC;
+}
+
+.dimChipRemove {
+  background: none;
+  border: none;
+  color: #5A1050;
+  cursor: pointer;
+  font-size: 11px;
+  padding: 0 2px;
+  line-height: 1;
+  transition: color var(--t-fast);
+}
+.dimChipRemove:hover { color: #FF60FF; }
+
 /* ── Team footer ─────────────────────────────────────────────── */
 .teamFooter {
   border-top: 1px solid #222;

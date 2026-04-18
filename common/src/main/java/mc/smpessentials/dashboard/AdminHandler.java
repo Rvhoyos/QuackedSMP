@@ -1644,6 +1644,96 @@ public final class AdminHandler {
         }
     }
 
+    // GET /api/admin/dims/all. Returns ALL dimensions including vanilla (overworld, nether, end).
+    public static String handleDimsAll(String method, Map<String, String> headers, String body,
+                                       MinecraftServer server) {
+        if (!SmpConfig.ADMIN_ENABLED)           return err(403, "Admin panel disabled");
+        if (!AdminAuth.isAuthorized(headers))   return err(403, "Unauthorized");
+        if (server == null)                     return err(503, "Server not ready");
+
+        CompletableFuture<String> future = new CompletableFuture<>();
+        server.execute(() -> {
+            try {
+                List<ResourceKey<Level>> allLevels = DimManager.listAll(server);
+                StringBuilder sb = new StringBuilder("[");
+                boolean first = true;
+                for (ResourceKey<Level> key : allLevels) {
+                    if (!first) sb.append(',');
+                    first = false;
+                    sb.append('"').append(jsonEscape(key.identifier().toString())).append('"');
+                }
+                sb.append(']');
+                future.complete(sb.toString());
+            } catch (Exception ex) {
+                future.complete(err(500, jsonEscape(ex.getMessage())));
+            }
+        });
+        try {
+            return future.get(5, TimeUnit.SECONDS);
+        } catch (Exception e) {
+            return err(500, "Timeout reading dimensions");
+        }
+    }
+
+    // GET /api/admin/teams/autoassign. Returns current auto-assign config.
+    public static String handleAutoAssignGet(String method, Map<String, String> headers, String body) {
+        if (!SmpConfig.ADMIN_ENABLED)           return err(403, "Admin panel disabled");
+        if (!AdminAuth.isAuthorized(headers))   return err(403, "Unauthorized");
+
+        StringBuilder sb = new StringBuilder("{");
+        boolean first = true;
+        for (var entry : SmpConfig.TEAM_AUTO_ASSIGN.entrySet()) {
+            if (!first) sb.append(',');
+            first = false;
+            sb.append('"').append(jsonEscape(entry.getKey())).append("\":");
+            sb.append(jsonStrArr(entry.getValue()));
+        }
+        sb.append('}');
+        return sb.toString();
+    }
+
+    // POST /api/admin/teams/autoassign. Updates auto-assign dims for a team.
+    // Body: {team, dimensions: [...]}. Empty dimensions list removes auto-assign for that team.
+    public static String handleAutoAssignPost(String method, Map<String, String> headers, String body,
+                                              MinecraftServer server) {
+        if (!"POST".equals(method))             return err(405, "Method not allowed");
+        if (!SmpConfig.ADMIN_ENABLED)           return err(403, "Admin panel disabled");
+        if (!AdminAuth.isAuthorized(headers))   return err(403, "Unauthorized");
+        if (server == null)                     return err(503, "Server not ready");
+        try {
+            JsonObject req = JsonParser.parseString(body).getAsJsonObject();
+            String teamName = req.get("team").getAsString().strip();
+            if (teamName.isEmpty()) return err(400, "Team name required");
+
+            List<String> dims = new ArrayList<>();
+            if (req.has("dimensions")) {
+                for (var el : req.getAsJsonArray("dimensions")) {
+                    dims.add(el.getAsString().strip());
+                }
+            }
+
+            // Validate no dimension is assigned to a different team
+            for (String dim : dims) {
+                for (var entry : SmpConfig.TEAM_AUTO_ASSIGN.entrySet()) {
+                    if (!entry.getKey().equals(teamName) && entry.getValue().contains(dim)) {
+                        return err(400, "Dimension " + dim + " is already assigned to team " + entry.getKey());
+                    }
+                }
+            }
+
+            if (dims.isEmpty()) {
+                SmpConfig.TEAM_AUTO_ASSIGN.remove(teamName);
+            } else {
+                SmpConfig.TEAM_AUTO_ASSIGN.put(teamName, dims);
+            }
+            mc.smpessentials.teams.TeamAutoAssign.buildReverseMap();
+            ConfigIO.save();
+            return "{\"ok\":true}";
+        } catch (Exception e) {
+            return err(400, "Invalid request: " + jsonEscape(e.getMessage()));
+        }
+    }
+
     // Returns the ChatFormatting name for the color applied to a Component's style, or "reset" if none.
     private static String extractChatFormatting(net.minecraft.network.chat.Component comp) {
         var textColor = comp.getStyle().getColor();

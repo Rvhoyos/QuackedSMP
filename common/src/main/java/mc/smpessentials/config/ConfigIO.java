@@ -129,6 +129,11 @@ public final class ConfigIO {
         data.discord.joinLeave = SmpConfig.DISCORD_JOIN_LEAVE;
         data.discord.chat = SmpConfig.DISCORD_CHAT;
 
+        data.teamAutoAssign = new java.util.HashMap<>();
+        for (var entry : SmpConfig.TEAM_AUTO_ASSIGN.entrySet()) {
+            data.teamAutoAssign.put(entry.getKey(), new java.util.ArrayList<>(entry.getValue()));
+        }
+
         data.antixrayEnabled = SmpConfig.ANTIXRAY_ENABLED;
         data.kitsEnabled = SmpConfig.KITS_ENABLED;
         data.kits.cooldownSeconds = SmpConfig.KIT_COOLDOWN_SECONDS;

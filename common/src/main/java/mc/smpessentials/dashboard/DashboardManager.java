@@ -246,6 +246,12 @@ public final class DashboardManager {
                 (m, h, b) -> AdminHandler.handleTeamRemovePlayer(m, h, b, mcServer));
         s.addRoute("/api/admin/playernames",
                 (m, h, b) -> AdminHandler.handlePlayerNames(m, h, b, mcServer));
+        s.addRoute("/api/admin/dims/all",
+                (m, h, b) -> AdminHandler.handleDimsAll(m, h, b, mcServer));
+        s.addRoute("/api/admin/teams/autoassign",
+                (m, h, b) -> "GET".equals(m)
+                        ? AdminHandler.handleAutoAssignGet(m, h, b)
+                        : AdminHandler.handleAutoAssignPost(m, h, b, mcServer));
 
         // Wilderness regen
         s.addRoute("/api/admin/regen",
