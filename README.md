@@ -37,6 +37,7 @@ The panel is a password-protected SPA served directly by the mod over an embedde
 | **Dimensions** | Create, delete, and configure custom dimensions. Wire portal frame blocks. |
 | **Skills** | Browse every player's skill levels. Set or adjust XP and levels per skill. |
 | **Claims** | View all active claims on the server. Force-unclaim all chunks owned by a player. |
+| **Teams** | Create, configure, and delete scoreboard teams. Auto-assign players to teams by dimension. |
 | **Chat Filter** | Add/remove blocked words. View active mutes, unmute players. |
 | **Config** | Edit every configurable value live. No file editing, no restart for most settings. |
 | **Mods** | Upload, replace, or remove server mods directly from the browser. |
@@ -159,12 +160,15 @@ Chunk-based land protection. Claim a chunk and no one else can build, break, or 
 - Fire and lava spread/flow prevented inside claims
 - Optional wilderness fire throttle to prevent arson griefing (toggle `allow_fire_wilderness`)
 - Water only flows into a claim from the same owner's source
+- Farmland trampling blocked inside claims and spawn protection
+- Endermen cannot pick up or place blocks inside claims and spawn protection
 - Armor Stands, Item Frames, Paintings, and Villagers protected from damage and theft
 - PvP immunity inside own claims
 
 | Command | Description | Permission |
 | :--- | :--- | :--- |
-| `/claim` | Claim current chunk | Everyone |
+| `/claim` | Claim current chunk (or NxN grid if size is set) | Everyone |
+| `/claim size <1-7>` | Set claim brush radius (e.g. 3 = 3x3 grid). Resets to 1 on restart | Everyone |
 | `/unclaim` | Unclaim current chunk | Everyone |
 | `/claim info` | Show owned count, limit, remaining, and current chunk status | Everyone |
 | `/claim map` | Visualize nearby chunks in chat | Everyone |
@@ -295,7 +299,7 @@ Password-protected hardcore sessions. Any player can create a session, share the
 - Creator picks a random start location (1,000+ blocks from spawn, within the world border)
 - All participants are teleported there with empty inventories
 - Deaths are tracked. When deaths reach the threshold (configurable % of peak players), the session ends for everyone
-- Dead players become spectators at the session start until they leave or the session ends
+- Dead players become spectators at their death location until they leave or the session ends
 - Leaving mid-session is always allowed; your inventory is restored immediately
 - Players who left cannot rejoin the same session
 - Sessions survive server restarts and long periods of downtime
@@ -405,7 +409,8 @@ Toggle: `antixray_enabled` in config (default: `true`)
 | `/mute <player> <mins>` | Mute a player | OP |
 | `/unmute <player>` | Unmute a player | OP |
 | `/rules` | View server rules | Everyone |
-| `/claim` | Claim current chunk | Everyone |
+| `/claim` | Claim current chunk (or NxN grid if size is set) | Everyone |
+| `/claim size <1-7>` | Set claim brush radius | Everyone |
 | `/unclaim` | Unclaim current chunk | Everyone |
 | `/claim info` | Show owned count, limit, remaining, and current chunk status | Everyone |
 | `/claim map` | Visualize nearby chunks in chat | Everyone |
@@ -498,6 +503,7 @@ Config lives at `config/quackedsmp.json`. Most settings are editable live from t
 | `kits.cooldownSeconds` | `86400` | Seconds between kit claims (default 24 hours) |
 | `kits.kits` | see JSON | Kit definitions: name, displayName, minTier, armor, items |
 | `hardcore_enabled` | `false` | Enable the hardcore session system |
+| `team_auto_assign` | `{}` | Map of team name to list of dimension IDs for auto-assignment |
 | `hardcore_death_percent` | `50` | Deaths as % of peak players to end a session |
 | `skills.xp_exponent` | `1.5` | Exponential factor for skill leveling |
 | `skills.ability_unlock_levels` | see JSON | Minimum level per skill to unlock active ability |

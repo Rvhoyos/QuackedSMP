@@ -117,6 +117,8 @@ public final class ConfigData {
     public Map<String, List<String>> teamAutoAssign = new HashMap<>();
 
     public boolean antixrayEnabled = true;
+    public boolean shopsEnabled = false;
+    public boolean economyEnabled = false;
     public KitsConfig kits = new KitsConfig();
 
     public static final class VotifierConfig {

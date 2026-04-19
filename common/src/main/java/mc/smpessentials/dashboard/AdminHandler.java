@@ -180,6 +180,8 @@ public final class AdminHandler {
         sb.append(String.format("\"claims_enabled\":%b,", SmpConfig.CLAIMS_ENABLED));
         sb.append(String.format("\"skills_enabled\":%b,", SmpConfig.SKILLS_ENABLED));
         sb.append(String.format("\"chatfilter_enabled\":%b,", SmpConfig.CHATFILTER_ENABLED));
+        sb.append(String.format("\"shops_enabled\":%b,", SmpConfig.SHOPS_ENABLED));
+        sb.append(String.format("\"economy_enabled\":%b,", SmpConfig.ECONOMY_ENABLED));
         // Hardcore
         sb.append(String.format("\"hardcore_enabled\":%b,", SmpConfig.HARDCORE_ENABLED));
         sb.append(String.format("\"hardcore_death_percent\":%d,", SmpConfig.HARDCORE_DEATH_PERCENT));
@@ -292,6 +294,8 @@ public final class AdminHandler {
             if (patch.has("claims_enabled"))     { SmpConfig.CLAIMS_ENABLED     = patch.get("claims_enabled").getAsBoolean();     changed++; }
             if (patch.has("skills_enabled"))     { SmpConfig.SKILLS_ENABLED     = patch.get("skills_enabled").getAsBoolean();     changed++; }
             if (patch.has("chatfilter_enabled")) { SmpConfig.CHATFILTER_ENABLED = patch.get("chatfilter_enabled").getAsBoolean(); changed++; }
+            if (patch.has("shops_enabled"))     { SmpConfig.SHOPS_ENABLED     = patch.get("shops_enabled").getAsBoolean();     changed++; }
+            if (patch.has("economy_enabled"))   { SmpConfig.ECONOMY_ENABLED   = patch.get("economy_enabled").getAsBoolean();   changed++; }
             // Hardcore
             if (patch.has("hardcore_enabled"))        { SmpConfig.HARDCORE_ENABLED        = patch.get("hardcore_enabled").getAsBoolean();       changed++; }
             if (patch.has("hardcore_death_percent"))   { SmpConfig.HARDCORE_DEATH_PERCENT   = patch.get("hardcore_death_percent").getAsInt();     changed++; }
@@ -1806,6 +1810,112 @@ public final class AdminHandler {
             }
         } catch (Exception ignored) {}
         return false;
+    }
+
+    // ── Shops ─────────────────────────────────────────────────────────────────
+
+    // GET /api/admin/shops. Lists all registered shops with live stock counts.
+    public static String handleShopsGet(String method, Map<String, String> headers, String body,
+                                        MinecraftServer server) {
+        if (!SmpConfig.ADMIN_ENABLED)           return err(403, "Admin panel disabled");
+        if (!AdminAuth.isAuthorized(headers))   return err(403, "Unauthorized");
+        if (server == null)                     return err(503, "Server not ready");
+
+        CompletableFuture<String> future = new CompletableFuture<>();
+        server.execute(() -> {
+            try {
+                var shops = mc.smpessentials.shops.ShopData.get(server).listAll();
+                SkillData skills = SkillData.get(server.overworld());
+                StringBuilder sb = new StringBuilder("[");
+                for (int i = 0; i < shops.size(); i++) {
+                    if (i > 0) sb.append(',');
+                    var shop = shops.get(i);
+                    ServerLevel sl = server.getLevel(shop.dimension());
+                    int stock = sl != null ? mc.smpessentials.shops.ShopService.getStockCount(sl, shop) : 0;
+                    sb.append(String.format(
+                            "{\"x\":%d,\"y\":%d,\"z\":%d,\"dim\":\"%s\",\"owner\":\"%s\",\"ownerName\":\"%s\","
+                                    + "\"item\":\"%s\",\"price\":%d,\"currency\":\"%s\",\"stock\":%s,\"spawnShop\":%b}",
+                            shop.pos().getX(), shop.pos().getY(), shop.pos().getZ(),
+                            jsonEscape(shop.dimension().identifier().toString()),
+                            shop.owner(), jsonEscape(skills.getDisplayName(shop.owner())),
+                            jsonEscape(shop.itemId()), shop.pricePerItem(),
+                            jsonEscape(shop.currencyItemId()),
+                            shop.spawnShop() ? "\"unlimited\"" : String.valueOf(stock),
+                            shop.spawnShop()));
+                }
+                sb.append("]");
+                future.complete(sb.toString());
+            } catch (Exception ex) {
+                future.complete(err(500, jsonEscape(ex.getMessage())));
+            }
+        });
+        try { return future.get(5, TimeUnit.SECONDS); } catch (Exception e) {
+            return err(500, "Timeout");
+        }
+    }
+
+    // POST /api/admin/shops/delete. Body: {dim, x, y, z}
+    public static String handleShopsDelete(String method, Map<String, String> headers, String body,
+                                           MinecraftServer server) {
+        if (!"POST".equals(method))             return err(405, "Method not allowed");
+        if (!SmpConfig.ADMIN_ENABLED)           return err(403, "Admin panel disabled");
+        if (!AdminAuth.isAuthorized(headers))   return err(403, "Unauthorized");
+        if (server == null)                     return err(503, "Server not ready");
+        try {
+            JsonObject req = JsonParser.parseString(body).getAsJsonObject();
+            String dim = req.get("dim").getAsString();
+            int x = req.get("x").getAsInt();
+            int y = req.get("y").getAsInt();
+            int z = req.get("z").getAsInt();
+            var dimKey = net.minecraft.resources.ResourceKey.create(
+                    net.minecraft.core.registries.Registries.DIMENSION,
+                    Identifier.parse(dim));
+            net.minecraft.core.BlockPos pos = new net.minecraft.core.BlockPos(x, y, z);
+
+            CompletableFuture<String> future = new CompletableFuture<>();
+            server.execute(() -> {
+                try {
+                    boolean removed = mc.smpessentials.shops.ShopData.get(server).removeShop(dimKey, pos);
+                    future.complete(String.format("{\"ok\":true,\"removed\":%b}", removed));
+                } catch (Exception ex) {
+                    future.complete(err(500, jsonEscape(ex.getMessage())));
+                }
+            });
+            return future.get(5, TimeUnit.SECONDS);
+        } catch (Exception e) {
+            return err(400, "Invalid request: " + jsonEscape(e.getMessage()));
+        }
+    }
+
+    // GET /api/admin/economy. Lists all player balances.
+    public static String handleEconomyGet(String method, Map<String, String> headers, String body,
+                                          MinecraftServer server) {
+        if (!SmpConfig.ADMIN_ENABLED)           return err(403, "Admin panel disabled");
+        if (!AdminAuth.isAuthorized(headers))   return err(403, "Unauthorized");
+        if (!SmpConfig.ECONOMY_ENABLED)         return err(200, "Economy disabled");
+        if (server == null)                     return err(503, "Server not ready");
+
+        CompletableFuture<String> future = new CompletableFuture<>();
+        server.execute(() -> {
+            try {
+                var econ = mc.smpessentials.shops.EconomyData.get(server);
+                SkillData skills = SkillData.get(server.overworld());
+                var balances = econ.allBalances();
+                StringBuilder sb = new StringBuilder("[");
+                int i = 0;
+                for (var entry : balances.entrySet()) {
+                    if (i > 0) sb.append(',');
+                    sb.append(String.format("{\"uuid\":\"%s\",\"name\":\"%s\",\"balance\":%d}",
+                            entry.getKey(), jsonEscape(skills.getDisplayName(entry.getKey())), entry.getValue()));
+                    i++;
+                }
+                sb.append("]");
+                future.complete(sb.toString());
+            } catch (Exception ex) {
+                future.complete(err(500, jsonEscape(ex.getMessage())));
+            }
+        });
+        try { return future.get(5, TimeUnit.SECONDS); } catch (Exception e) { return err(500, "Timeout"); }
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────

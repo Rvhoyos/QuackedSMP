@@ -26,7 +26,8 @@
     "ChunkPacketDataMixin",
     "EnderManTakeBlockMixin",
     "EnderManLeaveBlockMixin",
-    "FarmBlockMixin"
+    "FarmBlockMixin",
+    "ServerLevelMixin"
   ],
   "injectors": {
     "defaultRequire": 1

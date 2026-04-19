@@ -135,6 +135,8 @@ public final class ConfigIO {
         }
 
         data.antixrayEnabled = SmpConfig.ANTIXRAY_ENABLED;
+        data.shopsEnabled = SmpConfig.SHOPS_ENABLED;
+        data.economyEnabled = SmpConfig.ECONOMY_ENABLED;
         data.kitsEnabled = SmpConfig.KITS_ENABLED;
         data.kits.cooldownSeconds = SmpConfig.KIT_COOLDOWN_SECONDS;
         data.kits.kits = new java.util.ArrayList<>(SmpConfig.KIT_DEFINITIONS);

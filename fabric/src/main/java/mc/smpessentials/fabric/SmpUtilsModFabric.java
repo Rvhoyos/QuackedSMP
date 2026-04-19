@@ -122,6 +122,7 @@ public final class SmpUtilsModFabric implements ModInitializer {
                     mc.smpessentials.skills.SkillEvents.onBlockBreak(world, pos, state, p);
                     boolean allowed = mc.smpessentials.claims.ClaimProtection.onBlockBreak(world, pos, state, p);
                     if (allowed && world instanceof net.minecraft.server.level.ServerLevel sl) {
+                        mc.smpessentials.shops.ShopService.onBlockBreak(sl, pos);
                         mc.smpessentials.antixray.AntiXrayEngine.revealNeighbors(sl, pos);
                     }
                     return allowed;
@@ -132,6 +133,12 @@ public final class SmpUtilsModFabric implements ModInitializer {
             net.minecraft.world.InteractionResult portal =
                     mc.smpessentials.dims.CustomPortalActivator.onRightClickBlock(p, world, hand, hitResult.getBlockPos(), hitResult.getDirection());
             if (portal != net.minecraft.world.InteractionResult.PASS) return portal;
+            // Shop check runs before claim check so non-owners can buy from shops in claims
+            if (p instanceof net.minecraft.server.level.ServerPlayer sp) {
+                net.minecraft.world.InteractionResult shop =
+                        mc.smpessentials.shops.ShopService.onRightClickBlock(sp, world, hitResult.getBlockPos());
+                if (shop != net.minecraft.world.InteractionResult.PASS) return shop;
+            }
             return mc.smpessentials.claims.ClaimProtection.onRightClickBlock(p, hitResult.getBlockPos());
         });
 
