@@ -163,10 +163,12 @@ public final class AdminHandler {
     }
 
     // GET /api/admin/config. Returns all editable config fields.
-    public static String handleConfigGet(String method, Map<String, String> headers, String body) {
+    public static String handleConfigGet(String method, Map<String, String> headers, String body,
+                                         MinecraftServer server) {
         if (!SmpConfig.ADMIN_ENABLED)           return err(403, "Admin panel disabled");
         if (!AdminAuth.isAuthorized(headers))   return err(403, "Unauthorized");
 
+        boolean cmdBlocksEnabled = server != null && server.overworld().isCommandBlockEnabled();
         StringBuilder sb = new StringBuilder("{");
         // General
         sb.append(String.format("\"max_claims\":%d,", SmpConfig.MAX_CLAIMS));
@@ -182,6 +184,7 @@ public final class AdminHandler {
         sb.append(String.format("\"chatfilter_enabled\":%b,", SmpConfig.CHATFILTER_ENABLED));
         sb.append(String.format("\"shops_enabled\":%b,", SmpConfig.SHOPS_ENABLED));
         sb.append(String.format("\"economy_enabled\":%b,", SmpConfig.ECONOMY_ENABLED));
+        sb.append(String.format("\"commandblocks_enabled\":%b,", cmdBlocksEnabled));
         // Hardcore
         sb.append(String.format("\"hardcore_enabled\":%b,", SmpConfig.HARDCORE_ENABLED));
         sb.append(String.format("\"hardcore_death_percent\":%d,", SmpConfig.HARDCORE_DEATH_PERCENT));
@@ -1921,7 +1924,7 @@ public final class AdminHandler {
     // ── Helpers ───────────────────────────────────────────────────────────────
 
     // Builds a JSON error string. The status code is embedded so DashboardServer can read it.
-    static String err(int status, String message) {
+    public static String err(int status, String message) {
         return "__HTTP_" + status + "__" + String.format("{\"error\":\"%s\"}", jsonEscape(message));
     }
 
@@ -1965,7 +1968,7 @@ public final class AdminHandler {
         for (var el : arr) list.add(el.getAsInt());
     }
 
-    private static String jsonEscape(String s) {
+    public static String jsonEscape(String s) {
         if (s == null) return "";
         return s.replace("\\", "\\\\").replace("\"", "\\\"")
                 .replace("\n", "\\n").replace("\r", "\\r").replace("\t", "\\t");

@@ -52,6 +52,26 @@ export function IconCommandBlock({ size = 18 }) {
   )
 }
 
+export function IconRepeatCmdBlock({ size = 18 }) {
+  return (
+    <svg viewBox="0 0 16 16" width={size} height={size} shapeRendering="crispEdges">
+      {/* Body */}
+      {px(0, 0, 16, 16, '#8932B8')}
+      {/* Grid lines */}
+      {px(4, 0, 1, 16, '#5B1A8A')}
+      {px(11, 0, 1, 16, '#5B1A8A')}
+      {px(0, 4, 16, 1, '#5B1A8A')}
+      {px(0, 11, 16, 1, '#5B1A8A')}
+      {/* Center eye */}
+      {px(5, 5, 6, 6, '#1A0020')}
+      {px(6, 6, 4, 4, '#00C8C8')}
+      {px(7, 7, 2, 2, '#40FFFF')}
+      {/* Top-left highlight */}
+      {px(1, 1, 2, 2, '#A850D8')}
+    </svg>
+  )
+}
+
 export function IconChest({ size = 18 }) {
   return (
     <svg viewBox="0 0 16 16" width={size} height={size} shapeRendering="crispEdges">
