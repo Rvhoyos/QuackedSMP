@@ -48,10 +48,7 @@ public final class ShopService {
         if (shopOpt.isEmpty()) return InteractionResult.PASS;
 
         ShopEntry shop = shopOpt.get();
-        if (player.getUUID().equals(shop.owner())) return InteractionResult.PASS;
-        // OPs can open spawn shop chests to restock or change items
-        if (shop.spawnShop() && CommandRegistrar.isOp(player.createCommandSourceStack()))
-            return InteractionResult.PASS;
+        if (player.getUUID().equals(shop.owner()) && !shop.spawnShop()) return InteractionResult.PASS;
 
         int stock = getStockCount(sl, shop);
         ShopGui.open(player, shop, stock);
@@ -193,7 +190,7 @@ public final class ShopService {
         ShopEntry shop = shopOpt.get();
         int totalItems = quantity * shop.unit();
 
-        if (buyer.getUUID().equals(shop.owner())) {
+        if (buyer.getUUID().equals(shop.owner()) && !shop.spawnShop()) {
             buyer.sendSystemMessage(Component.literal("\u00a7cYou can't buy from your own shop."));
             return false;
         }
