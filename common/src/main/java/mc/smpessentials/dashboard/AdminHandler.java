@@ -178,6 +178,10 @@ public final class AdminHandler {
         sb.append(String.format("\"allow_lava_wilderness\":%b,", SmpConfig.ALLOW_LAVA_WILDERNESS));
         sb.append(String.format("\"allow_fire_wilderness\":%b,", SmpConfig.ALLOW_FIRE_WILDERNESS));
         sb.append(String.format("\"spawn_no_pvp\":%b,", SmpConfig.SPAWN_NO_PVP));
+        sb.append(String.format("\"protect_explosions\":%b,", SmpConfig.PROTECT_EXPLOSIONS));
+        sb.append(String.format("\"protect_fire_claims\":%b,", SmpConfig.PROTECT_FIRE_CLAIMS));
+        sb.append(String.format("\"protect_enderman\":%b,", SmpConfig.PROTECT_ENDERMAN));
+        sb.append(String.format("\"protect_farmland\":%b,", SmpConfig.PROTECT_FARMLAND));
         // Feature toggles
         sb.append(String.format("\"claims_enabled\":%b,", SmpConfig.CLAIMS_ENABLED));
         sb.append(String.format("\"skills_enabled\":%b,", SmpConfig.SKILLS_ENABLED));
@@ -293,6 +297,10 @@ public final class AdminHandler {
             if (patch.has("allow_lava_wilderness")) { SmpConfig.ALLOW_LAVA_WILDERNESS = patch.get("allow_lava_wilderness").getAsBoolean(); changed++; }
             if (patch.has("allow_fire_wilderness")) { SmpConfig.ALLOW_FIRE_WILDERNESS = patch.get("allow_fire_wilderness").getAsBoolean(); changed++; }
             if (patch.has("spawn_no_pvp"))          { SmpConfig.SPAWN_NO_PVP          = patch.get("spawn_no_pvp").getAsBoolean();          changed++; }
+            if (patch.has("protect_explosions"))   { SmpConfig.PROTECT_EXPLOSIONS    = patch.get("protect_explosions").getAsBoolean();   changed++; }
+            if (patch.has("protect_fire_claims"))  { SmpConfig.PROTECT_FIRE_CLAIMS   = patch.get("protect_fire_claims").getAsBoolean();  changed++; }
+            if (patch.has("protect_enderman"))     { SmpConfig.PROTECT_ENDERMAN      = patch.get("protect_enderman").getAsBoolean();     changed++; }
+            if (patch.has("protect_farmland"))     { SmpConfig.PROTECT_FARMLAND      = patch.get("protect_farmland").getAsBoolean();     changed++; }
             // Feature toggles
             if (patch.has("claims_enabled"))     { SmpConfig.CLAIMS_ENABLED     = patch.get("claims_enabled").getAsBoolean();     changed++; }
             if (patch.has("skills_enabled"))     { SmpConfig.SKILLS_ENABLED     = patch.get("skills_enabled").getAsBoolean();     changed++; }

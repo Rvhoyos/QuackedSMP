@@ -11,7 +11,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-// Cancels explosions that would affect any claimed chunk.
+// Cancels explosions that would affect any claimed chunk. Gated by PROTECT_EXPLOSIONS.
 @Mixin(ServerExplosion.class)
 public abstract class ExplosionMixin {
     @Shadow

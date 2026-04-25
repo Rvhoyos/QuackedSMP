@@ -36,6 +36,11 @@ public class ConfigGui {
     private static final int SLOT_MAX_CLAIMS_DISPLAY = 3;
     private static final int SLOT_MAX_CLAIMS_PLUS = 4;
 
+    private static final int SLOT_TOGGLE_EXPLOSIONS = 5;
+    private static final int SLOT_TOGGLE_FIRE_CLAIMS = 6;
+    private static final int SLOT_TOGGLE_ENDERMAN = 7;
+    private static final int SLOT_TOGGLE_FARMLAND = 8;
+
     // Row 1: Chat & Teleport
     private static final int SLOT_WARMUP_MINUS = 11;
     private static final int SLOT_WARMUP_DISPLAY = 12;
@@ -118,6 +123,15 @@ public class ConfigGui {
         container.setItem(SLOT_MAX_CLAIMS_DISPLAY,
                 createInfoItem(Items.PAPER, "Max Claims", String.valueOf(SmpConfig.MAX_CLAIMS)));
         container.setItem(SLOT_MAX_CLAIMS_PLUS, createActionItem(Items.GREEN_CONCRETE, "\u00a7a+5 Claims"));
+
+        container.setItem(SLOT_TOGGLE_EXPLOSIONS,
+                createBooleanItem("Protect: Explosions", SmpConfig.PROTECT_EXPLOSIONS));
+        container.setItem(SLOT_TOGGLE_FIRE_CLAIMS,
+                createBooleanItem("Protect: Fire in Claims", SmpConfig.PROTECT_FIRE_CLAIMS));
+        container.setItem(SLOT_TOGGLE_ENDERMAN,
+                createBooleanItem("Protect: Enderman Grief", SmpConfig.PROTECT_ENDERMAN));
+        container.setItem(SLOT_TOGGLE_FARMLAND,
+                createBooleanItem("Protect: Farmland Trample", SmpConfig.PROTECT_FARMLAND));
 
         // --- Row 1: Chat & Teleport ---
         container.setItem(SLOT_WARMUP_MINUS, createActionItem(Items.RED_CONCRETE, "\u00a7c-1s Warmup"));
@@ -271,6 +285,18 @@ public class ConfigGui {
             refresh = true;
         } else if (slotId == SLOT_MAX_CLAIMS_PLUS) {
             SmpConfig.MAX_CLAIMS += 5;
+            refresh = true;
+        } else if (slotId == SLOT_TOGGLE_EXPLOSIONS) {
+            SmpConfig.PROTECT_EXPLOSIONS = !SmpConfig.PROTECT_EXPLOSIONS;
+            refresh = true;
+        } else if (slotId == SLOT_TOGGLE_FIRE_CLAIMS) {
+            SmpConfig.PROTECT_FIRE_CLAIMS = !SmpConfig.PROTECT_FIRE_CLAIMS;
+            refresh = true;
+        } else if (slotId == SLOT_TOGGLE_ENDERMAN) {
+            SmpConfig.PROTECT_ENDERMAN = !SmpConfig.PROTECT_ENDERMAN;
+            refresh = true;
+        } else if (slotId == SLOT_TOGGLE_FARMLAND) {
+            SmpConfig.PROTECT_FARMLAND = !SmpConfig.PROTECT_FARMLAND;
             refresh = true;
         }
         // Row 1

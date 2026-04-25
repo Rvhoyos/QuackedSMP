@@ -119,6 +119,7 @@ public final class ClaimProtection {
 
     public static boolean onExplosionPre(Level level, Explosion explosion) {
         if (!mc.smpessentials.config.SmpConfig.CLAIMS_ENABLED) return true;
+        if (!mc.smpessentials.config.SmpConfig.PROTECT_EXPLOSIONS) return true;
         if (!(level instanceof ServerLevel sl))
             return true;
         try {
