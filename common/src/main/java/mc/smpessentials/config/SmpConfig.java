@@ -16,6 +16,10 @@ public final class SmpConfig {
     public static boolean ALLOW_LAVA_WILDERNESS = false;
     public static boolean ALLOW_FIRE_WILDERNESS = false;
     public static boolean SPAWN_NO_PVP = true;
+    public static boolean PROTECT_EXPLOSIONS = true;
+    public static boolean PROTECT_FIRE_CLAIMS = true;
+    public static boolean PROTECT_ENDERMAN = true;
+    public static boolean PROTECT_FARMLAND = true;
     public static java.util.Map<String, String> MESSAGES = new java.util.HashMap<>();
 
     // ---- Feature toggles ----
@@ -147,6 +151,10 @@ public final class SmpConfig {
         ALLOW_LAVA_WILDERNESS = d.allowLavaWilderness;
         ALLOW_FIRE_WILDERNESS = d.allowFireWilderness;
         SPAWN_NO_PVP = d.spawnNoPvp;
+        PROTECT_EXPLOSIONS = d.protectExplosions;
+        PROTECT_FIRE_CLAIMS = d.protectFireClaims;
+        PROTECT_ENDERMAN = d.protectEnderman;
+        PROTECT_FARMLAND = d.protectFarmland;
         CLAIMS_ENABLED = d.claimsEnabled;
         SKILLS_ENABLED = d.skillsEnabled;
         CHATFILTER_ENABLED = d.chatfilterEnabled;

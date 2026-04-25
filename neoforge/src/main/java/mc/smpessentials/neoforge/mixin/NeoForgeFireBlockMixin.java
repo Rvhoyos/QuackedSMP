@@ -14,14 +14,14 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-// Cancels block destruction by fire inside claims.
+// Cancels block destruction by fire inside claims. Gated by PROTECT_FIRE_CLAIMS.
 // NeoForge patches checkBurnOut to add a Direction parameter that Fabric lacks.
 @Mixin(FireBlock.class)
 public abstract class NeoForgeFireBlockMixin {
 
     @Inject(method = "checkBurnOut", at = @At("HEAD"), cancellable = true)
     private void blockBurnInClaim(Level level, BlockPos pos, int chance, RandomSource random, int age, Direction face, CallbackInfo ci) {
-        if (SmpConfig.CLAIMS_ENABLED && level instanceof ServerLevel sl) {
+        if (SmpConfig.CLAIMS_ENABLED && SmpConfig.PROTECT_FIRE_CLAIMS && level instanceof ServerLevel sl) {
             if (ClaimedSavedData.get(sl).isClaimed(sl, new ChunkPos(pos))) {
                 ci.cancel();
             }

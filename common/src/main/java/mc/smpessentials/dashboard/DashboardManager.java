@@ -1,6 +1,7 @@
 package mc.smpessentials.dashboard;
 
 import mc.smpessentials.SmpUtilsMod;
+import mc.smpessentials.commandblocks.CommandBlockHandler;
 import mc.smpessentials.config.SmpConfig;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.level.storage.LevelResource;
@@ -166,7 +167,7 @@ public final class DashboardManager {
                 (m, h, b) -> AdminHandler.handleExec(m, h, b, mcServer));
         s.addRoute("/api/admin/config",
                 (m, h, b) -> "GET".equals(m)
-                        ? AdminHandler.handleConfigGet(m, h, b)
+                        ? AdminHandler.handleConfigGet(m, h, b, mcServer)
                         : AdminHandler.handleConfigPost(m, h, b));
         s.addRoute("/api/admin/setop",
                 (m, h, b) -> AdminHandler.handleSetOp(m, h, b, mcServer));
@@ -264,6 +265,14 @@ public final class DashboardManager {
                 (m, h, b) -> AdminHandler.handleShopsDelete(m, h, b, mcServer));
         s.addRoute("/api/admin/economy",
                 (m, h, b) -> AdminHandler.handleEconomyGet(m, h, b, mcServer));
+
+        // Command blocks management
+        s.addRoute("/api/admin/commandblocks",
+                (m, h, b) -> CommandBlockHandler.handleGet(m, h, b, mcServer));
+        s.addRoute("/api/admin/commandblocks/update",
+                (m, h, b) -> CommandBlockHandler.handleUpdate(m, h, b, mcServer));
+        s.addRoute("/api/admin/commandblocks/delete",
+                (m, h, b) -> CommandBlockHandler.handleDelete(m, h, b, mcServer));
     }
 
     // ── Scheduled ─────────────────────────────────────────────────────────────

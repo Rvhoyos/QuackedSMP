@@ -10,7 +10,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-// Prevents endermen from picking up blocks in claimed chunks and spawn protection.
+// Prevents endermen from picking up blocks in claimed chunks and spawn protection. Gated by PROTECT_ENDERMAN.
 @Mixin(targets = "net.minecraft.world.entity.monster.EnderMan$EndermanTakeBlockGoal")
 public abstract class EnderManTakeBlockMixin {
 
@@ -18,6 +18,7 @@ public abstract class EnderManTakeBlockMixin {
 
     @Inject(method = "canUse", at = @At("HEAD"), cancellable = true)
     private void blockPickupInProtectedArea(CallbackInfoReturnable<Boolean> cir) {
+        if (!mc.smpessentials.config.SmpConfig.PROTECT_ENDERMAN) return;
         if (enderman.level() instanceof ServerLevel sl
                 && SpawnProtection.isProtectedArea(sl, enderman.blockPosition())) {
             cir.setReturnValue(false);

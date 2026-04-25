@@ -67,9 +67,16 @@ public final class ShopService {
         }
     }
 
-    public static int createShop(ServerPlayer player, int price, String currencyItemId) {
+    // Creates a shop on the chest the player is looking at.
+    // unit is the number of items per purchase unit (1 = single items, 16 = batches of 16).
+    public static int createShop(ServerPlayer player, int price, String currencyItemId, int unit) {
         if (price <= 0) {
             player.sendSystemMessage(Component.literal("\u00a7cPrice must be at least 1."));
+            return 0;
+        }
+
+        if (unit < 1) {
+            player.sendSystemMessage(Component.literal("\u00a7cUnit size must be at least 1."));
             return 0;
         }
 
@@ -126,7 +133,7 @@ public final class ShopService {
             return 0;
         }
 
-        ShopEntry entry = new ShopEntry(level.dimension(), pos, player.getUUID(), majorityItem, price, currencyItemId, spawnShop);
+        ShopEntry entry = new ShopEntry(level.dimension(), pos, player.getUUID(), majorityItem, price, currencyItemId, spawnShop, unit);
         data.addShop(entry);
 
         Item item = resolveItem(majorityItem);
@@ -136,7 +143,7 @@ public final class ShopService {
 
         String msg = "\u00a7aShop created! Selling \u00a7f" + itemName
                 + " \u00a7afor \u00a76" + price + " " + currencyName
-                + "\u00a7a each.";
+                + (unit > 1 ? " \u00a7aper " + unit + " items." : "\u00a7a each.");
         if (spawnShop) {
             msg += " \u00a77(Infinite stock)";
         } else {
@@ -174,6 +181,7 @@ public final class ShopService {
         return 1;
     }
 
+    // quantity = number of units to buy. Each unit contains shop.unit() items.
     public static boolean buyItems(ServerPlayer buyer, ResourceKey<Level> dim, BlockPos pos, int quantity) {
         ServerLevel level = ((ServerLevel) buyer.level()).getServer().getLevel(dim);
         if (level == null) return false;
@@ -183,6 +191,8 @@ public final class ShopService {
         if (shopOpt.isEmpty()) return false;
 
         ShopEntry shop = shopOpt.get();
+        int totalItems = quantity * shop.unit();
+
         if (buyer.getUUID().equals(shop.owner())) {
             buyer.sendSystemMessage(Component.literal("\u00a7cYou can't buy from your own shop."));
             return false;
@@ -194,7 +204,7 @@ public final class ShopService {
             return false;
         }
 
-        // Stock check
+        // Stock check (in individual items)
         BlockEntity be = level.getBlockEntity(pos);
         if (!shop.spawnShop()) {
             if (!(be instanceof Container container)) {
@@ -202,13 +212,13 @@ public final class ShopService {
                 return false;
             }
             int available = countItemInContainer(container, shop.itemId());
-            if (available < quantity) {
+            if (available < totalItems) {
                 buyer.sendSystemMessage(Component.literal("\u00a7cOnly " + available + " in stock."));
                 return false;
             }
         }
 
-        // Payment check: count currency in buyer inventory
+        // Payment check: price is per unit
         long totalCost = (long) shop.pricePerItem() * quantity;
         String currencyId = shop.currencyItemId();
         int currencyHeld = countCurrencyInInventory(buyer, currencyId);
@@ -219,9 +229,9 @@ public final class ShopService {
             return false;
         }
 
-        // Capacity check: block purchase if currency won't fit in the chest
+        // Capacity check: totalItems removed from chest frees slots for currency
         if (!shop.spawnShop() && be instanceof Container container) {
-            int capacity = calculateCurrencyCapacity(container, currencyId, shop.itemId(), quantity);
+            int capacity = calculateCurrencyCapacity(container, currencyId, shop.itemId(), totalItems);
             if (capacity < totalCost) {
                 buyer.sendSystemMessage(Component.literal("\u00a7cShop chest is too full to accept payment."));
                 return false;
@@ -229,7 +239,7 @@ public final class ShopService {
 
             // Execute transaction
             removeCurrencyFromInventory(buyer, currencyId, (int) totalCost);
-            removeItemsFromContainer(container, shop.itemId(), quantity);
+            removeItemsFromContainer(container, shop.itemId(), totalItems);
             addCurrencyToContainer(container, currencyId, (int) totalCost, level, pos);
             if (be instanceof ChestBlockEntity cbe) cbe.setChanged();
         } else {
@@ -238,7 +248,7 @@ public final class ShopService {
         }
 
         // Give items to buyer
-        int remaining = quantity;
+        int remaining = totalItems;
         while (remaining > 0) {
             int batch = Math.min(remaining, saleItem.getDefaultMaxStackSize());
             ItemStack stack = new ItemStack(saleItem, batch);
@@ -250,15 +260,24 @@ public final class ShopService {
 
         String itemName = new ItemStack(saleItem).getHoverName().getString();
         buyer.sendSystemMessage(Component.literal(
-                "\u00a7aPurchased \u00a7f" + quantity + "x " + itemName
+                "\u00a7aPurchased \u00a7f" + totalItems + "x " + itemName
                         + " \u00a7afor \u00a76" + totalCost + " " + currencyName + "\u00a7a."));
         return true;
     }
 
+    // Returns the number of sale items in the shop chest (individual items, not units).
+    // If the chunk is loaded and the chest block no longer exists, auto-removes the orphaned shop entry.
     public static int getStockCount(ServerLevel level, ShopEntry shop) {
         if (shop.spawnShop()) return Integer.MAX_VALUE;
+        if (!level.isLoaded(shop.pos())) return 0;
         BlockEntity be = level.getBlockEntity(shop.pos());
-        if (!(be instanceof Container container)) return 0;
+        if (!(be instanceof Container container)) {
+            if (!(level.getBlockState(shop.pos()).getBlock() instanceof ChestBlock)) {
+                ShopData.get(level.getServer()).removeShop(level.dimension(), shop.pos());
+                mc.smpessentials.SmpUtilsMod.LOGGER.info("[Shops] Auto-removed orphaned shop at {} (chest destroyed)", shop.pos());
+            }
+            return 0;
+        }
         return countItemInContainer(container, shop.itemId());
     }
 
@@ -286,7 +305,8 @@ public final class ShopService {
         String currencyName = getCurrencyName(shop.currencyItemId());
         player.sendSystemMessage(Component.literal("\u00a76--- Shop Info ---"));
         player.sendSystemMessage(Component.literal("\u00a77Item: \u00a7f" + itemName));
-        player.sendSystemMessage(Component.literal("\u00a77Price: \u00a76" + shop.pricePerItem() + " " + currencyName));
+        player.sendSystemMessage(Component.literal("\u00a77Price: \u00a76" + shop.pricePerItem() + " " + currencyName
+                + (shop.unit() > 1 ? " per " + shop.unit() : "")));
         player.sendSystemMessage(Component.literal("\u00a77Stock: \u00a7f" + (shop.spawnShop() ? "Unlimited" : String.valueOf(stock))));
         player.sendSystemMessage(Component.literal("\u00a77Owner: \u00a7f" + ownerName));
         return 1;

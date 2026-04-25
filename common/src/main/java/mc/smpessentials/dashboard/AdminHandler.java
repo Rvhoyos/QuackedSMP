@@ -163,10 +163,12 @@ public final class AdminHandler {
     }
 
     // GET /api/admin/config. Returns all editable config fields.
-    public static String handleConfigGet(String method, Map<String, String> headers, String body) {
+    public static String handleConfigGet(String method, Map<String, String> headers, String body,
+                                         MinecraftServer server) {
         if (!SmpConfig.ADMIN_ENABLED)           return err(403, "Admin panel disabled");
         if (!AdminAuth.isAuthorized(headers))   return err(403, "Unauthorized");
 
+        boolean cmdBlocksEnabled = server != null && server.overworld().isCommandBlockEnabled();
         StringBuilder sb = new StringBuilder("{");
         // General
         sb.append(String.format("\"max_claims\":%d,", SmpConfig.MAX_CLAIMS));
@@ -176,12 +178,17 @@ public final class AdminHandler {
         sb.append(String.format("\"allow_lava_wilderness\":%b,", SmpConfig.ALLOW_LAVA_WILDERNESS));
         sb.append(String.format("\"allow_fire_wilderness\":%b,", SmpConfig.ALLOW_FIRE_WILDERNESS));
         sb.append(String.format("\"spawn_no_pvp\":%b,", SmpConfig.SPAWN_NO_PVP));
+        sb.append(String.format("\"protect_explosions\":%b,", SmpConfig.PROTECT_EXPLOSIONS));
+        sb.append(String.format("\"protect_fire_claims\":%b,", SmpConfig.PROTECT_FIRE_CLAIMS));
+        sb.append(String.format("\"protect_enderman\":%b,", SmpConfig.PROTECT_ENDERMAN));
+        sb.append(String.format("\"protect_farmland\":%b,", SmpConfig.PROTECT_FARMLAND));
         // Feature toggles
         sb.append(String.format("\"claims_enabled\":%b,", SmpConfig.CLAIMS_ENABLED));
         sb.append(String.format("\"skills_enabled\":%b,", SmpConfig.SKILLS_ENABLED));
         sb.append(String.format("\"chatfilter_enabled\":%b,", SmpConfig.CHATFILTER_ENABLED));
         sb.append(String.format("\"shops_enabled\":%b,", SmpConfig.SHOPS_ENABLED));
         sb.append(String.format("\"economy_enabled\":%b,", SmpConfig.ECONOMY_ENABLED));
+        sb.append(String.format("\"commandblocks_enabled\":%b,", cmdBlocksEnabled));
         // Hardcore
         sb.append(String.format("\"hardcore_enabled\":%b,", SmpConfig.HARDCORE_ENABLED));
         sb.append(String.format("\"hardcore_death_percent\":%d,", SmpConfig.HARDCORE_DEATH_PERCENT));
@@ -290,6 +297,10 @@ public final class AdminHandler {
             if (patch.has("allow_lava_wilderness")) { SmpConfig.ALLOW_LAVA_WILDERNESS = patch.get("allow_lava_wilderness").getAsBoolean(); changed++; }
             if (patch.has("allow_fire_wilderness")) { SmpConfig.ALLOW_FIRE_WILDERNESS = patch.get("allow_fire_wilderness").getAsBoolean(); changed++; }
             if (patch.has("spawn_no_pvp"))          { SmpConfig.SPAWN_NO_PVP          = patch.get("spawn_no_pvp").getAsBoolean();          changed++; }
+            if (patch.has("protect_explosions"))   { SmpConfig.PROTECT_EXPLOSIONS    = patch.get("protect_explosions").getAsBoolean();   changed++; }
+            if (patch.has("protect_fire_claims"))  { SmpConfig.PROTECT_FIRE_CLAIMS   = patch.get("protect_fire_claims").getAsBoolean();  changed++; }
+            if (patch.has("protect_enderman"))     { SmpConfig.PROTECT_ENDERMAN      = patch.get("protect_enderman").getAsBoolean();     changed++; }
+            if (patch.has("protect_farmland"))     { SmpConfig.PROTECT_FARMLAND      = patch.get("protect_farmland").getAsBoolean();     changed++; }
             // Feature toggles
             if (patch.has("claims_enabled"))     { SmpConfig.CLAIMS_ENABLED     = patch.get("claims_enabled").getAsBoolean();     changed++; }
             if (patch.has("skills_enabled"))     { SmpConfig.SKILLS_ENABLED     = patch.get("skills_enabled").getAsBoolean();     changed++; }
@@ -1834,14 +1845,15 @@ public final class AdminHandler {
                     int stock = sl != null ? mc.smpessentials.shops.ShopService.getStockCount(sl, shop) : 0;
                     sb.append(String.format(
                             "{\"x\":%d,\"y\":%d,\"z\":%d,\"dim\":\"%s\",\"owner\":\"%s\",\"ownerName\":\"%s\","
-                                    + "\"item\":\"%s\",\"price\":%d,\"currency\":\"%s\",\"stock\":%s,\"spawnShop\":%b}",
+                                    + "\"item\":\"%s\",\"price\":%d,\"currency\":\"%s\",\"stock\":%s,\"spawnShop\":%b,\"unit\":%d}",
                             shop.pos().getX(), shop.pos().getY(), shop.pos().getZ(),
                             jsonEscape(shop.dimension().identifier().toString()),
                             shop.owner(), jsonEscape(skills.getDisplayName(shop.owner())),
                             jsonEscape(shop.itemId()), shop.pricePerItem(),
                             jsonEscape(shop.currencyItemId()),
                             shop.spawnShop() ? "\"unlimited\"" : String.valueOf(stock),
-                            shop.spawnShop()));
+                            shop.spawnShop(),
+                            shop.unit()));
                 }
                 sb.append("]");
                 future.complete(sb.toString());
@@ -1921,7 +1933,7 @@ public final class AdminHandler {
     // ── Helpers ───────────────────────────────────────────────────────────────
 
     // Builds a JSON error string. The status code is embedded so DashboardServer can read it.
-    static String err(int status, String message) {
+    public static String err(int status, String message) {
         return "__HTTP_" + status + "__" + String.format("{\"error\":\"%s\"}", jsonEscape(message));
     }
 
@@ -1965,7 +1977,7 @@ public final class AdminHandler {
         for (var el : arr) list.add(el.getAsInt());
     }
 
-    private static String jsonEscape(String s) {
+    public static String jsonEscape(String s) {
         if (s == null) return "";
         return s.replace("\\", "\\\\").replace("\"", "\\\"")
                 .replace("\n", "\\n").replace("\r", "\\r").replace("\t", "\\t");

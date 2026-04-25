@@ -71,25 +71,48 @@ public final class ShopGui {
 
         // Item display (slot 4)
         Item saleItem = resolveItem(shop.itemId());
+        int totalItems = quantity * shop.unit();
         if (saleItem != null) {
-            ItemStack display = new ItemStack(saleItem, Math.min(quantity, saleItem.getDefaultMaxStackSize()));
+            ItemStack display = new ItemStack(saleItem, Math.min(totalItems, saleItem.getDefaultMaxStackSize()));
             List<Component> lore = new ArrayList<>();
-            lore.add(Component.literal("\u00a77Price: \u00a76" + shop.pricePerItem() + " " + currencyName + " each"));
-            lore.add(Component.literal("\u00a77Stock: \u00a7f" + (shop.spawnShop() ? "Unlimited" : String.valueOf(stock))));
+            if (shop.unit() > 1) {
+                lore.add(Component.literal("\u00a77Price: \u00a76" + shop.pricePerItem() + " " + currencyName + " per " + shop.unit()));
+            } else {
+                lore.add(Component.literal("\u00a77Price: \u00a76" + shop.pricePerItem() + " " + currencyName + " each"));
+            }
+            if (shop.spawnShop()) {
+                lore.add(Component.literal("\u00a77Stock: \u00a7fUnlimited"));
+            } else if (shop.unit() > 1) {
+                lore.add(Component.literal("\u00a77Stock: \u00a7f" + stock / shop.unit() + " units (" + stock + " items)"));
+            } else {
+                lore.add(Component.literal("\u00a77Stock: \u00a7f" + stock));
+            }
             display.set(DataComponents.LORE, new ItemLore(lore));
             container.setItem(SLOT_ITEM_DISPLAY, display);
         }
 
-        // Quantity controls
-        container.setItem(SLOT_MINUS_10, createButton(Items.RED_CONCRETE, "\u00a7c-10"));
-        container.setItem(SLOT_MINUS_1, createButton(Items.RED_STAINED_GLASS_PANE, "\u00a7c-1"));
-        container.setItem(SLOT_PLUS_1, createButton(Items.GREEN_STAINED_GLASS_PANE, "\u00a7a+1"));
-        container.setItem(SLOT_PLUS_10, createButton(Items.GREEN_CONCRETE, "\u00a7a+10"));
+        // Quantity controls — bulk shops (unit > 1) get only +1/-1 since each unit is already a batch
+        if (shop.unit() > 1) {
+            container.setItem(SLOT_MINUS_10, filler.copy());
+            container.setItem(SLOT_MINUS_1, createButton(Items.RED_STAINED_GLASS_PANE, "\u00a7c-1"));
+            container.setItem(SLOT_PLUS_1, createButton(Items.GREEN_STAINED_GLASS_PANE, "\u00a7a+1"));
+            container.setItem(SLOT_PLUS_10, filler.copy());
+        } else {
+            container.setItem(SLOT_MINUS_10, createButton(Items.RED_CONCRETE, "\u00a7c-10"));
+            container.setItem(SLOT_MINUS_1, createButton(Items.RED_STAINED_GLASS_PANE, "\u00a7c-1"));
+            container.setItem(SLOT_PLUS_1, createButton(Items.GREEN_STAINED_GLASS_PANE, "\u00a7a+1"));
+            container.setItem(SLOT_PLUS_10, createButton(Items.GREEN_CONCRETE, "\u00a7a+10"));
+        }
 
         // Quantity + cost display (slot 13)
         long totalCost = (long) shop.pricePerItem() * quantity;
-        ItemStack qtyItem = new ItemStack(Items.PAPER, Math.min(quantity, 64));
-        qtyItem.set(DataComponents.CUSTOM_NAME, Component.literal("\u00a7fQuantity: " + quantity));
+        ItemStack qtyItem = new ItemStack(Items.PAPER, Math.min(totalItems, 64));
+        if (shop.unit() > 1) {
+            qtyItem.set(DataComponents.CUSTOM_NAME,
+                    Component.literal("\u00a7fQuantity: " + quantity + " units (" + totalItems + " items)"));
+        } else {
+            qtyItem.set(DataComponents.CUSTOM_NAME, Component.literal("\u00a7fQuantity: " + quantity));
+        }
         List<Component> costLore = new ArrayList<>();
         costLore.add(Component.literal("\u00a77Total: \u00a76" + totalCost + " " + currencyName));
         qtyItem.set(DataComponents.LORE, new ItemLore(costLore));
@@ -97,8 +120,13 @@ public final class ShopGui {
 
         // Confirm button
         ItemStack confirm = new ItemStack(Items.LIME_WOOL);
-        confirm.set(DataComponents.CUSTOM_NAME,
-                Component.literal("\u00a7aBuy " + quantity + " for " + totalCost + " " + currencyName));
+        if (shop.unit() > 1) {
+            confirm.set(DataComponents.CUSTOM_NAME,
+                    Component.literal("\u00a7aBuy " + totalItems + " items for " + totalCost + " " + currencyName));
+        } else {
+            confirm.set(DataComponents.CUSTOM_NAME,
+                    Component.literal("\u00a7aBuy " + quantity + " for " + totalCost + " " + currencyName));
+        }
         container.setItem(SLOT_CONFIRM, confirm);
 
         // Cancel button
@@ -119,14 +147,14 @@ public final class ShopGui {
 
         ShopEntry shop = shopOpt.get();
         int stock = ShopService.getStockCount(level.getServer().getLevel(shop.dimension()), shop);
-        int maxQty = shop.spawnShop() ? 2304 : stock; // 2304 = 36 stacks of 64
+        int maxQty = Math.max(1, shop.spawnShop() ? 2304 / shop.unit() : stock / shop.unit());
         int qty = container.getSelectedQuantity();
 
         switch (slotId) {
-            case SLOT_MINUS_10 -> qty = Math.max(1, qty - 10);
+            case SLOT_MINUS_10 -> { if (shop.unit() <= 1) qty = Math.max(1, qty - 10); }
             case SLOT_MINUS_1 -> qty = Math.max(1, qty - 1);
             case SLOT_PLUS_1 -> qty = Math.min(maxQty, qty + 1);
-            case SLOT_PLUS_10 -> qty = Math.min(maxQty, qty + 10);
+            case SLOT_PLUS_10 -> { if (shop.unit() <= 1) qty = Math.min(maxQty, qty + 10); }
             case SLOT_CONFIRM -> {
                 player.closeContainer();
                 ShopService.buyItems(player, container.getShopDim(), container.getShopPos(), qty);

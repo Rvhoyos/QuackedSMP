@@ -12,7 +12,8 @@ import ModsPanel from './ModsPanel'
 import HardcorePanel from './HardcorePanel'
 import TeamsPanel from './TeamsPanel'
 import ShopsPanel from './ShopsPanel'
-import { IconPlayerHead, IconCommandBlock, IconChest, IconBookshelf, IconPortal, IconSkills, IconFlag, IconChatFilter, IconMod, IconShield, IconSword, IconEmerald } from './MinecraftIcons'
+import CommandBlocksPanel from './CommandBlocksPanel'
+import { IconPlayerHead, IconCommandBlock, IconChest, IconBookshelf, IconPortal, IconSkills, IconFlag, IconChatFilter, IconMod, IconShield, IconSword, IconEmerald, IconRepeatCmdBlock } from './MinecraftIcons'
 import styles from './AdminPanel.module.css'
 
 const TABS = [
@@ -25,6 +26,7 @@ const TABS = [
   { id: 'hardcore',   label: 'Hardcore',    Icon: IconShield,      configKey: 'hardcore_enabled' },
   { id: 'teams',      label: 'Teams',       Icon: IconSword },
   { id: 'shops',      label: 'Shops',       Icon: IconEmerald,     configKey: 'shops_enabled' },
+  { id: 'cmdblocks',  label: 'Cmd Blocks',  Icon: IconRepeatCmdBlock, configKey: 'commandblocks_enabled' },
   { id: 'mods',       label: 'Mods',        Icon: IconMod },
   { id: 'config',     label: 'Config',      Icon: IconChest },
   { id: 'features',   label: 'Features',    Icon: IconBookshelf },
@@ -110,6 +112,7 @@ export default function AdminPanel({ health }) {
         {resolvedTab === 'hardcore'   && <HardcorePanel token={token} onExpired={logout} />}
         {resolvedTab === 'teams'      && <TeamsPanel token={token} onExpired={logout} />}
         {resolvedTab === 'shops'      && <ShopsPanel token={token} onExpired={logout} />}
+        {resolvedTab === 'cmdblocks'  && <CommandBlocksPanel token={token} onExpired={logout} />}
         {resolvedTab === 'mods'       && <ModsPanel token={token} onExpired={logout} />}
         {resolvedTab === 'config'     && <ConfigEditor token={token} onExpired={logout} />}
         {resolvedTab === 'features'   && <FeatureShowcase token={token} onExpired={logout} />}

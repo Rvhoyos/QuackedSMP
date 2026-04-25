@@ -26,6 +26,7 @@ const TABS = [
     id: 'general', label: 'General',
     keys: [
       'max_claims', 'allow_lava_wilderness', 'allow_fire_wilderness',
+      'protect_explosions', 'protect_fire_claims', 'protect_enderman', 'protect_farmland',
       'tp_warmup', 'mute_levels_minutes', 'hardcore_death_percent',
       'admin_enabled', 'dashboard_port', 'server_name',
     ],
@@ -198,6 +199,18 @@ function GeneralTab({ draft, patch, onDisable, disabling, disableMsg }) {
         </Row>
         <Row label="Fire in Wilderness" hint="Allow fire to spread in unclaimed wilderness">
           <Toggle value={draft.allow_fire_wilderness} onChange={v => patch('allow_fire_wilderness', v)} />
+        </Row>
+        <Row label="Protect: Explosions" hint="Block explosions in claimed chunks">
+          <Toggle value={draft.protect_explosions} onChange={v => patch('protect_explosions', v)} />
+        </Row>
+        <Row label="Protect: Fire in Claims" hint="Block fire spread and burn-out in claimed chunks">
+          <Toggle value={draft.protect_fire_claims} onChange={v => patch('protect_fire_claims', v)} />
+        </Row>
+        <Row label="Protect: Enderman Grief" hint="Prevent endermen from moving blocks in claims and spawn">
+          <Toggle value={draft.protect_enderman} onChange={v => patch('protect_enderman', v)} />
+        </Row>
+        <Row label="Protect: Farmland Trample" hint="Prevent farmland trampling in claims and spawn">
+          <Toggle value={draft.protect_farmland} onChange={v => patch('protect_farmland', v)} />
         </Row>
       </Group>
 

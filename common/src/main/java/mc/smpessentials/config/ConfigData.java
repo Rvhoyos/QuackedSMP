@@ -16,6 +16,10 @@ public final class ConfigData {
     public boolean allowLavaWilderness = false;
     public boolean allowFireWilderness = false;
     public boolean spawnNoPvp = true;
+    public boolean protectExplosions = true;
+    public boolean protectFireClaims = true;
+    public boolean protectEnderman = true;
+    public boolean protectFarmland = true;
     public boolean claimsEnabled = true;
     public boolean skillsEnabled = true;
     public boolean chatfilterEnabled = true;

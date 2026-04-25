@@ -138,6 +138,7 @@ export default function ShopsPanel({ token, onExpired }) {
                 <div className={styles.barWrap}>
                   <span className={styles.claimCount} style={{ minWidth: 'auto' }}>
                     {s.price} {itemName(s.currency || 'minecraft:emerald')}
+                    {s.unit > 1 && ` per ${s.unit}`}
                   </span>
                   <span className={styles.claimCount} style={{ minWidth: 'auto', color: s.spawnShop ? '#4CAF50' : '#888' }}>
                     {s.spawnShop ? 'unlimited' : `${s.stock} stock`}
