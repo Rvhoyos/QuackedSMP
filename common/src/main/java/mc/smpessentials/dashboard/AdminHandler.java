@@ -1845,14 +1845,15 @@ public final class AdminHandler {
                     int stock = sl != null ? mc.smpessentials.shops.ShopService.getStockCount(sl, shop) : 0;
                     sb.append(String.format(
                             "{\"x\":%d,\"y\":%d,\"z\":%d,\"dim\":\"%s\",\"owner\":\"%s\",\"ownerName\":\"%s\","
-                                    + "\"item\":\"%s\",\"price\":%d,\"currency\":\"%s\",\"stock\":%s,\"spawnShop\":%b}",
+                                    + "\"item\":\"%s\",\"price\":%d,\"currency\":\"%s\",\"stock\":%s,\"spawnShop\":%b,\"unit\":%d}",
                             shop.pos().getX(), shop.pos().getY(), shop.pos().getZ(),
                             jsonEscape(shop.dimension().identifier().toString()),
                             shop.owner(), jsonEscape(skills.getDisplayName(shop.owner())),
                             jsonEscape(shop.itemId()), shop.pricePerItem(),
                             jsonEscape(shop.currencyItemId()),
                             shop.spawnShop() ? "\"unlimited\"" : String.valueOf(stock),
-                            shop.spawnShop()));
+                            shop.spawnShop(),
+                            shop.unit()));
                 }
                 sb.append("]");
                 future.complete(sb.toString());

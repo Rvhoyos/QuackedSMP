@@ -17,20 +17,27 @@ public final class ShopCommands {
         dispatcher.register(Commands.literal("shop")
                 .requires(src -> SmpConfig.SHOPS_ENABLED && src.getEntity() instanceof ServerPlayer)
 
-                // /shop create <price> [currency_item]
+                // /shop create <price> [currency_item] [unit]
                 .then(Commands.literal("create")
                         .then(Commands.argument("price", IntegerArgumentType.integer(1))
-                                // /shop create <price> — defaults to minecraft:emerald
+                                // /shop create <price>
                                 .executes(ctx -> ShopService.createShop(
                                         ctx.getSource().getPlayerOrException(),
                                         IntegerArgumentType.getInteger(ctx, "price"),
-                                        "minecraft:emerald"))
+                                        "minecraft:emerald", 1))
                                 // /shop create <price> <currency>
                                 .then(Commands.argument("currency", StringArgumentType.string())
                                         .executes(ctx -> ShopService.createShop(
                                                 ctx.getSource().getPlayerOrException(),
                                                 IntegerArgumentType.getInteger(ctx, "price"),
-                                                StringArgumentType.getString(ctx, "currency"))))))
+                                                StringArgumentType.getString(ctx, "currency"), 1))
+                                        // /shop create <price> <currency> <unit>
+                                        .then(Commands.argument("unit", IntegerArgumentType.integer(1))
+                                                .executes(ctx -> ShopService.createShop(
+                                                        ctx.getSource().getPlayerOrException(),
+                                                        IntegerArgumentType.getInteger(ctx, "price"),
+                                                        StringArgumentType.getString(ctx, "currency"),
+                                                        IntegerArgumentType.getInteger(ctx, "unit")))))))
 
                 // /shop delete
                 .then(Commands.literal("delete")
@@ -100,6 +107,7 @@ public final class ShopCommands {
                     "\u00a7f" + itemName + " \u00a77@ " + dim
                             + " [" + shop.pos().getX() + ", " + shop.pos().getY() + ", " + shop.pos().getZ() + "]"
                             + " \u00a76" + shop.pricePerItem() + " " + currencyName
+                            + (shop.unit() > 1 ? " per " + shop.unit() : "")
                             + (shop.spawnShop() ? " \u00a7a[Spawn]" : "")));
         }
         return 1;
