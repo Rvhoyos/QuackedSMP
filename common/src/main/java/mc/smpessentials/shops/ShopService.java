@@ -67,6 +67,8 @@ public final class ShopService {
         }
     }
 
+    // Creates a shop on the chest the player is looking at.
+    // unit is the number of items per purchase unit (1 = single items, 16 = batches of 16).
     public static int createShop(ServerPlayer player, int price, String currencyItemId, int unit) {
         if (price <= 0) {
             player.sendSystemMessage(Component.literal("\u00a7cPrice must be at least 1."));
@@ -263,6 +265,8 @@ public final class ShopService {
         return true;
     }
 
+    // Returns the number of sale items in the shop chest (individual items, not units).
+    // If the chunk is loaded and the chest block no longer exists, auto-removes the orphaned shop entry.
     public static int getStockCount(ServerLevel level, ShopEntry shop) {
         if (shop.spawnShop()) return Integer.MAX_VALUE;
         if (!level.isLoaded(shop.pos())) return 0;
