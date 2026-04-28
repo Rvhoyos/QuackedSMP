@@ -19,14 +19,14 @@ logoFile = "assets/quacksmp/icon.png"
 [[dependencies.quacksmp]]
 modId = "neoforge"
 type = "required"
-versionRange = "[21.11,)"
+versionRange = "[26.1.2,)"
 ordering = "NONE"
 side = "BOTH"
 
 [[dependencies.quacksmp]]
 modId = "minecraft"
 type = "required"
-versionRange = "[1.21.11,)"
+versionRange = "[26.1.2,)"
 ordering = "NONE"
 side = "BOTH"
 

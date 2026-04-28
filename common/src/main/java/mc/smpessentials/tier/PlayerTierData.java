@@ -1,5 +1,6 @@
 package mc.smpessentials.tier;
 
+import net.minecraft.resources.Identifier;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.core.UUIDUtil;
@@ -73,7 +74,7 @@ public final class PlayerTierData extends SavedData {
             .apply(i, PlayerTierData::fromLists));
 
     public static final SavedDataType<PlayerTierData> TYPE = new SavedDataType<>(
-            "quackedsmp_player_tiers",
+            Identifier.withDefaultNamespace("quackedsmp_player_tiers"),
             PlayerTierData::new,
             CODEC,
             DataFixTypes.LEVEL);

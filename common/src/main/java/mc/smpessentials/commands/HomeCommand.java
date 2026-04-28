@@ -28,9 +28,9 @@ public final class HomeCommand {
                 });
                 if (transition != null) {
                     player.teleport(transition);
-                    player.displayClientMessage(Component.literal("Teleported to your respawn point."), false);
+                    player.sendSystemMessage(Component.literal("Teleported to your respawn point."), false);
                 } else {
-                    player.displayClientMessage(Component.literal("Could not find respawn point."), false);
+                    player.sendSystemMessage(Component.literal("Could not find respawn point."), false);
                 }
             });
             return 1;
@@ -43,7 +43,7 @@ public final class HomeCommand {
 
         mc.smpessentials.teleport.TeleportScheduler.schedule(player, () -> {
             player.teleportTo(level, target.x, target.y, target.z, Set.of(), player.getYRot(), player.getXRot(), false);
-            player.displayClientMessage(Component.literal("No bed/anchor set. Teleported to world spawn."), false);
+            player.sendSystemMessage(Component.literal("No bed/anchor set. Teleported to world spawn."), false);
         });
         return 1;
     }

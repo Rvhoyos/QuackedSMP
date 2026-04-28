@@ -14,7 +14,7 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ChestMenu;
-import net.minecraft.world.inventory.ClickType;
+import net.minecraft.world.inventory.ContainerInput;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -135,7 +135,7 @@ public final class ShopGui {
         container.setItem(SLOT_CANCEL, cancel);
     }
 
-    public static void onClick(ServerPlayer player, ShopMenuContainer container, int slotId, ClickType clickType) {
+    public static void onClick(ServerPlayer player, ShopMenuContainer container, int slotId, ContainerInput containerInput) {
         ServerLevel level = (ServerLevel) player.level();
         ShopData data = ShopData.get(level.getServer());
         var shopOpt = data.getShopAt(container.getShopDim(), container.getShopPos());

@@ -268,7 +268,7 @@ public class ConfigGui {
     }
 
     public static void onClick(ServerPlayer player, ConfigMenuContainer container, int slotId,
-            net.minecraft.world.inventory.ClickType clickType) {
+            net.minecraft.world.inventory.ContainerInput clickType) {
         boolean refresh = false;
         boolean save = false;
         boolean reload = false;
@@ -375,7 +375,7 @@ public class ConfigGui {
         } else if (slotId == SLOT_RESET) {
             // Check for Shift + Click (QUICK_MOVE in MC internal terminology usually maps
             // to Shift-Click)
-            if (clickType == net.minecraft.world.inventory.ClickType.QUICK_MOVE) {
+            if (clickType == net.minecraft.world.inventory.ContainerInput.QUICK_MOVE) {
                 ConfigIO.resetToFactory();
                 player.closeContainer();
                 player.sendSystemMessage(Component.literal("\u00a7aConfiguration reset to factory defaults!"));

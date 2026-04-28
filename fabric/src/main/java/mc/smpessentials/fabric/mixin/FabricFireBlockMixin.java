@@ -23,7 +23,7 @@ public abstract class FabricFireBlockMixin {
     private void blockBurnInClaim(Level level, BlockPos pos, int chance, RandomSource random, int age, CallbackInfo ci) {
         if (level instanceof ServerLevel sl) {
             if (SmpConfig.CLAIMS_ENABLED && SmpConfig.PROTECT_FIRE_CLAIMS
-                    && ClaimedSavedData.get(sl).isClaimed(sl, new ChunkPos(pos))) {
+                    && ClaimedSavedData.get(sl).isClaimed(sl, ChunkPos.containing(pos))) {
                 ci.cancel();
                 return;
             }

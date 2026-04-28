@@ -38,13 +38,13 @@ public final class TeleportCommands {
                                                                         .sendRequest(requester, target, now);
                                                         switch (r) {
                                                                 case OK -> {
-                                                                        requester.displayClientMessage(
+                                                                        requester.sendSystemMessage(
                                                                                         Component.literal(
                                                                                                         "Teleport request sent to "
                                                                                                                         + target.getName()
                                                                                                                                         .getString()),
                                                                                         false);
-                                                                        target.displayClientMessage(
+                                                                        target.sendSystemMessage(
                                                                                         Component.literal(requester
                                                                                                         .getName()
                                                                                                         .getString()
@@ -115,16 +115,16 @@ public final class TeleportCommands {
                 mc.smpessentials.teleport.TeleportScheduler.schedule(requester, () -> {
                         boolean ok = SafeTeleport.teleportToPlayer(requester, target);
                         if (!ok) {
-                                requester.displayClientMessage(Component.literal(SmpConfig.MESSAGES
+                                requester.sendSystemMessage(Component.literal(SmpConfig.MESSAGES
                                                 .getOrDefault("tpa.no_location", "No valid teleport location.")),
                                                 false);
-                                target.displayClientMessage(Component.literal("Teleport failed for requester."), false);
+                                target.sendSystemMessage(Component.literal("Teleport failed for requester."), false);
                         } else {
                                 String toMsg = SmpConfig.MESSAGES.getOrDefault("tpa.teleporting_to",
                                                 "Teleported to {player}");
-                                requester.displayClientMessage(Component.literal(
+                                requester.sendSystemMessage(Component.literal(
                                                 toMsg.replace("{player}", target.getName().getString())), false);
-                                target.displayClientMessage(
+                                target.sendSystemMessage(
                                                 Component.literal(requester.getName().getString()
                                                                 + " has been teleported."),
                                                 false);
@@ -134,7 +134,7 @@ public final class TeleportCommands {
                 // Notify acceptee immediately
                 String telMsg = SmpConfig.MESSAGES.getOrDefault("tpa.teleporting_requester",
                                 "Request accepted. Teleporting {player} in " + SmpConfig.TP_WARMUP + " seconds...");
-                target.displayClientMessage(
+                target.sendSystemMessage(
                                 Component.literal(telMsg.replace("{player}", requester.getName().getString())),
                                 false);
                 return 1;
@@ -154,11 +154,11 @@ public final class TeleportCommands {
                 if (requester != null) {
                         String deniedMsg = SmpConfig.MESSAGES.getOrDefault("tpa.denied",
                                         "Teleport request denied by {player}");
-                        requester.displayClientMessage(
+                        requester.sendSystemMessage(
                                         Component.literal(deniedMsg.replace("{player}", target.getName().getString())),
                                         false);
                 }
-                target.displayClientMessage(Component.literal(SmpConfig.MESSAGES
+                target.sendSystemMessage(Component.literal(SmpConfig.MESSAGES
                                 .getOrDefault("tpa.denied_confirm", "Denied the oldest pending request.")), false);
                 return 1;
         }

@@ -1,5 +1,6 @@
 package mc.smpessentials.keepinv;
 
+import net.minecraft.resources.Identifier;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.core.UUIDUtil;
@@ -36,7 +37,7 @@ public final class KeepInvSavedData extends SavedData {
             .apply(i, KeepInvSavedData::fromList));
 
     public static final SavedDataType<KeepInvSavedData> TYPE = new SavedDataType<>(
-            "quackedsmp_keepinv",
+            Identifier.withDefaultNamespace("quackedsmp_keepinv"),
             KeepInvSavedData::new,
             CODEC,
             DataFixTypes.LEVEL);

@@ -17,6 +17,7 @@ import net.neoforged.neoforge.event.ServerChatEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 import net.neoforged.neoforge.event.level.BlockEvent;
+import net.neoforged.neoforge.event.level.block.BreakBlockEvent;
 import net.neoforged.neoforge.event.server.ServerStartedEvent;
 import net.neoforged.neoforge.event.server.ServerStoppedEvent;
 import net.neoforged.neoforge.event.server.ServerStoppingEvent;
@@ -35,6 +36,11 @@ public class SmpEvents {
     @SubscribeEvent
     public static void onRegisterCommands(RegisterCommandsEvent event) {
         CommandRegistrar.registerCommands(event.getDispatcher(), event.getBuildContext(), event.getCommandSelection());
+    }
+
+    @SubscribeEvent
+    public static void onServerStarting(net.neoforged.neoforge.event.server.ServerStartingEvent event) {
+        mc.smpessentials.SavedDataMigration.migrate(event.getServer());
     }
 
     @SubscribeEvent
@@ -144,7 +150,7 @@ public class SmpEvents {
     }
 
     @SubscribeEvent
-    public static void onBlockBreak(BlockEvent.BreakEvent event) {
+    public static void onBlockBreak(BreakBlockEvent event) {
         if (event.getPlayer() instanceof ServerPlayer player
                 && event.getLevel() instanceof net.minecraft.world.level.Level level) {
             SkillEvents.onBlockBreak(level, event.getPos(), event.getState(), player);

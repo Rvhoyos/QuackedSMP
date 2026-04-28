@@ -1,6 +1,6 @@
 plugins {
-    id 'net.fabricmc.fabric-loom-remap' version '1.15.4' apply false
-    id 'net.neoforged.moddev' version '2.0.140' apply false
+    id 'net.fabricmc.fabric-loom' version '1.16.1' apply false
+    id 'net.neoforged.moddev' version '2.0.141' apply false
     id 'com.gradleup.shadow' version '8.3.6' apply false
 }
 
@@ -55,10 +55,6 @@ allprojects {
     repositories {
         mavenCentral()
         maven {
-            name = 'ParchmentMC'
-            url = 'https://maven.parchmentmc.org'
-        }
-        maven {
             name = 'NeoForge'
             url = 'https://maven.neoforged.net/releases'
         }
@@ -95,13 +91,13 @@ subprojects {
 
         java {
             toolchain {
-                languageVersion = JavaLanguageVersion.of(21)
+                languageVersion = JavaLanguageVersion.of(25)
             }
             withSourcesJar()
         }
 
         tasks.withType(JavaCompile).configureEach {
-            it.options.release = 21
+            it.options.release = 25
         }
 
         // Include common sources in platform projects

@@ -148,7 +148,7 @@ public final class SkillEvents {
             double arrowChance = archLevel * 0.005; // 0.5% per level, 50% at Lv.100
             if (sp.getRandom().nextDouble() < arrowChance) {
                 Block.popResource(sl, mob.blockPosition(), new ItemStack(Items.ARROW, 1));
-                sp.displayClientMessage(Component.literal("\u00a76\u25c6 Arrow Recovered!"), true);
+                sp.sendSystemMessage(Component.literal("\u00a76\u25c6 Arrow Recovered!"), true);
             }
         } else {
             awardXp(sp, data, SkillType.MELEE, baseXp);
@@ -191,7 +191,7 @@ public final class SkillEvents {
                 double bleedChance = meleeLevel * 0.005; // 0.5% per level, 50% at 100
                 if (sp.getRandom().nextDouble() < bleedChance) {
                     target.addEffect(new MobEffectInstance(MobEffects.WITHER, 60, 0)); // 3s
-                    sp.displayClientMessage(Component.literal("\u00a7c\u2694 Bleed!"), true);
+                    sp.sendSystemMessage(Component.literal("\u00a7c\u2694 Bleed!"), true);
                 }
 
                 // Combat parent damage buff is applied as a persistent attribute modifier
@@ -244,7 +244,7 @@ public final class SkillEvents {
             }
         }
         // Show AFTER re-call so Defense XP action bar message doesn't overwrite it
-        sp.displayClientMessage(Component.literal("\u00a7b\u2734 Safe Landing! -" + pct + "%"), true);
+        sp.sendSystemMessage(Component.literal("\u00a7b\u2734 Safe Landing! -" + pct + "%"), true);
         return true; // cancel original event
     }
 
@@ -441,11 +441,11 @@ public final class SkillEvents {
         String bar = SkillManager.progressBar(SkillManager.progressFraction(newTotal), 10);
         String msg = skill.category().color() + "+" + (int) amount + " " + capitalize(skill.name())
                 + " XP " + bar + " \u00a7f(Lv." + newLevel + ")";
-        player.displayClientMessage(Component.literal(msg), true);
+        player.sendSystemMessage(Component.literal(msg), true);
 
         // Level up announcement + parent buff update
         if (newLevel > oldLevel) {
-            player.displayClientMessage(Component.literal(
+            player.sendSystemMessage(Component.literal(
                     "\u00a76\u00a7l\u2605 LEVEL UP! \u00a7r" + skill.category().color()
                             + capitalize(skill.name()) + " \u00a7fis now level \u00a7e" + newLevel + "\u00a7f!"),
                     false);
@@ -527,7 +527,7 @@ public final class SkillEvents {
         double chance = SkillManager.perkScale(parentLevel, SmpConfig.CAP_DOUBLE_DROP);
         if (sp.getRandom().nextDouble() < chance) {
             Block.dropResources(state, level, pos, null, sp, sp.getMainHandItem());
-            sp.displayClientMessage(Component.literal("\u00a7a\u26a1 Double Drop!"), true);
+            sp.sendSystemMessage(Component.literal("\u00a7a\u26a1 Double Drop!"), true);
         }
     }
 
@@ -539,7 +539,7 @@ public final class SkillEvents {
             Item[] treasures = { Items.GOLD_NUGGET, Items.IRON_NUGGET, Items.GUNPOWDER, Items.BONE, Items.FLINT };
             Item treasure = treasures[sp.getRandom().nextInt(treasures.length)];
             Block.popResource(level, pos, new ItemStack(treasure, 1));
-            sp.displayClientMessage(Component.literal("\u00a76\u2726 Treasure!"), true);
+            sp.sendSystemMessage(Component.literal("\u00a76\u2726 Treasure!"), true);
         }
     }
 
@@ -563,7 +563,7 @@ public final class SkillEvents {
             }
         }
         if (cleared > 0)
-            sp.displayClientMessage(Component.literal("\u00a72\u2702 Leaves Cleared!"), true);
+            sp.sendSystemMessage(Component.literal("\u00a72\u2702 Leaves Cleared!"), true);
     }
 
     /** Farming: auto-replant crops on harvest. */
@@ -577,7 +577,7 @@ public final class SkillEvents {
                     level.setBlockAndUpdate(pos, state.getBlock().defaultBlockState());
                 }
             });
-            sp.displayClientMessage(Component.literal("\u00a72\u21ba Replanted!"), true);
+            sp.sendSystemMessage(Component.literal("\u00a72\u21ba Replanted!"), true);
         }
     }
 

@@ -71,7 +71,7 @@ public final class HardcoreSavedData extends SavedData {
     ).apply(i, HardcoreSavedData::fromCodec));
 
     public static final SavedDataType<HardcoreSavedData> TYPE = new SavedDataType<>(
-            "quackedsmp_hardcore",
+            Identifier.withDefaultNamespace("quackedsmp_hardcore"),
             HardcoreSavedData::new,
             CODEC,
             DataFixTypes.LEVEL);

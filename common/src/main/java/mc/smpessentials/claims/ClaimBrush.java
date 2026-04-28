@@ -36,8 +36,8 @@ public final class ClaimBrush {
 
         int radius = size / 2;
         for (int ring = 1; ring <= radius; ring++) {
-            int x = center.x - ring;
-            int z = center.z - ring;
+            int x = center.x() - ring;
+            int z = center.z() - ring;
             int side = ring * 2;
 
             // Top edge: left to right

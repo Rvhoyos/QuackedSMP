@@ -29,7 +29,7 @@ public abstract class FireBlockMixin {
             at = @At("RETURN"), cancellable = true)
     private void throttleFireSpread(LevelReader level, BlockPos pos, CallbackInfoReturnable<Integer> cir) {
         if (!(level instanceof ServerLevel sl)) return;
-        ChunkPos cp = new ChunkPos(pos);
+        ChunkPos cp = ChunkPos.containing(pos);
         boolean claimed = ClaimedSavedData.get(sl).isClaimed(sl, cp);
         if (mc.smpessentials.config.SmpConfig.CLAIMS_ENABLED && mc.smpessentials.config.SmpConfig.PROTECT_FIRE_CLAIMS && claimed) {
             cir.setReturnValue(0);

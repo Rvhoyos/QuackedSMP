@@ -92,17 +92,17 @@ public final class ClaimCommands {
                             for (int dz = -radius; dz <= radius; dz++) {
                                 MutableComponent line = Component.literal("");
                                 for (int dx = -radius; dx <= radius; dx++) {
-                                    ChunkPos current = new ChunkPos(center.x + dx, center.z + dz);
+                                    ChunkPos current = new ChunkPos(center.x() + dx, center.z() + dz);
                                     Optional<UUID> owner = ClaimService.getOwner(lvl, current);
 
                                     String symbol = "\u2588"; // Full Block
                                     net.minecraft.ChatFormatting color = net.minecraft.ChatFormatting.GRAY;
-                                    String tooltip = "Wilderness (" + current.x + ", " + current.z + ")";
+                                    String tooltip = "Wilderness (" + current.x() + ", " + current.z() + ")";
 
                                     if (dx == 0 && dz == 0) {
                                         symbol = "+"; // Player
                                         color = net.minecraft.ChatFormatting.WHITE;
-                                        tooltip = "You are here (" + current.x + ", " + current.z + ")";
+                                        tooltip = "You are here (" + current.x() + ", " + current.z() + ")";
                                         if (owner.isPresent()) {
                                             if (owner.get().equals(p.getUUID())) {
                                                 color = net.minecraft.ChatFormatting.GREEN;
@@ -115,10 +115,10 @@ public final class ClaimCommands {
                                     } else if (owner.isPresent()) {
                                         if (owner.get().equals(p.getUUID())) {
                                             color = net.minecraft.ChatFormatting.GREEN;
-                                            tooltip = "Your Claim (" + current.x + ", " + current.z + ")";
+                                            tooltip = "Your Claim (" + current.x() + ", " + current.z() + ")";
                                         } else {
                                             color = net.minecraft.ChatFormatting.RED;
-                                            tooltip = "Enemy Claim (" + current.x + ", " + current.z + ")";
+                                            tooltip = "Enemy Claim (" + current.x() + ", " + current.z() + ")";
                                             // Resolve name async if possible? For now, simplistic.
                                         }
                                     } else {
@@ -135,8 +135,8 @@ public final class ClaimCommands {
 
                                     // Add Click to claim? (Maybe dangerous, but fancy)
                                     // cell.withStyle(style -> style.withClickEvent(new
-                                    // ClickEvent(ClickEvent.Action.RUN_COMMAND, "/claim " + current.x + " " +
-                                    // current.z)));
+                                    // ClickEvent(ClickEvent.Action.RUN_COMMAND, "/claim " + current.x() + " " +
+                                    // current.z())));
 
                                     line.append(cell).append(Component.literal(" "));
                                 }

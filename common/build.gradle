@@ -4,9 +4,6 @@ plugins {
 
 neoForge {
     neoFormVersion = rootProject.neoform_version
-
-    parchment.minecraftVersion = rootProject.parchment_mc_version
-    parchment.mappingsVersion = rootProject.parchment_version
 }
 
 dependencies {

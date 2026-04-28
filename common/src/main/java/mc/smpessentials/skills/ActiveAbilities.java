@@ -125,7 +125,7 @@ public final class ActiveAbilities {
 
         if (!data.isAbilityReady(uuid, skill)) {
             long remaining = data.getCooldownRemaining(uuid, skill);
-            sp.displayClientMessage(Component.literal(
+            sp.sendSystemMessage(Component.literal(
                     "\u00a7c" + name + " on cooldown! \u00a77(" + formatTime(remaining) + ")"), true);
             return true; // handled: cancel the drop, show cooldown
         }
@@ -159,7 +159,7 @@ public final class ActiveAbilities {
 
         if (!data.isAbilityReady(uuid, SkillType.WOODCUTTING)) {
             long remaining = data.getCooldownRemaining(uuid, SkillType.WOODCUTTING);
-            sp.displayClientMessage(Component.literal(
+            sp.sendSystemMessage(Component.literal(
                     "\u00a7cTree Feller on cooldown! \u00a77(" + formatTime(remaining) + ")"), true);
             return true;
         }
@@ -219,7 +219,7 @@ public final class ActiveAbilities {
 
         if (!data.isAbilityReady(uuid, SkillType.FARMING)) {
             long remaining = data.getCooldownRemaining(uuid, SkillType.FARMING);
-            sp.displayClientMessage(Component.literal(
+            sp.sendSystemMessage(Component.literal(
                     "\u00a7cGreen Terra on cooldown! \u00a77(" + formatTime(remaining) + ")"), true);
             return true;
         }
@@ -236,8 +236,8 @@ public final class ActiveAbilities {
                     if (state.is(net.minecraft.tags.BlockTags.CROPS)
                             && state.getBlock() instanceof net.minecraft.world.level.block.BonemealableBlock bonemealable
                             && bonemealable.isValidBonemealTarget(level, pos, state)) {
-                        if (bonemealable.isBonemealSuccess(level, level.random, pos, state)) {
-                            bonemealable.performBonemeal(level, level.random, pos, state);
+                        if (bonemealable.isBonemealSuccess(level, level.getRandom(), pos, state)) {
+                            bonemealable.performBonemeal(level, level.getRandom(), pos, state);
                         }
                         bonemealed++;
                     }
@@ -256,7 +256,7 @@ public final class ActiveAbilities {
 
         if (!data.isAbilityReady(uuid, SkillType.FISHING)) {
             long remaining = data.getCooldownRemaining(uuid, SkillType.FISHING);
-            sp.displayClientMessage(Component.literal(
+            sp.sendSystemMessage(Component.literal(
                     "\u00a7cMaster Angler on cooldown! \u00a77(" + formatTime(remaining) + ")"), true);
             return true;
         }
@@ -276,7 +276,7 @@ public final class ActiveAbilities {
 
         if (!data.isAbilityReady(uuid, SkillType.MELEE)) {
             long remaining = data.getCooldownRemaining(uuid, SkillType.MELEE);
-            sp.displayClientMessage(Component.literal(
+            sp.sendSystemMessage(Component.literal(
                     "\u00a7cBerzerk on cooldown! \u00a77(" + formatTime(remaining) + ")"), true);
             return true;
         }
@@ -297,7 +297,7 @@ public final class ActiveAbilities {
 
         if (!data.isAbilityReady(uuid, SkillType.ARCHERY)) {
             long remaining = data.getCooldownRemaining(uuid, SkillType.ARCHERY);
-            sp.displayClientMessage(Component.literal(
+            sp.sendSystemMessage(Component.literal(
                     "\u00a7cSniper on cooldown! \u00a77(" + formatTime(remaining) + ")"), true);
             return true;
         }
@@ -318,7 +318,7 @@ public final class ActiveAbilities {
 
         if (!data.isAbilityReady(uuid, SkillType.DEFENSE)) {
             long remaining = data.getCooldownRemaining(uuid, SkillType.DEFENSE);
-            sp.displayClientMessage(Component.literal(
+            sp.sendSystemMessage(Component.literal(
                     "\u00a7cJuggernaut on cooldown! \u00a77(" + formatTime(remaining) + ")"), true);
             return true;
         }
@@ -342,7 +342,7 @@ public final class ActiveAbilities {
 
         if (!data.isAbilityReady(uuid, SkillType.AGILITY)) {
             long remaining = data.getCooldownRemaining(uuid, SkillType.AGILITY);
-            sp.displayClientMessage(Component.literal(
+            sp.sendSystemMessage(Component.literal(
                     "\u00a7cDash on cooldown! \u00a77(" + formatTime(remaining) + ")"), true);
             return;
         }
@@ -371,7 +371,7 @@ public final class ActiveAbilities {
 
         if (!data.isAbilityReady(uuid, ZOOM_KEY, SkillType.ARCHERY)) {
             long remaining = data.getCooldownRemaining(uuid, ZOOM_KEY, SkillType.ARCHERY);
-            sp.displayClientMessage(Component.literal(
+            sp.sendSystemMessage(Component.literal(
                     "\u00a7cScout Zoom on cooldown! \u00a77(" + formatTime(remaining) + ")"), true);
             return;
         }
@@ -428,14 +428,14 @@ public final class ActiveAbilities {
         // Expire on timer
         if (System.currentTimeMillis() > state.expiry()) {
             deactivateZoom(uuid, sp);
-            sp.displayClientMessage(Component.literal("\u00a77Scout Zoom ended."), true);
+            sp.sendSystemMessage(Component.literal("\u00a77Scout Zoom ended."), true);
             return;
         }
 
         // Deactivate if player switched to a hotbar slot with an item
         if (!sp.getMainHandItem().isEmpty()) {
             deactivateZoom(uuid, sp);
-            sp.displayClientMessage(Component.literal("\u00a77Scout Zoom ended."), true);
+            sp.sendSystemMessage(Component.literal("\u00a77Scout Zoom ended."), true);
             return;
         }
 
@@ -444,7 +444,7 @@ public final class ActiveAbilities {
         ItemStack offhand = sp.getOffhandItem();
         if (!(offhand.getItem() == Items.SPYGLASS && offhand.getCount() == 1)) {
             deactivateZoom(uuid, sp);
-            sp.displayClientMessage(Component.literal("\u00a77Scout Zoom ended."), true);
+            sp.sendSystemMessage(Component.literal("\u00a77Scout Zoom ended."), true);
             return;
         }
 
@@ -485,7 +485,7 @@ public final class ActiveAbilities {
 
         if (!data.isAbilityReady(uuid, SkillType.ENCHANTING)) {
             long remaining = data.getCooldownRemaining(uuid, SkillType.ENCHANTING);
-            sp.displayClientMessage(Component.literal(
+            sp.sendSystemMessage(Component.literal(
                     "\u00a7cArcane Infusion on cooldown! \u00a77(" + formatTime(remaining) + ")"), true);
             return true;
         }
@@ -537,7 +537,7 @@ public final class ActiveAbilities {
         } else {
             msg = "\u00a76\u00a7l\u2605 " + abilityName + " Activated! \u00a7r";
         }
-        sp.displayClientMessage(Component.literal(msg), false);
+        sp.sendSystemMessage(Component.literal(msg), false);
         sp.playSound(sound, 1.0f, 1.5f);
     }
 
@@ -549,7 +549,7 @@ public final class ActiveAbilities {
     private static void announce(ServerPlayer sp, String abilityName, String detail,
             net.minecraft.sounds.SoundEvent sound) {
         String msg = "\u00a76\u00a7l\u2605 " + abilityName + "! \u00a7r\u00a77" + detail;
-        sp.displayClientMessage(Component.literal(msg), false);
+        sp.sendSystemMessage(Component.literal(msg), false);
         sp.playSound(sound, 1.0f, 1.5f);
     }
 
@@ -592,7 +592,7 @@ public final class ActiveAbilities {
         // Check cooldown only after verifying a valid target
         if (!data.isAbilityReady(uuid, SkillType.ALCHEMY)) {
             long remaining = data.getCooldownRemaining(uuid, SkillType.ALCHEMY);
-            sp.displayClientMessage(Component.literal(
+            sp.sendSystemMessage(Component.literal(
                     "\u00a7cAlchemy on cooldown! \u00a77(" + formatTime(remaining) + ")"), true);
             return true;
         }
@@ -637,7 +637,7 @@ public final class ActiveAbilities {
 
         if (!data.isAbilityReady(uuid, SkillType.TRADING)) {
             long remaining = data.getCooldownRemaining(uuid, SkillType.TRADING);
-            sp.displayClientMessage(Component.literal(
+            sp.sendSystemMessage(Component.literal(
                     "\u00a7cTycoon's Charm on cooldown! \u00a77(" + formatTime(remaining) + ")"), true);
             return true;
         }

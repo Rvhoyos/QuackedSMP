@@ -481,7 +481,7 @@ public final class DimManager {
         ServerLevelData overworldData = server.getWorldData().overworldData();
         DerivedLevelData derivedData = new DerivedLevelData(server.getWorldData(), overworldData);
 
-        long seed = server.getWorldData().worldGenOptions().seed();
+        long seed = server.getWorldGenSettings().options().seed();
         long biomeZoomSeed = BiomeManager.obfuscateSeed(seed);
 
         Executor executor = accessor.getExecutor();
@@ -489,7 +489,7 @@ public final class DimManager {
 
         ServerLevel newLevel = new ServerLevel(
                 server, executor, storageSource, derivedData, dimKey, stem,
-                false, biomeZoomSeed, ImmutableList.of(), false, null);
+                false, biomeZoomSeed, ImmutableList.of(), false);
 
         levels.put(dimKey, newLevel);
         server.getPlayerList().addWorldborderListener(newLevel);
@@ -749,7 +749,7 @@ public final class DimManager {
                 .value();
 
         // Build the custom island density function
-        long seed = server.getWorldData().worldGenOptions().seed();
+        long seed = server.getWorldGenSettings().options().seed();
         EtherIslandDensityFunction islands = new EtherIslandDensityFunction(
                 seed, threshold, minRadius, maxRadius, spacing);
 
@@ -800,6 +800,6 @@ public final class DimManager {
                 floatingSettings.useLegacyRandomSource());
 
         return new LevelStem(overworldStem.type(), new NoiseBasedChunkGenerator(
-                parseBiomeSource(server, biomeListStr), new Holder.Direct<>(customSettings)));
+                parseBiomeSource(server, biomeListStr), Holder.direct(customSettings)));
     }
 }

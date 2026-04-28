@@ -54,7 +54,7 @@ public final class SosCommand {
 
             // Check if target is in a chunk owned by caller
             ServerLevel targetLevel = (ServerLevel) target.level();
-            ChunkPos targetChunk = new ChunkPos(target.blockPosition());
+            ChunkPos targetChunk = ChunkPos.containing(target.blockPosition());
 
             Optional<mc.smpessentials.claims.model.ClaimData> claimData = ClaimedSavedData.get(targetLevel)
                     .getClaim(targetLevel, targetChunk);
@@ -69,7 +69,7 @@ public final class SosCommand {
                     caller.sendSystemMessage(
                             Component.literal("Ejected " + target.getName().getString() + " from your claim."));
                     // Notify target
-                    target.displayClientMessage(Component.literal(
+                    target.sendSystemMessage(Component.literal(
                             "You were ejected from " + caller.getName().getString() + "'s claim via /sos."), true);
                     ejectedCount++;
                 }

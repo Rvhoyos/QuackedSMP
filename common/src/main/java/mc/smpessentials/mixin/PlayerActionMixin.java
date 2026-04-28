@@ -39,7 +39,7 @@ public abstract class PlayerActionMixin {
         if (mc.smpessentials.skills.ActiveAbilities.isZoomActive(uuid)) {
             // F while zoom is active → deactivate
             mc.smpessentials.skills.ActiveAbilities.deactivateZoom(uuid, player);
-            player.displayClientMessage(
+            player.sendSystemMessage(
                     net.minecraft.network.chat.Component.literal("\u00a77Scout Zoom deactivated."), true);
             ci.cancel();
             return;
@@ -75,7 +75,7 @@ public abstract class PlayerActionMixin {
             // etc.) while zoom is active. Cancel zoom so the spyglass is cleaned up and
             // the player can interact normally.
             mc.smpessentials.skills.ActiveAbilities.deactivateZoom(player.getUUID(), player);
-            player.displayClientMessage(
+            player.sendSystemMessage(
                     net.minecraft.network.chat.Component.literal("\u00a77Scout Zoom ended."), true);
         }
     }

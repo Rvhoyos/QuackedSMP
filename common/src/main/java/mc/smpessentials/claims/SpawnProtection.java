@@ -53,7 +53,7 @@ public final class SpawnProtection {
         ServerLevel level = (ServerLevel) entity.level();
         if (!isBlockInSpawnProtection(level, entity.blockPosition())) return true;
         if (level.getServer().getPlayerList().isOp(sp.nameAndId())) return true;
-        sp.displayClientMessage(
+        sp.sendSystemMessage(
                 net.minecraft.network.chat.Component.literal("\u00a7cThis entity is protected by spawn protection."), true);
         return false;
     }
@@ -81,7 +81,7 @@ public final class SpawnProtection {
     // protection radius. Used by enderman, farmland, and other mob-grief mixins.
     public static boolean isProtectedArea(ServerLevel level, BlockPos pos) {
         if (SmpConfig.CLAIMS_ENABLED
-                && ClaimedSavedData.get(level).isClaimed(level, new ChunkPos(pos))) {
+                && ClaimedSavedData.get(level).isClaimed(level, ChunkPos.containing(pos))) {
             return true;
         }
         return isBlockInSpawnProtection(level, pos);

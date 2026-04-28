@@ -1,5 +1,6 @@
 package mc.smpessentials.shops;
 
+import net.minecraft.resources.Identifier;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.core.BlockPos;
@@ -41,7 +42,7 @@ public final class ShopData extends SavedData {
             .apply(i, ShopData::fromList));
 
     public static final SavedDataType<ShopData> TYPE = new SavedDataType<>(
-            "quackedsmp_shops",
+            Identifier.withDefaultNamespace("quackedsmp_shops"),
             ShopData::new,
             CODEC,
             DataFixTypes.LEVEL);

@@ -115,8 +115,8 @@ public final class AntiXrayEngine {
         ChunkPos chunkPos = chunk.getPos();
         LevelChunkSection[] sections = chunk.getSections();
         int minSectionY = chunk.getMinSectionY();
-        int baseX = chunkPos.x << 4;
-        int baseZ = chunkPos.z << 4;
+        int baseX = chunkPos.x() << 4;
+        int baseZ = chunkPos.z() << 4;
         boolean modified = false;
         FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
         try {
@@ -178,7 +178,7 @@ public final class AntiXrayEngine {
         }
 
         int viewDist = level.getServer().getPlayerList().getViewDistance();
-        ChunkPos cp = new ChunkPos(pos);
+        ChunkPos cp = ChunkPos.containing(pos);
         for (ServerPlayer player : level.players()) {
             if (player.chunkPosition().getChessboardDistance(cp) <= viewDist) {
                 for (ClientboundBlockUpdatePacket packet : packets) {

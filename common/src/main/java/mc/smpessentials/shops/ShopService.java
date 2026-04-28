@@ -99,7 +99,7 @@ public final class ShopService {
         }
 
         // Check ownership: must own the claim or be in unclaimed territory (or be OP)
-        if (!ClaimAccess.canModify(player, level, new ChunkPos(pos))) {
+        if (!ClaimAccess.canModify(player, level, ChunkPos.containing(pos))) {
             player.sendSystemMessage(Component.literal("\u00a7cYou can't create a shop in someone else's claim."));
             return 0;
         }

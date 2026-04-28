@@ -1,5 +1,6 @@
 package mc.smpessentials.votifier;
 
+import net.minecraft.resources.Identifier;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.server.MinecraftServer;
@@ -22,7 +23,7 @@ public final class VoteQueueData extends SavedData {
     ).apply(i, VoteQueueData::new));
 
     public static final SavedDataType<VoteQueueData> TYPE = new SavedDataType<>(
-            "quackedsmp_vote_queue",
+            Identifier.withDefaultNamespace("quackedsmp_vote_queue"),
             () -> new VoteQueueData(new HashMap<>()),
             CODEC,
             DataFixTypes.LEVEL

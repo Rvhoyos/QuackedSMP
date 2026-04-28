@@ -3,7 +3,7 @@ package mc.smpessentials.commands;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.dimension.end.EndDragonFight;
+import net.minecraft.world.level.dimension.end.EnderDragonFight;
 import net.minecraft.world.level.storage.LevelResource;
 
 import java.io.IOException;
@@ -33,7 +33,7 @@ public class EndResetLogic {
         cleanUpOldFight(sEndLevel);
         discardEndEntities(sEndLevel);
 
-        EndDragonFight fight = sEndLevel.getDragonFight();
+        EnderDragonFight fight = sEndLevel.getDragonFight();
         if (fight == null)
             return 0;
 
@@ -43,7 +43,7 @@ public class EndResetLogic {
 
             // 4. Reset the internal state
             setPrivateField(fight, "dragonKilled", false);
-            setPrivateField(fight, "previouslyKilled", false);
+            setPrivateField(fight, "hasPreviouslyKilledDragon", false);
             setPrivateField(fight, "dragonUUID", null);
             setPrivateField(fight, "needsStateScanning", false);
             setPrivateField(fight, "respawnStage", null);
@@ -116,7 +116,7 @@ public class EndResetLogic {
     private static void cleanUpOldFight(Level endLevel) {
         if (!(endLevel instanceof ServerLevel))
             return;
-        EndDragonFight fight = ((ServerLevel) endLevel).getDragonFight();
+        EnderDragonFight fight = ((ServerLevel) endLevel).getDragonFight();
         if (fight != null) {
             try {
                 Object bossEvent = getPrivateField(fight, "dragonEvent");
@@ -206,28 +206,11 @@ public class EndResetLogic {
         }
     }
 
-    // Resets EndDragonFight.Data in WorldData so the next startup spawns a fresh dragon fight.
+    // Resets EnderDragonFight saved data so the next startup spawns a fresh dragon fight.
     private static void resetWorldDataDragonState(MinecraftServer server) {
-        try {
-            Class<?> dataClass = net.minecraft.world.level.dimension.end.EndDragonFight.Data.class;
-            java.lang.reflect.Constructor<?> dataConst = dataClass.getConstructors()[0];
-            Object[] dataArgs = new Object[dataConst.getParameterCount()];
-            for (int i = 0; i < dataArgs.length; i++) {
-                Class<?> pType = dataConst.getParameterTypes()[i];
-                if (pType == boolean.class) {
-                    dataArgs[i] = false;
-                } else if (pType == java.util.Optional.class) {
-                    dataArgs[i] = java.util.Optional.empty();
-                } else {
-                    dataArgs[i] = null;
-                }
-            }
-            net.minecraft.world.level.dimension.end.EndDragonFight.Data emptyData = 
-                (net.minecraft.world.level.dimension.end.EndDragonFight.Data) dataConst.newInstance(dataArgs);
-
-            server.getWorldData().setEndDragonFightData(emptyData);
-        } catch (Exception e) {
-            mc.smpessentials.SmpUtilsMod.LOGGER.error("Failed to reset End dragon fight world data", e);
+        ServerLevel endLevel = server.getLevel(Level.END);
+        if (endLevel != null) {
+            endLevel.setDragonFight(EnderDragonFight.createDefault());
         }
     }
 }

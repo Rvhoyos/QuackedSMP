@@ -1,5 +1,6 @@
 package mc.smpessentials.punish;
 
+import net.minecraft.resources.Identifier;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import mc.smpessentials.claims.storage.ClaimedSavedData;
@@ -34,7 +35,7 @@ public final class PunishManager extends SavedData {
      * SavedDataType for registering PunishManager with Minecraft's data storage system.
      */
     public static final SavedDataType<PunishManager> TYPE = new SavedDataType<>(
-            "quackedsmp_punishments",
+            Identifier.withDefaultNamespace("quackedsmp_punishments"),
             () -> new PunishManager(new HashSet<>()),
             PunishManager.CODEC,
             DataFixTypes.LEVEL
@@ -113,7 +114,7 @@ public final class PunishManager extends SavedData {
         for (ServerLevel level : server.getAllLevels()) {
             ClaimedSavedData.get(level).listClaims(level).stream()
                     .filter(claim -> claim.owner().equals(uuid))
-                    .forEach(claim -> clearContainersInChunk(level, new ChunkPos(claim.chunk())));
+                    .forEach(claim -> clearContainersInChunk(level, ChunkPos.unpack(claim.chunk())));
         }
 
         removePending(uuid);
@@ -126,7 +127,7 @@ public final class PunishManager extends SavedData {
      * @param chunkPos The position of the chunk to clear.
      */
     private void clearContainersInChunk(ServerLevel level, ChunkPos chunkPos) {
-        var chunk = level.getChunk(chunkPos.x, chunkPos.z);
+        var chunk = level.getChunk(chunkPos.x(), chunkPos.z());
         if (chunk == null) return;
         
         // Use a copy of the block entity values to avoid concurrent modification issues
