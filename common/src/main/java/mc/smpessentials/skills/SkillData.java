@@ -1,5 +1,6 @@
 package mc.smpessentials.skills;
 
+import net.minecraft.resources.Identifier;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.core.UUIDUtil;
@@ -51,7 +52,7 @@ public final class SkillData extends SavedData {
             .apply(i, SkillData::fromList));
 
     public static final SavedDataType<SkillData> TYPE = new SavedDataType<>(
-            "quackedsmp_skills",
+            Identifier.withDefaultNamespace("quackedsmp_skills"),
             () -> new SkillData(new HashMap<>()),
             SkillData.CODEC,
             DataFixTypes.LEVEL);

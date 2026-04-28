@@ -29,7 +29,7 @@ public final class TeleportScheduler {
     public static void schedule(ServerPlayer player, Runnable action) {
         // Cancel existing if any (resets timer)
         if (pending.remove(player.getUUID()) != null) {
-            player.displayClientMessage(Component.literal("\u00a7eTeleport rescheduled."), true);
+            player.sendSystemMessage(Component.literal("\u00a7eTeleport rescheduled."), true);
         }
 
         long ticks = mc.smpessentials.config.SmpConfig.TP_WARMUP * 20L;
@@ -40,7 +40,7 @@ public final class TeleportScheduler {
 
     private static void cancel(ServerPlayer player, String reason) {
         if (pending.remove(player.getUUID()) != null) {
-            player.displayClientMessage(Component.literal("Teleport cancelled: " + reason), true); // Action bar
+            player.sendSystemMessage(Component.literal("Teleport cancelled: " + reason), true); // Action bar
         }
     }
 
@@ -65,7 +65,7 @@ public final class TeleportScheduler {
             // Live countdown on action bar (refreshed every tick so it stays visible)
             long ticksLeft = p.scheduledTick - gameTime;
             long secsLeft = Math.max(1, (ticksLeft + 19) / 20);
-            player.displayClientMessage(
+            player.sendSystemMessage(
                     Component.literal("\u00a7eTeleporting in \u00a7f" + secsLeft + "s\u00a7e... Don't move!"), true);
         }
     }

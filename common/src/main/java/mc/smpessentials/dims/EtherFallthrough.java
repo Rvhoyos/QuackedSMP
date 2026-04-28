@@ -39,7 +39,7 @@ public final class EtherFallthrough {
                 spawnXZ.getX() + 0.5, 300, spawnXZ.getZ() + 0.5,
                 Set.of(), player.getYRot(), player.getXRot(), false);
 
-        player.displayClientMessage(
+        player.sendSystemMessage(
                 Component.literal("The void pulls you back to the overworld."), true);
     }
 }

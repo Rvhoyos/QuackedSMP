@@ -11,7 +11,8 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-// Blocks fire spread into claimed chunks (gated by PROTECT_FIRE_CLAIMS) and throttles it in wilderness.
+// Blocks fire spread into claimed chunks (gated by PROTECT_FIRE_CLAIMS), the spawn
+// protection area (always-on), and throttles it in wilderness.
 // The vanilla spread formula adds +40 to ignite odds before the roll, so dividing
 // odds is ineffective. Instead, we randomly return 0 to skip spread positions
 // entirely (the tick() loop gates on l1 > 0). This scales against multiple sources.
@@ -28,9 +29,13 @@ public abstract class FireBlockMixin {
             at = @At("RETURN"), cancellable = true)
     private void throttleFireSpread(LevelReader level, BlockPos pos, CallbackInfoReturnable<Integer> cir) {
         if (!(level instanceof ServerLevel sl)) return;
-        ChunkPos cp = new ChunkPos(pos);
+        ChunkPos cp = ChunkPos.containing(pos);
         boolean claimed = ClaimedSavedData.get(sl).isClaimed(sl, cp);
         if (mc.smpessentials.config.SmpConfig.CLAIMS_ENABLED && mc.smpessentials.config.SmpConfig.PROTECT_FIRE_CLAIMS && claimed) {
+            cir.setReturnValue(0);
+            return;
+        }
+        if (mc.smpessentials.claims.SpawnProtection.isBlockInSpawnProtection(sl, pos)) {
             cir.setReturnValue(0);
             return;
         }

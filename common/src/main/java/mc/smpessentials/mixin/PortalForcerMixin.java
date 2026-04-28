@@ -44,7 +44,7 @@ public abstract class PortalForcerMixin {
         // the travelling player (and the player is not trusted in that claim).
         java.util.UUID playerUuid = mc.smpessentials.claims.PortalEntityCapture.get();
         if (playerUuid != null) {
-            net.minecraft.world.level.ChunkPos chunkPos = new net.minecraft.world.level.ChunkPos(pos);
+            net.minecraft.world.level.ChunkPos chunkPos = net.minecraft.world.level.ChunkPos.containing(pos);
             mc.smpessentials.claims.storage.ClaimedSavedData claims =
                     mc.smpessentials.claims.storage.ClaimedSavedData.get(this.level);
             claims.getClaim(this.level, chunkPos).ifPresent(claimData -> {

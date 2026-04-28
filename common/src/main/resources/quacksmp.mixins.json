@@ -1,7 +1,7 @@
 {
   "required": true,
   "package": "mc.smpessentials.mixin",
-  "compatibilityLevel": "JAVA_21",
+  "compatibilityLevel": "JAVA_25",
   "minVersion": "0.8",
   "client": [],
   "mixins": [
@@ -27,7 +27,9 @@
     "EnderManTakeBlockMixin",
     "EnderManLeaveBlockMixin",
     "FarmBlockMixin",
-    "ServerLevelMixin"
+    "ServerLevelMixin",
+    "WitherSkullBlockMixin",
+    "EndCrystalItemMixin"
   ],
   "injectors": {
     "defaultRequire": 1

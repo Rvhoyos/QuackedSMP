@@ -1,5 +1,6 @@
 package mc.smpessentials.shops;
 
+import net.minecraft.resources.Identifier;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.core.UUIDUtil;
@@ -47,7 +48,7 @@ public final class EconomyData extends SavedData {
             .apply(i, EconomyData::fromEntries));
 
     public static final SavedDataType<EconomyData> TYPE = new SavedDataType<>(
-            "quackedsmp_economy",
+            Identifier.withDefaultNamespace("quackedsmp_economy"),
             EconomyData::new,
             CODEC,
             DataFixTypes.LEVEL);

@@ -7,6 +7,7 @@ import mc.smpessentials.events.MessageScheduler;
 import mc.smpessentials.skills.SkillEvents;
 import mc.smpessentials.teleport.TeleportScheduler;
 import mc.smpessentials.claims.ClaimProtection;
+import mc.smpessentials.claims.SpawnProtection;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionResult;
@@ -16,6 +17,7 @@ import net.neoforged.neoforge.event.ServerChatEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 import net.neoforged.neoforge.event.level.BlockEvent;
+import net.neoforged.neoforge.event.level.block.BreakBlockEvent;
 import net.neoforged.neoforge.event.server.ServerStartedEvent;
 import net.neoforged.neoforge.event.server.ServerStoppedEvent;
 import net.neoforged.neoforge.event.server.ServerStoppingEvent;
@@ -34,6 +36,11 @@ public class SmpEvents {
     @SubscribeEvent
     public static void onRegisterCommands(RegisterCommandsEvent event) {
         CommandRegistrar.registerCommands(event.getDispatcher(), event.getBuildContext(), event.getCommandSelection());
+    }
+
+    @SubscribeEvent
+    public static void onServerStarting(net.neoforged.neoforge.event.server.ServerStartingEvent event) {
+        mc.smpessentials.SavedDataMigration.migrate(event.getServer());
     }
 
     @SubscribeEvent
@@ -143,7 +150,7 @@ public class SmpEvents {
     }
 
     @SubscribeEvent
-    public static void onBlockBreak(BlockEvent.BreakEvent event) {
+    public static void onBlockBreak(BreakBlockEvent event) {
         if (event.getPlayer() instanceof ServerPlayer player
                 && event.getLevel() instanceof net.minecraft.world.level.Level level) {
             SkillEvents.onBlockBreak(level, event.getPos(), event.getState(), player);
@@ -184,6 +191,10 @@ public class SmpEvents {
     @SubscribeEvent
     public static void onInteractEntity(PlayerInteractEvent.EntityInteract event) {
         if (event.getEntity() instanceof ServerPlayer player) {
+            if (!SpawnProtection.onInteractEntity(player, event.getTarget())) {
+                event.setCanceled(true);
+                return;
+            }
             if (!ClaimProtection.onInteractEntity(player, event.getTarget())) {
                 event.setCanceled(true);
             }

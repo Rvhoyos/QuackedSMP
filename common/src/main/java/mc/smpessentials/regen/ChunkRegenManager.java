@@ -144,10 +144,10 @@ public final class ChunkRegenManager {
     private static LongOpenHashSet buildProtectedSet(List<ClaimData> claims) {
         LongOpenHashSet set = new LongOpenHashSet();
         for (ClaimData cd : claims) {
-            ChunkPos cp = new ChunkPos(cd.chunk());
+            ChunkPos cp = ChunkPos.unpack(cd.chunk());
             for (int dx = -BUFFER; dx <= BUFFER; dx++) {
                 for (int dz = -BUFFER; dz <= BUFFER; dz++) {
-                    set.add(new ChunkPos(cp.x + dx, cp.z + dz).toLong());
+                    set.add(new ChunkPos(cp.x() + dx, cp.z() + dz).pack());
                 }
             }
         }
@@ -252,7 +252,7 @@ public final class ChunkRegenManager {
                 int localZ = index >> 5;
                 int chunkX = regionX * 32 + localX;
                 int chunkZ = regionZ * 32 + localZ;
-                long chunkLong = new ChunkPos(chunkX, chunkZ).toLong();
+                long chunkLong = new ChunkPos(chunkX, chunkZ).pack();
 
                 int locOffset = index * 4;
                 raf.seek(locOffset);

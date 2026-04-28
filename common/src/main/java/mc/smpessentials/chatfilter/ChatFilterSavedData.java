@@ -1,5 +1,6 @@
 package mc.smpessentials.chatfilter;
 
+import net.minecraft.resources.Identifier;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.util.datafix.DataFixTypes;
@@ -35,7 +36,7 @@ public final class ChatFilterSavedData extends SavedData {
     /**
      * SavedDataType identifier; uses DataFixTypes.LEVEL for vanilla data fixers.
      */
-    public static final SavedDataType<ChatFilterSavedData> TYPE = new SavedDataType<>("quackedsmp_chat_filter",
+    public static final SavedDataType<ChatFilterSavedData> TYPE = new SavedDataType<>(Identifier.withDefaultNamespace("quackedsmp_chat_filter"),
             ChatFilterSavedData::new, CODEC, DataFixTypes.LEVEL);
 
     private final Set<String> words = new HashSet<>();

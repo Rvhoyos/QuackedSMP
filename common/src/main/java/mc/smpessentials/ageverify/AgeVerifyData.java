@@ -1,5 +1,6 @@
 package mc.smpessentials.ageverify;
 
+import net.minecraft.resources.Identifier;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.core.UUIDUtil;
@@ -27,7 +28,7 @@ public final class AgeVerifyData extends SavedData {
             .apply(i, AgeVerifyData::fromLists));
 
     public static final SavedDataType<AgeVerifyData> TYPE = new SavedDataType<>(
-            "quackedsmp_ageverify",
+            Identifier.withDefaultNamespace("quackedsmp_ageverify"),
             AgeVerifyData::new,
             CODEC,
             DataFixTypes.LEVEL);

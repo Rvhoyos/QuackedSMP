@@ -266,7 +266,7 @@ public class BlueMapMarkerManager {
                 // We group contiguous chunks together to draw them as discrete connected
                 // regions
                 List<Set<ChunkPos>> regions = findConnectedRegions(
-                        claims.stream().map(c -> new ChunkPos(c.chunk())).collect(Collectors.toSet()));
+                        claims.stream().map(c -> ChunkPos.unpack(c.chunk())).collect(Collectors.toSet()));
 
                 int regionIdx = 0;
                 for (Set<ChunkPos> region : regions) {
@@ -384,8 +384,8 @@ public class BlueMapMarkerManager {
                     currentRegion.add(curr);
 
                     // Check ADJACENT chunks (N, S, E, W)
-                    int x = curr.x;
-                    int z = curr.z;
+                    int x = curr.x();
+                    int z = curr.z();
                     ChunkPos[] neighbors = {
                             new ChunkPos(x + 1, z), new ChunkPos(x - 1, z),
                             new ChunkPos(x, z + 1), new ChunkPos(x, z - 1)

@@ -1,5 +1,6 @@
 package mc.smpessentials.claims.storage;
 
+import net.minecraft.resources.Identifier;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
@@ -28,7 +29,7 @@ public final class WhitelistSavedData extends SavedData {
             }));
 
     public static final SavedDataType<WhitelistSavedData> TYPE = new SavedDataType<>(
-            "quackedsmp_whitelist",
+            Identifier.withDefaultNamespace("quackedsmp_whitelist"),
             () -> new WhitelistSavedData(new Object2ObjectOpenHashMap<>()),
             WhitelistSavedData.CODEC,
             DataFixTypes.LEVEL);

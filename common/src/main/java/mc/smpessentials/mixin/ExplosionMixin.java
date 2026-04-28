@@ -1,6 +1,7 @@
 package mc.smpessentials.mixin;
 
 import mc.smpessentials.claims.ClaimProtection;
+import mc.smpessentials.claims.SpawnProtection;
 import net.minecraft.world.level.Explosion;
 import net.minecraft.world.level.ServerExplosion;
 import net.minecraft.server.level.ServerLevel;
@@ -11,7 +12,8 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-// Cancels explosions that would affect any claimed chunk. Gated by PROTECT_EXPLOSIONS.
+// Cancels explosions that would affect any claimed chunk (gated by PROTECT_EXPLOSIONS)
+// or the spawn protection area (always-on when vanilla radius > 0).
 @Mixin(ServerExplosion.class)
 public abstract class ExplosionMixin {
     @Shadow
@@ -22,6 +24,10 @@ public abstract class ExplosionMixin {
     private void onExplode(CallbackInfoReturnable<Integer> cir) {
         Explosion explosion = (Explosion) (Object) this;
         if (!ClaimProtection.onExplosionPre(this.level, explosion)) {
+            cir.setReturnValue(0);
+            return;
+        }
+        if (!SpawnProtection.onExplosionPre(this.level, explosion)) {
             cir.setReturnValue(0);
         }
     }

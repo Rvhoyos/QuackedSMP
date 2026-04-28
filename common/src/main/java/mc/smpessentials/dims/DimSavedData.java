@@ -41,7 +41,7 @@ public final class DimSavedData extends SavedData {
     ).apply(i, DimSavedData::new));
 
     public static final SavedDataType<DimSavedData> TYPE = new SavedDataType<>(
-            "quackedsmp_dims",
+            Identifier.withDefaultNamespace("quackedsmp_dims"),
             () -> new DimSavedData(new ArrayList<>()),
             DimSavedData.CODEC,
             DataFixTypes.LEVEL);

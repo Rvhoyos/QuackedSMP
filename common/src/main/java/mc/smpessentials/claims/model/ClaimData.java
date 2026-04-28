@@ -8,7 +8,7 @@ import net.minecraft.world.level.Level;
 
 /**
  * Single claimed chunk entry.
- * chunk = ChunkPos.toLong()
+ * chunk = ChunkPos.pack()
  */
 public record ClaimData(
                 ResourceKey<Level> dimension,

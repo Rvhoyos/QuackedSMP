@@ -80,7 +80,7 @@ public final class ClaimService {
                 }
             }
             // Also block exact spawn chunk for safety
-            if (pos.equals(new ChunkPos(spawn)))
+            if (pos.equals(ChunkPos.containing(spawn)))
                 return Result.SPAWN_PROTECTED;
         }
 

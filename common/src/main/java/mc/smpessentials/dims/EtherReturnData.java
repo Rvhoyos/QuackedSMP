@@ -1,5 +1,6 @@
 package mc.smpessentials.dims;
 
+import net.minecraft.resources.Identifier;
 import com.mojang.serialization.Codec;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.MinecraftServer;
@@ -30,7 +31,7 @@ public final class EtherReturnData extends SavedData {
      * Defaults to an empty map when no file exists.
      */
     public static final SavedDataType<EtherReturnData> TYPE = new SavedDataType<>(
-            "quackedsmp_ether_returns",
+            Identifier.withDefaultNamespace("quackedsmp_ether_returns"),
             () -> new EtherReturnData(new HashMap<>()),
             CODEC,
             DataFixTypes.LEVEL);

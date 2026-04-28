@@ -1,5 +1,6 @@
 package mc.smpessentials.claims.storage;
 
+import net.minecraft.resources.Identifier;
 import mc.smpessentials.claims.model.ClaimData;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
@@ -28,7 +29,7 @@ public final class ClaimedSavedData extends SavedData {
             ClaimData.CODEC.listOf().fieldOf("claims").forGetter(s -> s.claims)).apply(i, ClaimedSavedData::new));
 
     public static final SavedDataType<ClaimedSavedData> TYPE = new SavedDataType<>(
-            "quackedsmp_claims",
+            Identifier.withDefaultNamespace("quackedsmp_claims"),
             () -> new ClaimedSavedData(new ArrayList<>()),
             ClaimedSavedData.CODEC,
             DataFixTypes.LEVEL);
@@ -57,20 +58,20 @@ public final class ClaimedSavedData extends SavedData {
     }
 
     public boolean isClaimed(ServerLevel level, ChunkPos chunk) {
-        return dimIndex(level.dimension()).containsKey(chunk.toLong());
+        return dimIndex(level.dimension()).containsKey(chunk.pack());
     }
 
     public Optional<ClaimData> getClaim(ServerLevel level, ChunkPos chunk) {
-        return Optional.ofNullable(dimIndex(level.dimension()).get(chunk.toLong()));
+        return Optional.ofNullable(dimIndex(level.dimension()).get(chunk.pack()));
     }
 
     public Optional<ClaimData> getClaimAt(ServerLevel level, BlockPos pos) {
-        return getClaim(level, new ChunkPos(pos));
+        return getClaim(level, ChunkPos.containing(pos));
     }
 
     // Returns false if the chunk is already claimed.
     public boolean claim(ServerLevel level, ChunkPos chunk, UUID owner) {
-        long key = chunk.toLong();
+        long key = chunk.pack();
         var map = dimIndex(level.dimension());
         if (map.containsKey(key))
             return false;
@@ -85,7 +86,7 @@ public final class ClaimedSavedData extends SavedData {
 
     // Returns false if the chunk was not claimed.
     public boolean unclaim(ServerLevel level, ChunkPos chunk) {
-        long key = chunk.toLong();
+        long key = chunk.pack();
         var map = dimIndex(level.dimension());
         ClaimData removed = map.remove(key);
         if (removed == null)
@@ -102,7 +103,7 @@ public final class ClaimedSavedData extends SavedData {
 
     // Pass null to clear the display name. Returns false if the chunk is not claimed.
     public boolean updateName(ServerLevel level, ChunkPos chunk, String name) {
-        long key = chunk.toLong();
+        long key = chunk.pack();
         var map = dimIndex(level.dimension());
         ClaimData existing = map.get(key);
         if (existing == null) {

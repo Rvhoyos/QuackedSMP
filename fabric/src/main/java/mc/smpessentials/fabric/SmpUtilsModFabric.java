@@ -28,7 +28,9 @@ public final class SmpUtilsModFabric implements ModInitializer {
                             environment);
                 });
 
-        // 2. Server Started/Stopping
+        // 2. Server Starting/Started/Stopping
+        net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents.SERVER_STARTING.register(
+                mc.smpessentials.SavedDataMigration::migrate);
         net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents.SERVER_STARTED.register(server -> {
             mc.smpessentials.chatfilter.ChatFilter.onServerStart(server);
             mc.smpessentials.voicechat.VoicechatIntegration.onServerStart(server);
@@ -144,6 +146,9 @@ public final class SmpUtilsModFabric implements ModInitializer {
 
         // 8. Interact Entity
         net.fabricmc.fabric.api.event.player.UseEntityCallback.EVENT.register((p, world, hand, entity, hitResult) -> {
+            if (!mc.smpessentials.claims.SpawnProtection.onInteractEntity(p, entity)) {
+                return net.minecraft.world.InteractionResult.FAIL;
+            }
             if (!mc.smpessentials.claims.ClaimProtection.onInteractEntity(p, entity)) {
                 return net.minecraft.world.InteractionResult.FAIL;
             }

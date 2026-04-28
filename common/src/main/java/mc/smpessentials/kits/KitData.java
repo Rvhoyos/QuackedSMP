@@ -1,5 +1,6 @@
 package mc.smpessentials.kits;
 
+import net.minecraft.resources.Identifier;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.core.UUIDUtil;
@@ -46,7 +47,7 @@ public final class KitData extends SavedData {
             .apply(i, KitData::fromEntries));
 
     public static final SavedDataType<KitData> TYPE = new SavedDataType<>(
-            "quackedsmp_kits",
+            Identifier.withDefaultNamespace("quackedsmp_kits"),
             KitData::new,
             CODEC,
             DataFixTypes.LEVEL);
