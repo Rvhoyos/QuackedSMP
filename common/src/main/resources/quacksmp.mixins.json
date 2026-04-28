@@ -27,7 +27,9 @@
     "EnderManTakeBlockMixin",
     "EnderManLeaveBlockMixin",
     "FarmBlockMixin",
-    "ServerLevelMixin"
+    "ServerLevelMixin",
+    "WitherSkullBlockMixin",
+    "EndCrystalItemMixin"
   ],
   "injectors": {
     "defaultRequire": 1

@@ -144,6 +144,9 @@ public final class SmpUtilsModFabric implements ModInitializer {
 
         // 8. Interact Entity
         net.fabricmc.fabric.api.event.player.UseEntityCallback.EVENT.register((p, world, hand, entity, hitResult) -> {
+            if (!mc.smpessentials.claims.SpawnProtection.onInteractEntity(p, entity)) {
+                return net.minecraft.world.InteractionResult.FAIL;
+            }
             if (!mc.smpessentials.claims.ClaimProtection.onInteractEntity(p, entity)) {
                 return net.minecraft.world.InteractionResult.FAIL;
             }

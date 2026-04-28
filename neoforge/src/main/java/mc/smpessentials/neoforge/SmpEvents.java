@@ -7,6 +7,7 @@ import mc.smpessentials.events.MessageScheduler;
 import mc.smpessentials.skills.SkillEvents;
 import mc.smpessentials.teleport.TeleportScheduler;
 import mc.smpessentials.claims.ClaimProtection;
+import mc.smpessentials.claims.SpawnProtection;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionResult;
@@ -184,6 +185,10 @@ public class SmpEvents {
     @SubscribeEvent
     public static void onInteractEntity(PlayerInteractEvent.EntityInteract event) {
         if (event.getEntity() instanceof ServerPlayer player) {
+            if (!SpawnProtection.onInteractEntity(player, event.getTarget())) {
+                event.setCanceled(true);
+                return;
+            }
             if (!ClaimProtection.onInteractEntity(player, event.getTarget())) {
                 event.setCanceled(true);
             }

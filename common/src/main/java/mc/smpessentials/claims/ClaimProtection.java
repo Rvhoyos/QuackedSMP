@@ -167,10 +167,8 @@ public final class ClaimProtection {
         return true;
     }
 
-    private static boolean isProtectedEntity(Entity e) {
-        // Protect: Animals, Armor Stands, Hanging entities (Item Frames, Paintings),
-        // Villagers
-        // Allow: Monsters
+    // Package-private so SpawnProtection can reuse the same entity classification.
+    static boolean isProtectedEntity(Entity e) {
         if (e instanceof Monster)
             return false;
         if (e instanceof Player)
