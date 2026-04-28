@@ -66,6 +66,8 @@ public class SmpEvents {
     public static void onServerStopped(ServerStoppedEvent event) {
         mc.smpessentials.regen.ChunkRegenManager.onServerStopped(event.getServer());
         mc.smpessentials.dims.DimManager.scrubLevelDat(event.getServer());
+
+        mc.smpessentials.SmpUtilsMod.scheduleExitGuard();
     }
 
     @SubscribeEvent

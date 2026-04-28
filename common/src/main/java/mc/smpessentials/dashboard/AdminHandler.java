@@ -151,8 +151,8 @@ public final class AdminHandler {
                 try {
                     server.getCommands().performPrefixedCommand(
                             server.createCommandSourceStack(), command);
-                } catch (Exception e) {
-                    SmpUtilsMod.LOGGER.warn("[AdminPanel] exec failed: {}", e.getMessage(), e);
+                } catch (Throwable t) {
+                    SmpUtilsMod.LOGGER.error("[AdminPanel] exec failed: {}", command, t);
                 }
             });
             return String.format("{\"ok\":true,\"command\":\"%s\"}", jsonEscape(command));

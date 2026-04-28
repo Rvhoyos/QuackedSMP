@@ -51,6 +51,8 @@ public final class SmpUtilsModFabric implements ModInitializer {
         net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents.SERVER_STOPPED.register(server -> {
             mc.smpessentials.regen.ChunkRegenManager.onServerStopped(server);
             mc.smpessentials.dims.DimManager.scrubLevelDat(server);
+
+            mc.smpessentials.SmpUtilsMod.scheduleExitGuard();
         });
 
         // 3. Player Join / Disconnect
