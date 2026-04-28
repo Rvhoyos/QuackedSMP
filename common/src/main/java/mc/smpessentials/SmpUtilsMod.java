@@ -24,6 +24,18 @@ public final class SmpUtilsMod {
         purgeOldModVersions();
     }
 
+    // Schedules a forced JVM exit 5 seconds from now. Works around mods (e.g. WorldEdit) that
+    // leave non-daemon threads alive after shutdown, preventing the process from exiting.
+    public static void scheduleExitGuard() {
+        Thread exitGuard = new Thread(() -> {
+            try { Thread.sleep(5000); } catch (InterruptedException ignored) {}
+            LOGGER.warn("[QuackedSMP] JVM still alive 5s after shutdown — forcing exit");
+            System.exit(0);
+        }, "QuackSMP-ExitGuard");
+        exitGuard.setDaemon(true);
+        exitGuard.start();
+    }
+
     // Deletes stale QuackedSMP JARs from mods/ on startup, keeping only the currently running one.
     public static void purgeOldModVersions() {
         try {
