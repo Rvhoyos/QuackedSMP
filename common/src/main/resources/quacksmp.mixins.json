@@ -26,6 +26,7 @@
     "ChunkPacketDataMixin",
     "EnderManTakeBlockMixin",
     "EnderManLeaveBlockMixin",
+    "BlockUpdateRevealMixin",
     "FarmBlockMixin",
     "ServerLevelMixin",
     "WitherSkullBlockMixin",
