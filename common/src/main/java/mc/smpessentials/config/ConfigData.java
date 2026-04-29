@@ -32,6 +32,8 @@ public final class ConfigData {
     public String bluemapClaimColor = "00FFFF";
     public String bluemapOpClaimColor = "FFD700";
     public String bluemapVipClaimColor = "8A2BE2";
+    public boolean bluemapShowSpawnProtection = true;
+    public String bluemapSpawnProtectionColor = "80409040";
 
     public List<Integer> muteLevelsMinutes = new ArrayList<>(List.of(60, 120, 240, 480, 1440));
 

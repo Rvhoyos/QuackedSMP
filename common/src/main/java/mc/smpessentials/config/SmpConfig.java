@@ -63,6 +63,8 @@ public final class SmpConfig {
     public static String BLUEMAP_CLAIM_COLOR = "00FFFF"; // Cyan
     public static String BLUEMAP_OP_CLAIM_COLOR = "FFD700"; // Gold
     public static String BLUEMAP_VIP_CLAIM_COLOR = "8A2BE2"; // Purple
+    public static boolean BLUEMAP_SHOW_SPAWN_PROTECTION = true;
+    public static String BLUEMAP_SPAWN_PROTECTION_COLOR = "80409040";
 
     // ---- Hardcore ----
     public static boolean HARDCORE_ENABLED = false;
@@ -167,6 +169,8 @@ public final class SmpConfig {
         BLUEMAP_CLAIM_COLOR = d.bluemapClaimColor;
         BLUEMAP_OP_CLAIM_COLOR = d.bluemapOpClaimColor;
         BLUEMAP_VIP_CLAIM_COLOR = d.bluemapVipClaimColor;
+        BLUEMAP_SHOW_SPAWN_PROTECTION = d.bluemapShowSpawnProtection;
+        BLUEMAP_SPAWN_PROTECTION_COLOR = d.bluemapSpawnProtectionColor;
         MUTE_LEVELS_MINUTES = d.muteLevelsMinutes;
         TIERS = d.tiers;
         RULES = d.rules;

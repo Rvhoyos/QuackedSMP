@@ -8,6 +8,7 @@ import de.bluecolored.bluemap.api.markers.HtmlMarker;
 import de.bluecolored.bluemap.api.math.Color;
 import de.bluecolored.bluemap.api.math.Shape;
 import de.bluecolored.bluemap.api.BlueMapMap;
+import net.minecraft.server.dedicated.DedicatedServer;
 import net.minecraft.world.level.border.WorldBorder;
 import mc.smpessentials.config.SmpConfig;
 import mc.smpessentials.SmpUtilsMod;
@@ -32,7 +33,7 @@ import java.io.File;
 import java.util.*;
 import java.util.stream.Collectors;
 
-// Manages BlueMap markers for player homes, claimed regions, and the world border.
+// Manages BlueMap markers for player homes, claimed regions, spawn protection, and the world border.
 // Uses BlueMap's AssetStorage for custom icons to avoid CSP restrictions on POI markers.
 public class BlueMapMarkerManager {
     private final BlueMapAPI api;
@@ -84,6 +85,9 @@ public class BlueMapMarkerManager {
         }
         if (SmpConfig.BLUEMAP_SHOW_WORLDBORDER) {
             updateWorldBorder();
+        }
+        if (SmpConfig.BLUEMAP_SHOW_SPAWN_PROTECTION) {
+            updateSpawnProtection();
         }
     }
 
@@ -427,6 +431,50 @@ public class BlueMapMarkerManager {
         return new Color(255, 0, 0, 0.5f); // fallback red
     }
 
+    private void updateSpawnProtection() {
+        MinecraftServer server = BlueMapIntegration.getServer();
+        if (server == null || !(server instanceof DedicatedServer ds)) return;
+
+        int radius = ds.spawnProtectionRadius();
+        if (radius <= 0) {
+            for (BlueMapMap map : api.getMaps()) {
+                map.getMarkerSets().remove("quacksmp_spawnprotection");
+            }
+            return;
+        }
+
+        BlockPos spawn = server.overworld().getRespawnData().pos();
+        Shape spawnShape = new Shape(
+                new Vector2d(spawn.getX() - radius, spawn.getZ() - radius),
+                new Vector2d(spawn.getX() + radius, spawn.getZ() - radius),
+                new Vector2d(spawn.getX() + radius, spawn.getZ() + radius),
+                new Vector2d(spawn.getX() - radius, spawn.getZ() + radius));
+
+        String overworldId = server.overworld().dimension().identifier().toString();
+        Color fillColor = parseColor(SmpConfig.BLUEMAP_SPAWN_PROTECTION_COLOR);
+        Color lineColor = new Color(fillColor.getRed(), fillColor.getGreen(), fillColor.getBlue(), 1.0f);
+
+        for (BlueMapMap map : api.getMaps()) {
+            if (!map.getWorld().getId().endsWith("#" + overworldId)) {
+                map.getMarkerSets().remove("quacksmp_spawnprotection");
+                continue;
+            }
+
+            MarkerSet markerSet = map.getMarkerSets().computeIfAbsent("quacksmp_spawnprotection",
+                    id -> MarkerSet.builder().label("Spawn Protection").defaultHidden(false).build());
+            markerSet.getMarkers().clear();
+
+            markerSet.put("spawn_protection", ShapeMarker.builder()
+                    .label("Spawn Protection (radius " + radius + ")")
+                    .shape(spawnShape, spawn.getY())
+                    .fillColor(fillColor)
+                    .lineColor(lineColor)
+                    .lineWidth(2)
+                    .depthTestEnabled(false)
+                    .build());
+        }
+    }
+
     private void updateWorldBorder() {
         MinecraftServer server = BlueMapIntegration.getServer();
         if (server == null) return;
@@ -470,6 +518,7 @@ public class BlueMapMarkerManager {
             map.getMarkerSets().remove("quacksmp_homes");
             map.getMarkerSets().remove("quacksmp_claims");
             map.getMarkerSets().remove("quacksmp_worldborder");
+            map.getMarkerSets().remove("quacksmp_spawnprotection");
         }
     }
 }
