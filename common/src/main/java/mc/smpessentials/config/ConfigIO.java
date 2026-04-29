@@ -104,6 +104,8 @@ public final class ConfigIO {
         data.bluemapClaimColor = SmpConfig.BLUEMAP_CLAIM_COLOR;
         data.bluemapOpClaimColor = SmpConfig.BLUEMAP_OP_CLAIM_COLOR;
         data.bluemapVipClaimColor = SmpConfig.BLUEMAP_VIP_CLAIM_COLOR;
+        data.bluemapShowSpawnProtection = SmpConfig.BLUEMAP_SHOW_SPAWN_PROTECTION;
+        data.bluemapSpawnProtectionColor = SmpConfig.BLUEMAP_SPAWN_PROTECTION_COLOR;
         data.muteLevelsMinutes = new java.util.ArrayList<>(SmpConfig.MUTE_LEVELS_MINUTES);
         data.tiers = new java.util.ArrayList<>(SmpConfig.TIERS);
         data.rules = new java.util.ArrayList<>(SmpConfig.RULES);

@@ -226,6 +226,8 @@ public final class AdminHandler {
         sb.append(String.format("\"bluemap_op_claim_color\":\"%s\",", jsonEscape(SmpConfig.BLUEMAP_OP_CLAIM_COLOR)));
         sb.append(String.format("\"bluemap_vip_claim_color\":\"%s\",", jsonEscape(SmpConfig.BLUEMAP_VIP_CLAIM_COLOR)));
         sb.append(String.format("\"bluemap_worldborder_color\":\"%s\",", jsonEscape(SmpConfig.BLUEMAP_WORLDBORDER_COLOR)));
+        sb.append(String.format("\"bluemap_show_spawn_protection\":%b,", SmpConfig.BLUEMAP_SHOW_SPAWN_PROTECTION));
+        sb.append(String.format("\"bluemap_spawn_protection_color\":\"%s\",", jsonEscape(SmpConfig.BLUEMAP_SPAWN_PROTECTION_COLOR)));
         // Tiers
         sb.append("\"tiers\":[");
         for (int i = 0; i < SmpConfig.TIERS.size(); i++) {
@@ -334,6 +336,8 @@ public final class AdminHandler {
             if (patch.has("bluemap_op_claim_color"))    { SmpConfig.BLUEMAP_OP_CLAIM_COLOR    = patch.get("bluemap_op_claim_color").getAsString();     changed++; blueMapChanged = true; }
             if (patch.has("bluemap_vip_claim_color"))   { SmpConfig.BLUEMAP_VIP_CLAIM_COLOR   = patch.get("bluemap_vip_claim_color").getAsString();    changed++; blueMapChanged = true; }
             if (patch.has("bluemap_worldborder_color")) { SmpConfig.BLUEMAP_WORLDBORDER_COLOR = patch.get("bluemap_worldborder_color").getAsString();  changed++; blueMapChanged = true; }
+            if (patch.has("bluemap_show_spawn_protection"))  { SmpConfig.BLUEMAP_SHOW_SPAWN_PROTECTION  = patch.get("bluemap_show_spawn_protection").getAsBoolean();  changed++; blueMapChanged = true; }
+            if (patch.has("bluemap_spawn_protection_color")) { SmpConfig.BLUEMAP_SPAWN_PROTECTION_COLOR = patch.get("bluemap_spawn_protection_color").getAsString();  changed++; blueMapChanged = true; }
             // Lists
             if (patch.has("vote_rewards") && patch.get("vote_rewards").isJsonArray())          { loadStrArr(patch.getAsJsonArray("vote_rewards"),         SmpConfig.VOTE_REWARDS);       changed++; }
             if (patch.has("vote_vip_rewards") && patch.get("vote_vip_rewards").isJsonObject()) {

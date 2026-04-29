@@ -46,6 +46,7 @@ const TABS = [
       'votifier_enabled', 'votifier_port', 'votifier_token', 'vote_broadcast', 'vote_rewards', 'vote_vip_rewards',
       'bluemap_enabled', 'bluemap_show_homes', 'bluemap_show_claims', 'bluemap_show_worldborder',
       'bluemap_claim_color', 'bluemap_op_claim_color', 'bluemap_vip_claim_color', 'bluemap_worldborder_color',
+      'bluemap_show_spawn_protection', 'bluemap_spawn_protection_color',
     ],
   },
 ]
@@ -501,6 +502,12 @@ function IntegrationsTab({ draft, patch }) {
         </Row>
         <Row label="World Border Color" hint="Color of the world border line">
           <ColorInput value={draft.bluemap_worldborder_color} onChange={v => patch('bluemap_worldborder_color', v)} />
+        </Row>
+        <Row label="Show Spawn Protection" hint="Draw the spawn protection radius on the map">
+          <Toggle value={draft.bluemap_show_spawn_protection} onChange={v => patch('bluemap_show_spawn_protection', v)} />
+        </Row>
+        <Row label="Spawn Protection Color" hint="Fill color for the spawn protection area">
+          <ColorInput value={draft.bluemap_spawn_protection_color} onChange={v => patch('bluemap_spawn_protection_color', v)} />
         </Row>
       </Group>
     </>
