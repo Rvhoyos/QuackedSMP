@@ -19,8 +19,9 @@ import java.nio.file.Path;
 import java.util.*;
 
 // Queues and executes wilderness chunk regeneration at server shutdown.
-// Claimed chunks and a buffer zone around them are preserved; everything else
-// gets its header zeroed in the .mca files so Minecraft regenerates from seed.
+// Claimed chunks, the vanilla spawn protection area, and a buffer zone around
+// each are preserved; everything else gets its header zeroed in the .mca files
+// so Minecraft regenerates from seed.
 public final class ChunkRegenManager {
 
     private ChunkRegenManager() {}
@@ -60,6 +61,8 @@ public final class ChunkRegenManager {
             List<ClaimData> claims = readClaimsFromDisk(worldRoot);
             SmpUtilsMod.LOGGER.info("[QuackedSMP] Loaded {} claims from disk.", claims.size());
 
+            LongOpenHashSet spawnChunks = readSpawnProtectedChunks(worldRoot);
+
             // Group claims by dimension
             Map<String, List<ClaimData>> claimsByDim = new HashMap<>();
             for (ClaimData cd : claims) {
@@ -78,6 +81,9 @@ public final class ChunkRegenManager {
             for (String dimId : allDims) {
                 List<ClaimData> dimClaims = claimsByDim.getOrDefault(dimId, Collections.emptyList());
                 LongOpenHashSet protectedSet = buildProtectedSet(dimClaims);
+                if ("minecraft:overworld".equals(dimId)) {
+                    protectedSet.addAll(spawnChunks);
+                }
                 Path dimFolder = resolveDimensionFolder(worldRoot, dimId);
 
                 SmpUtilsMod.LOGGER.info("[QuackedSMP] {}: {} claims, {} protected chunks (with buffer={})",
@@ -116,7 +122,7 @@ public final class ChunkRegenManager {
     // Reads claims directly from the compressed NBT file on disk.
     // Returns an empty list if the file does not exist (no claims).
     private static List<ClaimData> readClaimsFromDisk(Path worldRoot) {
-        Path claimFile = worldRoot.resolve("data").resolve(CLAIMS_FILE);
+        Path claimFile = worldRoot.resolve("dimensions/minecraft/overworld/data/minecraft").resolve(CLAIMS_FILE);
         if (!Files.exists(claimFile)) {
             SmpUtilsMod.LOGGER.warn("[QuackedSMP] No claims file found -- all chunks will be regenerated.");
             return Collections.emptyList();
@@ -139,6 +145,67 @@ public final class ChunkRegenManager {
         }
     }
 
+    // Reads spawn center from level.dat and protection radius from server.properties,
+    // then returns the set of chunk positions within the spawn protection square + buffer.
+    // Returns an empty set if spawn protection is disabled or files cannot be read.
+    private static LongOpenHashSet readSpawnProtectedChunks(Path worldRoot) {
+        LongOpenHashSet set = new LongOpenHashSet();
+        Path normalizedRoot = worldRoot.toAbsolutePath().normalize();
+
+        // Read spawn-protection radius from server.properties
+        Path propsFile = normalizedRoot.getParent().resolve("server.properties");
+        if (!Files.exists(propsFile)) return set;
+
+        int radius;
+        try (var reader = Files.newBufferedReader(propsFile)) {
+            Properties props = new Properties();
+            props.load(reader);
+            String val = props.getProperty("spawn-protection", "16");
+            radius = Integer.parseInt(val.trim());
+        } catch (Exception e) {
+            SmpUtilsMod.LOGGER.warn("[QuackedSMP] Failed to read server.properties for spawn protection", e);
+            return set;
+        }
+        if (radius <= 0) return set;
+
+        // Read spawn position from level.dat
+        Path levelDat = normalizedRoot.resolve("level.dat");
+        if (!Files.exists(levelDat)) return set;
+
+        int spawnX, spawnZ;
+        try {
+            CompoundTag root = NbtIo.readCompressed(levelDat, NbtAccounter.unlimitedHeap());
+            Optional<CompoundTag> dataOpt = root.getCompound("Data");
+            if (dataOpt.isEmpty()) return set;
+            Optional<CompoundTag> spawnOpt = dataOpt.get().getCompound("spawn");
+            if (spawnOpt.isEmpty()) return set;
+            Optional<int[]> posOpt = spawnOpt.get().getIntArray("pos");
+            if (posOpt.isEmpty() || posOpt.get().length < 3) return set;
+            int[] pos = posOpt.get();
+            spawnX = pos[0];
+            spawnZ = pos[2];
+        } catch (IOException e) {
+            SmpUtilsMod.LOGGER.warn("[QuackedSMP] Failed to read level.dat for spawn position", e);
+            return set;
+        }
+
+        // Convert block-coord square to chunk coords, expand by buffer
+        int minChunkX = ((spawnX - radius) >> 4) - BUFFER;
+        int maxChunkX = ((spawnX + radius) >> 4) + BUFFER;
+        int minChunkZ = ((spawnZ - radius) >> 4) - BUFFER;
+        int maxChunkZ = ((spawnZ + radius) >> 4) + BUFFER;
+
+        for (int cx = minChunkX; cx <= maxChunkX; cx++) {
+            for (int cz = minChunkZ; cz <= maxChunkZ; cz++) {
+                set.add(new ChunkPos(cx, cz).pack());
+            }
+        }
+
+        SmpUtilsMod.LOGGER.info("[QuackedSMP] Spawn protection: center=({}, {}), radius={}, protecting {} chunks (with buffer={})",
+                spawnX, spawnZ, radius, set.size(), BUFFER);
+        return set;
+    }
+
     // Builds the set of chunk longs that must NOT be cleared.
     // Includes every claimed chunk plus a square buffer around each.
     private static LongOpenHashSet buildProtectedSet(List<ClaimData> claims) {
@@ -154,57 +221,29 @@ public final class ChunkRegenManager {
         return set;
     }
 
-    // Scans the world root to find all dimensions that have region data on disk.
+    // Scans dimensions/<namespace>/<path>/ for all dimensions that have region data on disk.
     private static Set<String> discoverDimensions(Path worldRoot) {
-        Set<String> dims = new LinkedHashSet<>();
-
-        // Overworld
-        if (Files.isDirectory(worldRoot.resolve("region"))) {
-            dims.add("minecraft:overworld");
-        }
-        // Nether
-        if (Files.isDirectory(worldRoot.resolve("DIM-1").resolve("region"))) {
-            dims.add("minecraft:the_nether");
-        }
-        // End
-        if (Files.isDirectory(worldRoot.resolve("DIM1").resolve("region"))) {
-            dims.add("minecraft:the_end");
-        }
-        // Custom dimensions: dimensions/<namespace>/<path>/region/
         Path dimsRoot = worldRoot.resolve("dimensions");
-        if (Files.isDirectory(dimsRoot)) {
-            try (DirectoryStream<Path> namespaces = Files.newDirectoryStream(dimsRoot)) {
-                for (Path ns : namespaces) {
-                    if (!Files.isDirectory(ns)) continue;
-                    try (DirectoryStream<Path> paths = Files.newDirectoryStream(ns)) {
-                        for (Path p : paths) {
-                            if (Files.isDirectory(p.resolve("region"))) {
-                                dims.add(ns.getFileName() + ":" + p.getFileName());
-                            }
-                        }
-                    }
-                }
-            } catch (IOException e) {
-                SmpUtilsMod.LOGGER.warn("[QuackedSMP] Failed to scan custom dimensions", e);
-            }
-        }
+        if (!Files.isDirectory(dimsRoot)) return new LinkedHashSet<>();
 
-        return dims;
+        try (var stream = Files.walk(dimsRoot, 2)) {
+            return stream
+                    .filter(p -> p.getNameCount() == dimsRoot.getNameCount() + 2)
+                    .filter(p -> Files.isDirectory(p.resolve("region")))
+                    .map(p -> p.getParent().getFileName() + ":" + p.getFileName())
+                    .collect(java.util.stream.Collectors.toCollection(LinkedHashSet::new));
+        } catch (IOException e) {
+            SmpUtilsMod.LOGGER.warn("[QuackedSMP] Failed to scan dimensions", e);
+            return new LinkedHashSet<>();
+        }
     }
 
-    // Maps a dimension ID string to its filesystem folder.
+    // Maps a dimension ID (e.g. "minecraft:overworld") to its filesystem folder.
     static Path resolveDimensionFolder(Path worldRoot, String dimId) {
-        return switch (dimId) {
-            case "minecraft:overworld" -> worldRoot;
-            case "minecraft:the_nether" -> worldRoot.resolve("DIM-1");
-            case "minecraft:the_end" -> worldRoot.resolve("DIM1");
-            default -> {
-                int colon = dimId.indexOf(':');
-                String namespace = colon > 0 ? dimId.substring(0, colon) : "minecraft";
-                String path = colon > 0 ? dimId.substring(colon + 1) : dimId;
-                yield worldRoot.resolve("dimensions").resolve(namespace).resolve(path);
-            }
-        };
+        int colon = dimId.indexOf(':');
+        String namespace = colon > 0 ? dimId.substring(0, colon) : "minecraft";
+        String path = colon > 0 ? dimId.substring(colon + 1) : dimId;
+        return worldRoot.resolve("dimensions").resolve(namespace).resolve(path);
     }
 
     // Processes all .mca files in a directory. Returns {filesProcessed, chunksCleared, filesDeleted}.

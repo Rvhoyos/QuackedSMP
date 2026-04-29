@@ -74,10 +74,10 @@ public class EndResetLogic {
             cleanUpOldFight(sEndLevel);
             discardEndEntities(sEndLevel);
 
-            // 3. Mark the DIM1 folder for deletion on shutdown
-            Path dim1Dir = server.getWorldPath(LevelResource.ROOT).resolve("DIM1");
-            Path marker = dim1Dir.resolve("RESET_PENDING");
-            if (!Files.exists(dim1Dir)) Files.createDirectories(dim1Dir);
+            // 3. Mark the End folder for deletion on shutdown
+            Path endDir = server.getWorldPath(LevelResource.ROOT).resolve("dimensions/minecraft/the_end");
+            Path marker = endDir.resolve("RESET_PENDING");
+            if (!Files.exists(endDir)) Files.createDirectories(endDir);
             Files.createFile(marker);
 
             // 4. Trigger a live dragon fight reset in the current level too
@@ -90,19 +90,20 @@ public class EndResetLogic {
         }
     }
 
-    // Deletes End region/data/poi files if a RESET_PENDING marker exists. Called from the server-stopping event.
+    // Deletes End region/entities/data/poi files if a RESET_PENDING marker exists. Called from the server-stopping event.
     public static void onServerStopping(MinecraftServer server) {
         try {
-            Path dim1Dir = server.getWorldPath(LevelResource.ROOT).resolve("DIM1");
-            Path marker = dim1Dir.resolve("RESET_PENDING");
-            
+            Path endDir = server.getWorldPath(LevelResource.ROOT).resolve("dimensions/minecraft/the_end");
+            Path marker = endDir.resolve("RESET_PENDING");
+
             if (Files.exists(marker)) {
                 mc.smpessentials.SmpUtilsMod.LOGGER.info("[QuackedSMP] Performing scheduled End dimension reset...");
 
                 // At this point, the server is shutting down, so we can attempt to delete files
-                deleteDirectoryContents(dim1Dir.resolve("region"));
-                deleteDirectoryContents(dim1Dir.resolve("data"));
-                deleteDirectoryContents(dim1Dir.resolve("poi"));
+                deleteDirectoryContents(endDir.resolve("region"));
+                deleteDirectoryContents(endDir.resolve("entities"));
+                deleteDirectoryContents(endDir.resolve("data"));
+                deleteDirectoryContents(endDir.resolve("poi"));
 
                 Files.deleteIfExists(marker);
                 mc.smpessentials.SmpUtilsMod.LOGGER.info("[QuackedSMP] End dimension reset complete.");

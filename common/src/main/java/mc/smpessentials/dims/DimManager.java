@@ -75,10 +75,6 @@ public final class DimManager {
 
     private static final Logger LOGGER = LogManager.getLogger("DimManager");
 
-    // Dims queued for removal from level.dat on next server stop (see scrubLevelDat)
-    private static final Set<String> pendingLevelDatRemovals =
-            Collections.synchronizedSet(new HashSet<>());
-
     // Tracks which loaded dims are ether-type to avoid SavedData lookups on every tick
     private static final Set<String> etherDimIds =
             Collections.synchronizedSet(new HashSet<>());
@@ -108,8 +104,8 @@ public final class DimManager {
     }
 
     // Evicts all players, saves, closes, and removes the dimension. Deletes chunk data, datapack
-    // JSON, and BlueMap map config so it does not re-register on restart. Queues a level.dat scrub
-    // for server stop. Returns null on success or an error message on failure.
+    // JSON, and BlueMap map config so it does not re-register on restart.
+    // Returns null on success or an error message on failure.
     public static String destroy(MinecraftServer server, String id) {
         Identifier loc;
         try {
@@ -160,11 +156,6 @@ public final class DimManager {
         levels.remove(dimKey);
         etherDimIds.remove(loc.toString());
         DimSavedData.get(server).remove(id);
-        // Queue this dim for removal from level.dat on the next server stop.
-        // Vanilla bakes datapack-registered dimensions into level.dat on first load and
-        // re-registers them from there on subsequent restarts even if the datapack JSON
-        // is deleted. scrubLevelDat() patches the file after the server's own save completes.
-        pendingLevelDatRemovals.add(loc.toString());
         // Force-write to disk immediately so the deletion survives a crash or fast restart
         server.overworld().getDataStorage().saveAndJoin();
 
@@ -215,7 +206,7 @@ public final class DimManager {
     // minecraft:overworld for any player saved in the given dimension.
     // This prevents a fatal server crash when the player reconnects.
     private static void relocateOfflinePlayers(MinecraftServer server, String deletedDimId) {
-        Path playerDataDir = server.getWorldPath(LevelResource.ROOT).resolve("playerdata");
+        Path playerDataDir = server.getWorldPath(LevelResource.PLAYER_DATA_DIR);
         if (!java.nio.file.Files.isDirectory(playerDataDir)) return;
 
         // Collect UUIDs of currently online players — their data is managed in memory.
@@ -253,41 +244,6 @@ public final class DimManager {
         }
     }
 
-    // Patches level.dat after the server's own save to remove deleted dim IDs from
-    // WorldGenSettings.dimensions. Must be called from the server-stopped event.
-    public static void scrubLevelDat(MinecraftServer server) {
-        if (pendingLevelDatRemovals.isEmpty()) return;
-
-        Path levelDat = server.getWorldPath(LevelResource.ROOT).resolve("level.dat");
-        try {
-            CompoundTag root = NbtIo.readCompressed(levelDat, NbtAccounter.unlimitedHeap());
-            // getCompound returns Optional<CompoundTag> in 1.21.11
-            Optional<CompoundTag> dimsOpt = root.getCompound("Data")
-                    .flatMap(d -> d.getCompound("WorldGenSettings"))
-                    .flatMap(w -> w.getCompound("dimensions"));
-
-            if (dimsOpt.isEmpty()) return;
-            CompoundTag dimensions = dimsOpt.get();
-
-            boolean modified = false;
-            for (String dimId : pendingLevelDatRemovals) {
-                if (dimensions.contains(dimId)) {
-                    dimensions.remove(dimId);
-                    LOGGER.info("Scrubbed {} from level.dat WorldGenSettings", dimId);
-                    modified = true;
-                }
-            }
-
-            if (modified) {
-                NbtIo.writeCompressed(root, levelDat);
-            }
-        } catch (IOException e) {
-            LOGGER.error("Failed to scrub deleted dimensions from level.dat: {}", e.getMessage());
-        } finally {
-            pendingLevelDatRemovals.clear();
-        }
-    }
-
     // Re-creates all custom dimensions from SavedData on server start.
     // After restoring, repairs any player data files that reference dimensions
     // not present in the server's levels map (safety net for servers that already
@@ -313,7 +269,7 @@ public final class DimManager {
     private static void repairOrphanedPlayers(MinecraftServer server) {
         Map<ResourceKey<Level>, ServerLevel> levels =
                 ((MinecraftServerMixin) server).getLevels();
-        Path playerDataDir = server.getWorldPath(LevelResource.ROOT).resolve("playerdata");
+        Path playerDataDir = server.getWorldPath(LevelResource.PLAYER_DATA_DIR);
         if (!java.nio.file.Files.isDirectory(playerDataDir)) return;
 
         try (DirectoryStream<Path> stream = java.nio.file.Files.newDirectoryStream(playerDataDir, "*.dat")) {
