@@ -215,7 +215,7 @@ public final class DimManager {
     // minecraft:overworld for any player saved in the given dimension.
     // This prevents a fatal server crash when the player reconnects.
     private static void relocateOfflinePlayers(MinecraftServer server, String deletedDimId) {
-        Path playerDataDir = server.getWorldPath(LevelResource.ROOT).resolve("playerdata");
+        Path playerDataDir = server.getWorldPath(LevelResource.PLAYER_DATA_DIR);
         if (!java.nio.file.Files.isDirectory(playerDataDir)) return;
 
         // Collect UUIDs of currently online players — their data is managed in memory.
@@ -313,7 +313,7 @@ public final class DimManager {
     private static void repairOrphanedPlayers(MinecraftServer server) {
         Map<ResourceKey<Level>, ServerLevel> levels =
                 ((MinecraftServerMixin) server).getLevels();
-        Path playerDataDir = server.getWorldPath(LevelResource.ROOT).resolve("playerdata");
+        Path playerDataDir = server.getWorldPath(LevelResource.PLAYER_DATA_DIR);
         if (!java.nio.file.Files.isDirectory(playerDataDir)) return;
 
         try (DirectoryStream<Path> stream = java.nio.file.Files.newDirectoryStream(playerDataDir, "*.dat")) {
