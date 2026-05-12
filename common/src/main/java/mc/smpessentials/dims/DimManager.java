@@ -331,8 +331,8 @@ public final class DimManager {
         if (surfaceY > 0) {
             return new BlockPos(hintX, surfaceY, hintZ);
         }
-        int islandY = dest.getHeight(Heightmap.Types.WORLD_SURFACE, 0, 0);
-        return new BlockPos(0, islandY > 0 ? islandY : 80, 0);
+        int islandY = dest.getHeight(Heightmap.Types.WORLD_SURFACE, hintX, hintZ);
+        return new BlockPos(hintX, islandY > 0 ? islandY : 80, hintZ);
     }
 
     // Generates a small floating island at spawnPos if terrain is missing, then ensures a return portal.
