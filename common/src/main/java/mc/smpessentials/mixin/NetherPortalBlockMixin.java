@@ -67,10 +67,8 @@ public abstract class NetherPortalBlockMixin {
         if (dest == null) return;
 
         // Determine destination position:
-        //   Outbound (→ custom dim): record entry pos for the return trip; resolve landing spot.
-        //     - Ether: one shared island, always at global spawn origin.
-        //     - Non-ether: one return portal per overworld portal; use entry XZ so each overworld
-        //       portal links to the matching position in the custom dim.
+        //   Outbound (→ custom dim): record entry pos for the return trip; use entry XZ so each
+        //     overworld portal links to the matching position in the custom dim.
         //   Inbound  (→ overworld): restore the position the entity entered from.
         final BlockPos origin;
         if (destKey.equals(Level.OVERWORLD)) {

@@ -326,13 +326,9 @@ public final class DimManager {
         if (dest.getChunkSource().getGenerator() instanceof FlatLevelSource flat) {
             return new BlockPos(hintX, flat.getSpawnHeight(dest), hintZ);
         }
-        // Noise-based dims: probe the heightmap. getHeight returns 0 for unloaded chunks.
+        // Noise-based dims: probe the heightmap. Returns minY for unloaded chunks.
         int surfaceY = dest.getHeight(Heightmap.Types.WORLD_SURFACE, hintX, hintZ);
-        if (surfaceY > 0) {
-            return new BlockPos(hintX, surfaceY, hintZ);
-        }
-        int islandY = dest.getHeight(Heightmap.Types.WORLD_SURFACE, hintX, hintZ);
-        return new BlockPos(hintX, islandY > 0 ? islandY : 80, hintZ);
+        return new BlockPos(hintX, surfaceY > 0 ? surfaceY : 80, hintZ);
     }
 
     // Generates a small floating island at spawnPos if terrain is missing, then ensures a return portal.
