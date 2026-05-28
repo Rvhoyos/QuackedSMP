@@ -189,6 +189,7 @@ public final class AdminHandler {
         sb.append(String.format("\"shops_enabled\":%b,", SmpConfig.SHOPS_ENABLED));
         sb.append(String.format("\"economy_enabled\":%b,", SmpConfig.ECONOMY_ENABLED));
         sb.append(String.format("\"commandblocks_enabled\":%b,", cmdBlocksEnabled));
+        sb.append(String.format("\"backup_public_download\":%b,", SmpConfig.BACKUP_PUBLIC_DOWNLOAD));
         // Hardcore
         sb.append(String.format("\"hardcore_enabled\":%b,", SmpConfig.HARDCORE_ENABLED));
         sb.append(String.format("\"hardcore_death_percent\":%d,", SmpConfig.HARDCORE_DEATH_PERCENT));
@@ -309,6 +310,7 @@ public final class AdminHandler {
             if (patch.has("chatfilter_enabled")) { SmpConfig.CHATFILTER_ENABLED = patch.get("chatfilter_enabled").getAsBoolean(); changed++; }
             if (patch.has("shops_enabled"))     { SmpConfig.SHOPS_ENABLED     = patch.get("shops_enabled").getAsBoolean();     changed++; }
             if (patch.has("economy_enabled"))   { SmpConfig.ECONOMY_ENABLED   = patch.get("economy_enabled").getAsBoolean();   changed++; }
+            if (patch.has("backup_public_download")) { SmpConfig.BACKUP_PUBLIC_DOWNLOAD = patch.get("backup_public_download").getAsBoolean(); changed++; }
             // Hardcore
             if (patch.has("hardcore_enabled"))        { SmpConfig.HARDCORE_ENABLED        = patch.get("hardcore_enabled").getAsBoolean();       changed++; }
             if (patch.has("hardcore_death_percent"))   { SmpConfig.HARDCORE_DEATH_PERCENT   = patch.get("hardcore_death_percent").getAsInt();     changed++; }
@@ -1988,7 +1990,7 @@ public final class AdminHandler {
     }
 
     // Parses a single query-string parameter value from a raw query string.
-    private static String queryParam(String queryString, String key) {
+    static String queryParam(String queryString, String key) {
         if (queryString == null || queryString.isEmpty()) return "";
         for (String part : queryString.split("&")) {
             int eq = part.indexOf('=');

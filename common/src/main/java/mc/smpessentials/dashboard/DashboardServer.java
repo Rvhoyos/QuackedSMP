@@ -6,6 +6,8 @@ import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
@@ -37,10 +39,24 @@ public final class DashboardServer extends Thread {
         String handle(String method, Map<String, String> headers, InputStream stream, long contentLength);
     }
 
+    /** Returns either a file to stream or an error; the dispatcher writes the response. */
+    @FunctionalInterface
+    public interface DownloadRouteHandler {
+        DownloadResult handle(String method, Map<String, String> headers);
+    }
+
+    /** Outcome of a {@link DownloadRouteHandler}: either an error or a file to stream. */
+    public sealed interface DownloadResult {
+        record Error(int status, String message) implements DownloadResult {}
+        record File(String contentType, String filename, Path path) implements DownloadResult {}
+    }
+
     // HTTP route table: path → handler
-    private final Map<String, RouteHandler>       routes       = new ConcurrentHashMap<>();
+    private final Map<String, RouteHandler>         routes         = new ConcurrentHashMap<>();
     // Upload route table: path → handler (bypasses the 64 KB body cap)
-    private final Map<String, UploadRouteHandler> uploadRoutes = new ConcurrentHashMap<>();
+    private final Map<String, UploadRouteHandler>   uploadRoutes   = new ConcurrentHashMap<>();
+    // Download route table: path → handler (streams response body from disk)
+    private final Map<String, DownloadRouteHandler> downloadRoutes = new ConcurrentHashMap<>();
 
     private final ExecutorService executor = Executors.newCachedThreadPool(r -> {
         Thread t = new Thread(r, "Dashboard-Conn");
@@ -64,6 +80,10 @@ public final class DashboardServer extends Thread {
 
     public void addUploadRoute(String path, UploadRouteHandler handler) {
         uploadRoutes.put(path, handler);
+    }
+
+    public void addDownloadRoute(String path, DownloadRouteHandler handler) {
+        downloadRoutes.put(path, handler);
     }
 
     // ── Server loop ────────────────────────────────────────────────────────────
@@ -142,6 +162,12 @@ public final class DashboardServer extends Thread {
                 return;
             }
 
+            DownloadRouteHandler downloadHandler = downloadRoutes.get(path);
+            if (downloadHandler != null) {
+                handleHttpDownload(socket, method, headers, downloadHandler);
+                return;
+            }
+
             // --- Read body (standard routes, max 64 KB) ---
             String body = "";
             if (contentLength > 0 && contentLength <= 65_536) {
@@ -209,6 +235,52 @@ public final class DashboardServer extends Thread {
                 writeResponse(out, 200, "application/json; charset=utf-8", "no-store", body);
             }
         }
+    }
+
+    // Calls the download handler, then writes either an error JSON or a streamed file body.
+    private void handleHttpDownload(Socket socket, String method, Map<String, String> headers,
+                                     DownloadRouteHandler handler) throws IOException {
+        try (socket) {
+            OutputStream out = socket.getOutputStream();
+            if ("OPTIONS".equals(method)) {
+                writeResponse(out, 204, "text/plain", "no-store", new byte[0]);
+                return;
+            }
+            DownloadResult result;
+            try {
+                result = handler.handle(method, headers);
+            } catch (Exception e) {
+                SmpUtilsMod.LOGGER.warn("[Dashboard] Download handler error: {}", e.getMessage());
+                byte[] body = "{\"error\":\"Internal server error\"}".getBytes(StandardCharsets.UTF_8);
+                writeResponse(out, 500, "application/json; charset=utf-8", "no-store", body);
+                return;
+            }
+            if (result instanceof DownloadResult.Error err) {
+                String json = String.format("{\"error\":\"%s\"}",
+                        err.message().replace("\\", "\\\\").replace("\"", "\\\""));
+                writeResponse(out, err.status(), "application/json; charset=utf-8", "no-store",
+                        json.getBytes(StandardCharsets.UTF_8));
+            } else if (result instanceof DownloadResult.File file) {
+                writeFileResponse(out, file.contentType(), file.filename(), file.path());
+            }
+        }
+    }
+
+    private void writeFileResponse(OutputStream out, String contentType, String filename, Path file) throws IOException {
+        long length = Files.size(file);
+        String safeName = filename.replace("\"", "");
+        String head = "HTTP/1.1 200 OK\r\n"
+                + "Content-Type: " + contentType + "\r\n"
+                + "Content-Length: " + length + "\r\n"
+                + "Content-Disposition: attachment; filename=\"" + safeName + "\"\r\n"
+                + "Cache-Control: no-store\r\n"
+                + "Access-Control-Allow-Origin: *\r\n"
+                + "Access-Control-Allow-Methods: GET, OPTIONS\r\n"
+                + "Access-Control-Allow-Headers: Content-Type, Authorization\r\n"
+                + "Connection: close\r\n\r\n";
+        out.write(head.getBytes(StandardCharsets.UTF_8));
+        Files.copy(file, out);
+        out.flush();
     }
 
     private void serveStatic(OutputStream out, String path) throws IOException {

@@ -67,10 +67,8 @@ public abstract class NetherPortalBlockMixin {
         if (dest == null) return;
 
         // Determine destination position:
-        //   Outbound (→ custom dim): record entry pos for the return trip; resolve landing spot.
-        //     - Ether: one shared island, always at global spawn origin.
-        //     - Non-ether: one return portal per overworld portal; use entry XZ so each overworld
-        //       portal links to the matching position in the custom dim.
+        //   Outbound (→ custom dim): record entry pos for the return trip; use entry XZ so each
+        //     overworld portal links to the matching position in the custom dim.
         //   Inbound  (→ overworld): restore the position the entity entered from.
         final BlockPos origin;
         if (destKey.equals(Level.OVERWORLD)) {
@@ -79,22 +77,17 @@ public abstract class NetherPortalBlockMixin {
             BlockPos entryPos = entity.blockPosition();
             DimManager.saveReturnPos(entity, entryPos, level.getServer());
             final int entryX = entryPos.getX(), entryZ = entryPos.getZ();
-            boolean isEther = data.getEntry(destKey.identifier().toString())
-                    .map(e -> "ether".equals(e.generatorType())).orElse(false);
-            origin = isEther
-                    ? DimManager.findSpawnOrigin(level.getServer(), dest)
-                    : DimManager.findSpawnOrigin(level.getServer(), dest, entryX, entryZ);
+            origin = DimManager.findSpawnOrigin(level.getServer(), dest, entryX, entryZ);
             // Ensure spawn structure on next tick — re-query origin inside execute() so that
             // spawn chunks are loaded and the portal lands at the actual terrain surface,
             // not at the Y=80 fallback that findSpawnOrigin returns for unloaded chunks.
             final MinecraftServer fServer = level.getServer();
             data.getEntry(destKey.identifier().toString())
                     .ifPresent(e -> fServer.execute(() -> {
+                        BlockPos freshOrigin = DimManager.findSpawnOrigin(fServer, dest, entryX, entryZ);
                         if ("ether".equals(e.generatorType())) {
-                            BlockPos freshOrigin = DimManager.findSpawnOrigin(fServer, dest);
                             DimManager.ensureSpawnPlatform(dest, freshOrigin);
                         } else {
-                            BlockPos freshOrigin = DimManager.findSpawnOrigin(fServer, dest, entryX, entryZ);
                             DimManager.ensureReturnPortal(dest, freshOrigin);
                         }
                     }));

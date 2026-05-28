@@ -6,9 +6,9 @@
 
 # QuackedSMP
 
-Server-side mod for **Minecraft 1.21.11** (Fabric + NeoForge) with a built-in browser admin panel. Drop the JAR and manage your server from a browser, no external tools or config editing needed.
+Server-side mod for **Minecraft 26.1.2** (Fabric + NeoForge) with a built-in browser admin panel. Drop the JAR and manage your server from a browser, no external tools or config editing needed.
 
-The panel is a password-protected SPA served directly by the mod over an embedded HTTP server, with WebSocket for live events, Bearer token auth, and PBKDF2-hashed passwords. Claims, skills, chat filter, custom dimensions, Discord, BlueMap, Votifier: every feature is toggleable from the panel.
+The panel is a password-protected SPA served directly by the mod over an embedded HTTP server, with WebSocket for live events, Bearer token auth, and PBKDF2-hashed passwords. Claims, skills, chat filter, custom dimensions, player shops, command blocks, world backups, Discord, BlueMap, Votifier: every feature is toggleable from the panel.
 
 ---
 
@@ -32,15 +32,19 @@ The panel is a password-protected SPA served directly by the mod over an embedde
 
 | Tab | What you can do |
 | :--- | :--- |
-| **Players** | See all online players, their dimension, OP status. Grant/revoke OP directly. |
+| **Players** | See all online players, their dimension, OP status. Grant/revoke OP, set VIP tier. |
 | **Commands** | Run any server command from the browser. Quick actions for weather, time, broadcast, end reset, wilderness regen, and server stop. |
 | **Dimensions** | Create, delete, and configure custom dimensions. Wire portal frame blocks. |
 | **Skills** | Browse every player's skill levels. Set or adjust XP and levels per skill. |
 | **Claims** | View all active claims on the server. Force-unclaim all chunks owned by a player. |
-| **Teams** | Create, configure, and delete scoreboard teams. Auto-assign players to teams by dimension. |
 | **Chat Filter** | Add/remove blocked words. View active mutes, unmute players. |
-| **Config** | Edit every configurable value live. No file editing, no restart for most settings. |
+| **Hardcore** | View active hardcore sessions, participants, deaths. Force-end a session. |
+| **Teams** | Create, configure, and delete scoreboard teams. Auto-assign players to teams by dimension. |
+| **Shops** | View every player-created shop on the server with its item, price, currency, and location. Delete shops. View player emerald-bank balances. Toggle the economy bank on/off. |
+| **Cmd Blocks** | List, edit, and delete command blocks in loaded chunks. |
 | **Mods** | Upload, replace, or remove server mods directly from the browser. |
+| **Backups** | Create world snapshot zips, list, download, delete. Toggle optional public download. |
+| **Config** | Edit every configurable value live. No file editing, no restart for most settings. |
 
 ### Public Dashboard
 
@@ -50,6 +54,7 @@ Accessible to anyone who can reach the port. No login required:
 - **Player count**: Live online count
 - **Event feed**: Join/leave events and chat in real time (WebSocket)
 - **Skills leaderboard**: Top players per skill and overall
+- **World download** (opt-in): if the admin enables `backup_public_download`, a "Download World" button appears in the header that streams the latest snapshot
 
 ### Security
 
@@ -77,10 +82,11 @@ The panel serves plain HTTP. Without TLS, your session token is unencrypted on t
 - Written to a temp file first, then moved atomically
 
 **Public endpoints (no auth)**
-- `/api/health` - player count, server name
+- `/api/health` - player count, server name, public-flags
 - `/api/metrics` - heap, RAM, disk, uptime, threads
 - `/api/spark/*` - TPS, CPU, MSPT (requires [Spark](https://modrinth.com/plugin/spark))
 - `/api/skills/leaderboard` - skill rankings
+- `/api/backups/latest/download` - latest world snapshot (only when `backup_public_download` is enabled)
 - WebSocket - join/leave events and chat
 
 ---
@@ -391,6 +397,80 @@ Server-side ore obfuscation that defeats x-ray cheat clients. When enabled, all 
 
 Toggle: `antixray_enabled` in config (default: `true`)
 
+---
+
+### Player Shops
+
+Anyone can turn a chest they own into a shop. Look at the chest, run `/shop create <price> [currency] [unit]`, and that chest now sells its majority item to other players. Right-clicking the shop chest as a non-owner opens a buy GUI; the chest's actual contents are the shop's stock.
+
+**Rules:**
+- The chest must be in your own claim or in unclaimed territory (or you must be OP). Other players' claims are off-limits.
+- Currency defaults to `minecraft:emerald` but can be any item ID — buyers must hold the physical items to pay.
+- `unit` is the bundle size: `/shop create 5 minecraft:emerald 16` sells items 16-at-a-time for 5 emeralds per bundle. Default `unit` is 1.
+- Stock is whatever's in the chest. When it runs out, the shop shows out-of-stock until refilled.
+- Breaking the chest deletes the shop entry automatically.
+
+**Spawn shops (admin):**
+If a chest is inside the vanilla spawn protection radius, only OPs can create a shop on it. Spawn shops behave differently: **unlimited stock**, the OP doesn't need to fill the chest, and the OP themselves can buy from the shop (useful for testing or balancing).
+
+**Economy bank** (optional, toggle `economy_enabled`):
+A virtual emerald wallet, separate from shop transactions. Players can deposit physical emeralds into the bank and transfer between accounts — useful for paying other players without handing over stacks in person. **Shop purchases always require physical items in inventory; the bank balance is never auto-debited by a shop.**
+
+> [!WARNING]
+> The economy bank is a **beta, untested** feature. Enable at your own risk; behavior may change.
+
+| Command | Description | Permission |
+| :--- | :--- | :--- |
+| `/shop create <price>` | Create a shop on the chest you're looking at; sells the chest's majority item for emeralds | Everyone (OP if in spawn) |
+| `/shop create <price> <currency>` | Same, with a custom currency item ID | Everyone (OP if in spawn) |
+| `/shop create <price> <currency> <unit>` | Same, with a bulk unit size | Everyone (OP if in spawn) |
+| `/shop delete` | Delete the shop on the chest you're looking at | Owner / OP |
+| `/shop info` | Inspect the shop on the chest you're looking at | Everyone |
+| `/shop list` | List the shops you own | Everyone |
+| `/shop deposit <amount>` | Deposit physical emeralds into the bank | Everyone (economy on) |
+| `/shop withdraw <amount>` | Withdraw bank balance as physical emeralds | Everyone (economy on) |
+| `/shop transfer <player> <amount>` | Send bank balance to another player | Everyone (economy on) |
+| `/shop balance` | Show your bank balance | Everyone (economy on) |
+
+Toggles: `shops_enabled` (default `false`), `economy_enabled` (default `false`)
+
+---
+
+### Command Blocks Dashboard
+
+Browse, edit, and delete command blocks in loaded chunks from the admin panel. Useful for phasing out command-block-driven setups (warps, kill commands, dimension TPs) by inventorying everything in one place.
+
+- Scans loaded chunks for impulse, chain, and repeat command blocks
+- Shows position, dimension, command string, and execution mode
+- Edit the command in-browser; save writes back to the block
+- Delete clears the block entirely
+
+Toggle: `commandblocks_enabled` (default `true` — driven by `enable-command-blocks` in `server.properties`)
+
+---
+
+### Vote Rewards (Votifier)
+
+Optional [NuVotifier](https://www.spigotmc.org/resources/nuvotifier.13449/) v2 listener. Run a TCP listener on a configurable port; when server list sites send a vote packet, all reward commands fire and the broadcast message is sent in chat.
+
+- Tier-stacking rewards: a tier 2 player gets base + tier 1 bonus + tier 2 bonus (stacks on top of lower tiers)
+- Offline queue: votes for offline players are saved and replayed on their next join
+- Configurable broadcast message with `{player}` placeholder
+
+Toggles: `votifier.enabled` (default `false`), `votifier.port` (default `8192`), `votifier.token` (required)
+
+---
+
+### World Backups
+
+Snapshot the world folder to a zip from the admin panel. The server pauses autosave during the zip and atomically renames the result so no partial files appear in the list.
+
+- Create / list / download / delete from the **Backups** tab
+- Files land in `<run>/backups/world-YYYYMMDD-HHmmss.zip` (path configurable via `backup_dir`)
+- Retention is automatic: oldest snapshots beyond `backup_max_count` are pruned after each create
+- One snapshot at a time; concurrent create attempts return HTTP 409
+- Optional public download: enable `backup_public_download` and a "Download World" button appears on the public dashboard, streaming the newest snapshot via `GET /api/backups/latest/download`
+
 </details>
 
 ---
@@ -455,6 +535,14 @@ Toggle: `antixray_enabled` in config (default: `true`)
 | `/smp kit` | List available kits and cooldown status | Everyone |
 | `/smp kit list` | Same as above | Everyone |
 | `/smp kit <name>` | Claim a kit | Everyone |
+| `/shop create <price> [currency] [unit]` | Turn the chest you're looking at into a shop | Everyone (OP if in spawn) |
+| `/shop delete` | Delete the shop on the chest you're looking at | Owner / OP |
+| `/shop info` | Inspect the shop on the chest you're looking at | Everyone |
+| `/shop list` | List shops you own | Everyone |
+| `/shop deposit <amount>` | Deposit physical emeralds into bank | Everyone (economy on) |
+| `/shop withdraw <amount>` | Withdraw bank balance as physical emeralds | Everyone (economy on) |
+| `/shop transfer <player> <amount>` | Send bank balance to another player | Everyone (economy on) |
+| `/shop balance` | Show your bank balance | Everyone (economy on) |
 | `/dim create <id> <type> [sub-params]` | Create a custom dimension | OP |
 | `/dim delete <id>` | Delete a custom dimension | OP |
 | `/dim list` | List all active dimensions | Everyone |
@@ -499,6 +587,15 @@ Config lives at `config/quackedsmp.json`. Most settings are editable live from t
 | `bluemap_show_worldborder` | `true` | Show world border on BlueMap |
 | `bluemap_worldborder_color` | `FF3C3C` | Hex color for world border |
 | `antixray_enabled` | `true` | Enable server-side ore obfuscation against x-ray clients |
+| `shops_enabled` | `false` | Enable the player-shop system (`/shop`) |
+| `economy_enabled` | `false` | Enable the virtual emerald bank (`/shop deposit`/`withdraw`/`transfer`/`balance`) |
+| `backup_max_count` | `5` | Retention count for world snapshots; oldest beyond this are pruned |
+| `backup_dir` | `"backups"` | Directory (relative to JVM working dir, or absolute) where snapshot zips are written |
+| `backup_public_download` | `false` | Show a public "Download World" button that streams the newest snapshot |
+| `votifier.enabled` | `false` | Enable the NuVotifier v2 TCP listener |
+| `votifier.port` | `8192` | TCP port the vote listener binds to |
+| `votifier.token` | `""` | Shared secret used by vote sites to authenticate |
+| `votifier.broadcast` | see JSON | Chat broadcast on successful vote; `{player}` is substituted |
 | `kits_enabled` | `true` | Enable the kit claim system |
 | `kits.cooldownSeconds` | `86400` | Seconds between kit claims (default 24 hours) |
 | `kits.kits` | see JSON | Kit definitions: name, displayName, minTier, armor, items |
