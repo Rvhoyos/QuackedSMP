@@ -123,9 +123,11 @@ public final class ConfigData {
     public Map<String, List<String>> teamAutoAssign = new HashMap<>();
 
     public boolean antixrayEnabled = true;
-    public int     backupMaxCount       = 5;
-    public String  backupDir            = "backups";
-    public boolean backupPublicDownload = false;
+    public int     backupMaxCount             = 5;
+    public String  backupDir                  = "backups";
+    public boolean backupPublicDownload       = false;
+    public int     backupPublicMaxConcurrent  = 0;
+    public int     backupPublicMaxPerIp       = 2;
     public boolean shopsEnabled = false;
     public boolean economyEnabled = false;
     public KitsConfig kits = new KitsConfig();

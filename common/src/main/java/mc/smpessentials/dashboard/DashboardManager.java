@@ -287,7 +287,7 @@ public final class DashboardManager {
 
         // Public latest-snapshot download (gated by BACKUP_PUBLIC_DOWNLOAD)
         s.addDownloadRoute("/api/backups/latest/download",
-                BackupHandler::handleLatestPublic);
+                (m, h) -> BackupHandler.handleLatestPublic(m, h, mcServer));
     }
 
     // ── Scheduled ─────────────────────────────────────────────────────────────
