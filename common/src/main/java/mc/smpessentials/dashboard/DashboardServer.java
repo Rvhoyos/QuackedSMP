@@ -48,7 +48,13 @@ public final class DashboardServer extends Thread {
     /** Outcome of a {@link DownloadRouteHandler}: either an error or a file to stream. */
     public sealed interface DownloadResult {
         record Error(int status, String message) implements DownloadResult {}
-        record File(String contentType, String filename, Path path) implements DownloadResult {}
+        /** {@code onComplete} fires after streaming finishes (success or IOException). */
+        record File(String contentType, String filename, Path path, Runnable onComplete) implements DownloadResult {
+            /** Convenience for routes that have no cleanup work to do after streaming. */
+            public File(String contentType, String filename, Path path) {
+                this(contentType, filename, path, () -> {});
+            }
+        }
     }
 
     // HTTP route table: path → handler
@@ -148,6 +154,8 @@ public final class DashboardServer extends Thread {
 
             // Expose query string to route handlers via pseudo-header
             headers.put("x-query-string", queryString);
+            // Expose direct socket peer for rate-limiting fallback when x-forwarded-for is absent
+            headers.put("x-remote-ip", socket.getInetAddress().getHostAddress());
 
             if (isUpgrade && wsKey != null) {
                 handleWebSocket(socket, wsKey);
@@ -261,7 +269,12 @@ public final class DashboardServer extends Thread {
                 writeResponse(out, err.status(), "application/json; charset=utf-8", "no-store",
                         json.getBytes(StandardCharsets.UTF_8));
             } else if (result instanceof DownloadResult.File file) {
-                writeFileResponse(out, file.contentType(), file.filename(), file.path());
+                try {
+                    writeFileResponse(out, file.contentType(), file.filename(), file.path());
+                } finally {
+                    try { file.onComplete().run(); }
+                    catch (Exception ignored) {}
+                }
             }
         }
     }

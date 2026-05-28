@@ -3,6 +3,7 @@ package mc.smpessentials.dashboard;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import mc.smpessentials.backup.BackupService;
+import mc.smpessentials.backup.PublicDownloadLimiter;
 import mc.smpessentials.config.SmpConfig;
 import net.minecraft.server.MinecraftServer;
 
@@ -80,20 +81,54 @@ public final class BackupHandler {
 
     /**
      * GET /api/backups/latest/download. Public route gated by
-     * {@link SmpConfig#BACKUP_PUBLIC_DOWNLOAD}. Streams the newest snapshot.
+     * {@link SmpConfig#BACKUP_PUBLIC_DOWNLOAD}. Streams the newest snapshot,
+     * with per-IP and global concurrency caps enforced by {@link PublicDownloadLimiter}.
      */
-    public static DashboardServer.DownloadResult handleLatestPublic(String method, Map<String, String> headers) {
+    public static DashboardServer.DownloadResult handleLatestPublic(
+            String method, Map<String, String> headers, MinecraftServer server) {
         if (!"GET".equals(method))             return new DashboardServer.DownloadResult.Error(405, "Method not allowed");
         if (!SmpConfig.BACKUP_PUBLIC_DOWNLOAD) return new DashboardServer.DownloadResult.Error(403, "Public downloads disabled");
+
         List<BackupService.Snapshot> all = BackupService.get().list();
         if (all.isEmpty()) return new DashboardServer.DownloadResult.Error(404, "No snapshots available");
         String name = all.get(0).name();
+
+        Path file;
         try {
-            Path file = BackupService.get().pathOf(name);
-            return new DashboardServer.DownloadResult.File("application/zip", name, file);
+            file = BackupService.get().pathOf(name);
         } catch (IOException e) {
             return new DashboardServer.DownloadResult.Error(500, "Read failed");
         }
+
+        String ip       = resolveIp(headers);
+        int globalCap   = resolveGlobalCap(server);
+        int perIpCap    = Math.max(1, SmpConfig.BACKUP_PUBLIC_MAX_PER_IP);
+
+        if (!PublicDownloadLimiter.get().tryAcquire(ip, perIpCap, globalCap)) {
+            return new DashboardServer.DownloadResult.Error(429, "Too many concurrent downloads, try again shortly");
+        }
+
+        return new DashboardServer.DownloadResult.File(
+                "application/zip", name, file,
+                () -> PublicDownloadLimiter.get().release(ip));
+    }
+
+    /** Prefer the proxy-supplied client IP; fall back to the direct socket peer. */
+    private static String resolveIp(Map<String, String> headers) {
+        String xff = headers.getOrDefault("x-forwarded-for", "");
+        String first = xff.isEmpty() ? "" : xff.split(",")[0].trim();
+        if (!first.isEmpty()) return first;
+        return headers.getOrDefault("x-remote-ip", "unknown");
+    }
+
+    // MinecraftServer.getMaxPlayers() is the vanilla base-class method backed by
+    // `max-players` in server.properties (delegates to playerList.getMaxPlayers()).
+    // Identical on Fabric and NeoForge; same category as the other vanilla
+    // MinecraftServer.* calls the common module already makes.
+    private static int resolveGlobalCap(MinecraftServer server) {
+        int cfg = SmpConfig.BACKUP_PUBLIC_MAX_CONCURRENT;
+        if (cfg > 0) return cfg;
+        return server != null ? server.getMaxPlayers() : 20;
     }
 
     /** GET /api/admin/backups/download?name=... Streams the zip body to the client. */
