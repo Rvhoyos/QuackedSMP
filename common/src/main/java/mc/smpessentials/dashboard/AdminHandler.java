@@ -1988,7 +1988,7 @@ public final class AdminHandler {
     }
 
     // Parses a single query-string parameter value from a raw query string.
-    private static String queryParam(String queryString, String key) {
+    static String queryParam(String queryString, String key) {
         if (queryString == null || queryString.isEmpty()) return "";
         for (String part : queryString.split("&")) {
             int eq = part.indexOf('=');

@@ -13,7 +13,8 @@ import HardcorePanel from './HardcorePanel'
 import TeamsPanel from './TeamsPanel'
 import ShopsPanel from './ShopsPanel'
 import CommandBlocksPanel from './CommandBlocksPanel'
-import { IconPlayerHead, IconCommandBlock, IconChest, IconBookshelf, IconPortal, IconSkills, IconFlag, IconChatFilter, IconMod, IconShield, IconSword, IconEmerald, IconRepeatCmdBlock } from './MinecraftIcons'
+import BackupsPanel from './BackupsPanel'
+import { IconPlayerHead, IconCommandBlock, IconChest, IconBookshelf, IconPortal, IconSkills, IconFlag, IconChatFilter, IconMod, IconShield, IconSword, IconEmerald, IconRepeatCmdBlock, IconShulkerBox } from './MinecraftIcons'
 import styles from './AdminPanel.module.css'
 
 const TABS = [
@@ -28,6 +29,7 @@ const TABS = [
   { id: 'shops',      label: 'Shops',       Icon: IconEmerald,     configKey: 'shops_enabled' },
   { id: 'cmdblocks',  label: 'Cmd Blocks',  Icon: IconRepeatCmdBlock, configKey: 'commandblocks_enabled' },
   { id: 'mods',       label: 'Mods',        Icon: IconMod },
+  { id: 'backups',    label: 'Backups',     Icon: IconShulkerBox },
   { id: 'config',     label: 'Config',      Icon: IconChest },
   { id: 'features',   label: 'Features',    Icon: IconBookshelf },
 ]
@@ -114,6 +116,7 @@ export default function AdminPanel({ health }) {
         {resolvedTab === 'shops'      && <ShopsPanel token={token} onExpired={logout} />}
         {resolvedTab === 'cmdblocks'  && <CommandBlocksPanel token={token} onExpired={logout} />}
         {resolvedTab === 'mods'       && <ModsPanel token={token} onExpired={logout} />}
+        {resolvedTab === 'backups'    && <BackupsPanel token={token} onExpired={logout} />}
         {resolvedTab === 'config'     && <ConfigEditor token={token} onExpired={logout} />}
         {resolvedTab === 'features'   && <FeatureShowcase token={token} onExpired={logout} />}
       </div>

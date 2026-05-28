@@ -830,3 +830,29 @@ export function IconEmerald({ size = 18 }) {
     </svg>
   )
 }
+
+export function IconShulkerBox({ size = 18 }) {
+  return (
+    <svg viewBox="0 0 16 16" width={size} height={size} shapeRendering="crispEdges">
+      {/* Lower body */}
+      {px(2, 7, 12, 7, '#8B4090')}
+      {px(2, 13, 12, 1, '#5C2862')}
+      {/* Body shading */}
+      {px(2, 7, 1, 7, '#6E3074')}
+      {px(13, 7, 1, 7, '#6E3074')}
+      {px(3, 8, 10, 1, '#A050AA')}
+      {/* Lid */}
+      {px(3, 4, 10, 3, '#A050AA')}
+      {px(3, 4, 10, 1, '#C070D0')}
+      {px(3, 6, 10, 1, '#6E3074')}
+      {/* Lid notches */}
+      {px(5, 2, 2, 2, '#A050AA')}
+      {px(9, 2, 2, 2, '#A050AA')}
+      {px(5, 2, 2, 1, '#C070D0')}
+      {px(9, 2, 2, 1, '#C070D0')}
+      {/* Front face detail */}
+      {px(6, 10, 4, 2, '#5C2862')}
+      {px(7, 10, 2, 1, '#3F1B45')}
+    </svg>
+  )
+}

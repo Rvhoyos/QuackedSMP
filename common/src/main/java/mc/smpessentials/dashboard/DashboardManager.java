@@ -273,6 +273,16 @@ public final class DashboardManager {
                 (m, h, b) -> CommandBlockHandler.handleUpdate(m, h, b, mcServer));
         s.addRoute("/api/admin/commandblocks/delete",
                 (m, h, b) -> CommandBlockHandler.handleDelete(m, h, b, mcServer));
+
+        // World backup snapshots
+        s.addRoute("/api/admin/backups",
+                BackupHandler::handleList);
+        s.addRoute("/api/admin/backups/create",
+                (m, h, b) -> BackupHandler.handleCreate(m, h, b, mcServer));
+        s.addRoute("/api/admin/backups/delete",
+                BackupHandler::handleDelete);
+        s.addDownloadRoute("/api/admin/backups/download",
+                BackupHandler::handleDownload);
     }
 
     // ── Scheduled ─────────────────────────────────────────────────────────────

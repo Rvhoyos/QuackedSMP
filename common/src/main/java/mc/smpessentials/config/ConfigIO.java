@@ -141,6 +141,8 @@ public final class ConfigIO {
         }
 
         data.antixrayEnabled = SmpConfig.ANTIXRAY_ENABLED;
+        data.backupMaxCount  = SmpConfig.BACKUP_MAX_COUNT;
+        data.backupDir       = SmpConfig.BACKUP_DIR;
         data.shopsEnabled = SmpConfig.SHOPS_ENABLED;
         data.economyEnabled = SmpConfig.ECONOMY_ENABLED;
         data.kitsEnabled = SmpConfig.KITS_ENABLED;
