@@ -9,6 +9,7 @@ export default function BackupsPanel({ token, onExpired }) {
   const [status,        setStatus]        = useState(null)
   const [confirmDelete, setConfirmDelete] = useState(null)
   const [downloading,   setDownloading]   = useState(null)
+  const [publicEnabled, setPublicEnabled] = useState(false)
   const pollRef = useRef(null)
 
   const auth = { Authorization: `Bearer ${token}` }
@@ -35,6 +36,30 @@ export default function BackupsPanel({ token, onExpired }) {
   }
 
   useEffect(() => { loadList() }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    fetch('/api/admin/config', { headers: auth })
+      .then(r => r.status === 401 ? null : r.json())
+      .then(d => { if (d && !d.error) setPublicEnabled(Boolean(d.backup_public_download)) })
+      .catch(() => {})
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  async function togglePublic(next) {
+    setPublicEnabled(next)
+    try {
+      const r = await fetch('/api/admin/config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...auth },
+        body: JSON.stringify({ backup_public_download: next }),
+      })
+      if (r.status === 401) { onExpired(); return }
+      const d = await r.json()
+      if (d.error) { setError(d.error); setPublicEnabled(!next) }
+    } catch {
+      setError('Failed to update setting')
+      setPublicEnabled(!next)
+    }
+  }
 
   // Poll while a snapshot is being generated.
   useEffect(() => {
@@ -134,6 +159,20 @@ export default function BackupsPanel({ token, onExpired }) {
         </div>
       )}
       {status && <div className={styles.statusMsg}>{status}</div>}
+
+      <label className={styles.toggleRow}>
+        <input
+          type="checkbox"
+          checked={publicEnabled}
+          onChange={e => togglePublic(e.target.checked)}
+        />
+        <span className={styles.toggleLabel}>
+          Allow public download of latest snapshot
+        </span>
+        <span className={styles.toggleHint}>
+          Shows a "Download World" button on the public dashboard
+        </span>
+      </label>
 
       <div className={styles.toolbar}>
         <span className={styles.count}>

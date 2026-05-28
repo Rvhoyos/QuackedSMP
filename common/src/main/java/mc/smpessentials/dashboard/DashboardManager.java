@@ -110,14 +110,15 @@ public final class DashboardManager {
 
     private static void registerRoutes(DashboardServer s) {
         s.addRoute("/api/health", () -> {
-            int     online      = mcServer != null ? mcServer.getPlayerList().getPlayerCount() : 0;
-            boolean adminOn     = SmpConfig.ADMIN_ENABLED;
-            boolean hasPassword = !SmpConfig.ADMIN_PASSWORD_HASH.isBlank();
-            String  serverName  = SmpConfig.SERVER_NAME;
+            int     online        = mcServer != null ? mcServer.getPlayerList().getPlayerCount() : 0;
+            boolean adminOn       = SmpConfig.ADMIN_ENABLED;
+            boolean hasPassword   = !SmpConfig.ADMIN_PASSWORD_HASH.isBlank();
+            boolean publicBackup  = SmpConfig.BACKUP_PUBLIC_DOWNLOAD;
+            String  serverName    = SmpConfig.SERVER_NAME;
             String version = mc.smpessentials.SmpUtilsMod.VERSION;
             return String.format(
-                    "{\"status\":\"ok\",\"online\":%d,\"adminEnabled\":%b,\"hasPassword\":%b,\"serverName\":\"%s\",\"version\":\"%s\"}",
-                    online, adminOn, hasPassword, jsonEscape(serverName), jsonEscape(version));
+                    "{\"status\":\"ok\",\"online\":%d,\"adminEnabled\":%b,\"hasPassword\":%b,\"backupPublicEnabled\":%b,\"serverName\":\"%s\",\"version\":\"%s\"}",
+                    online, adminOn, hasPassword, publicBackup, jsonEscape(serverName), jsonEscape(version));
         });
         s.addRoute("/api/metrics", () -> {
             Runtime rt       = Runtime.getRuntime();
@@ -283,6 +284,10 @@ public final class DashboardManager {
                 BackupHandler::handleDelete);
         s.addDownloadRoute("/api/admin/backups/download",
                 BackupHandler::handleDownload);
+
+        // Public latest-snapshot download (gated by BACKUP_PUBLIC_DOWNLOAD)
+        s.addDownloadRoute("/api/backups/latest/download",
+                BackupHandler::handleLatestPublic);
     }
 
     // ── Scheduled ─────────────────────────────────────────────────────────────

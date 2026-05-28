@@ -74,8 +74,9 @@ public final class SmpConfig {
     public static boolean ANTIXRAY_ENABLED = true;
 
     // ---- World Backups ----
-    public static int    BACKUP_MAX_COUNT = 5;
-    public static String BACKUP_DIR       = "backups";
+    public static int     BACKUP_MAX_COUNT       = 5;
+    public static String  BACKUP_DIR             = "backups";
+    public static boolean BACKUP_PUBLIC_DOWNLOAD = false;
 
     // ---- Shops ----
     public static boolean SHOPS_ENABLED = false;
@@ -212,8 +213,9 @@ public final class SmpConfig {
         }
 
         ANTIXRAY_ENABLED = d.antixrayEnabled;
-        BACKUP_MAX_COUNT = d.backupMaxCount;
-        BACKUP_DIR       = d.backupDir;
+        BACKUP_MAX_COUNT       = d.backupMaxCount;
+        BACKUP_DIR             = d.backupDir;
+        BACKUP_PUBLIC_DOWNLOAD = d.backupPublicDownload;
         SHOPS_ENABLED = d.shopsEnabled;
         ECONOMY_ENABLED = d.economyEnabled;
         KITS_ENABLED = d.kitsEnabled;

@@ -78,6 +78,24 @@ public final class BackupHandler {
         }
     }
 
+    /**
+     * GET /api/backups/latest/download. Public route gated by
+     * {@link SmpConfig#BACKUP_PUBLIC_DOWNLOAD}. Streams the newest snapshot.
+     */
+    public static DashboardServer.DownloadResult handleLatestPublic(String method, Map<String, String> headers) {
+        if (!"GET".equals(method))             return new DashboardServer.DownloadResult.Error(405, "Method not allowed");
+        if (!SmpConfig.BACKUP_PUBLIC_DOWNLOAD) return new DashboardServer.DownloadResult.Error(403, "Public downloads disabled");
+        List<BackupService.Snapshot> all = BackupService.get().list();
+        if (all.isEmpty()) return new DashboardServer.DownloadResult.Error(404, "No snapshots available");
+        String name = all.get(0).name();
+        try {
+            Path file = BackupService.get().pathOf(name);
+            return new DashboardServer.DownloadResult.File("application/zip", name, file);
+        } catch (IOException e) {
+            return new DashboardServer.DownloadResult.Error(500, "Read failed");
+        }
+    }
+
     /** GET /api/admin/backups/download?name=... Streams the zip body to the client. */
     public static DashboardServer.DownloadResult handleDownload(String method, Map<String, String> headers) {
         if (!"GET".equals(method))            return new DashboardServer.DownloadResult.Error(405, "Method not allowed");

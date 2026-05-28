@@ -52,6 +52,31 @@
   flex-shrink: 0;
 }
 
+.toggleRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-bottom: 1px solid #111;
+  background: #161616;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+.toggleRow input { cursor: pointer; flex-shrink: 0; }
+.toggleLabel {
+  font-family: var(--font-pixel);
+  font-size: 7px;
+  color: #BBB;
+  letter-spacing: 0.3px;
+}
+.toggleHint {
+  font-family: var(--font-pixel);
+  font-size: 6px;
+  color: #555;
+  letter-spacing: 0.3px;
+  margin-left: auto;
+}
+
 .toolbar {
   display: flex;
   align-items: center;

@@ -146,6 +146,11 @@ export default function App() {
           <span className={styles.playerCount}>
             {health != null ? `${health.online} online` : '— online'}
           </span>
+          {health?.backupPublicEnabled && view !== 'admin' && (
+            <a className={styles.navTab} href="/api/backups/latest/download">
+              Download World
+            </a>
+          )}
           {health?.adminEnabled && (
             <button
               className={`${styles.navTab} ${view === 'admin' ? styles.navTabActive : ''}`}
