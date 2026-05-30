@@ -73,6 +73,10 @@ The panel serves plain HTTP. Without TLS, your session token is unencrypted on t
 - 5 failed logins within 15 minutes locks the IP out for 5 minutes (HTTP 429)
 - Counter clears on successful login
 
+**Public download rate limiting**
+- The public world-snapshot route (`/api/backups/latest/download`) enforces a per-IP concurrent download cap (`backup_public_max_per_ip`, default 2) and a global concurrent cap (`backup_public_max_concurrent`, default 0 = follows `max-players` from `server.properties`)
+- Exceeding either cap returns HTTP 429
+
 **Path traversal**
 - Static files reject any path with `..` and serve only from the embedded classpath
 
@@ -592,6 +596,8 @@ Config lives at `config/quackedsmp.json`. Most settings are editable live from t
 | `backup_max_count` | `5` | Retention count for world snapshots; oldest beyond this are pruned |
 | `backup_dir` | `"backups"` | Directory (relative to JVM working dir, or absolute) where snapshot zips are written |
 | `backup_public_download` | `false` | Show a public "Download World" button that streams the newest snapshot |
+| `backup_public_max_per_ip` | `2` | Max concurrent public downloads per client IP |
+| `backup_public_max_concurrent` | `0` | Max concurrent public downloads server-wide. `0` follows `max-players` from `server.properties` |
 | `votifier.enabled` | `false` | Enable the NuVotifier v2 TCP listener |
 | `votifier.port` | `8192` | TCP port the vote listener binds to |
 | `votifier.token` | `""` | Shared secret used by vote sites to authenticate |
