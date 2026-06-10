@@ -11,6 +11,7 @@
     "VillagerMixin",
     "SignBlockEntityMixin",
     "ServerGamePacketListenerMixin",
+    "ServerGamePacketListenerShopMixin",
     "AnvilMenuMixin",
     "ChestMenuMixin",
     "AbstractContainerMenuMixin",
