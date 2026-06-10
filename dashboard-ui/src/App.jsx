@@ -4,8 +4,13 @@ import EventFeed from './components/EventFeed'
 import ChatPanel from './components/ChatPanel'
 import AdminPanel from './components/admin/AdminPanel'
 import SkillsLeaderboard from './components/SkillsLeaderboard'
+import DownloadProgress from './components/DownloadProgress'
 import { IconDuck } from './components/admin/MinecraftIcons'
+import { streamingDownload, hasFileSystemAccess } from './lib/streamingDownload'
 import styles from './App.module.css'
+
+const PUBLIC_DOWNLOAD_URL = '/api/backups/latest/download'
+const PUBLIC_DOWNLOAD_FILENAME = 'world.zip'
 
 const MAX_EVENTS = 150
 
@@ -31,6 +36,9 @@ export default function App() {
   const [wsStatus,    setWsStatus]    = useState('connecting')
   const [view,        setView]        = useState('dashboard') // 'dashboard' | 'admin'
   const [update,      setUpdate]      = useState(null) // {latest, current, url} or null
+  const [dlPrompt,    setDlPrompt]    = useState(false)
+  const [dlProgress,  setDlProgress]  = useState(null) // { received, total, speed, eta } | null
+  const [dlError,     setDlError]     = useState(null)
 
   const wsRef         = useRef(null)
   const retryRef      = useRef(null)
@@ -112,6 +120,20 @@ export default function App() {
     }
   }, [openWebSocket, pollMetrics, pollLeaderboard])
 
+  const startPublicDownload = useCallback(async () => {
+    setDlError(null)
+    setDlPrompt(false)
+    setDlProgress({ received: 0, total: 0, speed: 0, eta: null })
+    const result = await streamingDownload({
+      url: PUBLIC_DOWNLOAD_URL,
+      filename: PUBLIC_DOWNLOAD_FILENAME,
+      onProgress: setDlProgress,
+      allowBlobFallback: true,
+    })
+    setDlProgress(null)
+    if (!result.ok && !result.userCancelled) setDlError(result.error || 'Download failed')
+  }, [])
+
   const lbRef = useRef(null)
   useEffect(() => {
     bootstrap()
@@ -147,9 +169,13 @@ export default function App() {
             {health != null ? `${health.online} online` : '— online'}
           </span>
           {health?.backupPublicEnabled && view !== 'admin' && (
-            <a className={styles.navTab} href="/api/backups/latest/download">
-              Download World
-            </a>
+            <button
+              className={styles.navTab}
+              onClick={() => { setDlError(null); setDlProgress(null); setDlPrompt(true) }}
+              disabled={dlProgress != null}
+            >
+              {dlProgress != null ? 'Downloading…' : 'Download World'}
+            </button>
           )}
           {health?.adminEnabled && (
             <button
@@ -172,6 +198,47 @@ export default function App() {
             Download
           </a>
           <button className={styles.updateDismiss} onClick={() => setUpdate(null)}>×</button>
+        </div>
+      )}
+
+      {dlError && (
+        <div className={styles.dlErrorBanner}>
+          <span>Download failed: {dlError}</span>
+          <button className={styles.updateDismiss} onClick={() => setDlError(null)}>×</button>
+        </div>
+      )}
+
+      {dlProgress && (
+        <div className={styles.dlProgressBanner}>
+          <span className={styles.dlProgressLabel}>Downloading world…</span>
+          <DownloadProgress {...dlProgress} />
+        </div>
+      )}
+
+      {dlPrompt && (
+        <div className={styles.dlOverlay} onClick={() => setDlPrompt(false)}>
+          <div className={styles.dlBox} onClick={e => e.stopPropagation()}>
+            <p className={styles.dlTitle}>Download World</p>
+            <p className={styles.dlBody}>
+              Full Minecraft world as a <code>.zip</code>. Large worlds can take a while
+              on slow connections.
+            </p>
+            {!hasFileSystemAccess() && (
+              <p className={styles.dlCaveat}>
+                Your browser will hold the file in memory while downloading.
+                Chrome, Edge, or Brave stream straight to disk and are recommended
+                for large downloads.
+              </p>
+            )}
+            <div className={styles.dlBtns}>
+              <button className={styles.btnGhost} onClick={() => setDlPrompt(false)}>
+                Cancel
+              </button>
+              <button className={styles.btnPrimary} onClick={startPublicDownload}>
+                Download
+              </button>
+            </div>
+          </div>
         </div>
       )}
 

@@ -257,6 +257,134 @@
   color: #FFAA00;
 }
 
+/* ── Download world: error banner, progress banner, prompt modal ── */
+.dlErrorBanner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 8px 24px;
+  background: #2A1010;
+  border-bottom: 2px solid #5A1010;
+  font-family: var(--font-pixel);
+  font-size: 7px;
+  color: #FF8060;
+  text-shadow: 1px 1px 0 rgba(0,0,0,0.6);
+  flex-shrink: 0;
+}
+
+.dlProgressBanner {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 8px 24px;
+  background: #102218;
+  border-bottom: 2px solid #1F4030;
+  flex-shrink: 0;
+}
+
+.dlProgressLabel {
+  font-family: var(--font-pixel);
+  font-size: 7px;
+  color: #8EC8A8;
+  letter-spacing: 0.5px;
+  text-shadow: 1px 1px 0 rgba(0,0,0,0.6);
+  white-space: nowrap;
+}
+
+.dlOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  backdrop-filter: blur(2px);
+}
+
+.dlBox {
+  border-top:    3px solid var(--mc-stone-light);
+  border-left:   3px solid var(--mc-stone-light);
+  border-bottom: 3px solid var(--mc-stone-dark);
+  border-right:  3px solid var(--mc-stone-dark);
+  background: var(--mc-panel);
+  padding: 22px;
+  width: 420px;
+  max-width: calc(100vw - 32px);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  animation: dlPopIn 120ms ease;
+}
+
+@keyframes dlPopIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+.dlTitle {
+  font-family: var(--font-pixel);
+  font-size: 10px;
+  color: var(--text);
+  text-shadow: 1px 1px 0 rgba(0,0,0,0.5);
+  letter-spacing: 0.5px;
+  margin: 0;
+}
+
+.dlBody, .dlCaveat {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.5;
+  margin: 0;
+  color: #CCC;
+}
+
+.dlBody code {
+  background: #0A0A0A;
+  padding: 1px 5px;
+  border: 1px solid #222;
+  font-size: 11px;
+}
+
+.dlCaveat {
+  color: #FFC080;
+  border-left: 3px solid #8A5A20;
+  padding-left: 10px;
+}
+
+.dlBtns {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 4px;
+}
+
+.btnGhost,
+.btnPrimary {
+  font-family: var(--font-pixel);
+  font-size: 7px;
+  letter-spacing: 0.4px;
+  padding: 7px 14px;
+  cursor: pointer;
+  white-space: nowrap;
+  text-shadow: 1px 1px 0 rgba(0,0,0,0.5);
+}
+
+.btnGhost {
+  background: none;
+  border: 1px solid #333;
+  color: #888;
+}
+.btnGhost:hover { color: #CCC; border-color: #555; }
+
+.btnPrimary {
+  background: var(--mc-wood);
+  border: none;
+  color: #FFF8E1;
+}
+.btnPrimary:hover { filter: brightness(1.15); }
+
 /* ── Main layout ── */
 .main {
   flex: 1;

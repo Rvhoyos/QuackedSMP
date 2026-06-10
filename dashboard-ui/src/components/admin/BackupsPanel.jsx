@@ -1,4 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
+import DownloadProgress from '../DownloadProgress'
+import { streamingDownload } from '../../lib/streamingDownload'
 import styles from './BackupsPanel.module.css'
 
 export default function BackupsPanel({ token, onExpired }) {
@@ -9,6 +11,7 @@ export default function BackupsPanel({ token, onExpired }) {
   const [status,        setStatus]        = useState(null)
   const [confirmDelete, setConfirmDelete] = useState(null)
   const [downloading,   setDownloading]   = useState(null)
+  const [dlProgress,    setDlProgress]    = useState(null) // { received, total, speed, eta } | null
   const [publicEnabled, setPublicEnabled] = useState(false)
   const pollRef = useRef(null)
 
@@ -108,25 +111,19 @@ export default function BackupsPanel({ token, onExpired }) {
   async function downloadSnapshot(name) {
     setError(null)
     setDownloading(name)
-    try {
-      const r = await fetch(`/api/admin/backups/download?name=${encodeURIComponent(name)}`, { headers: auth })
-      if (r.status === 401) { onExpired(); return }
-      if (!r.ok) {
-        try { const d = await r.json(); setError(d.error || 'Download failed') }
-        catch { setError('Download failed') }
-        return
-      }
-      const blob = await r.blob()
-      const url  = URL.createObjectURL(blob)
-      const a    = document.createElement('a')
-      a.href     = url
-      a.download = name
-      document.body.appendChild(a)
-      a.click()
-      a.remove()
-      URL.revokeObjectURL(url)
-    } catch { setError('Download failed') }
+    setDlProgress({ received: 0, total: 0, speed: 0, eta: null })
+    const result = await streamingDownload({
+      url: `/api/admin/backups/download?name=${encodeURIComponent(name)}`,
+      filename: name,
+      headers: auth,
+      onProgress: setDlProgress,
+      allowBlobFallback: true,
+    })
     setDownloading(null)
+    setDlProgress(null)
+    if (!result.ok && !result.userCancelled) {
+      setError(result.error || 'Download failed')
+    }
   }
 
   function fmtSize(bytes) {
@@ -208,6 +205,10 @@ export default function BackupsPanel({ token, onExpired }) {
               {fmtSize(snap.sizeBytes)} · {fmtDate(snap.createdAt)}
             </span>
 
+            {downloading === snap.name && dlProgress && (
+              <DownloadProgress {...dlProgress} />
+            )}
+
             {confirmDelete === snap.name ? (
               <div className={styles.confirmRow}>
                 <span className={styles.confirmText}>Delete {snap.name}?</span>
@@ -223,7 +224,7 @@ export default function BackupsPanel({ token, onExpired }) {
                 <button
                   className={styles.btnGhost}
                   onClick={() => downloadSnapshot(snap.name)}
-                  disabled={downloading === snap.name}
+                  disabled={downloading != null}
                 >
                   {downloading === snap.name ? 'Downloading…' : 'Download'}
                 </button>
