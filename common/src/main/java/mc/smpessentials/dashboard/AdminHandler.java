@@ -192,6 +192,11 @@ public final class AdminHandler {
         sb.append(String.format("\"backup_public_download\":%b,", SmpConfig.BACKUP_PUBLIC_DOWNLOAD));
         sb.append(String.format("\"backup_public_max_concurrent\":%d,", SmpConfig.BACKUP_PUBLIC_MAX_CONCURRENT));
         sb.append(String.format("\"backup_public_max_per_ip\":%d,", SmpConfig.BACKUP_PUBLIC_MAX_PER_IP));
+        // Web panel link (gated on public download)
+        sb.append(String.format("\"panel_url\":\"%s\",", jsonEscape(SmpConfig.PANEL_URL)));
+        sb.append(String.format("\"panel_message\":\"%s\",", jsonEscape(SmpConfig.PANEL_MESSAGE)));
+        sb.append(String.format("\"panel_message_enabled\":%b,", SmpConfig.PANEL_MESSAGE_ENABLED));
+        sb.append(String.format("\"panel_message_interval\":%d,", SmpConfig.PANEL_MESSAGE_INTERVAL));
         // Hardcore
         sb.append(String.format("\"hardcore_enabled\":%b,", SmpConfig.HARDCORE_ENABLED));
         sb.append(String.format("\"hardcore_death_percent\":%d,", SmpConfig.HARDCORE_DEATH_PERCENT));
@@ -315,6 +320,28 @@ public final class AdminHandler {
             if (patch.has("backup_public_download")) { SmpConfig.BACKUP_PUBLIC_DOWNLOAD = patch.get("backup_public_download").getAsBoolean(); changed++; }
             if (patch.has("backup_public_max_concurrent")) { SmpConfig.BACKUP_PUBLIC_MAX_CONCURRENT = patch.get("backup_public_max_concurrent").getAsInt(); changed++; }
             if (patch.has("backup_public_max_per_ip")) { SmpConfig.BACKUP_PUBLIC_MAX_PER_IP = patch.get("backup_public_max_per_ip").getAsInt(); changed++; }
+            // Web panel link
+            if (patch.has("panel_url")) {
+                String url = patch.get("panel_url").getAsString().trim();
+                // Empty clears the link. Otherwise require http/https so the chat link is clickable.
+                if (!url.isEmpty()) {
+                    java.net.URI parsed;
+                    try {
+                        parsed = new java.net.URI(url);
+                    } catch (Exception e) {
+                        return err(400, "Invalid panel URL");
+                    }
+                    String scheme = parsed.getScheme();
+                    if (scheme == null || !(scheme.equalsIgnoreCase("http") || scheme.equalsIgnoreCase("https"))) {
+                        return err(400, "Panel URL must start with http:// or https://");
+                    }
+                }
+                SmpConfig.PANEL_URL = url;
+                changed++;
+            }
+            if (patch.has("panel_message"))         { SmpConfig.PANEL_MESSAGE         = patch.get("panel_message").getAsString();        changed++; }
+            if (patch.has("panel_message_enabled")) { SmpConfig.PANEL_MESSAGE_ENABLED = patch.get("panel_message_enabled").getAsBoolean(); changed++; }
+            if (patch.has("panel_message_interval")) { SmpConfig.PANEL_MESSAGE_INTERVAL = Math.max(60, patch.get("panel_message_interval").getAsInt()); changed++; }
             // Hardcore
             if (patch.has("hardcore_enabled"))        { SmpConfig.HARDCORE_ENABLED        = patch.get("hardcore_enabled").getAsBoolean();       changed++; }
             if (patch.has("hardcore_death_percent"))   { SmpConfig.HARDCORE_DEATH_PERCENT   = patch.get("hardcore_death_percent").getAsInt();     changed++; }

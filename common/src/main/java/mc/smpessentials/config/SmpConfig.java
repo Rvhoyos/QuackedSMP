@@ -80,6 +80,24 @@ public final class SmpConfig {
     public static int     BACKUP_PUBLIC_MAX_CONCURRENT = 0; // 0 = follow server max-players
     public static int     BACKUP_PUBLIC_MAX_PER_IP     = 2;
 
+    // ---- Web Panel link (gated on public download) ----
+    public static String  PANEL_URL              = "";
+    public static String  PANEL_MESSAGE          = "&aServer web panel & world download: [Click here]({url})";
+    public static boolean PANEL_MESSAGE_ENABLED  = false;
+    public static int     PANEL_MESSAGE_INTERVAL = 1800; // Seconds
+
+    // Single gate for both /smp download and the periodic broadcast: public download must be
+    // on and a URL configured. URL scheme (http/https) is validated at save time in AdminHandler.
+    public static boolean panelLinkAvailable() {
+        return BACKUP_PUBLIC_DOWNLOAD && PANEL_URL != null && !PANEL_URL.isBlank();
+    }
+
+    // panelMessage with {url} substituted for the configured panel URL. Still needs TextUtil.format
+    // to turn & codes and [label](url) markdown into a component before sending.
+    public static String panelMessageResolved() {
+        return PANEL_MESSAGE.replace("{url}", PANEL_URL == null ? "" : PANEL_URL.trim());
+    }
+
     // ---- Shops ----
     public static boolean SHOPS_ENABLED = false;
     public static boolean ECONOMY_ENABLED = false;
@@ -220,6 +238,10 @@ public final class SmpConfig {
         BACKUP_PUBLIC_DOWNLOAD       = d.backupPublicDownload;
         BACKUP_PUBLIC_MAX_CONCURRENT = d.backupPublicMaxConcurrent;
         BACKUP_PUBLIC_MAX_PER_IP     = d.backupPublicMaxPerIp;
+        PANEL_URL                    = d.panelUrl;
+        PANEL_MESSAGE                = d.panelMessage;
+        PANEL_MESSAGE_ENABLED        = d.panelMessageEnabled;
+        PANEL_MESSAGE_INTERVAL       = d.panelMessageInterval;
         SHOPS_ENABLED = d.shopsEnabled;
         ECONOMY_ENABLED = d.economyEnabled;
         KITS_ENABLED = d.kitsEnabled;
