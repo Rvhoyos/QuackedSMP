@@ -120,6 +120,7 @@ public class SmpEvents {
             mc.smpessentials.dims.EtherFallthrough.tick(player);
             mc.smpessentials.antixray.AntiXrayEngine.tickPlayer(player);
             mc.smpessentials.teams.TeamAutoAssign.tick(player);
+            mc.smpessentials.hardcore.HardcoreSavedData.get(event.getServer()).tickSpectatorHud(player);
         }
     }
 

@@ -13,6 +13,10 @@ export default function BackupsPanel({ token, onExpired }) {
   const [downloading,   setDownloading]   = useState(null)
   const [dlProgress,    setDlProgress]    = useState(null) // { received, total, speed, eta } | null
   const [publicEnabled, setPublicEnabled] = useState(false)
+  const [panelUrl,        setPanelUrl]        = useState('')
+  const [panelUrlSaved,   setPanelUrlSaved]   = useState('')
+  const [panelMsgEnabled, setPanelMsgEnabled] = useState(false)
+  const [panelInterval,   setPanelInterval]   = useState(1800)
   const pollRef = useRef(null)
 
   const auth = { Authorization: `Bearer ${token}` }
@@ -43,9 +47,71 @@ export default function BackupsPanel({ token, onExpired }) {
   useEffect(() => {
     fetch('/api/admin/config', { headers: auth })
       .then(r => r.status === 401 ? null : r.json())
-      .then(d => { if (d && !d.error) setPublicEnabled(Boolean(d.backup_public_download)) })
+      .then(d => {
+        if (d && !d.error) {
+          setPublicEnabled(Boolean(d.backup_public_download))
+          const url = d.panel_url || ''
+          setPanelUrl(url)
+          setPanelUrlSaved(url)
+          setPanelMsgEnabled(Boolean(d.panel_message_enabled))
+          if (Number.isFinite(d.panel_message_interval)) setPanelInterval(d.panel_message_interval)
+        }
+      })
       .catch(() => {})
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Saves an arbitrary config patch, surfacing errors and session expiry.
+  async function patchConfig(patch) {
+    try {
+      const r = await fetch('/api/admin/config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...auth },
+        body: JSON.stringify(patch),
+      })
+      if (r.status === 401) { onExpired(); return false }
+      const d = await r.json()
+      if (d.error) { setError(d.error); return false }
+      return true
+    } catch {
+      setError('Failed to update setting')
+      return false
+    }
+  }
+
+  // Minecraft only makes http/https links clickable; anything else is dead text in chat.
+  // Empty is allowed (it clears the link and hides the feature).
+  function panelUrlError(url) {
+    const t = url.trim()
+    if (t === '') return null
+    let parsed
+    try { parsed = new URL(t) } catch { return 'Enter a full URL, e.g. https://panel.example.com' }
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+      return 'URL must start with http:// or https://'
+    }
+    return null
+  }
+
+  async function savePanelUrl() {
+    const trimmed = panelUrl.trim()
+    const err = panelUrlError(trimmed)
+    if (err) { setError(err); return }
+    if (await patchConfig({ panel_url: trimmed })) {
+      setPanelUrl(trimmed)
+      setPanelUrlSaved(trimmed)
+      flash(trimmed ? 'Panel link saved' : 'Panel link cleared')
+    }
+  }
+
+  async function togglePanelMsg(next) {
+    setPanelMsgEnabled(next)
+    if (!(await patchConfig({ panel_message_enabled: next }))) setPanelMsgEnabled(!next)
+  }
+
+  async function savePanelInterval(secs) {
+    const v = Math.max(60, Number(secs) || 0)
+    setPanelInterval(v)
+    await patchConfig({ panel_message_interval: v })
+  }
 
   async function togglePublic(next) {
     setPublicEnabled(next)
@@ -170,6 +236,62 @@ export default function BackupsPanel({ token, onExpired }) {
           Shows a "Download World" button on the public dashboard
         </span>
       </label>
+
+      {publicEnabled && (
+        <div className={styles.panelBox}>
+          <div className={styles.panelTitle}>Web panel link</div>
+          <div className={styles.panelHint}>
+            Players get this link via /smp download. Requires a URL below. Nothing shows if it's empty.
+          </div>
+
+          <div className={styles.panelField}>
+            <label className={styles.panelLabel}>Panel URL</label>
+            <div className={styles.panelRow}>
+              <input
+                className={styles.textInput}
+                type="text"
+                placeholder="https://panel.example.com"
+                value={panelUrl}
+                onChange={e => setPanelUrl(e.target.value)}
+              />
+              <button
+                className={styles.btn}
+                onClick={savePanelUrl}
+                disabled={panelUrl.trim() === panelUrlSaved || Boolean(panelUrlError(panelUrl))}
+              >
+                Save
+              </button>
+            </div>
+            {panelUrlError(panelUrl)
+              ? <div className={styles.panelError}>{panelUrlError(panelUrl)}</div>
+              : <div className={styles.panelHint}>Must include http:// or https:// or it won't be clickable in chat.</div>}
+          </div>
+
+          <label className={`${styles.toggleRow} ${styles.panelInner} ${!panelUrlSaved ? styles.disabledRow : ''}`}>
+            <input
+              type="checkbox"
+              checked={panelMsgEnabled}
+              disabled={!panelUrlSaved}
+              onChange={e => togglePanelMsg(e.target.checked)}
+            />
+            <span className={styles.toggleLabel}>Periodically announce the link in chat</span>
+          </label>
+
+          {panelMsgEnabled && panelUrlSaved && (
+            <div className={styles.panelField}>
+              <label className={styles.panelLabel}>Interval (seconds)</label>
+              <input
+                className={styles.numInput}
+                type="number"
+                min={60}
+                value={panelInterval}
+                onChange={e => setPanelInterval(Number(e.target.value))}
+                onBlur={e => savePanelInterval(e.target.value)}
+              />
+            </div>
+          )}
+        </div>
+      )}
 
       <div className={styles.toolbar}>
         <span className={styles.count}>

@@ -34,6 +34,10 @@ public class GeneralCommands {
                                         .executes(GeneralCommands::resetEndDragon))
                                 .then(Commands.literal("world")
                                         .executes(GeneralCommands::resetEndWorld))))
+                .then(Commands.literal("download")
+                        .requires(s -> s.getEntity() instanceof ServerPlayer
+                                && SmpConfig.panelLinkAvailable())
+                        .executes(GeneralCommands::sendPanelLink))
                 .then(Commands.literal("help")
                         .executes(GeneralCommands::sendHelp))
                 .then(Commands.literal("admin")
@@ -106,6 +110,27 @@ public class GeneralCommands {
             return 1;
         }
         return 0;
+    }
+
+    // Sends the configured web-panel link as a clickable chat message.
+    // Gate is enforced in .requires(), but re-check here in case config changed mid-tick.
+    private static int sendPanelLink(CommandContext<CommandSourceStack> ctx) {
+        try {
+            if (!SmpConfig.panelLinkAvailable()) {
+                ctx.getSource().sendFailure(Component.literal("The web panel link is not available."));
+                return 0;
+            }
+            String msg = SmpConfig.panelMessageResolved();
+            if (msg == null || msg.isBlank()) {
+                ctx.getSource().sendFailure(Component.literal("The web panel link is not available."));
+                return 0;
+            }
+            ctx.getSource().sendSystemMessage(mc.smpessentials.util.TextUtil.format(msg));
+            return 1;
+        } catch (Exception e) {
+            ctx.getSource().sendFailure(Component.literal("Could not send the panel link."));
+            return 0;
+        }
     }
 
     private static int sendHelp(CommandContext<CommandSourceStack> ctx) {

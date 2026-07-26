@@ -56,7 +56,8 @@ public final class HardcoreSavedData extends SavedData {
             UUIDUtil.CODEC.listOf().fieldOf("dead").forGetter(s -> List.copyOf(s.dead)),
             Codec.INT.fieldOf("peak_players").forGetter(s -> s.peakPlayers),
             Codec.INT.fieldOf("deaths").forGetter(s -> s.deaths),
-            UUIDUtil.CODEC.listOf().optionalFieldOf("left", List.of()).forGetter(s -> List.copyOf(s.left))
+            Codec.unboundedMap(Codec.STRING, COMPOUND_CODEC).optionalFieldOf("suspended", Map.of())
+                    .forGetter(s -> s.suspendedToStringMap())
     ).apply(i, SessionData::new));
 
     public static final Codec<HardcoreSavedData> CODEC = RecordCodecBuilder.create(i -> i.group(
@@ -131,12 +132,26 @@ public final class HardcoreSavedData extends SavedData {
         if (name.length() > 32) return "Session name too long (max 32).";
         if (password.isEmpty()) return "Password cannot be empty.";
 
+        // Create auto-joins, so you must not already be in a session (else it would create
+        // an orphan the creator can't join)
+        if (playerSessions.containsKey(creator.getUUID())) {
+            return "You are already in session '" + playerSessions.get(creator.getUUID())
+                    + "'. Leave it before creating another.";
+        }
+
+        // One active authored session per person
+        for (SessionData s : sessions.values()) {
+            if (s.creator.equals(creator.getUUID())) {
+                return "You already run a hardcore session ('" + s.name + "'). End it before creating another.";
+            }
+        }
+
         BlockPos pos = randomPosInBorder(level);
         SessionData session = new SessionData(
                 name, password, creator.getUUID(),
                 pos.getX(), pos.getY(), pos.getZ(),
                 level.dimension().identifier().toString(),
-                List.of(), List.of(), 0, 0, List.of());
+                List.of(), List.of(), 0, 0, Map.of());
         sessions.put(name, session);
         setDirty();
         return null;
@@ -151,8 +166,11 @@ public final class HardcoreSavedData extends SavedData {
         if (playerSessions.containsKey(uuid)) {
             return "You are already in session '" + playerSessions.get(uuid) + "'. Leave first.";
         }
-        if (session.left.contains(uuid)) {
-            return "You already participated in this session and cannot rejoin.";
+
+        // Stepped-out player: resume exactly where they left off instead of a fresh start
+        if (session.suspended.containsKey(uuid)) {
+            resumeSession(session, player);
+            return null;
         }
 
         // Stash full player state (inventory, equipment, game mode, XP, health, food, respawn point)
@@ -189,7 +207,37 @@ public final class HardcoreSavedData extends SavedData {
         session.alive.add(uuid);
         session.peakPlayers = Math.max(session.peakPlayers, session.alive.size());
         setDirty();
+
+        player.sendSystemMessage(Component.literal(
+                "\u00a7a[Hardcore] Joined session '" + name
+                        + "'! Your inventory has been stashed. Stay alive!"));
         return null;
+    }
+
+    // Restores a stepped-out player's full hardcore state and puts them back where they left off.
+    private void resumeSession(SessionData session, ServerPlayer player) {
+        UUID uuid = player.getUUID();
+
+        // Stash the player's normal life before handing back their hardcore state
+        stashes.put(uuid, savePlayerState(player));
+
+        CompoundTag hardcore = session.suspended.remove(uuid);
+        applyStashTag(player, hardcore);
+        teleportToStashPos(player, hardcore);
+
+        // Re-derive alive/dead from the restored game mode (spectator == dead)
+        boolean dead = GameType.SPECTATOR.getName().equals(hardcore.getString("GameMode").orElse(""));
+        if (dead) {
+            session.dead.add(uuid);
+        } else {
+            session.alive.add(uuid);
+            session.peakPlayers = Math.max(session.peakPlayers, session.alive.size());
+        }
+        playerSessions.put(uuid, session.name);
+        setDirty();
+
+        player.sendSystemMessage(Component.literal(
+                "\u00a7a[Hardcore] Resumed session '" + session.name + "'. Welcome back!"));
     }
 
     public String leaveSession(ServerPlayer player) {
@@ -199,16 +247,15 @@ public final class HardcoreSavedData extends SavedData {
 
         SessionData session = sessions.get(sessionName);
         if (session != null) {
+            // Preserve full hardcore state so the player can rejoin exactly where they were
+            session.suspended.put(uuid, savePlayerState(player));
             session.alive.remove(uuid);
             session.dead.remove(uuid);
-            session.left.add(uuid);
         }
         playerSessions.remove(uuid);
 
-        // Restore stashed state
+        // Restore normal (pre-session) life and send them home
         restorePlayerState(player);
-
-        // Teleport to world spawn
         teleportToSpawn(player);
 
         setDirty();
@@ -260,6 +307,28 @@ public final class HardcoreSavedData extends SavedData {
                         Set.of(), player.getYRot(), player.getXRot(), false);
             });
         }
+    }
+
+    // Refreshes the spectator action-bar HUD for dead session members: controls plus who
+    // they are currently watching. Called every tick; self-throttles to once a second.
+    public void tickSpectatorHud(ServerPlayer player) {
+        if (player.tickCount % 20 != 0) return;
+        UUID uuid = player.getUUID();
+        String sessionName = playerSessions.get(uuid);
+        if (sessionName == null) return;
+        SessionData session = sessions.get(sessionName);
+        if (session == null || !session.dead.contains(uuid)) return;
+
+        net.minecraft.world.entity.Entity camera = player.getCamera();
+        Component msg;
+        if (camera != player) {
+            msg = Component.literal("\u00a77Spectating \u00a7f" + camera.getName().getString()
+                    + " \u00a78· \u00a77Sneak to detach");
+        } else {
+            msg = Component.literal(
+                    "\u00a77Left-click a nearby player to view their POV \u00a78· \u00a77Sneak to exit");
+        }
+        player.sendSystemMessage(msg, true);
     }
 
     // Called when player reconnects to restore their hardcore state
@@ -415,13 +484,22 @@ public final class HardcoreSavedData extends SavedData {
                     .result().ifPresent(nbt -> tag.put("RespawnConfig", nbt));
         }
 
+        // Position and dimension (used to rejoin exactly where the player stepped out)
+        tag.putDouble("PosX", player.getX());
+        tag.putDouble("PosY", player.getY());
+        tag.putDouble("PosZ", player.getZ());
+        tag.putString("PosDim", player.level().dimension().identifier().toString());
+
         return tag;
     }
 
-    // Restores inventory, equipment, game mode, XP, health, food, and respawn point from the stash.
+    // Restores the player's normal (pre-session) life from the top-level stash.
     private void restorePlayerState(ServerPlayer player) {
-        UUID uuid = player.getUUID();
-        CompoundTag tag = stashes.remove(uuid);
+        applyStashTag(player, stashes.remove(player.getUUID()));
+    }
+
+    // Restores inventory, equipment, game mode, XP, health, food, and respawn point from a stash tag.
+    private void applyStashTag(ServerPlayer player, CompoundTag tag) {
         if (tag == null) return;
 
         var registryOps = ((ServerLevel) player.level()).getServer()
@@ -512,6 +590,20 @@ public final class HardcoreSavedData extends SavedData {
                 Set.of(), player.getYRot(), player.getXRot(), false);
     }
 
+    // Teleports the player to the position and dimension recorded in a stash tag.
+    private static void teleportToStashPos(ServerPlayer player, CompoundTag tag) {
+        String dimStr = tag.getString("PosDim").orElse(null);
+        if (dimStr == null) return;
+        ResourceKey<Level> dimKey = ResourceKey.create(Registries.DIMENSION, Identifier.parse(dimStr));
+        MinecraftServer srv = ((ServerLevel) player.level()).getServer();
+        ServerLevel target = srv.getLevel(dimKey);
+        if (target == null) target = srv.overworld();
+        double x = tag.getDouble("PosX").orElse(player.getX());
+        double y = tag.getDouble("PosY").orElse(player.getY());
+        double z = tag.getDouble("PosZ").orElse(player.getZ());
+        player.teleportTo(target, x, y, z, Set.of(), player.getYRot(), player.getXRot(), false);
+    }
+
     private static final int MIN_DISTANCE_FROM_CENTER = 1000;
     private static final int BORDER_PADDING = 100;
 
@@ -563,12 +655,14 @@ public final class HardcoreSavedData extends SavedData {
         final Set<UUID> dead;
         int peakPlayers;
         int deaths;
-        final Set<UUID> left;
+        // Preserved hardcore state for players who stepped out; keyed per session so a
+        // player can be suspended in several sessions at once. Rejoin restores from here.
+        final Map<UUID, CompoundTag> suspended;
 
         SessionData(String name, String password, UUID creator,
                     int startX, int startY, int startZ, String startDim,
                     List<UUID> alive, List<UUID> dead,
-                    int peakPlayers, int deaths, List<UUID> left) {
+                    int peakPlayers, int deaths, Map<String, CompoundTag> suspended) {
             this.name = name;
             this.password = password;
             this.creator = creator;
@@ -580,7 +674,14 @@ public final class HardcoreSavedData extends SavedData {
             this.dead = new HashSet<>(dead);
             this.peakPlayers = peakPlayers;
             this.deaths = deaths;
-            this.left = new HashSet<>(left);
+            this.suspended = new HashMap<>();
+            suspended.forEach((k, v) -> this.suspended.put(UUID.fromString(k), v));
+        }
+
+        Map<String, CompoundTag> suspendedToStringMap() {
+            Map<String, CompoundTag> map = new HashMap<>();
+            suspended.forEach((k, v) -> map.put(k.toString(), v));
+            return map;
         }
 
         public String getName()     { return name; }

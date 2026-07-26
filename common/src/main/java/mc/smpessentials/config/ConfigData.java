@@ -128,6 +128,15 @@ public final class ConfigData {
     public boolean backupPublicDownload       = false;
     public int     backupPublicMaxConcurrent  = 0;
     public int     backupPublicMaxPerIp       = 2;
+    // Public web panel link. Only surfaced (via /smp download and the optional periodic
+    // broadcast) when backupPublicDownload is on AND panelUrl is a non-blank http/https URL.
+    // panelMessage supports & color codes and [label](url) clickable links (see TextUtil).
+    // {url} is replaced with panelUrl before formatting.
+    public String  panelUrl                   = "";
+    public String  panelMessage               = "&aServer web panel & world download: [Click here]({url})";
+    // Toggles the periodic chat broadcast of the link. Independent of periodicMessages.
+    public boolean panelMessageEnabled        = false;
+    public int     panelMessageInterval       = 1800; // Seconds, minimum 60 enforced on save
     public boolean shopsEnabled = false;
     public boolean economyEnabled = false;
     public KitsConfig kits = new KitsConfig();

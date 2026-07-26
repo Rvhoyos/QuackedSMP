@@ -89,10 +89,7 @@ public final class HardcoreCommands {
             ctx.getSource().sendFailure(Component.literal(error));
             return 0;
         }
-
-        player.sendSystemMessage(Component.literal(
-                "\u00a7a[Hardcore] Joined session '" + name
-                        + "'! Your inventory has been stashed. Stay alive!"));
+        // joinSession sends the appropriate joined/resumed message
         return 1;
     }
 

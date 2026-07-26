@@ -146,6 +146,10 @@ public final class ConfigIO {
         data.backupPublicDownload       = SmpConfig.BACKUP_PUBLIC_DOWNLOAD;
         data.backupPublicMaxConcurrent  = SmpConfig.BACKUP_PUBLIC_MAX_CONCURRENT;
         data.backupPublicMaxPerIp       = SmpConfig.BACKUP_PUBLIC_MAX_PER_IP;
+        data.panelUrl                   = SmpConfig.PANEL_URL;
+        data.panelMessage               = SmpConfig.PANEL_MESSAGE;
+        data.panelMessageEnabled        = SmpConfig.PANEL_MESSAGE_ENABLED;
+        data.panelMessageInterval       = SmpConfig.PANEL_MESSAGE_INTERVAL;
         data.shopsEnabled = SmpConfig.SHOPS_ENABLED;
         data.economyEnabled = SmpConfig.ECONOMY_ENABLED;
         data.kitsEnabled = SmpConfig.KITS_ENABLED;
