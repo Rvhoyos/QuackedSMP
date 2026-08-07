@@ -87,6 +87,10 @@ public final class HardcoreSavedData extends SavedData {
     private final Set<UUID> heartsShownHardcore = new HashSet<>();
     // Transient, not persisted. Last-seen dimension per player, for End-entry edge detection.
     private final Map<UUID, String> lastDim = new HashMap<>();
+    // Transient, not persisted. Seconds left on the free-fly spectator how-to hint, so it
+    // fades instead of banner-spamming. Reseeded each time a member re-enters the dead state.
+    private final Map<UUID, Integer> spectatorHintSecondsLeft = new HashMap<>();
+    private static final int SPECTATOR_HINT_SECONDS = 12;
 
     public HardcoreSavedData() {}
 
@@ -362,20 +366,30 @@ public final class HardcoreSavedData extends SavedData {
         if (player.tickCount % 20 != 0) return;
         UUID uuid = player.getUUID();
         String sessionName = playerSessions.get(uuid);
-        if (sessionName == null) return;
+        if (sessionName == null) { spectatorHintSecondsLeft.remove(uuid); return; }
         SessionData session = sessions.get(sessionName);
-        if (session == null || !session.dead.contains(uuid)) return;
+        if (session == null || !session.dead.contains(uuid)) {
+            spectatorHintSecondsLeft.remove(uuid);
+            return;
+        }
 
         net.minecraft.world.entity.Entity camera = player.getCamera();
-        Component msg;
         if (camera != player) {
-            msg = Component.literal("\u00a77Spectating \u00a7f" + camera.getName().getString()
-                    + " \u00a78· \u00a77Sneak to detach");
-        } else {
-            msg = Component.literal(
-                    "\u00a77Left-click a nearby player to view their POV \u00a78· \u00a77Sneak to exit");
+            // Attached to a player's POV: always show whose eyes they are in.
+            player.sendSystemMessage(Component.literal("\u00a77Spectating \u00a7f"
+                    + camera.getName().getString() + " \u00a78\u00b7 \u00a77Sneak to detach"), true);
+            return;
         }
-        player.sendSystemMessage(msg, true);
+
+        // Free-flying: show the how-to hint only for a short window after becoming a spectator
+        // so it fades rather than banner-spamming. Opening the vanilla spectate menu is
+        // client-only and invisible to the server, so this is time-based, not menu-triggered.
+        int left = spectatorHintSecondsLeft.getOrDefault(uuid, SPECTATOR_HINT_SECONDS);
+        if (left <= 0) return;
+        spectatorHintSecondsLeft.put(uuid, left - 1);
+        player.sendSystemMessage(Component.literal(
+                "\u00a77Press \u00a7f1-9 \u00a77for the spectate menu, or left-click a player "
+                        + "for their POV \u00a78\u00b7 \u00a77Sneak to exit"), true);
     }
 
     // Called when player reconnects to restore their hardcore state
