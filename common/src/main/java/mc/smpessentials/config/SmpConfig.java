@@ -69,6 +69,9 @@ public final class SmpConfig {
     // ---- Hardcore ----
     public static boolean HARDCORE_ENABLED = false;
     public static int HARDCORE_DEATH_PERCENT = 50;
+    // Sends the vanilla withered-heart HUD to session members. Per-connection, so it only
+    // takes effect on (re)connect; joining/leaving while online shows a passive warning.
+    public static boolean HARDCORE_WITHERED_HEARTS = true;
 
     // ---- Anti-XRay ----
     public static boolean ANTIXRAY_ENABLED = true;
@@ -226,6 +229,7 @@ public final class SmpConfig {
 
         HARDCORE_ENABLED = d.hardcoreEnabled;
         HARDCORE_DEATH_PERCENT = d.hardcoreDeathPercent;
+        HARDCORE_WITHERED_HEARTS = d.hardcoreWitheredHearts;
 
         TEAM_AUTO_ASSIGN = new java.util.HashMap<>();
         for (var entry : d.teamAutoAssign.entrySet()) {

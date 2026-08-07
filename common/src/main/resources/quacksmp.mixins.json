@@ -12,6 +12,7 @@
     "SignBlockEntityMixin",
     "ServerGamePacketListenerMixin",
     "ServerGamePacketListenerShopMixin",
+    "PlayerListHardcoreHeartsMixin",
     "AnvilMenuMixin",
     "ChestMenuMixin",
     "AbstractContainerMenuMixin",

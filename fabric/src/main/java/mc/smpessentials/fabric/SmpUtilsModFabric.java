@@ -65,7 +65,10 @@ public final class SmpUtilsModFabric implements ModInitializer {
             }
             mc.smpessentials.dashboard.DashboardManager.broadcastPlayerJoin(player.getGameProfile().name());
             mc.smpessentials.votifier.VoteHandler.onPlayerJoin(player);
-            mc.smpessentials.hardcore.HardcoreSavedData.get(server).onPlayerReconnect(player);
+            mc.smpessentials.hardcore.HardcoreSavedData hc =
+                    mc.smpessentials.hardcore.HardcoreSavedData.get(server);
+            hc.markHeartsSent(player);
+            hc.onPlayerReconnect(player);
         });
         net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> {
             net.minecraft.server.level.ServerPlayer player = handler.getPlayer();
@@ -82,6 +85,9 @@ public final class SmpUtilsModFabric implements ModInitializer {
             if (entity instanceof net.minecraft.server.level.ServerPlayer sp) {
                 mc.smpessentials.hardcore.HardcoreSavedData.get(((net.minecraft.server.level.ServerLevel) sp.level()).getServer()).onPlayerDeath(sp);
                 mc.smpessentials.keepinv.KeepInvSavedData.onPlayerDeath(sp);
+            } else if (entity instanceof net.minecraft.world.entity.boss.enderdragon.EnderDragon dragon
+                    && dragon.level() instanceof net.minecraft.server.level.ServerLevel end) {
+                mc.smpessentials.hardcore.HardcoreSavedData.get(end.getServer()).onDragonKilled(end);
             }
         });
 
@@ -100,7 +106,10 @@ public final class SmpUtilsModFabric implements ModInitializer {
                 mc.smpessentials.dims.EtherFallthrough.tick(player);
                 mc.smpessentials.antixray.AntiXrayEngine.tickPlayer(player);
                 mc.smpessentials.teams.TeamAutoAssign.tick(player);
-                mc.smpessentials.hardcore.HardcoreSavedData.get(server).tickSpectatorHud(player);
+                mc.smpessentials.hardcore.HardcoreSavedData hc =
+                        mc.smpessentials.hardcore.HardcoreSavedData.get(server);
+                hc.tickSpectatorHud(player);
+                hc.tickEndEntry(player);
             }
         });
 
