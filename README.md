@@ -71,16 +71,17 @@ Anyone who can reach the port (no login):
 - **Skills leaderboard**
 - **World download** (opt-in only): when `backup_public_download` is true, a download button streams the latest snapshot
 
-### Security
+<details>
+<summary><strong>Security details</strong> (auth, rate limits, public API)</summary>
 
-The panel serves plain HTTP. Prefer LAN, VPN, SSH tunnel, or a reverse proxy with TLS (see Quick Start).
+Rules of thumb are in **Quick Start** above. This section is the technical breakdown.
 
 **Auth**
 
 - Passwords hashed with PBKDF2-SHA256 (100,000 iterations)
 - Constant-time comparison on verify
 - 128-bit random session tokens, 24-hour TTL
-- Admin API calls use a Bearer token in the `Authorization` header (no cookies; avoids classic CSRF on cookie-based sessions)
+- Admin API uses a Bearer token in the `Authorization` header (no cookies)
 
 **Brute-force protection**
 
@@ -111,6 +112,8 @@ The panel serves plain HTTP. Prefer LAN, VPN, SSH tunnel, or a reverse proxy wit
 - `/api/backups/latest/download` - latest world snapshot only when `backup_public_download` is enabled
 - `/api/admin/status` - whether admin is enabled and whether a password is set (no secrets)
 - WebSocket - join / leave and chat events
+
+</details>
 
 ---
 
