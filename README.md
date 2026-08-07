@@ -6,64 +6,39 @@
 
 # QuackedSMP
 
-Server-side mod for **Minecraft 26.1.2** (Fabric + NeoForge) with an optional browser admin panel. Drop the JAR for claims, skills, anti-grief, and more. Turn on the panel when you want live config, backups, and player management from a browser.
+Server-side mod for **Minecraft 26.1.2** (Fabric + NeoForge). Claims, skills, anti-grief, custom dims, shops, hardcore, and more. Optional browser admin panel for config, backups, players, and commands.
 
 ## Quick Start
 
-1. Drop the JAR that matches your loader (Fabric or NeoForge) into the server `mods/` folder and start the server.
-2. In-game as OP, run (password must be at least 8 characters):
+1. Put the Fabric or NeoForge JAR in `mods/` and start the server.
+2. As OP (password at least 8 characters):
    ```
    /smp admin setpassword <your-password>
    ```
-3. Open the panel:
-   - **Same machine as the server:** `http://127.0.0.1:8125`
-   - **Another device on your LAN, or a host whose IP you can reach:** `http://<server-ip>:8125` (only if that address and port are actually reachable)
+3. Open in a browser:
+   - Same PC as the server: `http://localhost:8125` (or `http://127.0.0.1:8125`)
+   - Other device on your network: `http://<server-ip>:8125`
 
-The panel is **optional**. Core gameplay features work without opening any extra port. The dashboard stays off until you run `setpassword` (or enable it in config yourself).
+Panel is optional. Game features work without it. Panel stays off until you set a password.
 
-> Once enabled, anyone who can reach the port can see the **public** dashboard (metrics, leaderboard, live join/leave and chat feed). **Admin** actions require the password.
+**Security (short):**
 
-### Access and security (read this)
+- Admin needs the password. Public metrics / chat feed / leaderboard do not.
+- Panel is plain HTTP on port **8125**. Fine on localhost or home LAN. Do not open 8125 to the whole internet without HTTPS (Caddy/Nginx reverse proxy) or a private tunnel (SSH / VPN).
+- Never set `dashboard.enabled=true` in config without a password unless you want open admin.
 
-After enable, the panel serves **plain HTTP** and listens on **all network interfaces** on port **8125** (default). That means LAN devices can reach it if your firewall allows it.
+## Features
 
-| How you admin | Recommendation |
-| :--- | :--- |
-| Same PC or home LAN only | Use `127.0.0.1` or your LAN IP. Do **not** port-forward 8125 on your router. |
-| Remote admin without a public panel | **SSH tunnel** or a private VPN (Tailscale, etc.). Keep 8125 closed on the public firewall. |
-| Public URL on a VPS / domain | Put **Caddy or Nginx** in front with **TLS**. Proxy to `127.0.0.1:8125`. Prefer **not** exposing 8125 raw to the internet. |
+- Land claims + anti-grief
+- RPG skills and abilities
+- Custom dimensions and portal frames
+- Chat filter and auto-mutes
+- VIP tiers and kits (`/vip set`)
+- Anti-xray (on by default)
+- Wilderness regen, player shops, hardcore sessions, world backups
+- Optional: Discord, BlueMap, Votifier, Spark, Simple Voice Chat
 
-Without TLS, the login session token can be sniffed on an untrusted network. Password hashing and login rate limiting still apply; they do not encrypt the wire.
-
-> [!WARNING]
-> Manually setting `dashboard.enabled=true` in `config/quackedsmp.json` **without** a password is allowed if you want open admin, but then **anyone who can reach the port has full admin**. Prefer `/smp admin setpassword`.
-
-## Panel includes
-
-- Upload, replace, or remove server mods from the browser
-- Create, list, download, or delete world backup snapshots
-- Run commands, manage players (OP, VIP tier), edit live config
-- Live metrics and event feed (install [Spark](https://modrinth.com/plugin/spark) for TPS / CPU / MSPT)
-- Dimensions, skills, claims, chat filter, hardcore, teams, shops, command blocks
-
-## Features (all optional where noted)
-
-1. **Land claiming** with anti-grief (explosions, fire, lava, endermen, farmland, claim PvP rules)
-2. **RPG skills** with passive buffs and active abilities
-3. **Custom dimensions** (overworld / ether islands / nether / end) and custom portal frames
-4. **Chat filter** with leet-style evasion checks and progressive auto-mutes
-5. **VIP tiers** (`/vip set`) with bonus claims, kits, and other perks
-6. **Anti-xray** ore obfuscation (on by default)
-7. **Wilderness regen** for unclaimed chunks (queued for next shutdown)
-8. **Player shops** and optional emerald bank (off by default; bank is beta)
-9. **Hardcore sessions** (password join, inventory stash, rejoin, withered hearts, dragon win)
-10. **World backups** from the panel, optional public download link
-
-> Opinionated SMP toolkit: lots of content out of the box, most systems toggleable from the panel Config tab or `config/quackedsmp.json`.
-
-## Integrations
-
-Optional: [Discord](https://support.discord.com/hc/en-us/articles/228383668) webhooks, [BlueMap](https://modrinth.com/plugin/bluemap), [NuVotifier](https://www.spigotmc.org/resources/nuvotifier.13449/)-compatible vote listener, [Spark](https://modrinth.com/plugin/spark), [Simple Voice Chat](https://modrinth.com/plugin/simple-voice-chat) age-gate.
+Most systems can be toggled in the panel Config tab or `config/quackedsmp.json`.
 
 ---
 
