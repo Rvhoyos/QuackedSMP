@@ -360,8 +360,10 @@ public final class HardcoreSavedData extends SavedData {
         }
     }
 
-    // Refreshes the spectator action-bar HUD for dead session members: controls plus who
-    // they are currently watching. Called every tick; self-throttles to once a second.
+    // Refreshes the spectator action-bar HUD for dead session members. While attached to a
+    // player's camera it shows who they are watching; while free-flying it shows the how-to
+    // hint, which fades a few seconds after they become a spectator. Called every tick;
+    // self-throttles to once a second.
     public void tickSpectatorHud(ServerPlayer player) {
         if (player.tickCount % 20 != 0) return;
         UUID uuid = player.getUUID();
