@@ -124,19 +124,17 @@ public final class AdminAuth {
     // ── Auth check helper ──────────────────────────────────────────────────────
 
     public static boolean isAuthorized(java.util.Map<String, String> headers) {
+        // Intentionally quiet: this runs on every admin request. Logging tokens (even
+        // prefixes) or per-request success/fail floods logs and leaks session material
+        // when log packs are shared. Callers return 403 on false; login still rate-limits.
         if (noPasswordSet()) {
-            mc.smpessentials.SmpUtilsMod.LOGGER.info("[AdminAuth] isAuthorized=true (no password set)");
             return true;
         }
         String auth = headers.get("authorization");
         if (auth == null || !auth.startsWith("Bearer ")) {
-            mc.smpessentials.SmpUtilsMod.LOGGER.warn("[AdminAuth] isAuthorized=false (no/bad Authorization header)");
             return false;
         }
-        String token = auth.substring(7).trim();
-        boolean valid = isValidSession(token);
-        mc.smpessentials.SmpUtilsMod.LOGGER.info("[AdminAuth] isAuthorized={} token={}…", valid, token.length() > 8 ? token.substring(0, 8) : token);
-        return valid;
+        return isValidSession(auth.substring(7).trim());
     }
 
     // ── PBKDF2 helper ─────────────────────────────────────────────────────────

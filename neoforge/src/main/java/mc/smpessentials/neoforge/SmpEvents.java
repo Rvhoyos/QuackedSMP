@@ -82,7 +82,10 @@ public class SmpEvents {
             }
             mc.smpessentials.dashboard.DashboardManager.broadcastPlayerJoin(player.getGameProfile().name());
             mc.smpessentials.votifier.VoteHandler.onPlayerJoin(player);
-            mc.smpessentials.hardcore.HardcoreSavedData.get(((net.minecraft.server.level.ServerLevel) player.level()).getServer()).onPlayerReconnect(player);
+            mc.smpessentials.hardcore.HardcoreSavedData hc =
+                    mc.smpessentials.hardcore.HardcoreSavedData.get(((net.minecraft.server.level.ServerLevel) player.level()).getServer());
+            hc.markHeartsSent(player);
+            hc.onPlayerReconnect(player);
         }
     }
 
@@ -100,6 +103,9 @@ public class SmpEvents {
         if (event.getEntity() instanceof ServerPlayer sp) {
             mc.smpessentials.hardcore.HardcoreSavedData.get(((net.minecraft.server.level.ServerLevel) sp.level()).getServer()).onPlayerDeath(sp);
             mc.smpessentials.keepinv.KeepInvSavedData.onPlayerDeath(sp);
+        } else if (event.getEntity() instanceof net.minecraft.world.entity.boss.enderdragon.EnderDragon dragon
+                && dragon.level() instanceof net.minecraft.server.level.ServerLevel end) {
+            mc.smpessentials.hardcore.HardcoreSavedData.get(end.getServer()).onDragonKilled(end);
         }
     }
 
@@ -120,7 +126,10 @@ public class SmpEvents {
             mc.smpessentials.dims.EtherFallthrough.tick(player);
             mc.smpessentials.antixray.AntiXrayEngine.tickPlayer(player);
             mc.smpessentials.teams.TeamAutoAssign.tick(player);
-            mc.smpessentials.hardcore.HardcoreSavedData.get(event.getServer()).tickSpectatorHud(player);
+            mc.smpessentials.hardcore.HardcoreSavedData hc =
+                    mc.smpessentials.hardcore.HardcoreSavedData.get(event.getServer());
+            hc.tickSpectatorHud(player);
+            hc.tickEndEntry(player);
         }
     }
 

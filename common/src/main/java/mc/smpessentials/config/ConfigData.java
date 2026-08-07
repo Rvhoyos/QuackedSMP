@@ -112,6 +112,7 @@ public final class ConfigData {
 
     public boolean hardcoreEnabled = false;
     public int hardcoreDeathPercent = 50;
+    public boolean hardcoreWitheredHearts = true;
 
     public VotifierConfig votifier = new VotifierConfig();
     public DashboardConfig dashboard = new DashboardConfig();

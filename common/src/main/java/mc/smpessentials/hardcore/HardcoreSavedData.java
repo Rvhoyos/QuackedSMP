@@ -82,6 +82,16 @@ public final class HardcoreSavedData extends SavedData {
     private final Map<UUID, CompoundTag> stashes = new HashMap<>();
     private final Map<UUID, String> playerSessions = new HashMap<>();
 
+    // Transient, not persisted. Tracks the hardcore flag actually sent in each player's login
+    // packet, so we can warn when live membership drifts from what the client HUD shows.
+    private final Set<UUID> heartsShownHardcore = new HashSet<>();
+    // Transient, not persisted. Last-seen dimension per player, for End-entry edge detection.
+    private final Map<UUID, String> lastDim = new HashMap<>();
+    // Transient, not persisted. Seconds left on the free-fly spectator how-to hint, so it
+    // fades instead of banner-spamming. Reseeded each time a member re-enters the dead state.
+    private final Map<UUID, Integer> spectatorHintSecondsLeft = new HashMap<>();
+    private static final int SPECTATOR_HINT_SECONDS = 12;
+
     public HardcoreSavedData() {}
 
     private static HardcoreSavedData fromCodec(List<SessionData> sessionList,
@@ -123,6 +133,44 @@ public final class HardcoreSavedData extends SavedData {
             return true;
         }
         return false;
+    }
+
+    // ── Hardcore hearts HUD ─────────────────────────────────────
+
+    // Whether this player's client should render the withered hardcore heart HUD.
+    // Keys on live membership, so a stepped-out (suspended) player correctly reads as false.
+    public static boolean shouldShowHardcoreHearts(ServerPlayer player) {
+        if (!SmpConfig.HARDCORE_WITHERED_HEARTS) return false;
+        MinecraftServer server = ((ServerLevel) player.level()).getServer();
+        return get(server).getPlayerSessionName(player.getUUID()) != null;
+    }
+
+    // Records the hardcore flag the login packet just sent this player. Must run at login
+    // BEFORE onPlayerReconnect, which can change membership.
+    public void markHeartsSent(ServerPlayer player) {
+        if (shouldShowHardcoreHearts(player)) {
+            heartsShownHardcore.add(player.getUUID());
+        } else {
+            heartsShownHardcore.remove(player.getUUID());
+        }
+    }
+
+    // Warns the player if their live membership no longer matches the heart HUD their client
+    // is showing (which only updates on reconnect). Silent when they already match.
+    private void warnHeartsMismatchIfAny(ServerPlayer player) {
+        if (!SmpConfig.HARDCORE_WITHERED_HEARTS) return;
+        UUID uuid = player.getUUID();
+        boolean shouldShow = playerSessions.get(uuid) != null;
+        boolean clientShows = heartsShownHardcore.contains(uuid);
+        if (shouldShow == clientShows) return;
+        if (shouldShow) {
+            player.sendSystemMessage(Component.literal(
+                    "\u00a7e[Hardcore] Withered hearts appear the next time you reconnect. "
+                            + "Reconnect whenever you like, no rush."));
+        } else {
+            player.sendSystemMessage(Component.literal(
+                    "\u00a7e[Hardcore] Your hearts return to normal the next time you reconnect."));
+        }
     }
 
     // ── Business logic ──────────────────────────────────────────
@@ -211,6 +259,7 @@ public final class HardcoreSavedData extends SavedData {
         player.sendSystemMessage(Component.literal(
                 "\u00a7a[Hardcore] Joined session '" + name
                         + "'! Your inventory has been stashed. Stay alive!"));
+        warnHeartsMismatchIfAny(player);
         return null;
     }
 
@@ -238,6 +287,7 @@ public final class HardcoreSavedData extends SavedData {
 
         player.sendSystemMessage(Component.literal(
                 "\u00a7a[Hardcore] Resumed session '" + session.name + "'. Welcome back!"));
+        warnHeartsMismatchIfAny(player);
     }
 
     public String leaveSession(ServerPlayer player) {
@@ -257,6 +307,7 @@ public final class HardcoreSavedData extends SavedData {
         // Restore normal (pre-session) life and send them home
         restorePlayerState(player);
         teleportToSpawn(player);
+        warnHeartsMismatchIfAny(player);
 
         setDirty();
         return null;
@@ -309,26 +360,38 @@ public final class HardcoreSavedData extends SavedData {
         }
     }
 
-    // Refreshes the spectator action-bar HUD for dead session members: controls plus who
-    // they are currently watching. Called every tick; self-throttles to once a second.
+    // Refreshes the spectator action-bar HUD for dead session members. While attached to a
+    // player's camera it shows who they are watching; while free-flying it shows the how-to
+    // hint, which fades a few seconds after they become a spectator. Called every tick;
+    // self-throttles to once a second.
     public void tickSpectatorHud(ServerPlayer player) {
         if (player.tickCount % 20 != 0) return;
         UUID uuid = player.getUUID();
         String sessionName = playerSessions.get(uuid);
-        if (sessionName == null) return;
+        if (sessionName == null) { spectatorHintSecondsLeft.remove(uuid); return; }
         SessionData session = sessions.get(sessionName);
-        if (session == null || !session.dead.contains(uuid)) return;
+        if (session == null || !session.dead.contains(uuid)) {
+            spectatorHintSecondsLeft.remove(uuid);
+            return;
+        }
 
         net.minecraft.world.entity.Entity camera = player.getCamera();
-        Component msg;
         if (camera != player) {
-            msg = Component.literal("\u00a77Spectating \u00a7f" + camera.getName().getString()
-                    + " \u00a78· \u00a77Sneak to detach");
-        } else {
-            msg = Component.literal(
-                    "\u00a77Left-click a nearby player to view their POV \u00a78· \u00a77Sneak to exit");
+            // Attached to a player's POV: always show whose eyes they are in.
+            player.sendSystemMessage(Component.literal("\u00a77Spectating \u00a7f"
+                    + camera.getName().getString() + " \u00a78\u00b7 \u00a77Sneak to detach"), true);
+            return;
         }
-        player.sendSystemMessage(msg, true);
+
+        // Free-flying: show the how-to hint only for a short window after becoming a spectator
+        // so it fades rather than banner-spamming. Opening the vanilla spectate menu is
+        // client-only and invisible to the server, so this is time-based, not menu-triggered.
+        int left = spectatorHintSecondsLeft.getOrDefault(uuid, SPECTATOR_HINT_SECONDS);
+        if (left <= 0) return;
+        spectatorHintSecondsLeft.put(uuid, left - 1);
+        player.sendSystemMessage(Component.literal(
+                "\u00a77Press \u00a7f1-9 \u00a77for the spectate menu, or left-click a player "
+                        + "for their POV \u00a78\u00b7 \u00a77Sneak to exit"), true);
     }
 
     // Called when player reconnects to restore their hardcore state
@@ -346,6 +409,7 @@ public final class HardcoreSavedData extends SavedData {
             setDirty();
             player.sendSystemMessage(Component.literal(
                     "\u00a7e[Hardcore] Your session no longer exists. Inventory restored."));
+            warnHeartsMismatchIfAny(player);
             return;
         }
 
@@ -406,8 +470,68 @@ public final class HardcoreSavedData extends SavedData {
                 teleportToSpawn(player);
                 player.sendSystemMessage(Component.literal(message));
                 playerSessions.remove(uuid);
+                warnHeartsMismatchIfAny(player);
             }
         }
+    }
+
+    // ── Dragon respawn on End entry + dragon-kill win (TODO #9) ──
+
+    // Edge-detects a session member entering the End and guarantees a dragon to fight.
+    // Called every tick from the per-player loop; cheap (one map lookup) until the dim changes.
+    public void tickEndEntry(ServerPlayer player) {
+        UUID uuid = player.getUUID();
+        String cur = player.level().dimension().identifier().toString();
+        String prev = lastDim.get(uuid);
+        if (cur.equals(prev)) return;
+        lastDim.put(uuid, cur);
+        if (!SmpConfig.HARDCORE_ENABLED) return;
+        if (!"minecraft:the_end".equals(cur)) return;
+        if (playerSessions.get(uuid) == null) return;
+        ensureDragon((ServerLevel) player.level());
+    }
+
+    // Respawns the End dragon only if none is currently present, so an in-progress fight
+    // (or a fresh vanilla dragon) is never wiped.
+    private void ensureDragon(ServerLevel end) {
+        for (net.minecraft.world.entity.Entity entity : end.getAllEntities()) {
+            if (entity instanceof net.minecraft.world.entity.boss.enderdragon.EnderDragon) {
+                return;
+            }
+        }
+        mc.smpessentials.commands.EndResetLogic.resetDragon(end.getServer(), true);
+    }
+
+    // Called when an ender dragon dies. Every session with an alive member currently in the
+    // End wins from this single death, so two sessions meeting in the End both win at once.
+    public void onDragonKilled(ServerLevel end) {
+        if (!SmpConfig.HARDCORE_ENABLED) return;
+        Set<SessionData> winners = new HashSet<>();
+        for (ServerPlayer player : end.players()) {
+            String sessionName = playerSessions.get(player.getUUID());
+            if (sessionName == null) continue;
+            SessionData session = sessions.get(sessionName);
+            if (session != null && session.alive.contains(player.getUUID())) {
+                winners.add(session);
+            }
+        }
+        for (SessionData session : winners) {
+            winSession(session, end.getServer());
+        }
+    }
+
+    // Ends a session as a WIN: broadcasts victory, restores all participants, removes it.
+    private void winSession(SessionData session, MinecraftServer server) {
+        server.getPlayerList().broadcastSystemMessage(
+                Component.literal("\u00a76\u00a7l[Hardcore] Session '" + session.name
+                        + "' WON! The dragon has been slain."),
+                false);
+
+        restoreAllParticipants(session, server,
+                "\u00a76[Hardcore] Victory! Your inventory has been restored.");
+
+        sessions.remove(session.name);
+        setDirty();
     }
 
     // ── Query methods ───────────────────────────────────────────
