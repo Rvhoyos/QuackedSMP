@@ -192,6 +192,9 @@ public final class AdminHandler {
         sb.append(String.format("\"backup_public_download\":%b,", SmpConfig.BACKUP_PUBLIC_DOWNLOAD));
         sb.append(String.format("\"backup_public_max_concurrent\":%d,", SmpConfig.BACKUP_PUBLIC_MAX_CONCURRENT));
         sb.append(String.format("\"backup_public_max_per_ip\":%d,", SmpConfig.BACKUP_PUBLIC_MAX_PER_IP));
+        sb.append(String.format("\"backup_max_count\":%d,", SmpConfig.BACKUP_MAX_COUNT));
+        sb.append(String.format("\"backup_periodic_enabled\":%b,", SmpConfig.BACKUP_PERIODIC_ENABLED));
+        sb.append(String.format("\"backup_interval_hours\":%d,", SmpConfig.BACKUP_INTERVAL_HOURS));
         // Web panel link (gated on public download)
         sb.append(String.format("\"panel_url\":\"%s\",", jsonEscape(SmpConfig.PANEL_URL)));
         sb.append(String.format("\"panel_message\":\"%s\",", jsonEscape(SmpConfig.PANEL_MESSAGE)));
@@ -320,6 +323,9 @@ public final class AdminHandler {
             if (patch.has("backup_public_download")) { SmpConfig.BACKUP_PUBLIC_DOWNLOAD = patch.get("backup_public_download").getAsBoolean(); changed++; }
             if (patch.has("backup_public_max_concurrent")) { SmpConfig.BACKUP_PUBLIC_MAX_CONCURRENT = patch.get("backup_public_max_concurrent").getAsInt(); changed++; }
             if (patch.has("backup_public_max_per_ip")) { SmpConfig.BACKUP_PUBLIC_MAX_PER_IP = patch.get("backup_public_max_per_ip").getAsInt(); changed++; }
+            if (patch.has("backup_max_count")) { SmpConfig.BACKUP_MAX_COUNT = Math.max(1, patch.get("backup_max_count").getAsInt()); changed++; }
+            if (patch.has("backup_periodic_enabled")) { SmpConfig.BACKUP_PERIODIC_ENABLED = patch.get("backup_periodic_enabled").getAsBoolean(); changed++; }
+            if (patch.has("backup_interval_hours")) { SmpConfig.BACKUP_INTERVAL_HOURS = Math.max(1, patch.get("backup_interval_hours").getAsInt()); changed++; }
             // Web panel link
             if (patch.has("panel_url")) {
                 String url = patch.get("panel_url").getAsString().trim();

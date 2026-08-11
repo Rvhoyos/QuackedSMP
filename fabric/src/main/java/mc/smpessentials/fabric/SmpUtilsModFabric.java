@@ -38,12 +38,14 @@ public final class SmpUtilsModFabric implements ModInitializer {
             mc.smpessentials.dims.DimManager.restoreAll(server);
             mc.smpessentials.bluemap.BlueMapIntegration.onServerStart(server);
             mc.smpessentials.dashboard.DashboardManager.onServerStart(server);
+            mc.smpessentials.backup.BackupScheduler.get().start(server);
             mc.smpessentials.votifier.VoteHandler.init(server);
             mc.smpessentials.votifier.VotifierListener.start();
         });
         net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents.SERVER_STOPPING.register(server -> {
             mc.smpessentials.commands.EndResetLogic.onServerStopping(server);
             mc.smpessentials.dashboard.DashboardManager.onServerStop();
+            mc.smpessentials.backup.BackupScheduler.get().stop();
             mc.smpessentials.votifier.VotifierListener.stop();
         });
         net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents.SERVER_STOPPED.register(server -> {

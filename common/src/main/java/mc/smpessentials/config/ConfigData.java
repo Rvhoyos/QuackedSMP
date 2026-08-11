@@ -126,6 +126,8 @@ public final class ConfigData {
     public boolean antixrayEnabled = true;
     public int     backupMaxCount             = 5;
     public String  backupDir                  = "backups";
+    public boolean backupPeriodicEnabled      = false;
+    public int     backupIntervalHours        = 24;
     public boolean backupPublicDownload       = false;
     public int     backupPublicMaxConcurrent  = 0;
     public int     backupPublicMaxPerIp       = 2;

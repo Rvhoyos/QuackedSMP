@@ -17,6 +17,9 @@ export default function BackupsPanel({ token, onExpired }) {
   const [panelUrlSaved,   setPanelUrlSaved]   = useState('')
   const [panelMsgEnabled, setPanelMsgEnabled] = useState(false)
   const [panelInterval,   setPanelInterval]   = useState(1800)
+  const [maxCount,        setMaxCount]        = useState(5)
+  const [periodicEnabled, setPeriodicEnabled] = useState(false)
+  const [intervalHours,   setIntervalHours]   = useState(24)
   const pollRef = useRef(null)
 
   const auth = { Authorization: `Bearer ${token}` }
@@ -55,6 +58,9 @@ export default function BackupsPanel({ token, onExpired }) {
           setPanelUrlSaved(url)
           setPanelMsgEnabled(Boolean(d.panel_message_enabled))
           if (Number.isFinite(d.panel_message_interval)) setPanelInterval(d.panel_message_interval)
+          if (Number.isFinite(d.backup_max_count)) setMaxCount(d.backup_max_count)
+          setPeriodicEnabled(Boolean(d.backup_periodic_enabled))
+          if (Number.isFinite(d.backup_interval_hours)) setIntervalHours(d.backup_interval_hours)
         }
       })
       .catch(() => {})
@@ -111,6 +117,31 @@ export default function BackupsPanel({ token, onExpired }) {
     const v = Math.max(60, Number(secs) || 0)
     setPanelInterval(v)
     await patchConfig({ panel_message_interval: v })
+  }
+
+  async function saveMaxCount(n) {
+    const v = Math.max(1, Number(n) || 0)
+    setMaxCount(v)
+    await patchConfig({ backup_max_count: v })
+  }
+
+  async function togglePeriodic(next) {
+    setPeriodicEnabled(next)
+    if (!(await patchConfig({ backup_periodic_enabled: next }))) setPeriodicEnabled(!next)
+  }
+
+  async function saveIntervalHours(hours) {
+    const v = Math.max(1, Number(hours) || 0)
+    setIntervalHours(v)
+    await patchConfig({ backup_interval_hours: v })
+  }
+
+  // Approximate next scheduled run: newest snapshot + interval. Deferred if players are
+  // online, so this is a lower bound. No backend clock needed.
+  function nextBackupLabel() {
+    if (snapshots.length === 0) return `about ${intervalHours}h after the next snapshot`
+    const due = snapshots[0].createdAt + intervalHours * 3600 * 1000
+    return due <= Date.now() ? 'due now (waiting for an empty server)' : `~${fmtDate(due)}`
   }
 
   async function togglePublic(next) {
@@ -222,6 +253,55 @@ export default function BackupsPanel({ token, onExpired }) {
         </div>
       )}
       {status && <div className={styles.statusMsg}>{status}</div>}
+
+      <div className={styles.panelBox}>
+        <div className={styles.panelTitle}>Scheduled backups</div>
+
+        <label className={`${styles.toggleRow} ${styles.panelInner}`}>
+          <input
+            type="checkbox"
+            checked={periodicEnabled}
+            onChange={e => togglePeriodic(e.target.checked)}
+          />
+          <span className={styles.toggleLabel}>Automatically back up on a schedule</span>
+        </label>
+
+        {periodicEnabled && (
+          <>
+            <div className={styles.panelField}>
+              <label className={styles.panelLabel}>Interval (hours)</label>
+              <input
+                className={styles.numInput}
+                type="number"
+                min={1}
+                value={intervalHours}
+                onChange={e => setIntervalHours(Number(e.target.value))}
+                onBlur={e => saveIntervalHours(e.target.value)}
+              />
+            </div>
+            <div className={styles.panelHint}>
+              A due backup waits until no players are online, then runs automatically.
+              If it stays overdue for a full extra interval, it runs anyway.
+              <br />Next backup: {nextBackupLabel()}
+            </div>
+          </>
+        )}
+
+        <div className={styles.panelField}>
+          <label className={styles.panelLabel}>Keep last N snapshots</label>
+          <input
+            className={styles.numInput}
+            type="number"
+            min={1}
+            value={maxCount}
+            onChange={e => setMaxCount(Number(e.target.value))}
+            onBlur={e => saveMaxCount(e.target.value)}
+          />
+          <div className={styles.panelHint}>
+            Applies to all snapshots, manual and scheduled. Older ones are pruned after each backup.
+          </div>
+        </div>
+      </div>
 
       <label className={styles.toggleRow}>
         <input

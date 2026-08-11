@@ -51,6 +51,7 @@ public class SmpEvents {
         mc.smpessentials.dims.DimManager.restoreAll(event.getServer());
         mc.smpessentials.bluemap.BlueMapIntegration.onServerStart(event.getServer());
         mc.smpessentials.dashboard.DashboardManager.onServerStart(event.getServer());
+        mc.smpessentials.backup.BackupScheduler.get().start(event.getServer());
         mc.smpessentials.votifier.VoteHandler.init(event.getServer());
         mc.smpessentials.votifier.VotifierListener.start();
     }
@@ -59,6 +60,7 @@ public class SmpEvents {
     public static void onServerStopping(ServerStoppingEvent event) {
         mc.smpessentials.commands.EndResetLogic.onServerStopping(event.getServer());
         mc.smpessentials.dashboard.DashboardManager.onServerStop();
+        mc.smpessentials.backup.BackupScheduler.get().stop();
         mc.smpessentials.votifier.VotifierListener.stop();
     }
 

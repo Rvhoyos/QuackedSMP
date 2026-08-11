@@ -79,6 +79,8 @@ public final class SmpConfig {
     // ---- World Backups ----
     public static int     BACKUP_MAX_COUNT             = 5;
     public static String  BACKUP_DIR                   = "backups";
+    public static boolean BACKUP_PERIODIC_ENABLED      = false;
+    public static int     BACKUP_INTERVAL_HOURS        = 24;
     public static boolean BACKUP_PUBLIC_DOWNLOAD       = false;
     public static int     BACKUP_PUBLIC_MAX_CONCURRENT = 0; // 0 = follow server max-players
     public static int     BACKUP_PUBLIC_MAX_PER_IP     = 2;
@@ -239,6 +241,8 @@ public final class SmpConfig {
         ANTIXRAY_ENABLED = d.antixrayEnabled;
         BACKUP_MAX_COUNT             = d.backupMaxCount;
         BACKUP_DIR                   = d.backupDir;
+        BACKUP_PERIODIC_ENABLED      = d.backupPeriodicEnabled;
+        BACKUP_INTERVAL_HOURS        = d.backupIntervalHours;
         BACKUP_PUBLIC_DOWNLOAD       = d.backupPublicDownload;
         BACKUP_PUBLIC_MAX_CONCURRENT = d.backupPublicMaxConcurrent;
         BACKUP_PUBLIC_MAX_PER_IP     = d.backupPublicMaxPerIp;
