@@ -469,7 +469,7 @@ export function IconSpeedometer({ size = 20 }) {
       {/* Zone dividers */}
       <line x1="5.57"  y1="6.34" x2="7.5"  y2="8.64" stroke="#1A1A2A" strokeWidth="1.5"/>
       <line x1="18.43" y1="6.34" x2="16.5" y2="8.64" stroke="#1A1A2A" strokeWidth="1.5"/>
-      {/* Needle — pointing to 12 o'clock (middle of yellow = normal range) */}
+      {/* Needle pointing to 12 o'clock (middle of yellow = normal range) */}
       <line x1="12" y1="14" x2="12" y2="5" stroke="#FFFFFF" strokeWidth="1.5" strokeLinecap="round"/>
       {/* Center cap */}
       <circle cx="12" cy="14" r="2.5" fill="#555555"/>
@@ -853,6 +853,165 @@ export function IconShulkerBox({ size = 18 }) {
       {/* Front face detail */}
       {px(6, 10, 4, 2, '#5C2862')}
       {px(7, 10, 2, 1, '#3F1B45')}
+    </svg>
+  )
+}
+
+// ── Hardcore leaderboard icons ────────────────────────────────────────────────
+
+export function IconSkull({ size = 20 }) {
+  return (
+    <svg viewBox="0 0 16 16" width={size} height={size} shapeRendering="crispEdges">
+      {/* Cranium */}
+      {px(4, 1, 8, 1, '#E8E8E8')}
+      {px(3, 2, 10, 1, '#F2F2F2')}
+      {px(2, 3, 12, 6, '#F2F2F2')}
+      {px(3, 9, 10, 1, '#E0E0E0')}
+      {/* Shading */}
+      {px(2, 3, 1, 6, '#CFCFCF')}
+      {px(13, 3, 1, 6, '#CFCFCF')}
+      {px(4, 2, 3, 1, '#FFFFFF')}
+      {/* Eye sockets */}
+      {px(4, 4, 3, 3, '#1A1A1A')}
+      {px(9, 4, 3, 3, '#1A1A1A')}
+      {px(5, 5, 1, 1, '#3A3A3A')}
+      {px(10, 5, 1, 1, '#3A3A3A')}
+      {/* Nose */}
+      {px(7, 7, 2, 2, '#1A1A1A')}
+      {/* Jaw + teeth */}
+      {px(4, 10, 8, 3, '#F2F2F2')}
+      {px(5, 11, 1, 2, '#B0B0B0')}
+      {px(7, 11, 1, 2, '#B0B0B0')}
+      {px(9, 11, 1, 2, '#B0B0B0')}
+    </svg>
+  )
+}
+
+export function IconDragonHead({ size = 20 }) {
+  return (
+    <svg viewBox="0 0 16 16" width={size} height={size} shapeRendering="crispEdges">
+      {/* Head */}
+      {px(3, 3, 9, 6, '#2B2B33')}
+      {px(3, 3, 9, 1, '#3C3C46')}
+      {px(2, 4, 1, 4, '#23232A')}
+      {/* Snout */}
+      {px(1, 6, 3, 3, '#2B2B33')}
+      {px(0, 7, 2, 1, '#23232A')}
+      {/* Horns */}
+      {px(9, 0, 2, 3, '#4A4A55')}
+      {px(11, 1, 2, 2, '#4A4A55')}
+      {px(12, 0, 1, 1, '#5A5A66')}
+      {/* Jaw */}
+      {px(2, 9, 8, 2, '#23232A')}
+      {px(1, 10, 3, 1, '#23232A')}
+      {/* Eye (glowing purple) */}
+      {px(7, 5, 2, 2, '#C060FF')}
+      {px(7, 5, 1, 1, '#E8B0FF')}
+      {/* Nostril */}
+      {px(2, 6, 1, 1, '#000000')}
+      {/* Teeth */}
+      {px(3, 11, 1, 1, '#DDDDDD')}
+      {px(6, 11, 1, 1, '#DDDDDD')}
+    </svg>
+  )
+}
+
+export function IconTombstone({ size = 20 }) {
+  return (
+    <svg viewBox="0 0 16 16" width={size} height={size} shapeRendering="crispEdges">
+      {/* Rounded-top headstone */}
+      {px(6, 1, 4, 1, '#9AA0A8')}
+      {px(4, 2, 8, 1, '#AEB4BC')}
+      {px(3, 3, 10, 10, '#AEB4BC')}
+      {/* Shading */}
+      {px(3, 3, 1, 10, '#868C94')}
+      {px(12, 3, 1, 10, '#868C94')}
+      {px(4, 3, 2, 1, '#C6CCD4')}
+      {/* Engraved cross */}
+      {px(7, 4, 2, 5, '#6B7178')}
+      {px(5, 5, 6, 2, '#6B7178')}
+      {/* Grass mound */}
+      {px(1, 13, 14, 1, '#3B8A3B')}
+      {px(0, 14, 16, 2, '#2F6E2F')}
+      {px(2, 13, 3, 1, '#4CA64C')}
+      {px(9, 13, 3, 1, '#4CA64C')}
+    </svg>
+  )
+}
+
+export function IconMedal({ size = 20 }) {
+  return (
+    <svg viewBox="0 0 16 16" width={size} height={size} shapeRendering="crispEdges">
+      {/* Ribbons */}
+      {px(4, 0, 3, 5, '#3B6FE0')}
+      {px(9, 0, 3, 5, '#E23B3B')}
+      {px(5, 5, 2, 1, '#2C55B0')}
+      {px(9, 5, 2, 1, '#B02C2C')}
+      {/* Medal disc */}
+      {px(6, 6, 4, 1, '#B8860B')}
+      {px(5, 7, 6, 5, '#FFD700')}
+      {px(6, 12, 4, 1, '#B8860B')}
+      {/* Disc shading + highlight */}
+      {px(5, 7, 1, 5, '#E8B923')}
+      {px(10, 7, 1, 5, '#C99A00')}
+      {px(6, 7, 2, 1, '#FFEC70')}
+      {/* Engraved star */}
+      {px(7, 8, 2, 3, '#B8860B')}
+      {px(6, 9, 4, 1, '#B8860B')}
+    </svg>
+  )
+}
+
+export function IconHeartCracked({ size = 20 }) {
+  return (
+    <svg viewBox="0 0 16 16" width={size} height={size} shapeRendering="crispEdges">
+      {/* Heart humps */}
+      {px(3, 3, 3, 1, '#E23B3B')}
+      {px(10, 3, 3, 1, '#E23B3B')}
+      {px(2, 4, 5, 1, '#E23B3B')}
+      {px(9, 4, 5, 1, '#E23B3B')}
+      {/* Body */}
+      {px(2, 5, 12, 2, '#E23B3B')}
+      {px(3, 7, 10, 1, '#E23B3B')}
+      {px(4, 8, 8, 1, '#E23B3B')}
+      {px(5, 9, 6, 1, '#E23B3B')}
+      {px(6, 10, 4, 1, '#E23B3B')}
+      {px(7, 11, 2, 1, '#E23B3B')}
+      {/* Highlight */}
+      {px(3, 4, 2, 1, '#FF6B6B')}
+      {px(3, 5, 1, 1, '#FF6B6B')}
+      {/* Crack (dark zigzag) */}
+      {px(8, 3, 1, 2, '#5A0E0E')}
+      {px(7, 5, 1, 2, '#5A0E0E')}
+      {px(8, 7, 1, 2, '#5A0E0E')}
+      {px(7, 9, 1, 2, '#5A0E0E')}
+    </svg>
+  )
+}
+
+export function IconWolf({ size = 20 }) {
+  return (
+    <svg viewBox="0 0 16 16" width={size} height={size} shapeRendering="crispEdges">
+      {/* Ears */}
+      {px(2, 1, 3, 3, '#8A8F96')}
+      {px(11, 1, 3, 3, '#8A8F96')}
+      {px(3, 2, 1, 1, '#5A5F66')}
+      {px(12, 2, 1, 1, '#5A5F66')}
+      {/* Head */}
+      {px(2, 4, 12, 6, '#B4BAC2')}
+      {px(2, 4, 12, 1, '#C8CED6')}
+      {/* Cheeks shading */}
+      {px(2, 9, 12, 1, '#9AA0A8')}
+      {/* Snout */}
+      {px(5, 10, 6, 3, '#C8CED6')}
+      {px(6, 13, 4, 1, '#9AA0A8')}
+      {/* Nose */}
+      {px(7, 12, 2, 1, '#1A1A1A')}
+      {/* Eyes (amber) */}
+      {px(4, 6, 2, 2, '#F0A030')}
+      {px(10, 6, 2, 2, '#F0A030')}
+      {px(4, 6, 1, 1, '#FFD060')}
+      {px(10, 6, 1, 1, '#FFD060')}
     </svg>
   )
 }

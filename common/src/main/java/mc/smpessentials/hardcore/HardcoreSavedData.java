@@ -57,7 +57,8 @@ public final class HardcoreSavedData extends SavedData {
             Codec.INT.fieldOf("peak_players").forGetter(s -> s.peakPlayers),
             Codec.INT.fieldOf("deaths").forGetter(s -> s.deaths),
             Codec.unboundedMap(Codec.STRING, COMPOUND_CODEC).optionalFieldOf("suspended", Map.of())
-                    .forGetter(s -> s.suspendedToStringMap())
+                    .forGetter(s -> s.suspendedToStringMap()),
+            Codec.LONG.optionalFieldOf("started_at", 0L).forGetter(s -> s.startedAt)
     ).apply(i, SessionData::new));
 
     public static final Codec<HardcoreSavedData> CODEC = RecordCodecBuilder.create(i -> i.group(
@@ -68,7 +69,11 @@ public final class HardcoreSavedData extends SavedData {
                     .forGetter(d -> d.stashesToStringMap()),
             Codec.unboundedMap(Codec.STRING, Codec.STRING)
                     .optionalFieldOf("player_sessions", Map.of())
-                    .forGetter(d -> d.playerSessionsToStringMap())
+                    .forGetter(d -> d.playerSessionsToStringMap()),
+            HardcoreRun.CODEC.listOf().optionalFieldOf("completed_runs", List.of())
+                    .forGetter(d -> List.copyOf(d.completedRuns)),
+            Codec.unboundedMap(Codec.STRING, Codec.STRING).optionalFieldOf("known_names", Map.of())
+                    .forGetter(d -> d.knownNamesToStringMap())
     ).apply(i, HardcoreSavedData::fromCodec));
 
     public static final SavedDataType<HardcoreSavedData> TYPE = new SavedDataType<>(
@@ -81,6 +86,10 @@ public final class HardcoreSavedData extends SavedData {
     private final Map<String, SessionData> sessions = new LinkedHashMap<>();
     private final Map<UUID, CompoundTag> stashes = new HashMap<>();
     private final Map<UUID, String> playerSessions = new HashMap<>();
+    // Finished-run history, newest last. Kept permanently (records are tiny).
+    private final List<HardcoreRun> completedRuns = new ArrayList<>();
+    // Persisted UUID to last-seen name, so leaderboards can display offline participants.
+    private final Map<UUID, String> knownNames = new HashMap<>();
 
     // Transient, not persisted. Tracks the hardcore flag actually sent in each player's login
     // packet, so we can warn when live membership drifts from what the client HUD shows.
@@ -96,14 +105,29 @@ public final class HardcoreSavedData extends SavedData {
 
     private static HardcoreSavedData fromCodec(List<SessionData> sessionList,
                                                 Map<String, CompoundTag> stashMap,
-                                                Map<String, String> playerSessionMap) {
+                                                Map<String, String> playerSessionMap,
+                                                List<HardcoreRun> completedRunList,
+                                                Map<String, String> knownNameMap) {
         HardcoreSavedData data = new HardcoreSavedData();
         for (SessionData s : sessionList) {
             data.sessions.put(s.name, s);
         }
         stashMap.forEach((k, v) -> data.stashes.put(UUID.fromString(k), v));
         playerSessionMap.forEach((k, v) -> data.playerSessions.put(UUID.fromString(k), v));
+        data.completedRuns.addAll(completedRunList);
+        knownNameMap.forEach((k, v) -> data.knownNames.put(UUID.fromString(k), v));
         return data;
+    }
+
+    private Map<String, String> knownNamesToStringMap() {
+        Map<String, String> map = new HashMap<>();
+        knownNames.forEach((k, v) -> map.put(k.toString(), v));
+        return map;
+    }
+
+    // Records a player's current name for offline leaderboard display.
+    private void rememberName(ServerPlayer player) {
+        knownNames.put(player.getUUID(), player.getName().getString());
     }
 
     private Map<String, CompoundTag> stashesToStringMap() {
@@ -179,6 +203,7 @@ public final class HardcoreSavedData extends SavedData {
         if (sessions.containsKey(name)) return "Session '" + name + "' already exists.";
         if (name.length() > 32) return "Session name too long (max 32).";
         if (password.isEmpty()) return "Password cannot be empty.";
+        rememberName(creator);
 
         // Create auto-joins, so you must not already be in a session (else it would create
         // an orphan the creator can't join)
@@ -199,7 +224,7 @@ public final class HardcoreSavedData extends SavedData {
                 name, password, creator.getUUID(),
                 pos.getX(), pos.getY(), pos.getZ(),
                 level.dimension().identifier().toString(),
-                List.of(), List.of(), 0, 0, Map.of());
+                List.of(), List.of(), 0, 0, Map.of(), System.currentTimeMillis());
         sessions.put(name, session);
         setDirty();
         return null;
@@ -214,6 +239,7 @@ public final class HardcoreSavedData extends SavedData {
         if (playerSessions.containsKey(uuid)) {
             return "You are already in session '" + playerSessions.get(uuid) + "'. Leave first.";
         }
+        rememberName(player);
 
         // Stepped-out player: resume exactly where they left off instead of a fresh start
         if (session.suspended.containsKey(uuid)) {
@@ -225,7 +251,7 @@ public final class HardcoreSavedData extends SavedData {
         stashes.put(uuid, savePlayerState(player));
         playerSessions.put(uuid, name);
 
-        // Clear inventory, XP, and effects — start fresh
+        // Clear inventory, XP, and effects. Start fresh
         player.getInventory().clearContent();
         clearEquipment(player);
         player.experienceLevel = 0;
@@ -260,6 +286,7 @@ public final class HardcoreSavedData extends SavedData {
                 "\u00a7a[Hardcore] Joined session '" + name
                         + "'! Your inventory has been stashed. Stay alive!"));
         warnHeartsMismatchIfAny(player);
+        notifySidebarEntry(player);
         return null;
     }
 
@@ -288,6 +315,13 @@ public final class HardcoreSavedData extends SavedData {
         player.sendSystemMessage(Component.literal(
                 "\u00a7a[Hardcore] Resumed session '" + session.name + "'. Welcome back!"));
         warnHeartsMismatchIfAny(player);
+        notifySidebarEntry(player);
+    }
+
+    // Flashes the run-time sidebar for all members when someone enters a session.
+    private void notifySidebarEntry(ServerPlayer player) {
+        mc.smpessentials.hardcore.sidebar.HardcoreSidebarController.INSTANCE
+                .onSessionEntry(((ServerLevel) player.level()).getServer());
     }
 
     public String leaveSession(ServerPlayer player) {
@@ -431,6 +465,7 @@ public final class HardcoreSavedData extends SavedData {
                         + "' has ended! Death threshold reached (" + session.deaths + " deaths)."),
                 false);
 
+        recordCompletion(session, HardcoreRun.Outcome.LOSS, server);
         restoreAllParticipants(session, server,
                 "\u00a7e[Hardcore] Session over. Your inventory has been restored.");
 
@@ -448,6 +483,7 @@ public final class HardcoreSavedData extends SavedData {
                         + "' has been ended by an operator."),
                 false);
 
+        recordCompletion(session, HardcoreRun.Outcome.FORCE_ENDED, server);
         restoreAllParticipants(session, server,
                 "\u00a7e[Hardcore] Session ended. Your inventory has been restored.");
 
@@ -473,6 +509,36 @@ public final class HardcoreSavedData extends SavedData {
                 warnHeartsMismatchIfAny(player);
             }
         }
+    }
+
+    // ── Finished-run history (leaderboard) ─────────────────────
+
+    // Snapshots a finishing session into the permanent run history (hall of fame).
+    private void recordCompletion(SessionData session, HardcoreRun.Outcome outcome, MinecraftServer server) {
+        long now = System.currentTimeMillis();
+        long started = session.startedAt > 0 ? session.startedAt : now;
+        completedRuns.add(new HardcoreRun(
+                session.name,
+                resolveName(server, session.creator),
+                session.creator,
+                outcome,
+                started,
+                now,
+                session.peakPlayers,
+                session.deaths,
+                new ArrayList<>(session.participants())));
+    }
+
+    // Resolves a display name for a participant UUID. Prefers the live player, then the
+    // persisted name cache (every participant is remembered at session entry), then the UUID.
+    public static String resolveName(MinecraftServer server, UUID uuid) {
+        ServerPlayer online = server.getPlayerList().getPlayer(uuid);
+        if (online != null) return online.getName().getString();
+        return get(server).knownNames.getOrDefault(uuid, uuid.toString());
+    }
+
+    public List<HardcoreRun> getCompletedRuns() {
+        return Collections.unmodifiableList(completedRuns);
     }
 
     // ── Dragon respawn on End entry + dragon-kill win (TODO #9) ──
@@ -527,6 +593,7 @@ public final class HardcoreSavedData extends SavedData {
                         + "' WON! The dragon has been slain."),
                 false);
 
+        recordCompletion(session, HardcoreRun.Outcome.WIN, server);
         restoreAllParticipants(session, server,
                 "\u00a76[Hardcore] Victory! Your inventory has been restored.");
 
@@ -679,7 +746,7 @@ public final class HardcoreSavedData extends SavedData {
         player.experienceProgress = tag.getFloat("XpProgress").orElse(0f);
         player.totalExperience = tag.getInt("TotalXp").orElse(0);
 
-        // Restore health and hunger — skip for dead players (session-ending death calls
+        // Restore health and hunger. Skip for dead players (session-ending death calls
         // restoreAllParticipants while the dying player is still in death state; setting
         // health on a dead player desyncs client/server). Respawn gives them max health anyway.
         if (player.isAlive()) {
@@ -782,11 +849,15 @@ public final class HardcoreSavedData extends SavedData {
         // Preserved hardcore state for players who stepped out; keyed per session so a
         // player can be suspended in several sessions at once. Rejoin restores from here.
         final Map<UUID, CompoundTag> suspended;
+        // Wall-clock creation time (real elapsed run timer). 0 for sessions from before this
+        // field existed; treated as unknown by runMillis.
+        long startedAt;
 
         SessionData(String name, String password, UUID creator,
                     int startX, int startY, int startZ, String startDim,
                     List<UUID> alive, List<UUID> dead,
-                    int peakPlayers, int deaths, Map<String, CompoundTag> suspended) {
+                    int peakPlayers, int deaths, Map<String, CompoundTag> suspended,
+                    long startedAt) {
             this.name = name;
             this.password = password;
             this.creator = creator;
@@ -800,6 +871,7 @@ public final class HardcoreSavedData extends SavedData {
             this.deaths = deaths;
             this.suspended = new HashMap<>();
             suspended.forEach((k, v) -> this.suspended.put(UUID.fromString(k), v));
+            this.startedAt = startedAt;
         }
 
         Map<String, CompoundTag> suspendedToStringMap() {
@@ -822,6 +894,21 @@ public final class HardcoreSavedData extends SavedData {
         public int getThreshold() {
             return Math.max(1,
                     (int) Math.ceil(peakPlayers * SmpConfig.HARDCORE_DEATH_PERCENT / 100.0));
+        }
+
+        public boolean isDead(UUID id) { return dead.contains(id); }
+
+        // Real elapsed run time in milliseconds. 0 if the start time is unknown.
+        public long runMillis(long now) {
+            return startedAt > 0 ? Math.max(0, now - startedAt) : 0;
+        }
+
+        // Everyone who took part in this run: alive, dead, and stepped-out members.
+        Set<UUID> participants() {
+            Set<UUID> all = new HashSet<>(alive);
+            all.addAll(dead);
+            all.addAll(suspended.keySet());
+            return all;
         }
     }
 }

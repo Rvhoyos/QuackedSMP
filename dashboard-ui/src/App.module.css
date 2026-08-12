@@ -5,7 +5,7 @@
   min-height: 100vh;
 }
 
-/* ── Header — wood plank bar ── */
+/* ── Header: wood plank bar ── */
 .header {
   display: grid;
   grid-template-columns: 1fr auto 1fr;
@@ -70,7 +70,7 @@
   letter-spacing: 0.5px;
 }
 
-/* ── Center — server name ── */
+/* ── Center: server name ── */
 .headerCenter {
   display: flex;
   justify-content: center;
@@ -392,7 +392,7 @@
   flex-direction: column;
   gap: var(--s-4);
   padding: var(--s-5) var(--s-6);
-  overflow: hidden;
+  overflow-y: auto;
   min-height: 0;
 }
 

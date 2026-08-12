@@ -203,6 +203,11 @@ public final class AdminHandler {
         // Hardcore
         sb.append(String.format("\"hardcore_enabled\":%b,", SmpConfig.HARDCORE_ENABLED));
         sb.append(String.format("\"hardcore_death_percent\":%d,", SmpConfig.HARDCORE_DEATH_PERCENT));
+        sb.append(String.format("\"hardcore_team_visibility\":%b,", SmpConfig.HARDCORE_TEAM_VISIBILITY));
+        sb.append(String.format("\"hardcore_sidebar_enabled\":%b,", SmpConfig.HARDCORE_SIDEBAR_ENABLED));
+        sb.append(String.format("\"hardcore_sidebar_interval_seconds\":%d,", SmpConfig.HARDCORE_SIDEBAR_INTERVAL_SECONDS));
+        sb.append(String.format("\"hardcore_sidebar_show_seconds\":%d,", SmpConfig.HARDCORE_SIDEBAR_SHOW_SECONDS));
+        sb.append(String.format("\"hardcore_sidebar_on_entry_seconds\":%d,", SmpConfig.HARDCORE_SIDEBAR_ON_ENTRY_SECONDS));
         // Admin
         sb.append(String.format("\"admin_enabled\":%b,", SmpConfig.ADMIN_ENABLED));
         sb.append(String.format("\"dashboard_port\":%d,", SmpConfig.DASHBOARD_PORT));
@@ -351,6 +356,11 @@ public final class AdminHandler {
             // Hardcore
             if (patch.has("hardcore_enabled"))        { SmpConfig.HARDCORE_ENABLED        = patch.get("hardcore_enabled").getAsBoolean();       changed++; }
             if (patch.has("hardcore_death_percent"))   { SmpConfig.HARDCORE_DEATH_PERCENT   = patch.get("hardcore_death_percent").getAsInt();     changed++; }
+            if (patch.has("hardcore_team_visibility")) { SmpConfig.HARDCORE_TEAM_VISIBILITY = patch.get("hardcore_team_visibility").getAsBoolean(); changed++; }
+            if (patch.has("hardcore_sidebar_enabled")) { SmpConfig.HARDCORE_SIDEBAR_ENABLED = patch.get("hardcore_sidebar_enabled").getAsBoolean(); changed++; }
+            if (patch.has("hardcore_sidebar_interval_seconds")) { SmpConfig.HARDCORE_SIDEBAR_INTERVAL_SECONDS = Math.max(10, patch.get("hardcore_sidebar_interval_seconds").getAsInt()); changed++; }
+            if (patch.has("hardcore_sidebar_show_seconds"))     { SmpConfig.HARDCORE_SIDEBAR_SHOW_SECONDS     = Math.max(1,  patch.get("hardcore_sidebar_show_seconds").getAsInt());     changed++; }
+            if (patch.has("hardcore_sidebar_on_entry_seconds")) { SmpConfig.HARDCORE_SIDEBAR_ON_ENTRY_SECONDS = Math.max(1,  patch.get("hardcore_sidebar_on_entry_seconds").getAsInt()); changed++; }
             // Admin
             if (patch.has("admin_enabled"))         { SmpConfig.ADMIN_ENABLED         = patch.get("admin_enabled").getAsBoolean();        changed++; }
             if (patch.has("dashboard_port"))        { SmpConfig.DASHBOARD_PORT        = patch.get("dashboard_port").getAsInt();           changed++; }

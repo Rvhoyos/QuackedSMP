@@ -191,6 +191,10 @@ public final class DashboardManager {
         s.addRoute("/api/skills/leaderboard",
                 (m, h, b) -> AdminHandler.handleSkillsLeaderboard(m, h, b, mcServer));
 
+        // Hardcore leaderboard (public)
+        s.addRoute("/api/hardcore/leaderboard",
+                (m, h, b) -> HardcoreHandler.handleLeaderboard(m, h, b, mcServer));
+
         // Skills admin
         s.addRoute("/api/admin/skills/players",
                 (m, h, b) -> AdminHandler.handleSkillsPlayers(m, h, b, mcServer));

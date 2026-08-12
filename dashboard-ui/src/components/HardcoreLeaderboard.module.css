@@ -1,0 +1,223 @@
+.wrap {
+  flex-shrink: 0;
+  background: var(--mc-panel);
+  border: 1px solid #1A1A1A;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* ── Header ──────────────────────────────────────────────────────── */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 14px;
+  border-bottom: 1px solid #111;
+  background: #181818;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.title {
+  font-family: var(--font-pixel);
+  font-size: 7px;
+  color: #EF4444;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  text-shadow: 1px 1px 0 rgba(0,0,0,0.5);
+  white-space: nowrap;
+}
+
+.tabs { display: flex; gap: 2px; }
+
+.tab {
+  font-family: var(--font-pixel);
+  font-size: 6px;
+  letter-spacing: 0.3px;
+  background: none;
+  border: 1px solid #2A2A2A;
+  color: #666;
+  padding: 4px 10px;
+  cursor: pointer;
+  transition: color var(--t-fast), border-color var(--t-fast);
+  white-space: nowrap;
+}
+.tab:hover { color: #AAA; border-color: #444; }
+.tabActive { color: #F87171; border-color: #7F1D1D; background: rgba(127,29,29,0.25); }
+
+/* ── Records + counters grid (shared fun stats) ──────────────────── */
+.recordsHeading {
+  font-family: var(--font-pixel);
+  font-size: 6px;
+  color: #EF4444;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  padding: 8px 12px 4px;
+  border-top: 1px solid #111;
+  background: #161616;
+  flex-shrink: 0;
+}
+.records {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1px;
+  background: #111;
+  flex-shrink: 0;
+}
+@media (max-width: 700px) { .records { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 460px) { .records { grid-template-columns: 1fr; } }
+.record {
+  background: #161616;
+  padding: 9px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  overflow: hidden;
+}
+.recordLabel {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  font-family: var(--font-pixel);
+  font-size: 5px;
+  color: #9CA3AF;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+.recordIcon {
+  display: inline-flex;
+  flex-shrink: 0;
+}
+.recordRight {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  min-width: 0;
+  text-align: right;
+}
+.recordName {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: #EEE;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.recordVal {
+  font-family: var(--font-mono);
+  font-size: 17px;
+  color: #EF4444;
+}
+.recordSub {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: #F59E0B;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── Rankings: the tab-controlled table in a bounded scroll box ───── */
+.rankingHeading {
+  font-family: var(--font-pixel);
+  font-size: 6px;
+  color: #EF4444;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  padding: 8px 12px 4px;
+  border-top: 1px solid #111;
+  background: #161616;
+  flex-shrink: 0;
+}
+.body {
+  padding: 4px 0;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.table { width: 100%; border-collapse: collapse; }
+
+.thRank, .thName, .thNum {
+  font-family: var(--font-pixel);
+  font-size: 6px;
+  color: #444;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  text-align: left;
+  border-bottom: 1px solid #111;
+}
+.thNum { text-align: right; }
+
+.tr { border-bottom: 1px solid #0D0D0D; }
+.tr:hover { background: rgba(255,255,255,0.03); }
+
+.rank {
+  font-family: var(--font-pixel);
+  font-size: 7px;
+  color: #555;
+  padding: 6px 10px;
+  width: 30px;
+  letter-spacing: 0.3px;
+}
+.name {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: #CCC;
+  padding: 6px 10px;
+}
+.by {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: #777;
+  padding: 6px 10px;
+}
+.num {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: #EF4444;
+  padding: 6px 10px;
+  text-align: right;
+  white-space: nowrap;
+}
+.noData {
+  font-family: var(--font-pixel);
+  font-size: 6px;
+  color: #333;
+  padding: 12px 10px;
+  text-align: center;
+  letter-spacing: 0.3px;
+}
+
+/* ── Active runs strip ───────────────────────────────────────────── */
+.active {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 8px 12px;
+  border-top: 1px solid #111;
+  background: #161616;
+  flex-shrink: 0;
+}
+.activeTitle {
+  font-family: var(--font-pixel);
+  font-size: 5px;
+  color: #6B7280;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+.activePill {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: #CCC;
+  padding: 2px 7px;
+  background: rgba(239,68,68,0.1);
+  border: 1px solid rgba(239,68,68,0.25);
+}

@@ -51,6 +51,7 @@ public class SmpEvents {
         mc.smpessentials.dims.DimManager.restoreAll(event.getServer());
         mc.smpessentials.bluemap.BlueMapIntegration.onServerStart(event.getServer());
         mc.smpessentials.dashboard.DashboardManager.onServerStart(event.getServer());
+        mc.smpessentials.hardcore.HardcoreTeam.seed(event.getServer());
         mc.smpessentials.backup.BackupScheduler.get().start(event.getServer());
         mc.smpessentials.votifier.VoteHandler.init(event.getServer());
         mc.smpessentials.votifier.VotifierListener.start();
@@ -96,6 +97,9 @@ public class SmpEvents {
         SkillEvents.onPlayerLoggedOut(event.getEntity());
         mc.smpessentials.teleport.TeleportService.clearForPlayer(event.getEntity().getUUID());
         mc.smpessentials.antixray.AntiXrayEngine.onPlayerDisconnect(event.getEntity().getUUID());
+        if (event.getEntity() instanceof ServerPlayer sp) {
+            mc.smpessentials.hardcore.sidebar.HardcoreSidebarController.INSTANCE.onDisconnect(sp);
+        }
         mc.smpessentials.dashboard.DashboardManager.broadcastPlayerLeave(event.getEntity().getGameProfile().name());
     }
 
@@ -133,6 +137,7 @@ public class SmpEvents {
             hc.tickSpectatorHud(player);
             hc.tickEndEntry(player);
         }
+        mc.smpessentials.hardcore.sidebar.HardcoreSidebarController.INSTANCE.tick(event.getServer());
     }
 
     @SubscribeEvent

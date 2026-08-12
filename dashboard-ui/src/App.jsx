@@ -4,6 +4,7 @@ import EventFeed from './components/EventFeed'
 import ChatPanel from './components/ChatPanel'
 import AdminPanel from './components/admin/AdminPanel'
 import SkillsLeaderboard from './components/SkillsLeaderboard'
+import HardcoreLeaderboard from './components/HardcoreLeaderboard'
 import DownloadProgress from './components/DownloadProgress'
 import { IconDuck } from './components/admin/MinecraftIcons'
 import { streamingDownload, hasFileSystemAccess } from './lib/streamingDownload'
@@ -32,6 +33,7 @@ export default function App() {
   const [mspt,        setMspt]        = useState(null)
   const [sysMetrics,  setSysMetrics]  = useState(null)
   const [leaderboard, setLeaderboard] = useState(null)
+  const [hardcore,    setHardcore]    = useState(null)
   const [events,      setEvents]      = useState([])
   const [wsStatus,    setWsStatus]    = useState('connecting')
   const [view,        setView]        = useState('dashboard') // 'dashboard' | 'admin'
@@ -68,6 +70,10 @@ export default function App() {
     try {
       const r = await fetch('/api/skills/leaderboard')
       if (r.ok) { const d = await r.json(); if (!d.error) setLeaderboard(d) }
+    } catch { /* ignore */ }
+    try {
+      const r = await fetch('/api/hardcore/leaderboard')
+      if (r.ok) { const d = await r.json(); if (!d.error) setHardcore(d) }
     } catch { /* ignore */ }
   }, [])
 
@@ -254,6 +260,7 @@ export default function App() {
             <ChatPanel events={events} />
           </div>
           <SkillsLeaderboard data={leaderboard} />
+          <HardcoreLeaderboard data={hardcore} />
         </main>
       )}
     </div>

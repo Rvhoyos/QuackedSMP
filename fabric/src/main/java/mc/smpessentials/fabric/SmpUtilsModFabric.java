@@ -38,6 +38,7 @@ public final class SmpUtilsModFabric implements ModInitializer {
             mc.smpessentials.dims.DimManager.restoreAll(server);
             mc.smpessentials.bluemap.BlueMapIntegration.onServerStart(server);
             mc.smpessentials.dashboard.DashboardManager.onServerStart(server);
+            mc.smpessentials.hardcore.HardcoreTeam.seed(server);
             mc.smpessentials.backup.BackupScheduler.get().start(server);
             mc.smpessentials.votifier.VoteHandler.init(server);
             mc.smpessentials.votifier.VotifierListener.start();
@@ -77,6 +78,7 @@ public final class SmpUtilsModFabric implements ModInitializer {
             mc.smpessentials.skills.SkillEvents.onPlayerLoggedOut(player);
             mc.smpessentials.teleport.TeleportService.clearForPlayer(player.getUUID());
             mc.smpessentials.antixray.AntiXrayEngine.onPlayerDisconnect(player.getUUID());
+            mc.smpessentials.hardcore.sidebar.HardcoreSidebarController.INSTANCE.onDisconnect(player);
             mc.smpessentials.dashboard.DashboardManager.broadcastPlayerLeave(player.getGameProfile().name());
         });
 
@@ -113,6 +115,7 @@ public final class SmpUtilsModFabric implements ModInitializer {
                 hc.tickSpectatorHud(player);
                 hc.tickEndEntry(player);
             }
+            mc.smpessentials.hardcore.sidebar.HardcoreSidebarController.INSTANCE.tick(server);
         });
 
         // Scout Zoom activation is handled by PlayerActionMixin (common module)

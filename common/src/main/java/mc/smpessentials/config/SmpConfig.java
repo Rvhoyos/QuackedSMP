@@ -68,10 +68,20 @@ public final class SmpConfig {
 
     // ---- Hardcore ----
     public static boolean HARDCORE_ENABLED = false;
-    public static int HARDCORE_DEATH_PERCENT = 50;
+    // Percent of peak players that must die to end a session. 100 = ends only when everyone dies.
+    public static int HARDCORE_DEATH_PERCENT = 100;
     // Sends the vanilla withered-heart HUD to session members. Per-connection, so it only
     // takes effect on (re)connect; joining/leaving while online shows a passive warning.
     public static boolean HARDCORE_WITHERED_HEARTS = true;
+    // Gives session members a scoreboard-team identity (nametag/tab color). Off by default;
+    // when off, TeamAutoAssign behaves exactly as before.
+    public static boolean HARDCORE_TEAM_VISIBILITY = false;
+    public static String  HARDCORE_TEAM_NAME       = "hardcore";
+    // Per-player run-time sidebar (transient: periodic + on session entry).
+    public static boolean HARDCORE_SIDEBAR_ENABLED          = false;
+    public static int     HARDCORE_SIDEBAR_INTERVAL_SECONDS = 2700;
+    public static int     HARDCORE_SIDEBAR_SHOW_SECONDS     = 20;
+    public static int     HARDCORE_SIDEBAR_ON_ENTRY_SECONDS = 10;
 
     // ---- Anti-XRay ----
     public static boolean ANTIXRAY_ENABLED = true;
@@ -232,6 +242,12 @@ public final class SmpConfig {
         HARDCORE_ENABLED = d.hardcoreEnabled;
         HARDCORE_DEATH_PERCENT = d.hardcoreDeathPercent;
         HARDCORE_WITHERED_HEARTS = d.hardcoreWitheredHearts;
+        HARDCORE_TEAM_VISIBILITY = d.hardcoreTeamVisibility;
+        HARDCORE_TEAM_NAME = d.hardcoreTeamName;
+        HARDCORE_SIDEBAR_ENABLED = d.hardcoreSidebarEnabled;
+        HARDCORE_SIDEBAR_INTERVAL_SECONDS = d.hardcoreSidebarIntervalSeconds;
+        HARDCORE_SIDEBAR_SHOW_SECONDS = d.hardcoreSidebarShowSeconds;
+        HARDCORE_SIDEBAR_ON_ENTRY_SECONDS = d.hardcoreSidebarOnEntrySeconds;
 
         TEAM_AUTO_ASSIGN = new java.util.HashMap<>();
         for (var entry : d.teamAutoAssign.entrySet()) {
