@@ -322,7 +322,7 @@ Optional age-gate (compile API **2.6.0**). When `voicechat_enable` is true and S
 
 ### Anti-XRay
 
-`antixray_enabled` (default true): server-side obfuscation of fully hidden blocks in chunk data. Dimension-aware palettes; real blocks reveal as you dig.
+`antixray_enabled` (default true): server-side obfuscation of fully hidden ores and stone in chunk data. Hidden blocks are sent as plain stone / deepslate / netherrack (depth-aware), so x-ray clients see no ore locations and leak nothing. Real blocks reveal as you break into them and via proximity as you move, so any reveal reads as a natural stone-to-ore transition rather than a flicker.
 
 ### Player Shops
 

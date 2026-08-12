@@ -26,11 +26,12 @@ import java.util.concurrent.ConcurrentHashMap;
  * Server-side ore obfuscation engine.
  *
  * Replaces hidden stone, deepslate, netherrack, and ore blocks in outgoing chunk packets
- * with random ores so x-ray clients see noise instead of real ore locations. Only blocks
- * in {@link #OBFUSCATABLE} are targeted; everything else (dirt, gravel, granite, etc.) is
- * left untouched. A block is considered hidden when all 6 neighbor faces pointing toward
- * it are sturdy (full square faces). Real block states are restored via block-break reveal,
- * proximity reveal, and normal chunk re-sends.
+ * with the plain base material for their depth (stone, deepslate, or netherrack) so x-ray
+ * clients see uniform rock and no ore locations. Only blocks in {@link #OBFUSCATABLE} are
+ * targeted; everything else (dirt, gravel, granite, etc.) is left untouched. A block is
+ * considered hidden when all 6 neighbor faces pointing toward it are sturdy (full square
+ * faces). Real block states are restored via block-break reveal, proximity reveal, and
+ * normal chunk re-sends, so an exposed ore reads as a natural stone-to-ore transition.
  */
 public final class AntiXrayEngine {
     private AntiXrayEngine() {}
@@ -198,9 +199,8 @@ public final class AntiXrayEngine {
 
         BlockPos currentPos = player.blockPosition();
         UUID uuid = player.getUUID();
-        BlockPos lastPos = lastPositions.get(uuid);
-
-        if (lastPos != null && lastPos.equals(currentPos)) return;
+        // No movement gate: proximity reveal runs every tick (deduped by the revealed set) so
+        // stationary miners still get pre-reveal before breaking, e.g. when digging straight down.
         lastPositions.put(uuid, currentPos);
 
         Set<Long> revealed = revealedBlocks.computeIfAbsent(uuid, k -> new HashSet<>());
@@ -257,17 +257,15 @@ public final class AntiXrayEngine {
     }
 
     private static BlockState replacement(int x, int y, int z, boolean nether) {
-        long hash = x * 341873128712L + z * 132897987541L + y * 67890123456L;
-        hash = (hash ^ (hash >>> 16)) & 0x7FFFFFFF;
-
-        BlockState[] palette;
+        // Stone-mode: hide every obfuscatable block as the plain base material for its depth.
+        // Break/proximity reveal then flickers stone -> the real block, which reads as natural
+        // (unlike fake-ore -> stone, which looks like a glitch). Also leaks no ore info to xrayers.
+        // The *_ORES palettes are kept for a possible fake-ore mode revisit.
         if (nether) {
-            palette = NETHER_ORES;
+            return Blocks.NETHERRACK.defaultBlockState();
         } else if (y < 0) {
-            palette = DEEP_ORES;
-        } else {
-            palette = OVERWORLD_ORES;
+            return Blocks.DEEPSLATE.defaultBlockState();
         }
-        return palette[(int) (hash % palette.length)];
+        return Blocks.STONE.defaultBlockState();
     }
 }
