@@ -42,11 +42,28 @@ public final class TeamAutoAssign {
     }
 
     private static void apply(ServerPlayer player, String dimId) {
-        String targetTeam = reverseMap.get(dimId);
-        if (targetTeam == null) return;
-
         var scoreboard = player.level().getScoreboard();
         var current = scoreboard.getPlayersTeam(player.getScoreboardName());
+
+        // Hardcore membership takes priority over the dimension team and fully owns the hardcore
+        // team, so this stays self-correcting each tick.
+        if (mc.smpessentials.config.SmpConfig.HARDCORE_TEAM_VISIBILITY
+                && mc.smpessentials.hardcore.HardcoreSavedData.get(
+                        ((net.minecraft.server.level.ServerLevel) player.level()).getServer())
+                        .getPlayerSessionName(player.getUUID()) != null) {
+            var hcTeam = mc.smpessentials.hardcore.HardcoreTeam.getOrCreate(scoreboard);
+            if (current != hcTeam) scoreboard.addPlayerToTeam(player.getScoreboardName(), hcTeam);
+            return;
+        }
+        // Not (or no longer) in a session: never leave a player stuck on the hardcore team, even
+        // when the current dimension has no mapping.
+        if (current != null && current.getName().equals(mc.smpessentials.config.SmpConfig.HARDCORE_TEAM_NAME)) {
+            scoreboard.removePlayerFromTeam(player.getScoreboardName());
+            current = null;
+        }
+
+        String targetTeam = reverseMap.get(dimId);
+        if (targetTeam == null) return;
         if (current != null && current.getName().equals(targetTeam)) return;
 
         var team = scoreboard.getPlayerTeam(targetTeam);

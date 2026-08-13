@@ -77,6 +77,16 @@ public final class SpawnProtection {
                 && !isBlockInSpawnProtection(level, new BlockPos(Mth.floor(center.x), y, Mth.floor(center.z)));
     }
 
+    // Returns true if this entity is a hostile mob being added inside the spawn
+    // protection radius and should be blocked from entering the world. Uses the Enemy
+    // marker interface so it also covers hostiles that do not extend Monster
+    // (Slime, Ghast, Hoglin, Shulker). Keeps spawn a safe zone without touching combat.
+    public static boolean shouldBlockHostileSpawn(ServerLevel level, Entity entity) {
+        if (!SmpConfig.SPAWN_NO_HOSTILES) return false;
+        if (!(entity instanceof net.minecraft.world.entity.monster.Enemy)) return false;
+        return isBlockInSpawnProtection(level, entity.blockPosition());
+    }
+
     // Returns true if the position is inside a claimed chunk or within the vanilla spawn
     // protection radius. Used by enderman, farmland, and other mob-grief mixins.
     public static boolean isProtectedArea(ServerLevel level, BlockPos pos) {

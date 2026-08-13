@@ -26,8 +26,12 @@ const TABS = [
     id: 'general', label: 'General',
     keys: [
       'max_claims', 'allow_lava_wilderness', 'allow_fire_wilderness',
+      'spawn_no_hostiles',
       'protect_explosions', 'protect_fire_claims', 'protect_enderman', 'protect_farmland',
-      'tp_warmup', 'mute_levels_minutes', 'hardcore_death_percent',
+      'tp_warmup', 'mute_levels_minutes',
+      'hardcore_enabled', 'hardcore_death_percent', 'hardcore_team_visibility',
+      'hardcore_sidebar_enabled', 'hardcore_sidebar_interval_seconds',
+      'hardcore_sidebar_show_seconds', 'hardcore_sidebar_on_entry_seconds',
       'admin_enabled', 'dashboard_port', 'server_name',
     ],
   },
@@ -201,6 +205,9 @@ function GeneralTab({ draft, patch, onDisable, disabling, disableMsg }) {
         <Row label="Fire in Wilderness" hint="Allow fire to spread in unclaimed wilderness">
           <Toggle value={draft.allow_fire_wilderness} onChange={v => patch('allow_fire_wilderness', v)} />
         </Row>
+        <Row label="Protect: Hostiles in Spawn" hint="Remove hostile mobs that spawn inside spawn protection">
+          <Toggle value={draft.spawn_no_hostiles} onChange={v => patch('spawn_no_hostiles', v)} />
+        </Row>
         <Row label="Protect: Explosions" hint="Block explosions in claimed chunks">
           <Toggle value={draft.protect_explosions} onChange={v => patch('protect_explosions', v)} />
         </Row>
@@ -228,8 +235,26 @@ function GeneralTab({ draft, patch, onDisable, disabling, disableMsg }) {
       </Group>
 
       <Group icon={<IconShield />} title="Hardcore Mode" accent="red">
+        <Row label="Enabled" hint="Allow players to create and join hardcore sessions">
+          <Toggle value={draft.hardcore_enabled} onChange={v => patch('hardcore_enabled', v)} />
+        </Row>
         <Row label="Death Threshold" hint="Percent of peak players that must die to end a session">
           <NumInput value={draft.hardcore_death_percent} onChange={v => patch('hardcore_death_percent', v)} suffix="%" />
+        </Row>
+        <Row label="Team Identity" hint="Give session members a team name tag (nametag + tab). Edit color/prefix in Teams.">
+          <Toggle value={draft.hardcore_team_visibility} onChange={v => patch('hardcore_team_visibility', v)} />
+        </Row>
+        <Row label="Run Sidebar" hint="Show session members a run-time sidebar (periodic + on join)">
+          <Toggle value={draft.hardcore_sidebar_enabled} onChange={v => patch('hardcore_sidebar_enabled', v)} />
+        </Row>
+        <Row label="Sidebar Interval" hint="Average seconds between periodic sidebar pulses (jittered ±50%)">
+          <NumInput value={draft.hardcore_sidebar_interval_seconds} onChange={v => patch('hardcore_sidebar_interval_seconds', v)} suffix="s" />
+        </Row>
+        <Row label="Sidebar Duration" hint="Seconds the periodic pulse stays on screen">
+          <NumInput value={draft.hardcore_sidebar_show_seconds} onChange={v => patch('hardcore_sidebar_show_seconds', v)} suffix="s" />
+        </Row>
+        <Row label="Sidebar On-Join" hint="Seconds the sidebar flashes when a member joins or creates a session">
+          <NumInput value={draft.hardcore_sidebar_on_entry_seconds} onChange={v => patch('hardcore_sidebar_on_entry_seconds', v)} suffix="s" />
         </Row>
       </Group>
 

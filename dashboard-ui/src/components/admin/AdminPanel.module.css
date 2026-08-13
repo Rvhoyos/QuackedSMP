@@ -17,7 +17,7 @@
   to   { opacity: 1; transform: translateY(0); }
 }
 
-/* ── Tab header — dark stone bar ── */
+/* ── Tab header: dark stone bar ── */
 .header {
   display: flex;
   align-items: stretch;
@@ -32,6 +32,23 @@
   display: flex;
   gap: 0;
   align-items: stretch;
+  /* Scroll the tab strip horizontally when the window is too narrow to fit all
+     tabs, instead of clipping the overflow (which hid the extra tabs entirely). */
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: var(--mc-wood-dark) transparent;
+}
+.tabs::-webkit-scrollbar {
+  height: 4px;
+}
+.tabs::-webkit-scrollbar-thumb {
+  background: var(--mc-wood-dark);
+}
+.tabs::-webkit-scrollbar-track {
+  background: transparent;
 }
 
 /* Tab buttons */
@@ -50,6 +67,7 @@
   cursor: pointer;
   transition: background var(--t-fast), color var(--t-fast);
   white-space: nowrap;
+  flex-shrink: 0;
   text-shadow: 1px 1px 0 rgba(0,0,0,0.5);
   position: relative;
 }
@@ -91,6 +109,7 @@
 .logout {
   display: flex;
   align-items: center;
+  flex-shrink: 0;
   padding: 0 16px;
   margin: 8px;
   font-family: var(--font-pixel);

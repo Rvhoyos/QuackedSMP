@@ -178,6 +178,7 @@ public final class AdminHandler {
         sb.append(String.format("\"allow_lava_wilderness\":%b,", SmpConfig.ALLOW_LAVA_WILDERNESS));
         sb.append(String.format("\"allow_fire_wilderness\":%b,", SmpConfig.ALLOW_FIRE_WILDERNESS));
         sb.append(String.format("\"spawn_no_pvp\":%b,", SmpConfig.SPAWN_NO_PVP));
+        sb.append(String.format("\"spawn_no_hostiles\":%b,", SmpConfig.SPAWN_NO_HOSTILES));
         sb.append(String.format("\"protect_explosions\":%b,", SmpConfig.PROTECT_EXPLOSIONS));
         sb.append(String.format("\"protect_fire_claims\":%b,", SmpConfig.PROTECT_FIRE_CLAIMS));
         sb.append(String.format("\"protect_enderman\":%b,", SmpConfig.PROTECT_ENDERMAN));
@@ -192,6 +193,9 @@ public final class AdminHandler {
         sb.append(String.format("\"backup_public_download\":%b,", SmpConfig.BACKUP_PUBLIC_DOWNLOAD));
         sb.append(String.format("\"backup_public_max_concurrent\":%d,", SmpConfig.BACKUP_PUBLIC_MAX_CONCURRENT));
         sb.append(String.format("\"backup_public_max_per_ip\":%d,", SmpConfig.BACKUP_PUBLIC_MAX_PER_IP));
+        sb.append(String.format("\"backup_max_count\":%d,", SmpConfig.BACKUP_MAX_COUNT));
+        sb.append(String.format("\"backup_periodic_enabled\":%b,", SmpConfig.BACKUP_PERIODIC_ENABLED));
+        sb.append(String.format("\"backup_interval_hours\":%d,", SmpConfig.BACKUP_INTERVAL_HOURS));
         // Web panel link (gated on public download)
         sb.append(String.format("\"panel_url\":\"%s\",", jsonEscape(SmpConfig.PANEL_URL)));
         sb.append(String.format("\"panel_message\":\"%s\",", jsonEscape(SmpConfig.PANEL_MESSAGE)));
@@ -200,6 +204,11 @@ public final class AdminHandler {
         // Hardcore
         sb.append(String.format("\"hardcore_enabled\":%b,", SmpConfig.HARDCORE_ENABLED));
         sb.append(String.format("\"hardcore_death_percent\":%d,", SmpConfig.HARDCORE_DEATH_PERCENT));
+        sb.append(String.format("\"hardcore_team_visibility\":%b,", SmpConfig.HARDCORE_TEAM_VISIBILITY));
+        sb.append(String.format("\"hardcore_sidebar_enabled\":%b,", SmpConfig.HARDCORE_SIDEBAR_ENABLED));
+        sb.append(String.format("\"hardcore_sidebar_interval_seconds\":%d,", SmpConfig.HARDCORE_SIDEBAR_INTERVAL_SECONDS));
+        sb.append(String.format("\"hardcore_sidebar_show_seconds\":%d,", SmpConfig.HARDCORE_SIDEBAR_SHOW_SECONDS));
+        sb.append(String.format("\"hardcore_sidebar_on_entry_seconds\":%d,", SmpConfig.HARDCORE_SIDEBAR_ON_ENTRY_SECONDS));
         // Admin
         sb.append(String.format("\"admin_enabled\":%b,", SmpConfig.ADMIN_ENABLED));
         sb.append(String.format("\"dashboard_port\":%d,", SmpConfig.DASHBOARD_PORT));
@@ -307,6 +316,7 @@ public final class AdminHandler {
             if (patch.has("allow_lava_wilderness")) { SmpConfig.ALLOW_LAVA_WILDERNESS = patch.get("allow_lava_wilderness").getAsBoolean(); changed++; }
             if (patch.has("allow_fire_wilderness")) { SmpConfig.ALLOW_FIRE_WILDERNESS = patch.get("allow_fire_wilderness").getAsBoolean(); changed++; }
             if (patch.has("spawn_no_pvp"))          { SmpConfig.SPAWN_NO_PVP          = patch.get("spawn_no_pvp").getAsBoolean();          changed++; }
+            if (patch.has("spawn_no_hostiles"))     { SmpConfig.SPAWN_NO_HOSTILES     = patch.get("spawn_no_hostiles").getAsBoolean();     changed++; }
             if (patch.has("protect_explosions"))   { SmpConfig.PROTECT_EXPLOSIONS    = patch.get("protect_explosions").getAsBoolean();   changed++; }
             if (patch.has("protect_fire_claims"))  { SmpConfig.PROTECT_FIRE_CLAIMS   = patch.get("protect_fire_claims").getAsBoolean();  changed++; }
             if (patch.has("protect_enderman"))     { SmpConfig.PROTECT_ENDERMAN      = patch.get("protect_enderman").getAsBoolean();     changed++; }
@@ -320,6 +330,9 @@ public final class AdminHandler {
             if (patch.has("backup_public_download")) { SmpConfig.BACKUP_PUBLIC_DOWNLOAD = patch.get("backup_public_download").getAsBoolean(); changed++; }
             if (patch.has("backup_public_max_concurrent")) { SmpConfig.BACKUP_PUBLIC_MAX_CONCURRENT = patch.get("backup_public_max_concurrent").getAsInt(); changed++; }
             if (patch.has("backup_public_max_per_ip")) { SmpConfig.BACKUP_PUBLIC_MAX_PER_IP = patch.get("backup_public_max_per_ip").getAsInt(); changed++; }
+            if (patch.has("backup_max_count")) { SmpConfig.BACKUP_MAX_COUNT = Math.max(1, patch.get("backup_max_count").getAsInt()); changed++; }
+            if (patch.has("backup_periodic_enabled")) { SmpConfig.BACKUP_PERIODIC_ENABLED = patch.get("backup_periodic_enabled").getAsBoolean(); changed++; }
+            if (patch.has("backup_interval_hours")) { SmpConfig.BACKUP_INTERVAL_HOURS = Math.max(1, patch.get("backup_interval_hours").getAsInt()); changed++; }
             // Web panel link
             if (patch.has("panel_url")) {
                 String url = patch.get("panel_url").getAsString().trim();
@@ -345,6 +358,11 @@ public final class AdminHandler {
             // Hardcore
             if (patch.has("hardcore_enabled"))        { SmpConfig.HARDCORE_ENABLED        = patch.get("hardcore_enabled").getAsBoolean();       changed++; }
             if (patch.has("hardcore_death_percent"))   { SmpConfig.HARDCORE_DEATH_PERCENT   = patch.get("hardcore_death_percent").getAsInt();     changed++; }
+            if (patch.has("hardcore_team_visibility")) { SmpConfig.HARDCORE_TEAM_VISIBILITY = patch.get("hardcore_team_visibility").getAsBoolean(); changed++; }
+            if (patch.has("hardcore_sidebar_enabled")) { SmpConfig.HARDCORE_SIDEBAR_ENABLED = patch.get("hardcore_sidebar_enabled").getAsBoolean(); changed++; }
+            if (patch.has("hardcore_sidebar_interval_seconds")) { SmpConfig.HARDCORE_SIDEBAR_INTERVAL_SECONDS = Math.max(10, patch.get("hardcore_sidebar_interval_seconds").getAsInt()); changed++; }
+            if (patch.has("hardcore_sidebar_show_seconds"))     { SmpConfig.HARDCORE_SIDEBAR_SHOW_SECONDS     = Math.max(1,  patch.get("hardcore_sidebar_show_seconds").getAsInt());     changed++; }
+            if (patch.has("hardcore_sidebar_on_entry_seconds")) { SmpConfig.HARDCORE_SIDEBAR_ON_ENTRY_SECONDS = Math.max(1,  patch.get("hardcore_sidebar_on_entry_seconds").getAsInt()); changed++; }
             // Admin
             if (patch.has("admin_enabled"))         { SmpConfig.ADMIN_ENABLED         = patch.get("admin_enabled").getAsBoolean();        changed++; }
             if (patch.has("dashboard_port"))        { SmpConfig.DASHBOARD_PORT        = patch.get("dashboard_port").getAsInt();           changed++; }

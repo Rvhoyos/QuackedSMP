@@ -16,6 +16,7 @@ public final class SmpConfig {
     public static boolean ALLOW_LAVA_WILDERNESS = false;
     public static boolean ALLOW_FIRE_WILDERNESS = false;
     public static boolean SPAWN_NO_PVP = true;
+    public static boolean SPAWN_NO_HOSTILES = true;
     public static boolean PROTECT_EXPLOSIONS = true;
     public static boolean PROTECT_FIRE_CLAIMS = true;
     public static boolean PROTECT_ENDERMAN = true;
@@ -68,10 +69,20 @@ public final class SmpConfig {
 
     // ---- Hardcore ----
     public static boolean HARDCORE_ENABLED = false;
-    public static int HARDCORE_DEATH_PERCENT = 50;
+    // Percent of peak players that must die to end a session. 100 = ends only when everyone dies.
+    public static int HARDCORE_DEATH_PERCENT = 100;
     // Sends the vanilla withered-heart HUD to session members. Per-connection, so it only
     // takes effect on (re)connect; joining/leaving while online shows a passive warning.
     public static boolean HARDCORE_WITHERED_HEARTS = true;
+    // Gives session members a scoreboard-team identity (nametag/tab color). Off by default;
+    // when off, TeamAutoAssign behaves exactly as before.
+    public static boolean HARDCORE_TEAM_VISIBILITY = false;
+    public static String  HARDCORE_TEAM_NAME       = "hardcore";
+    // Per-player run-time sidebar (transient: periodic + on session entry).
+    public static boolean HARDCORE_SIDEBAR_ENABLED          = false;
+    public static int     HARDCORE_SIDEBAR_INTERVAL_SECONDS = 2700;
+    public static int     HARDCORE_SIDEBAR_SHOW_SECONDS     = 20;
+    public static int     HARDCORE_SIDEBAR_ON_ENTRY_SECONDS = 10;
 
     // ---- Anti-XRay ----
     public static boolean ANTIXRAY_ENABLED = true;
@@ -79,6 +90,8 @@ public final class SmpConfig {
     // ---- World Backups ----
     public static int     BACKUP_MAX_COUNT             = 5;
     public static String  BACKUP_DIR                   = "backups";
+    public static boolean BACKUP_PERIODIC_ENABLED      = false;
+    public static int     BACKUP_INTERVAL_HOURS        = 24;
     public static boolean BACKUP_PUBLIC_DOWNLOAD       = false;
     public static int     BACKUP_PUBLIC_MAX_CONCURRENT = 0; // 0 = follow server max-players
     public static int     BACKUP_PUBLIC_MAX_PER_IP     = 2;
@@ -181,6 +194,7 @@ public final class SmpConfig {
         ALLOW_LAVA_WILDERNESS = d.allowLavaWilderness;
         ALLOW_FIRE_WILDERNESS = d.allowFireWilderness;
         SPAWN_NO_PVP = d.spawnNoPvp;
+        SPAWN_NO_HOSTILES = d.spawnNoHostiles;
         PROTECT_EXPLOSIONS = d.protectExplosions;
         PROTECT_FIRE_CLAIMS = d.protectFireClaims;
         PROTECT_ENDERMAN = d.protectEnderman;
@@ -230,6 +244,12 @@ public final class SmpConfig {
         HARDCORE_ENABLED = d.hardcoreEnabled;
         HARDCORE_DEATH_PERCENT = d.hardcoreDeathPercent;
         HARDCORE_WITHERED_HEARTS = d.hardcoreWitheredHearts;
+        HARDCORE_TEAM_VISIBILITY = d.hardcoreTeamVisibility;
+        HARDCORE_TEAM_NAME = d.hardcoreTeamName;
+        HARDCORE_SIDEBAR_ENABLED = d.hardcoreSidebarEnabled;
+        HARDCORE_SIDEBAR_INTERVAL_SECONDS = d.hardcoreSidebarIntervalSeconds;
+        HARDCORE_SIDEBAR_SHOW_SECONDS = d.hardcoreSidebarShowSeconds;
+        HARDCORE_SIDEBAR_ON_ENTRY_SECONDS = d.hardcoreSidebarOnEntrySeconds;
 
         TEAM_AUTO_ASSIGN = new java.util.HashMap<>();
         for (var entry : d.teamAutoAssign.entrySet()) {
@@ -239,6 +259,8 @@ public final class SmpConfig {
         ANTIXRAY_ENABLED = d.antixrayEnabled;
         BACKUP_MAX_COUNT             = d.backupMaxCount;
         BACKUP_DIR                   = d.backupDir;
+        BACKUP_PERIODIC_ENABLED      = d.backupPeriodicEnabled;
+        BACKUP_INTERVAL_HOURS        = d.backupIntervalHours;
         BACKUP_PUBLIC_DOWNLOAD       = d.backupPublicDownload;
         BACKUP_PUBLIC_MAX_CONCURRENT = d.backupPublicMaxConcurrent;
         BACKUP_PUBLIC_MAX_PER_IP     = d.backupPublicMaxPerIp;

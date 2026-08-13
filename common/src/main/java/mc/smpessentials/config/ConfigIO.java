@@ -88,6 +88,7 @@ public final class ConfigIO {
         data.allowLavaWilderness = SmpConfig.ALLOW_LAVA_WILDERNESS;
         data.allowFireWilderness = SmpConfig.ALLOW_FIRE_WILDERNESS;
         data.spawnNoPvp = SmpConfig.SPAWN_NO_PVP;
+        data.spawnNoHostiles = SmpConfig.SPAWN_NO_HOSTILES;
         data.protectExplosions = SmpConfig.PROTECT_EXPLOSIONS;
         data.protectFireClaims = SmpConfig.PROTECT_FIRE_CLAIMS;
         data.protectEnderman = SmpConfig.PROTECT_ENDERMAN;
@@ -115,6 +116,12 @@ public final class ConfigIO {
         data.hardcoreEnabled = SmpConfig.HARDCORE_ENABLED;
         data.hardcoreDeathPercent = SmpConfig.HARDCORE_DEATH_PERCENT;
         data.hardcoreWitheredHearts = SmpConfig.HARDCORE_WITHERED_HEARTS;
+        data.hardcoreTeamVisibility = SmpConfig.HARDCORE_TEAM_VISIBILITY;
+        data.hardcoreTeamName = SmpConfig.HARDCORE_TEAM_NAME;
+        data.hardcoreSidebarEnabled = SmpConfig.HARDCORE_SIDEBAR_ENABLED;
+        data.hardcoreSidebarIntervalSeconds = SmpConfig.HARDCORE_SIDEBAR_INTERVAL_SECONDS;
+        data.hardcoreSidebarShowSeconds = SmpConfig.HARDCORE_SIDEBAR_SHOW_SECONDS;
+        data.hardcoreSidebarOnEntrySeconds = SmpConfig.HARDCORE_SIDEBAR_ON_ENTRY_SECONDS;
 
         data.votifier.enabled = SmpConfig.VOTIFIER_ENABLED;
         data.votifier.port = SmpConfig.VOTIFIER_PORT;
@@ -144,6 +151,8 @@ public final class ConfigIO {
         data.antixrayEnabled = SmpConfig.ANTIXRAY_ENABLED;
         data.backupMaxCount             = SmpConfig.BACKUP_MAX_COUNT;
         data.backupDir                  = SmpConfig.BACKUP_DIR;
+        data.backupPeriodicEnabled      = SmpConfig.BACKUP_PERIODIC_ENABLED;
+        data.backupIntervalHours        = SmpConfig.BACKUP_INTERVAL_HOURS;
         data.backupPublicDownload       = SmpConfig.BACKUP_PUBLIC_DOWNLOAD;
         data.backupPublicMaxConcurrent  = SmpConfig.BACKUP_PUBLIC_MAX_CONCURRENT;
         data.backupPublicMaxPerIp       = SmpConfig.BACKUP_PUBLIC_MAX_PER_IP;

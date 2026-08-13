@@ -16,6 +16,7 @@ public final class ConfigData {
     public boolean allowLavaWilderness = false;
     public boolean allowFireWilderness = false;
     public boolean spawnNoPvp = true;
+    public boolean spawnNoHostiles = true;
     public boolean protectExplosions = true;
     public boolean protectFireClaims = true;
     public boolean protectEnderman = true;
@@ -111,8 +112,23 @@ public final class ConfigData {
     }
 
     public boolean hardcoreEnabled = false;
-    public int hardcoreDeathPercent = 50;
+    // Percent of peak players that must die to end a session. 100 = ends only when everyone dies.
+    public int hardcoreDeathPercent = 100;
     public boolean hardcoreWitheredHearts = true;
+    // Optional scoreboard-team identity for session members (nametag/tab color). Off by
+    // default: current behavior is unchanged until enabled. The team's color/prefix are edited
+    // in the dashboard teams editor; only the name is fixed here.
+    public boolean hardcoreTeamVisibility = false;
+    public String  hardcoreTeamName       = "hardcore";
+    // Per-player run-time sidebar for session members. Transient: shown periodically and on
+    // session entry, not permanently on screen.
+    public boolean hardcoreSidebarEnabled        = false;
+    // Mean gap between periodic sidebar pulses (jittered +/-50% at runtime). ~45 minutes.
+    public int     hardcoreSidebarIntervalSeconds = 2700;
+    // How long the periodic pulse stays on screen.
+    public int     hardcoreSidebarShowSeconds     = 20;
+    // How long the flash on session create/join stays on screen.
+    public int     hardcoreSidebarOnEntrySeconds  = 10;
 
     public VotifierConfig votifier = new VotifierConfig();
     public DashboardConfig dashboard = new DashboardConfig();
@@ -126,6 +142,8 @@ public final class ConfigData {
     public boolean antixrayEnabled = true;
     public int     backupMaxCount             = 5;
     public String  backupDir                  = "backups";
+    public boolean backupPeriodicEnabled      = false;
+    public int     backupIntervalHours        = 24;
     public boolean backupPublicDownload       = false;
     public int     backupPublicMaxConcurrent  = 0;
     public int     backupPublicMaxPerIp       = 2;
