@@ -26,6 +26,7 @@ const TABS = [
     id: 'general', label: 'General',
     keys: [
       'max_claims', 'allow_lava_wilderness', 'allow_fire_wilderness',
+      'spawn_no_hostiles',
       'protect_explosions', 'protect_fire_claims', 'protect_enderman', 'protect_farmland',
       'tp_warmup', 'mute_levels_minutes',
       'hardcore_enabled', 'hardcore_death_percent', 'hardcore_team_visibility',
@@ -203,6 +204,9 @@ function GeneralTab({ draft, patch, onDisable, disabling, disableMsg }) {
         </Row>
         <Row label="Fire in Wilderness" hint="Allow fire to spread in unclaimed wilderness">
           <Toggle value={draft.allow_fire_wilderness} onChange={v => patch('allow_fire_wilderness', v)} />
+        </Row>
+        <Row label="Protect: Hostiles in Spawn" hint="Remove hostile mobs that spawn inside spawn protection">
+          <Toggle value={draft.spawn_no_hostiles} onChange={v => patch('spawn_no_hostiles', v)} />
         </Row>
         <Row label="Protect: Explosions" hint="Block explosions in claimed chunks">
           <Toggle value={draft.protect_explosions} onChange={v => patch('protect_explosions', v)} />
