@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import DownloadProgress from '../DownloadProgress'
+import RestoreInfo from '../RestoreInfo'
 import { streamingDownload } from '../../lib/streamingDownload'
 import styles from './BackupsPanel.module.css'
 
@@ -13,6 +14,8 @@ export default function BackupsPanel({ token, onExpired }) {
   const [downloading,   setDownloading]   = useState(null)
   const [dlProgress,    setDlProgress]    = useState(null) // { received, total, speed, eta } | null
   const [publicEnabled, setPublicEnabled] = useState(false)
+  const [seedDisclosure, setSeedDisclosure] = useState(false)
+  const [restoreInfo,    setRestoreInfo]    = useState(null)
   const [panelUrl,        setPanelUrl]        = useState('')
   const [panelUrlSaved,   setPanelUrlSaved]   = useState('')
   const [panelMsgEnabled, setPanelMsgEnabled] = useState(false)
@@ -48,11 +51,19 @@ export default function BackupsPanel({ token, onExpired }) {
   useEffect(() => { loadList() }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
+    fetch('/api/admin/restore-info', { headers: auth })
+      .then(r => r.status === 401 ? null : r.json())
+      .then(d => { if (d && !d.error) setRestoreInfo(d) })
+      .catch(() => {})
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
     fetch('/api/admin/config', { headers: auth })
       .then(r => r.status === 401 ? null : r.json())
       .then(d => {
         if (d && !d.error) {
           setPublicEnabled(Boolean(d.backup_public_download))
+          setSeedDisclosure(Boolean(d.backup_public_seed_disclosure))
           const url = d.panel_url || ''
           setPanelUrl(url)
           setPanelUrlSaved(url)
@@ -161,6 +172,11 @@ export default function BackupsPanel({ token, onExpired }) {
     }
   }
 
+  async function toggleSeedDisclosure(next) {
+    setSeedDisclosure(next)
+    if (!(await patchConfig({ backup_public_seed_disclosure: next }))) setSeedDisclosure(!next)
+  }
+
   // Poll while a snapshot is being generated.
   useEffect(() => {
     if (!running) {
@@ -254,6 +270,8 @@ export default function BackupsPanel({ token, onExpired }) {
       )}
       {status && <div className={styles.statusMsg}>{status}</div>}
 
+      <RestoreInfo info={restoreInfo} />
+
       <div className={styles.panelBox}>
         <div className={styles.panelTitle}>Scheduled backups</div>
 
@@ -316,6 +334,24 @@ export default function BackupsPanel({ token, onExpired }) {
           Shows a "Download World" button on the public dashboard
         </span>
       </label>
+
+      {publicEnabled && (
+        <div className={styles.panelBox}>
+          <div className={styles.panelTitle}>Public seed disclosure</div>
+          <label className={`${styles.toggleRow} ${styles.panelInner}`}>
+            <input
+              type="checkbox"
+              checked={seedDisclosure}
+              onChange={e => toggleSeedDisclosure(e.target.checked)}
+            />
+            <span className={styles.toggleLabel}>Also give the seed to public downloaders</span>
+          </label>
+          <div className={styles.panelHint}>
+            Lets guests restore matching terrain, but exposes the seed to online seed-finder
+            tools (structure/loot locating). Off by default. Admins always see the seed above.
+          </div>
+        </div>
+      )}
 
       {publicEnabled && (
         <div className={styles.panelBox}>

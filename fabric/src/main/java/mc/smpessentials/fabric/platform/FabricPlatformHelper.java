@@ -22,6 +22,19 @@ public class FabricPlatformHelper implements PlatformHelper {
     }
 
     @Override
+    public String getLoaderName() {
+        return "Fabric";
+    }
+
+    @Override
+    public String getLoaderVersion() {
+        return FabricLoader.getInstance()
+                .getModContainer("fabricloader")
+                .map(c -> c.getMetadata().getVersion().getFriendlyString())
+                .orElse("unknown");
+    }
+
+    @Override
     public Optional<Path> getActiveModJarPath() {
         try {
             return FabricLoader.getInstance()

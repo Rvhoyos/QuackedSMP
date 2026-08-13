@@ -6,6 +6,7 @@ import AdminPanel from './components/admin/AdminPanel'
 import SkillsLeaderboard from './components/SkillsLeaderboard'
 import HardcoreLeaderboard from './components/HardcoreLeaderboard'
 import DownloadProgress from './components/DownloadProgress'
+import RestoreInfo from './components/RestoreInfo'
 import { IconDuck } from './components/admin/MinecraftIcons'
 import { streamingDownload, hasFileSystemAccess } from './lib/streamingDownload'
 import styles from './App.module.css'
@@ -236,6 +237,7 @@ export default function App() {
                 for large downloads.
               </p>
             )}
+            {health?.seed != null && <RestoreInfo info={health} title="Restore info" />}
             <div className={styles.dlBtns}>
               <button className={styles.btnGhost} onClick={() => setDlPrompt(false)}>
                 Cancel

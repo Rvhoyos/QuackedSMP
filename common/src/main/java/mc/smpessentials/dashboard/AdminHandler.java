@@ -191,6 +191,7 @@ public final class AdminHandler {
         sb.append(String.format("\"economy_enabled\":%b,", SmpConfig.ECONOMY_ENABLED));
         sb.append(String.format("\"commandblocks_enabled\":%b,", cmdBlocksEnabled));
         sb.append(String.format("\"backup_public_download\":%b,", SmpConfig.BACKUP_PUBLIC_DOWNLOAD));
+        sb.append(String.format("\"backup_public_seed_disclosure\":%b,", SmpConfig.BACKUP_PUBLIC_SEED_DISCLOSURE));
         sb.append(String.format("\"backup_public_max_concurrent\":%d,", SmpConfig.BACKUP_PUBLIC_MAX_CONCURRENT));
         sb.append(String.format("\"backup_public_max_per_ip\":%d,", SmpConfig.BACKUP_PUBLIC_MAX_PER_IP));
         sb.append(String.format("\"backup_max_count\":%d,", SmpConfig.BACKUP_MAX_COUNT));
@@ -328,6 +329,7 @@ public final class AdminHandler {
             if (patch.has("shops_enabled"))     { SmpConfig.SHOPS_ENABLED     = patch.get("shops_enabled").getAsBoolean();     changed++; }
             if (patch.has("economy_enabled"))   { SmpConfig.ECONOMY_ENABLED   = patch.get("economy_enabled").getAsBoolean();   changed++; }
             if (patch.has("backup_public_download")) { SmpConfig.BACKUP_PUBLIC_DOWNLOAD = patch.get("backup_public_download").getAsBoolean(); changed++; }
+            if (patch.has("backup_public_seed_disclosure")) { SmpConfig.BACKUP_PUBLIC_SEED_DISCLOSURE = patch.get("backup_public_seed_disclosure").getAsBoolean(); changed++; }
             if (patch.has("backup_public_max_concurrent")) { SmpConfig.BACKUP_PUBLIC_MAX_CONCURRENT = patch.get("backup_public_max_concurrent").getAsInt(); changed++; }
             if (patch.has("backup_public_max_per_ip")) { SmpConfig.BACKUP_PUBLIC_MAX_PER_IP = patch.get("backup_public_max_per_ip").getAsInt(); changed++; }
             if (patch.has("backup_max_count")) { SmpConfig.BACKUP_MAX_COUNT = Math.max(1, patch.get("backup_max_count").getAsInt()); changed++; }

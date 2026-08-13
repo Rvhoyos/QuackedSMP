@@ -24,9 +24,10 @@ public final class SmpConfig {
     public static java.util.Map<String, String> MESSAGES = new java.util.HashMap<>();
 
     // ---- Feature toggles ----
-    public static boolean CLAIMS_ENABLED = true;
-    public static boolean SKILLS_ENABLED = true;
-    public static boolean CHATFILTER_ENABLED = true;
+    // Big features default OFF: this is a modular plugin, operators opt in per feature.
+    public static boolean CLAIMS_ENABLED = false;
+    public static boolean SKILLS_ENABLED = false;
+    public static boolean CHATFILTER_ENABLED = false;
     public static java.util.List<Integer> MUTE_LEVELS_MINUTES = new java.util.ArrayList<>(
             java.util.List.of(60, 120, 240, 480, 1440));
 
@@ -52,10 +53,10 @@ public final class SmpConfig {
     public static boolean DISCORD_CHAT = true;
 
     // ---- Voice Chat ----
-    public static boolean VOICECHAT_ENABLE = true;
+    public static boolean VOICECHAT_ENABLE = false;
 
     // ---- BlueMap ----
-    public static boolean BLUEMAP_ENABLE = true;
+    public static boolean BLUEMAP_ENABLE = false;
     public static boolean BLUEMAP_SHOW_HOMES = true;
     public static boolean BLUEMAP_SHOW_CLAIMS = true;
     public static boolean BLUEMAP_SHOW_WORLDBORDER = true;
@@ -95,6 +96,8 @@ public final class SmpConfig {
     public static boolean BACKUP_PUBLIC_DOWNLOAD       = false;
     public static int     BACKUP_PUBLIC_MAX_CONCURRENT = 0; // 0 = follow server max-players
     public static int     BACKUP_PUBLIC_MAX_PER_IP     = 2;
+    // Owner opt-in: expose the world seed to public downloaders. Off by default.
+    public static boolean BACKUP_PUBLIC_SEED_DISCLOSURE = false;
 
     // ---- Web Panel link (gated on public download) ----
     public static String  PANEL_URL              = "";
@@ -119,7 +122,7 @@ public final class SmpConfig {
     public static boolean ECONOMY_ENABLED = false;
 
     // ---- Kits ----
-    public static boolean KITS_ENABLED = true;
+    public static boolean KITS_ENABLED = false;
     public static long KIT_COOLDOWN_SECONDS = 86400;
     public static java.util.List<ConfigData.KitDef> KIT_DEFINITIONS = new java.util.ArrayList<>();
 
@@ -264,6 +267,7 @@ public final class SmpConfig {
         BACKUP_PUBLIC_DOWNLOAD       = d.backupPublicDownload;
         BACKUP_PUBLIC_MAX_CONCURRENT = d.backupPublicMaxConcurrent;
         BACKUP_PUBLIC_MAX_PER_IP     = d.backupPublicMaxPerIp;
+        BACKUP_PUBLIC_SEED_DISCLOSURE = d.backupPublicSeedDisclosure;
         PANEL_URL                    = d.panelUrl;
         PANEL_MESSAGE                = d.panelMessage;
         PANEL_MESSAGE_ENABLED        = d.panelMessageEnabled;

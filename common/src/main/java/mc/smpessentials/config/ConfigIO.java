@@ -154,6 +154,7 @@ public final class ConfigIO {
         data.backupPeriodicEnabled      = SmpConfig.BACKUP_PERIODIC_ENABLED;
         data.backupIntervalHours        = SmpConfig.BACKUP_INTERVAL_HOURS;
         data.backupPublicDownload       = SmpConfig.BACKUP_PUBLIC_DOWNLOAD;
+        data.backupPublicSeedDisclosure = SmpConfig.BACKUP_PUBLIC_SEED_DISCLOSURE;
         data.backupPublicMaxConcurrent  = SmpConfig.BACKUP_PUBLIC_MAX_CONCURRENT;
         data.backupPublicMaxPerIp       = SmpConfig.BACKUP_PUBLIC_MAX_PER_IP;
         data.panelUrl                   = SmpConfig.PANEL_URL;

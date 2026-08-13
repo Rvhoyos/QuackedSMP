@@ -26,6 +26,22 @@ public class NeoForgePlatformHelper implements PlatformHelper {
     }
 
     @Override
+    public String getLoaderName() {
+        return "NeoForge";
+    }
+
+    @Override
+    public String getLoaderVersion() {
+        try {
+            return ModList.get().getModContainerById("neoforge")
+                    .map(c -> c.getModInfo().getVersion().toString())
+                    .orElse("unknown");
+        } catch (Exception e) {
+            return "unknown";
+        }
+    }
+
+    @Override
     public Optional<Path> getActiveModJarPath() {
         try {
             return Optional.of(
