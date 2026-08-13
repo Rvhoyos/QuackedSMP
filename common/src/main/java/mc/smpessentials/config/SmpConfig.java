@@ -16,6 +16,7 @@ public final class SmpConfig {
     public static boolean ALLOW_LAVA_WILDERNESS = false;
     public static boolean ALLOW_FIRE_WILDERNESS = false;
     public static boolean SPAWN_NO_PVP = true;
+    public static boolean SPAWN_NO_HOSTILES = true;
     public static boolean PROTECT_EXPLOSIONS = true;
     public static boolean PROTECT_FIRE_CLAIMS = true;
     public static boolean PROTECT_ENDERMAN = true;
@@ -193,6 +194,7 @@ public final class SmpConfig {
         ALLOW_LAVA_WILDERNESS = d.allowLavaWilderness;
         ALLOW_FIRE_WILDERNESS = d.allowFireWilderness;
         SPAWN_NO_PVP = d.spawnNoPvp;
+        SPAWN_NO_HOSTILES = d.spawnNoHostiles;
         PROTECT_EXPLOSIONS = d.protectExplosions;
         PROTECT_FIRE_CLAIMS = d.protectFireClaims;
         PROTECT_ENDERMAN = d.protectEnderman;

@@ -88,6 +88,7 @@ public final class ConfigIO {
         data.allowLavaWilderness = SmpConfig.ALLOW_LAVA_WILDERNESS;
         data.allowFireWilderness = SmpConfig.ALLOW_FIRE_WILDERNESS;
         data.spawnNoPvp = SmpConfig.SPAWN_NO_PVP;
+        data.spawnNoHostiles = SmpConfig.SPAWN_NO_HOSTILES;
         data.protectExplosions = SmpConfig.PROTECT_EXPLOSIONS;
         data.protectFireClaims = SmpConfig.PROTECT_FIRE_CLAIMS;
         data.protectEnderman = SmpConfig.PROTECT_ENDERMAN;
