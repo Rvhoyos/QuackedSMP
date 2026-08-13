@@ -89,16 +89,20 @@ jobs:
       - name: Build both jars
         run: ./gradlew :fabric:build :neoforge:build
 
+      # Copy the exact main jars by version so sources/dev jars are never picked up.
+      - name: Collect release jars
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          mkdir -p release-jars
+          cp "fabric/build/libs/quackedsmp-fabric-${VERSION}.jar" release-jars/
+          cp "neoforge/build/libs/quackedsmp-neoforge-${VERSION}.jar" release-jars/
+
       # Created with a PAT (not GITHUB_TOKEN) so the published release triggers deploy-prod.
       - name: Create release and attach jars
         uses: softprops/action-gh-release@v2
         with:
           token: ${{ secrets.RELEASE_PAT }}
-          files: |
-            fabric/build/libs/quackedsmp-fabric-*.jar
-            neoforge/build/libs/quackedsmp-neoforge-*.jar
-            !fabric/build/libs/*-sources.jar
-            !neoforge/build/libs/*-sources.jar
+          files: release-jars/*.jar
           fail_on_unmatched_files: true
 
   deploy-prod:
