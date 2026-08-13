@@ -5,7 +5,7 @@ const DEFAULT_NOTE =
   'Restoring on another machine needs the same seed, loader, and mod set for terrain to match at unloaded chunks.'
 
 // Presentational only — parents fetch the data and pass it in. `info` carries
-// mcVersion, loader, loaderVersion, modVersion, worldName and (optionally) seed.
+// mcVersion, loader, loaderVersion, modVersion and (optionally) seed.
 // The seed row and copy button are omitted when no seed is present.
 export default function RestoreInfo({ info, title = 'Restore info', note = DEFAULT_NOTE }) {
   const [copied, setCopied] = useState(false)
@@ -38,7 +38,6 @@ export default function RestoreInfo({ info, title = 'Restore info', note = DEFAU
         <Field label="Minecraft" value={info.mcVersion} />
         <Field label="Loader" value={joinLoader(info.loader, info.loaderVersion)} />
         <Field label="QuackedSMP" value={info.modVersion} />
-        <Field label="World" value={info.worldName} />
       </div>
 
       <div className={styles.note}>{note}</div>

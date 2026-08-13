@@ -26,11 +26,9 @@ public final class RestoreInfoHandler {
             sb.append(String.format(Locale.US, "\"seed\":\"%d\",", info.seed()));
         }
         sb.append(String.format(Locale.US,
-                "\"mcVersion\":\"%s\",\"loader\":\"%s\",\"loaderVersion\":\"%s\","
-                        + "\"modVersion\":\"%s\",\"worldName\":\"%s\"",
+                "\"mcVersion\":\"%s\",\"loader\":\"%s\",\"loaderVersion\":\"%s\",\"modVersion\":\"%s\"",
                 jsonEscape(info.mcVersion()), jsonEscape(info.loader()),
-                jsonEscape(info.loaderVersion()), jsonEscape(info.modVersion()),
-                jsonEscape(info.worldName())));
+                jsonEscape(info.loaderVersion()), jsonEscape(info.modVersion())));
         return sb.toString();
     }
 

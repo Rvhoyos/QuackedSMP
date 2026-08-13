@@ -9,7 +9,7 @@ import net.minecraft.server.MinecraftServer;
 // terrain at unloaded chunks: the seed plus the environment it was generated in.
 // Pure value object. See RestoreInfoHandler for serialization and routing.
 public record RestoreInfo(long seed, String mcVersion, String loader,
-                          String loaderVersion, String modVersion, String worldName) {
+                          String loaderVersion, String modVersion) {
 
     // Reads a live snapshot from the running server, or null if the server is not ready.
     public static RestoreInfo capture(MinecraftServer server) {
@@ -19,7 +19,6 @@ public record RestoreInfo(long seed, String mcVersion, String loader,
                 SharedConstants.getCurrentVersion().name(),
                 SmpServices.PLATFORM.getLoaderName(),
                 SmpServices.PLATFORM.getLoaderVersion(),
-                SmpUtilsMod.VERSION,
-                server.getWorldData().getLevelName());
+                SmpUtilsMod.VERSION);
     }
 }
