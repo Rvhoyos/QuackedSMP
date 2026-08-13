@@ -116,9 +116,18 @@ public final class DashboardManager {
             boolean publicBackup  = SmpConfig.BACKUP_PUBLIC_DOWNLOAD;
             String  serverName    = SmpConfig.SERVER_NAME;
             String version = mc.smpessentials.SmpUtilsMod.VERSION;
+            // Restore info rides along only when public download is on. The seed is included
+            // only when the owner also opts into disclosure; otherwise it stays admin-only.
+            String restore = "";
+            if (publicBackup) {
+                RestoreInfo info = RestoreInfo.capture(mcServer);
+                if (info != null) {
+                    restore = "," + RestoreInfoHandler.jsonFields(info, SmpConfig.BACKUP_PUBLIC_SEED_DISCLOSURE);
+                }
+            }
             return String.format(
-                    "{\"status\":\"ok\",\"online\":%d,\"adminEnabled\":%b,\"hasPassword\":%b,\"backupPublicEnabled\":%b,\"serverName\":\"%s\",\"version\":\"%s\"}",
-                    online, adminOn, hasPassword, publicBackup, jsonEscape(serverName), jsonEscape(version));
+                    "{\"status\":\"ok\",\"online\":%d,\"adminEnabled\":%b,\"hasPassword\":%b,\"backupPublicEnabled\":%b,\"serverName\":\"%s\",\"version\":\"%s\"%s}",
+                    online, adminOn, hasPassword, publicBackup, jsonEscape(serverName), jsonEscape(version), restore);
         });
         s.addRoute("/api/metrics", () -> {
             Runtime rt       = Runtime.getRuntime();
@@ -184,6 +193,8 @@ public final class DashboardManager {
                 (m, h, b) -> AdminHandler.handleDimSetPortal(m, h, b, mcServer));
         s.addRoute("/api/admin/blocks",
                 (m, h, b) -> AdminHandler.handleBlocksGet(m, h, b));
+        s.addRoute("/api/admin/restore-info",
+                (m, h, b) -> RestoreInfoHandler.handleGet(m, h, b, mcServer));
         s.addRoute("/api/admin/biomes",
                 (m, h, b) -> AdminHandler.handleBiomesGet(m, h, b, mcServer));
 

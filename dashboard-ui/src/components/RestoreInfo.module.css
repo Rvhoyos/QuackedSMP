@@ -1,0 +1,84 @@
+.box {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 14px;
+  border-bottom: 1px solid #111;
+  background: #131313;
+  flex-shrink: 0;
+}
+
+.title {
+  font-family: var(--font-pixel);
+  font-size: 8px;
+  color: #CDA869;
+  letter-spacing: 0.4px;
+}
+
+.seedRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.seed {
+  flex: 1;
+  min-width: 0;
+  overflow-x: auto;
+  white-space: nowrap;
+  background: #0d0d0d;
+  border: 1px solid #333;
+  color: #E8D8A8;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  padding: 6px 9px;
+}
+
+.copyBtn {
+  flex-shrink: 0;
+  background: #1c1c1c;
+  border: 1px solid #444;
+  color: #CDA869;
+  font-family: var(--font-pixel);
+  font-size: 6px;
+  letter-spacing: 0.3px;
+  padding: 7px 10px;
+  cursor: pointer;
+}
+.copyBtn:hover { filter: brightness(1.2); }
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 8px 16px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.label {
+  font-family: var(--font-pixel);
+  font-size: 6px;
+  color: #777;
+  letter-spacing: 0.3px;
+}
+
+.value {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: #DDD;
+  overflow-wrap: anywhere;
+}
+
+.note {
+  font-family: var(--font-pixel);
+  font-size: 6px;
+  color: #555;
+  line-height: 1.6;
+  letter-spacing: 0.3px;
+}

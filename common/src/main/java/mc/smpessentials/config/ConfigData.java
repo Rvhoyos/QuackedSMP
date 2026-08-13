@@ -21,11 +21,12 @@ public final class ConfigData {
     public boolean protectFireClaims = true;
     public boolean protectEnderman = true;
     public boolean protectFarmland = true;
-    public boolean claimsEnabled = true;
-    public boolean skillsEnabled = true;
-    public boolean chatfilterEnabled = true;
-    public boolean voicechatEnable = true;
-    public boolean bluemapEnable = true;
+    // Big features default OFF: this is a modular plugin, operators opt in per feature.
+    public boolean claimsEnabled = false;
+    public boolean skillsEnabled = false;
+    public boolean chatfilterEnabled = false;
+    public boolean voicechatEnable = false;
+    public boolean bluemapEnable = false;
     public boolean bluemapShowHomes = true;
     public boolean bluemapShowClaims = true;
     public boolean bluemapShowWorldborder = true;
@@ -136,7 +137,7 @@ public final class ConfigData {
     public SkillsConfig skills = new SkillsConfig();
     // Import queue: loaded into NBT on startup/reload, then cleared from the file by ConfigIO.save().
     public ChatFilterData chatfilter = new ChatFilterData();
-    public boolean kitsEnabled = true;
+    public boolean kitsEnabled = false;
     public Map<String, List<String>> teamAutoAssign = new HashMap<>();
 
     public boolean antixrayEnabled = true;
@@ -147,6 +148,10 @@ public final class ConfigData {
     public boolean backupPublicDownload       = false;
     public int     backupPublicMaxConcurrent  = 0;
     public int     backupPublicMaxPerIp       = 2;
+    // When on, the world seed is disclosed to public downloaders (via /api/health) so they
+    // can restore matching terrain. Off by default: a public seed lets players locate
+    // structures/loot with online seed tools.
+    public boolean backupPublicSeedDisclosure = false;
     // Public web panel link. Only surfaced (via /smp download and the optional periodic
     // broadcast) when backupPublicDownload is on AND panelUrl is a non-blank http/https URL.
     // panelMessage supports & color codes and [label](url) clickable links (see TextUtil).
