@@ -123,6 +123,11 @@ public final class ConfigIO {
         data.hardcoreSidebarShowSeconds = SmpConfig.HARDCORE_SIDEBAR_SHOW_SECONDS;
         data.hardcoreSidebarOnEntrySeconds = SmpConfig.HARDCORE_SIDEBAR_ON_ENTRY_SECONDS;
 
+        data.welcomeSidebarEnabled = SmpConfig.WELCOME_SIDEBAR_ENABLED;
+        data.welcomeSidebarTitle = SmpConfig.WELCOME_SIDEBAR_TITLE;
+        data.welcomeSidebarLines = new java.util.ArrayList<>(SmpConfig.WELCOME_SIDEBAR_LINES);
+        data.welcomeSidebarShowSeconds = SmpConfig.WELCOME_SIDEBAR_SHOW_SECONDS;
+
         data.votifier.enabled = SmpConfig.VOTIFIER_ENABLED;
         data.votifier.port = SmpConfig.VOTIFIER_PORT;
         data.votifier.token = SmpConfig.VOTIFIER_TOKEN;

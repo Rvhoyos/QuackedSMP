@@ -1,6 +1,5 @@
-package mc.smpessentials.hardcore.sidebar;
+package mc.smpessentials.sidebar;
 
-import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.numbers.BlankFormat;
 import net.minecraft.network.protocol.game.ClientboundResetScorePacket;
@@ -23,39 +22,50 @@ import java.util.UUID;
 // Low-level per-connection sidebar sender (mechanism only, no policy). Sends scoreboard packets
 // directly to individual players so each can show different content, which vanilla's shared
 // ServerScoreboard cannot do. The objective is never registered on the live scoreboard; it
-// exists only as client-side state built from the packets we send.
+// exists only as client-side state built from the packets we send. Title is supplied per show,
+// so the single slot can host different boards (e.g. hardcore vs welcome) over time.
+// One logical board occupies the slot at a time; SidebarManager guarantees that.
 public final class PlayerSidebar {
 
     public static final PlayerSidebar INSTANCE = new PlayerSidebar();
 
-    private static final String OBJECTIVE_NAME = "qsmp_hc";
+    private static final String OBJECTIVE_NAME = "qsmp_sidebar";
 
-    // Built lazily (needs a scoreboard reference) and reused for every player.
+    // Built lazily (needs a scoreboard reference) and reused for every player. Its display name is
+    // mutated to the caller's title immediately before each ADD/CHANGE send, so it holds the right
+    // title at packet-construction time even though the instance is shared across players.
     private Objective objective;
     // Players who currently have the objective + display slot set.
     private final Set<UUID> shown = new HashSet<>();
+    // Last title sent per player, so a board swap emits a CHANGE only when the title actually differs.
+    private final Map<UUID, Component> lastTitle = new HashMap<>();
     // Last line count sent per player, so shrinking boards reset their stale lines.
     private final Map<UUID, Integer> lineCounts = new HashMap<>();
 
     private PlayerSidebar() {}
 
-    private Objective objective(ServerPlayer player) {
+    private Objective objective(ServerPlayer player, Component title) {
         if (objective == null) {
             objective = new Objective(player.level().getScoreboard(), OBJECTIVE_NAME,
-                    ObjectiveCriteria.DUMMY,
-                    Component.literal("HARDCORE").withStyle(ChatFormatting.RED, ChatFormatting.BOLD),
+                    ObjectiveCriteria.DUMMY, title,
                     ObjectiveCriteria.RenderType.INTEGER, false, BlankFormat.INSTANCE);
         }
         return objective;
     }
 
     // Shows or refreshes the sidebar for one player. Top line first.
-    public void show(ServerPlayer player, List<Component> lines) {
-        Objective obj = objective(player);
+    public void show(ServerPlayer player, Component title, List<Component> lines) {
+        Objective obj = objective(player, title);
         UUID id = player.getUUID();
         if (shown.add(id)) {
+            obj.setDisplayName(title);
             player.connection.send(new ClientboundSetObjectivePacket(obj, ClientboundSetObjectivePacket.METHOD_ADD));
             player.connection.send(new ClientboundSetDisplayObjectivePacket(DisplaySlot.SIDEBAR, obj));
+            lastTitle.put(id, title);
+        } else if (!title.equals(lastTitle.get(id))) {
+            obj.setDisplayName(title);
+            player.connection.send(new ClientboundSetObjectivePacket(obj, ClientboundSetObjectivePacket.METHOD_CHANGE));
+            lastTitle.put(id, title);
         }
         int n = lines.size();
         for (int i = 0; i < n; i++) {
@@ -74,6 +84,7 @@ public final class PlayerSidebar {
     public void clear(ServerPlayer player) {
         UUID id = player.getUUID();
         lineCounts.remove(id);
+        lastTitle.remove(id);
         if (!shown.remove(id)) return;
         if (objective != null) {
             player.connection.send(new ClientboundSetDisplayObjectivePacket(DisplaySlot.SIDEBAR, null));
@@ -88,11 +99,12 @@ public final class PlayerSidebar {
     // Drops tracking for a player without sending packets (use on disconnect).
     public void forget(UUID id) {
         shown.remove(id);
+        lastTitle.remove(id);
         lineCounts.remove(id);
     }
 
     // Stable, unique per-line score-holder key. Never rendered (each line sets a display component).
     private static String lineKey(int index) {
-        return "qsmp_hc_" + index;
+        return "qsmp_sidebar_" + index;
     }
 }

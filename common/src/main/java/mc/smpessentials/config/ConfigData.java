@@ -132,6 +132,24 @@ public final class ConfigData {
     // How long the flash on session create/join stays on screen.
     public int     hardcoreSidebarOnEntrySeconds  = 10;
 
+    // Welcome sidebar (2nd MOTD). Shown transiently when a player enters normal survival: on join
+    // (unless in a hardcore session) and when returning to survival from a session. On by default,
+    // and the default content is itself the nudge: it tells the owner to customize it in the panel
+    // or config. Title and lines support & color codes and {player}/{server} placeholders.
+    public boolean welcomeSidebarEnabled     = true;
+    public String  welcomeSidebarTitle       = "&6{server}";
+    public List<String> welcomeSidebarLines  = new ArrayList<>(List.of(
+            "&eNew here? &f/rules",
+            "&aProtect land: &f/claim",
+            "&bSleep in a bed to set &f/home",
+            "&dMore commands: &f/smp help",
+            " ",
+            "&8Owners: edit this in the panel",
+            "&8(Config > Chat) or",
+            "&8config/quackedsmp.json + /smp reload"));
+    // How long the welcome sidebar stays on screen.
+    public int     welcomeSidebarShowSeconds = 12;
+
     public VotifierConfig votifier = new VotifierConfig();
     public DashboardConfig dashboard = new DashboardConfig();
     public DiscordConfig discord = new DiscordConfig();

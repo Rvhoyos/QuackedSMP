@@ -41,7 +41,8 @@ const TABS = [
   },
   {
     id: 'chat', label: 'Chat',
-    keys: ['welcome_message', 'message_interval', 'periodic_messages', 'rules'],
+    keys: ['welcome_message', 'message_interval', 'periodic_messages', 'rules',
+      'welcome_sidebar_enabled', 'welcome_sidebar_title', 'welcome_sidebar_lines', 'welcome_sidebar_show_seconds'],
   },
   {
     id: 'integrations', label: 'Integrations',
@@ -440,6 +441,25 @@ function ChatTab({ draft, patch }) {
             placeholder="&e1. Your rule here…"
           />
         </StackedRow>
+      </Group>
+
+      <Group icon={<IconSign />} title="Welcome Sidebar" accent="green">
+        <Row label="Enabled" hint="Second MOTD shown on join (unless in a hardcore session) and when returning to survival from one">
+          <Toggle value={draft.welcome_sidebar_enabled} onChange={v => patch('welcome_sidebar_enabled', v)} />
+        </Row>
+        <StackedRow label="Title" hint="Sidebar heading. Supports & color codes and {player}/{server}.">
+          <TextInput value={draft.welcome_sidebar_title} onChange={v => patch('welcome_sidebar_title', v)} />
+        </StackedRow>
+        <StackedRow label="Lines" hint="Top line first. Supports & color codes and {player}/{server}.">
+          <ListEditor
+            value={draft.welcome_sidebar_lines}
+            onChange={v => patch('welcome_sidebar_lines', v)}
+            placeholder="&eNew here? &f/rules"
+          />
+        </StackedRow>
+        <Row label="Show Duration" hint="How long the sidebar stays on screen">
+          <NumInput value={draft.welcome_sidebar_show_seconds} onChange={v => patch('welcome_sidebar_show_seconds', v)} suffix="s" />
+        </Row>
       </Group>
     </>
   )

@@ -72,13 +72,14 @@ public final class SmpUtilsModFabric implements ModInitializer {
                     mc.smpessentials.hardcore.HardcoreSavedData.get(server);
             hc.markHeartsSent(player);
             hc.onPlayerReconnect(player);
+            mc.smpessentials.sidebar.SidebarManager.INSTANCE.onJoin(player);
         });
         net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> {
             net.minecraft.server.level.ServerPlayer player = handler.getPlayer();
             mc.smpessentials.skills.SkillEvents.onPlayerLoggedOut(player);
             mc.smpessentials.teleport.TeleportService.clearForPlayer(player.getUUID());
             mc.smpessentials.antixray.AntiXrayEngine.onPlayerDisconnect(player.getUUID());
-            mc.smpessentials.hardcore.sidebar.HardcoreSidebarController.INSTANCE.onDisconnect(player);
+            mc.smpessentials.sidebar.SidebarManager.INSTANCE.onDisconnect(player);
             mc.smpessentials.dashboard.DashboardManager.broadcastPlayerLeave(player.getGameProfile().name());
         });
 
@@ -115,7 +116,7 @@ public final class SmpUtilsModFabric implements ModInitializer {
                 hc.tickSpectatorHud(player);
                 hc.tickEndEntry(player);
             }
-            mc.smpessentials.hardcore.sidebar.HardcoreSidebarController.INSTANCE.tick(server);
+            mc.smpessentials.sidebar.SidebarManager.INSTANCE.tick(server);
         });
 
         // Scout Zoom activation is handled by PlayerActionMixin (common module)

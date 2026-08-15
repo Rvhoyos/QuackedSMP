@@ -320,8 +320,13 @@ public final class HardcoreSavedData extends SavedData {
 
     // Flashes the run-time sidebar for all members when someone enters a session.
     private void notifySidebarEntry(ServerPlayer player) {
-        mc.smpessentials.hardcore.sidebar.HardcoreSidebarController.INSTANCE
+        mc.smpessentials.sidebar.SidebarManager.INSTANCE
                 .onSessionEntry(((ServerLevel) player.level()).getServer());
+    }
+
+    // Offers the welcome sidebar when a player returns to normal survival from a session.
+    private void notifySidebarExit(ServerPlayer player) {
+        mc.smpessentials.sidebar.SidebarManager.INSTANCE.onEnterSurvival(player);
     }
 
     public String leaveSession(ServerPlayer player) {
@@ -342,6 +347,7 @@ public final class HardcoreSavedData extends SavedData {
         restorePlayerState(player);
         teleportToSpawn(player);
         warnHeartsMismatchIfAny(player);
+        notifySidebarExit(player);
 
         setDirty();
         return null;
@@ -507,6 +513,7 @@ public final class HardcoreSavedData extends SavedData {
                 player.sendSystemMessage(Component.literal(message));
                 playerSessions.remove(uuid);
                 warnHeartsMismatchIfAny(player);
+                notifySidebarExit(player);
             }
         }
     }

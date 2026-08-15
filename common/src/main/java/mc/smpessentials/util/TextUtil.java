@@ -1,7 +1,9 @@
 package mc.smpessentials.util;
 
+import mc.smpessentials.config.SmpConfig;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.server.level.ServerPlayer;
 
 import java.util.regex.Pattern;
 
@@ -12,6 +14,15 @@ public final class TextUtil {
     private static final Pattern AMPERSAND = Pattern.compile("(?i)&([0-9a-fk-or])");
 
     private static final Pattern LINK_PATTERN = Pattern.compile("\\[([^\\]]+)\\]\\(([^)]+)\\)");
+
+    // Resolves the {server} and {player} placeholders then formats. Shared by anything that greets
+    // a player (join message, welcome sidebar).
+    public static MutableComponent motd(String template, ServerPlayer player) {
+        if (template == null) return Component.empty();
+        String server = SmpConfig.SERVER_NAME;
+        if (server == null || server.isBlank()) server = "QuackedSMP";
+        return format(template.replace("{server}", server).replace("{player}", player.getName().getString()));
+    }
 
     // Replaces & color codes and parses Markdown-style links: [Text](URL).
     public static MutableComponent format(String text) {

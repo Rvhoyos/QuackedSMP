@@ -98,6 +98,12 @@ public final class SmpConfig {
     public static int     HARDCORE_SIDEBAR_SHOW_SECONDS;
     public static int     HARDCORE_SIDEBAR_ON_ENTRY_SECONDS;
 
+    // ---- Welcome sidebar (2nd MOTD) ----
+    public static boolean WELCOME_SIDEBAR_ENABLED;
+    public static String  WELCOME_SIDEBAR_TITLE;
+    public static java.util.List<String> WELCOME_SIDEBAR_LINES = new java.util.ArrayList<>();
+    public static int     WELCOME_SIDEBAR_SHOW_SECONDS;
+
     // ---- Anti-XRay ----
     public static boolean ANTIXRAY_ENABLED;
 
@@ -268,6 +274,11 @@ public final class SmpConfig {
         HARDCORE_SIDEBAR_INTERVAL_SECONDS = d.hardcoreSidebarIntervalSeconds;
         HARDCORE_SIDEBAR_SHOW_SECONDS = d.hardcoreSidebarShowSeconds;
         HARDCORE_SIDEBAR_ON_ENTRY_SECONDS = d.hardcoreSidebarOnEntrySeconds;
+
+        WELCOME_SIDEBAR_ENABLED = d.welcomeSidebarEnabled;
+        WELCOME_SIDEBAR_TITLE = d.welcomeSidebarTitle;
+        WELCOME_SIDEBAR_LINES = d.welcomeSidebarLines;
+        WELCOME_SIDEBAR_SHOW_SECONDS = d.welcomeSidebarShowSeconds;
 
         TEAM_AUTO_ASSIGN = new java.util.HashMap<>();
         for (var entry : d.teamAutoAssign.entrySet()) {

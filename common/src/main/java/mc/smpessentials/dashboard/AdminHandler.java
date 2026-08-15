@@ -210,6 +210,10 @@ public final class AdminHandler {
         sb.append(String.format("\"hardcore_sidebar_interval_seconds\":%d,", SmpConfig.HARDCORE_SIDEBAR_INTERVAL_SECONDS));
         sb.append(String.format("\"hardcore_sidebar_show_seconds\":%d,", SmpConfig.HARDCORE_SIDEBAR_SHOW_SECONDS));
         sb.append(String.format("\"hardcore_sidebar_on_entry_seconds\":%d,", SmpConfig.HARDCORE_SIDEBAR_ON_ENTRY_SECONDS));
+        sb.append(String.format("\"welcome_sidebar_enabled\":%b,", SmpConfig.WELCOME_SIDEBAR_ENABLED));
+        sb.append(String.format("\"welcome_sidebar_title\":\"%s\",", jsonEscape(SmpConfig.WELCOME_SIDEBAR_TITLE)));
+        sb.append("\"welcome_sidebar_lines\":").append(jsonStrArr(SmpConfig.WELCOME_SIDEBAR_LINES)).append(",");
+        sb.append(String.format("\"welcome_sidebar_show_seconds\":%d,", SmpConfig.WELCOME_SIDEBAR_SHOW_SECONDS));
         // Admin
         sb.append(String.format("\"admin_enabled\":%b,", SmpConfig.ADMIN_ENABLED));
         sb.append(String.format("\"dashboard_port\":%d,", SmpConfig.DASHBOARD_PORT));
@@ -365,6 +369,10 @@ public final class AdminHandler {
             if (patch.has("hardcore_sidebar_interval_seconds")) { SmpConfig.HARDCORE_SIDEBAR_INTERVAL_SECONDS = Math.max(10, patch.get("hardcore_sidebar_interval_seconds").getAsInt()); changed++; }
             if (patch.has("hardcore_sidebar_show_seconds"))     { SmpConfig.HARDCORE_SIDEBAR_SHOW_SECONDS     = Math.max(1,  patch.get("hardcore_sidebar_show_seconds").getAsInt());     changed++; }
             if (patch.has("hardcore_sidebar_on_entry_seconds")) { SmpConfig.HARDCORE_SIDEBAR_ON_ENTRY_SECONDS = Math.max(1,  patch.get("hardcore_sidebar_on_entry_seconds").getAsInt()); changed++; }
+            if (patch.has("welcome_sidebar_enabled")) { SmpConfig.WELCOME_SIDEBAR_ENABLED = patch.get("welcome_sidebar_enabled").getAsBoolean(); changed++; }
+            if (patch.has("welcome_sidebar_title"))   { SmpConfig.WELCOME_SIDEBAR_TITLE   = patch.get("welcome_sidebar_title").getAsString(); changed++; }
+            if (patch.has("welcome_sidebar_lines") && patch.get("welcome_sidebar_lines").isJsonArray()) { loadStrArr(patch.getAsJsonArray("welcome_sidebar_lines"), SmpConfig.WELCOME_SIDEBAR_LINES); changed++; }
+            if (patch.has("welcome_sidebar_show_seconds")) { SmpConfig.WELCOME_SIDEBAR_SHOW_SECONDS = Math.max(1, patch.get("welcome_sidebar_show_seconds").getAsInt()); changed++; }
             // Admin
             if (patch.has("admin_enabled"))         { SmpConfig.ADMIN_ENABLED         = patch.get("admin_enabled").getAsBoolean();        changed++; }
             if (patch.has("dashboard_port"))        { SmpConfig.DASHBOARD_PORT        = patch.get("dashboard_port").getAsInt();           changed++; }
