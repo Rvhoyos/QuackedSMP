@@ -13,7 +13,9 @@ import net.minecraft.world.level.border.WorldBorder;
 import mc.smpessentials.config.SmpConfig;
 import mc.smpessentials.SmpUtilsMod;
 import mc.smpessentials.claims.ClaimManager;
+import mc.smpessentials.claims.ClaimRegions;
 import mc.smpessentials.claims.model.ClaimData;
+import mc.smpessentials.claims.storage.ClaimedSavedData;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.core.BlockPos;
@@ -269,7 +271,7 @@ public class BlueMapMarkerManager {
 
                 // We group contiguous chunks together to draw them as discrete connected
                 // regions
-                List<Set<ChunkPos>> regions = findConnectedRegions(
+                List<Set<ChunkPos>> regions = ClaimRegions.connectedComponents(
                         claims.stream().map(c -> ChunkPos.unpack(c.chunk())).collect(Collectors.toSet()));
 
                 int regionIdx = 0;
@@ -291,26 +293,13 @@ public class BlueMapMarkerManager {
         if (mapOpt.isEmpty())
             return;
 
-        // Resolve the most popular Name across this connected region:
-        Map<String, Integer> nameCounts = new HashMap<>();
+        // One name per region: read it off the region's single named (anchor) chunk.
+        String bestName = null;
         ServerLevel sLevel = server.getLevel(dim);
         if (sLevel != null) {
-            for (ChunkPos cp : regionChunks) {
-                var cdOpt = mc.smpessentials.claims.storage.ClaimedSavedData.get(sLevel).getClaim(sLevel, cp);
-                if (cdOpt.isPresent() && cdOpt.get().name().isPresent() && !cdOpt.get().name().get().isBlank()) {
-                    String customName = cdOpt.get().name().get();
-                    nameCounts.put(customName, nameCounts.getOrDefault(customName, 0) + 1);
-                }
-            }
-        }
-
-        String bestName = null;
-        int maxCount = 0;
-        for (var entry : nameCounts.entrySet()) {
-            if (entry.getValue() > maxCount) {
-                maxCount = entry.getValue();
-                bestName = entry.getKey();
-            }
+            var named = ClaimedSavedData.get(sLevel).namedChunkIn(dim, regionChunks);
+            if (named.isPresent() && named.get().name().isPresent() && !named.get().name().get().isBlank())
+                bestName = named.get().name().get();
         }
 
         String markerLabel = (bestName != null) ? bestName : ownerName + "'s Claim";
@@ -345,9 +334,13 @@ public class BlueMapMarkerManager {
             avgX /= regionChunks.size();
             avgZ /= regionChunks.size();
 
+            // Scale the label with region size so small regions stay legible next to big ones.
+            int font = Math.max(12, Math.min(48, 12 + (int) (Math.sqrt(regionChunks.size()) * 6)));
+
             HtmlMarker htmlMarker = HtmlMarker.builder()
                     .label(bestName)
-                    .html("<div style='color:white; text-shadow: 2px 2px 4px black; font-weight:bold; font-family:sans-serif; white-space:nowrap; pointer-events:none;'>"
+                    .html("<div style='color:white; text-shadow: 2px 2px 4px black; font-weight:bold; font-family:sans-serif; white-space:nowrap; pointer-events:none; font-size:"
+                            + font + "px;'>"
                             + bestName + "</div>")
                     .position(new Vector3d(avgX, 70.1, avgZ))
                     .anchor(new Vector2i(0, 0)) // Center the label
@@ -369,43 +362,6 @@ public class BlueMapMarkerManager {
                 new Vector2d(endX, startZ),
                 new Vector2d(endX, endZ),
                 new Vector2d(startX, endZ));
-    }
-
-    private List<Set<ChunkPos>> findConnectedRegions(Set<ChunkPos> allOwnerChunks) {
-        List<Set<ChunkPos>> regions = new ArrayList<>();
-        Set<ChunkPos> visited = new HashSet<>();
-
-        for (ChunkPos cp : allOwnerChunks) {
-            if (!visited.contains(cp)) {
-                Set<ChunkPos> currentRegion = new HashSet<>();
-                Queue<ChunkPos> queue = new LinkedList<>();
-
-                queue.add(cp);
-                visited.add(cp);
-
-                while (!queue.isEmpty()) {
-                    ChunkPos curr = queue.poll();
-                    currentRegion.add(curr);
-
-                    // Check ADJACENT chunks (N, S, E, W)
-                    int x = curr.x();
-                    int z = curr.z();
-                    ChunkPos[] neighbors = {
-                            new ChunkPos(x + 1, z), new ChunkPos(x - 1, z),
-                            new ChunkPos(x, z + 1), new ChunkPos(x, z - 1)
-                    };
-
-                    for (ChunkPos n : neighbors) {
-                        if (allOwnerChunks.contains(n) && !visited.contains(n)) {
-                            visited.add(n);
-                            queue.add(n);
-                        }
-                    }
-                }
-                regions.add(currentRegion);
-            }
-        }
-        return regions;
     }
 
     private Color parseColor(String hexARGB) {

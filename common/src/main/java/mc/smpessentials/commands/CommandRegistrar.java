@@ -23,6 +23,8 @@ public final class CommandRegistrar {
                                                                 .getEntity() instanceof net.minecraft.server.level.ServerPlayer)
                                                 .executes(ctx -> mc.smpessentials.commands.HomeCommand
                                                                 .execute(ctx.getSource())));
+                // --- /visit <name> ---
+                mc.smpessentials.commands.VisitCommand.register(dispatcher);
                 // --- /spawn ---
                 dispatcher.register(
                                 Commands.literal("spawn")

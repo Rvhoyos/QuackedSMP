@@ -1,12 +1,15 @@
 package mc.smpessentials.claims;
 
 import mc.smpessentials.claims.model.ClaimData;
+import mc.smpessentials.claims.model.WarpAnchor;
+import mc.smpessentials.claims.storage.ClaimedSavedData;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.server.dedicated.DedicatedServer;
 import net.minecraft.core.BlockPos;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -40,9 +43,30 @@ public final class ClaimService {
         return false;
     }
 
-    public static boolean setName(ServerPlayer player, ServerLevel level, ChunkPos pos, String name) {
-        var mgr = ClaimManager.get(level);
-        return mgr.setNameIfOwned(pos, player.getUUID(), name);
+    // Names the region the player is standing in and captures their exact spot as the /visit anchor.
+    public static NameResult nameClaim(ServerPlayer player, ServerLevel level, String name) {
+        if (name == null || name.isBlank())
+            return NameResult.EMPTY;
+        WarpAnchor anchor = new WarpAnchor(player.getX(), player.getY(), player.getZ(),
+                player.getYRot(), player.getXRot());
+        return switch (ClaimManager.get(level).nameRegion(player.chunkPosition(), player.getUUID(), name, anchor)) {
+            case OK -> NameResult.OK;
+            case NAME_TAKEN -> NameResult.NAME_TAKEN;
+            case NOT_OWNER -> NameResult.NOT_OWNER;
+        };
+    }
+
+    // Named regions the player may /visit (owner, trusted, or OP), sorted case-insensitively.
+    public static List<String> visitableNames(ServerPlayer player) {
+        return RegionNames.visitable(ClaimedSavedData.get((ServerLevel) player.level()), player);
+    }
+
+    public static RegionNames.VisitResult resolveVisit(ServerPlayer player, String name) {
+        return RegionNames.resolveVisit(ClaimedSavedData.get((ServerLevel) player.level()), player, name);
+    }
+
+    public enum NameResult {
+        OK, NOT_OWNER, NAME_TAKEN, EMPTY
     }
 
     public static Result claim(ServerPlayer player, ServerLevel level, ChunkPos pos) {
@@ -97,6 +121,7 @@ public final class ClaimService {
             return Result.REACHED_CAP;
 
         mgr.claim(pos, me);
+        mgr.resolveMerge(pos, me);
         return Result.SUCCESS;
     }
 
