@@ -122,8 +122,9 @@ public final class ConfigData {
     public boolean hardcoreTeamVisibility = false;
     public String  hardcoreTeamName       = "hardcore";
     // Per-player run-time sidebar for session members. Transient: shown periodically and on
-    // session entry, not permanently on screen.
-    public boolean hardcoreSidebarEnabled        = false;
+    // session entry, not permanently on screen. On by default; inert until hardcore is enabled
+    // since it only ever targets players in a hardcore session.
+    public boolean hardcoreSidebarEnabled        = true;
     // Mean gap between periodic sidebar pulses (jittered +/-50% at runtime). ~45 minutes.
     public int     hardcoreSidebarIntervalSeconds = 2700;
     // How long the periodic pulse stays on screen.

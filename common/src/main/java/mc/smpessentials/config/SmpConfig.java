@@ -2,108 +2,121 @@ package mc.smpessentials.config;
 
 import mc.smpessentials.skills.SkillType;
 
+/**
+ * Live runtime holder for all config values. Read from here everywhere.
+ *
+ * Do NOT give these fields default literals. Every default lives in exactly
+ * one place, {@link ConfigData}. {@link #load()} copies ConfigData into these
+ * fields at startup (SmpUtilsMod.init, before any subsystem), so any literal
+ * written here is dead: overwritten before the first read, and a silent
+ * second source of truth that can disagree with the real default.
+ *
+ * Fields are intentionally declared uninitialized. Collections keep an empty
+ * initializer only for null-safety, never a populated default.
+ *
+ * To change a default: edit {@link ConfigData} only.
+ */
 public final class SmpConfig {
-    public static int MAX_CLAIMS = 50;
-    public static int TP_WARMUP = 5;
-    public static String WELCOME_MESSAGE = "Welcome to {server}, {player}!";
+    // No defaults here. See class Javadoc. Defaults live in ConfigData.
+    public static int MAX_CLAIMS;
+    public static int TP_WARMUP;
+    public static String WELCOME_MESSAGE;
     public static java.util.List<String> RULES = new java.util.ArrayList<>();
     public static java.util.List<String> PERIODIC_MESSAGES = new java.util.ArrayList<>();
-    public static int MESSAGE_INTERVAL = 300; // Seconds
+    public static int MESSAGE_INTERVAL; // Seconds
     // ---- Tier definitions (in ascending tier order) ----
     public static java.util.List<TierDef> TIERS = new java.util.ArrayList<>();
 
     public record TierDef(int tier, String name, long minPlaytimeHours, int bonusClaims) {}
-    public static boolean ALLOW_LAVA_WILDERNESS = false;
-    public static boolean ALLOW_FIRE_WILDERNESS = false;
-    public static boolean SPAWN_NO_PVP = true;
-    public static boolean SPAWN_NO_HOSTILES = true;
-    public static boolean PROTECT_EXPLOSIONS = true;
-    public static boolean PROTECT_FIRE_CLAIMS = true;
-    public static boolean PROTECT_ENDERMAN = true;
-    public static boolean PROTECT_FARMLAND = true;
+    public static boolean ALLOW_LAVA_WILDERNESS;
+    public static boolean ALLOW_FIRE_WILDERNESS;
+    public static boolean SPAWN_NO_PVP;
+    public static boolean SPAWN_NO_HOSTILES;
+    public static boolean PROTECT_EXPLOSIONS;
+    public static boolean PROTECT_FIRE_CLAIMS;
+    public static boolean PROTECT_ENDERMAN;
+    public static boolean PROTECT_FARMLAND;
     public static java.util.Map<String, String> MESSAGES = new java.util.HashMap<>();
 
     // ---- Feature toggles ----
-    // Big features default OFF: this is a modular plugin, operators opt in per feature.
-    public static boolean CLAIMS_ENABLED = false;
-    public static boolean SKILLS_ENABLED = false;
-    public static boolean CHATFILTER_ENABLED = false;
-    public static java.util.List<Integer> MUTE_LEVELS_MINUTES = new java.util.ArrayList<>(
-            java.util.List.of(60, 120, 240, 480, 1440));
+    public static boolean CLAIMS_ENABLED;
+    public static boolean SKILLS_ENABLED;
+    public static boolean CHATFILTER_ENABLED;
+    public static java.util.List<Integer> MUTE_LEVELS_MINUTES = new java.util.ArrayList<>();
 
     // ---- Votifier ----
-    public static boolean VOTIFIER_ENABLED = false;
-    public static int VOTIFIER_PORT = 8192;
-    public static String VOTIFIER_TOKEN = "";
-    public static String VOTE_BROADCAST = "&6\u2736 {player} &ejust voted for the server! Thanks for the support!";
+    public static boolean VOTIFIER_ENABLED;
+    public static int VOTIFIER_PORT;
+    public static String VOTIFIER_TOKEN;
+    public static String VOTE_BROADCAST;
     public static java.util.List<String> VOTE_REWARDS = new java.util.ArrayList<>();
     // Tier number -> bonus reward commands. Stacks: tier 2 players get tier 1 + tier 2 bonuses.
     public static java.util.Map<Integer, java.util.List<String>> VOTE_VIP_REWARDS = new java.util.HashMap<>();
 
     // ---- Dashboard ----
-    public static boolean DASHBOARD_ENABLED = false;
-    public static int DASHBOARD_PORT = 8125;
-    public static boolean ADMIN_ENABLED = false;
-    public static String ADMIN_PASSWORD_HASH = "";
-    public static String SERVER_NAME = "";
+    public static boolean DASHBOARD_ENABLED;
+    public static int DASHBOARD_PORT;
+    public static boolean ADMIN_ENABLED;
+    public static String ADMIN_PASSWORD_HASH;
+    public static String SERVER_NAME;
 
     // ---- Discord Webhook ----
-    public static String DISCORD_WEBHOOK_URL = "";
-    public static boolean DISCORD_JOIN_LEAVE = true;
-    public static boolean DISCORD_CHAT = true;
+    public static String DISCORD_WEBHOOK_URL;
+    public static boolean DISCORD_JOIN_LEAVE;
+    public static boolean DISCORD_CHAT;
 
     // ---- Voice Chat ----
-    public static boolean VOICECHAT_ENABLE = false;
+    public static boolean VOICECHAT_ENABLE;
 
     // ---- BlueMap ----
-    public static boolean BLUEMAP_ENABLE = false;
-    public static boolean BLUEMAP_SHOW_HOMES = true;
-    public static boolean BLUEMAP_SHOW_CLAIMS = true;
-    public static boolean BLUEMAP_SHOW_WORLDBORDER = true;
-    public static String BLUEMAP_WORLDBORDER_COLOR = "FF3C3C";
+    public static boolean BLUEMAP_ENABLE;
+    public static boolean BLUEMAP_SHOW_HOMES;
+    public static boolean BLUEMAP_SHOW_CLAIMS;
+    public static boolean BLUEMAP_SHOW_WORLDBORDER;
+    public static String BLUEMAP_WORLDBORDER_COLOR;
     // Stored as 6-digit RGB hex strings (e.g. "00FFFF")
-    public static String BLUEMAP_CLAIM_COLOR = "00FFFF"; // Cyan
-    public static String BLUEMAP_OP_CLAIM_COLOR = "FFD700"; // Gold
-    public static String BLUEMAP_VIP_CLAIM_COLOR = "8A2BE2"; // Purple
-    public static boolean BLUEMAP_SHOW_SPAWN_PROTECTION = true;
-    public static String BLUEMAP_SPAWN_PROTECTION_COLOR = "80409040";
+    public static String BLUEMAP_CLAIM_COLOR;
+    public static String BLUEMAP_OP_CLAIM_COLOR;
+    public static String BLUEMAP_VIP_CLAIM_COLOR;
+    public static boolean BLUEMAP_SHOW_SPAWN_PROTECTION;
+    public static String BLUEMAP_SPAWN_PROTECTION_COLOR;
 
     // ---- Hardcore ----
-    public static boolean HARDCORE_ENABLED = false;
+    public static boolean HARDCORE_ENABLED;
     // Percent of peak players that must die to end a session. 100 = ends only when everyone dies.
-    public static int HARDCORE_DEATH_PERCENT = 100;
+    public static int HARDCORE_DEATH_PERCENT;
     // Sends the vanilla withered-heart HUD to session members. Per-connection, so it only
     // takes effect on (re)connect; joining/leaving while online shows a passive warning.
-    public static boolean HARDCORE_WITHERED_HEARTS = true;
-    // Gives session members a scoreboard-team identity (nametag/tab color). Off by default;
-    // when off, TeamAutoAssign behaves exactly as before.
-    public static boolean HARDCORE_TEAM_VISIBILITY = false;
-    public static String  HARDCORE_TEAM_NAME       = "hardcore";
+    public static boolean HARDCORE_WITHERED_HEARTS;
+    // Gives session members a scoreboard-team identity (nametag/tab color).
+    // When off, TeamAutoAssign behaves exactly as before.
+    public static boolean HARDCORE_TEAM_VISIBILITY;
+    public static String  HARDCORE_TEAM_NAME;
     // Per-player run-time sidebar (transient: periodic + on session entry).
-    public static boolean HARDCORE_SIDEBAR_ENABLED          = false;
-    public static int     HARDCORE_SIDEBAR_INTERVAL_SECONDS = 2700;
-    public static int     HARDCORE_SIDEBAR_SHOW_SECONDS     = 20;
-    public static int     HARDCORE_SIDEBAR_ON_ENTRY_SECONDS = 10;
+    public static boolean HARDCORE_SIDEBAR_ENABLED;
+    public static int     HARDCORE_SIDEBAR_INTERVAL_SECONDS;
+    public static int     HARDCORE_SIDEBAR_SHOW_SECONDS;
+    public static int     HARDCORE_SIDEBAR_ON_ENTRY_SECONDS;
 
     // ---- Anti-XRay ----
-    public static boolean ANTIXRAY_ENABLED = true;
+    public static boolean ANTIXRAY_ENABLED;
 
     // ---- World Backups ----
-    public static int     BACKUP_MAX_COUNT             = 5;
-    public static String  BACKUP_DIR                   = "backups";
-    public static boolean BACKUP_PERIODIC_ENABLED      = false;
-    public static int     BACKUP_INTERVAL_HOURS        = 24;
-    public static boolean BACKUP_PUBLIC_DOWNLOAD       = false;
-    public static int     BACKUP_PUBLIC_MAX_CONCURRENT = 0; // 0 = follow server max-players
-    public static int     BACKUP_PUBLIC_MAX_PER_IP     = 2;
-    // Owner opt-in: expose the world seed to public downloaders. Off by default.
-    public static boolean BACKUP_PUBLIC_SEED_DISCLOSURE = false;
+    public static int     BACKUP_MAX_COUNT;
+    public static String  BACKUP_DIR;
+    public static boolean BACKUP_PERIODIC_ENABLED;
+    public static int     BACKUP_INTERVAL_HOURS;
+    public static boolean BACKUP_PUBLIC_DOWNLOAD;
+    public static int     BACKUP_PUBLIC_MAX_CONCURRENT; // 0 = follow server max-players
+    public static int     BACKUP_PUBLIC_MAX_PER_IP;
+    // Owner opt-in: expose the world seed to public downloaders.
+    public static boolean BACKUP_PUBLIC_SEED_DISCLOSURE;
 
     // ---- Web Panel link (gated on public download) ----
-    public static String  PANEL_URL              = "";
-    public static String  PANEL_MESSAGE          = "&aServer web panel & world download: [Click here]({url})";
-    public static boolean PANEL_MESSAGE_ENABLED  = false;
-    public static int     PANEL_MESSAGE_INTERVAL = 1800; // Seconds
+    public static String  PANEL_URL;
+    public static String  PANEL_MESSAGE;
+    public static boolean PANEL_MESSAGE_ENABLED;
+    public static int     PANEL_MESSAGE_INTERVAL; // Seconds
 
     // Single gate for both /smp download and the periodic broadcast: public download must be
     // on and a URL configured. URL scheme (http/https) is validated at save time in AdminHandler.
@@ -118,28 +131,30 @@ public final class SmpConfig {
     }
 
     // ---- Shops ----
-    public static boolean SHOPS_ENABLED = false;
-    public static boolean ECONOMY_ENABLED = false;
+    public static boolean SHOPS_ENABLED;
+    public static boolean ECONOMY_ENABLED;
 
     // ---- Kits ----
-    public static boolean KITS_ENABLED = false;
-    public static long KIT_COOLDOWN_SECONDS = 86400;
+    public static boolean KITS_ENABLED;
+    public static long KIT_COOLDOWN_SECONDS;
     public static java.util.List<ConfigData.KitDef> KIT_DEFINITIONS = new java.util.ArrayList<>();
 
     // ---- Team Auto-Assign ----
     public static java.util.Map<String, java.util.List<String>> TEAM_AUTO_ASSIGN = new java.util.HashMap<>();
 
     // ---- Skills ----
-    public static double SKILL_XP_EXPONENT = 1.5;
+    public static double SKILL_XP_EXPONENT;
     public static java.util.Map<String, Long> SKILL_COOLDOWNS = new java.util.HashMap<>();
     public static java.util.Map<String, Integer> SKILL_UNLOCK_LEVELS = new java.util.HashMap<>();
-    public static double CAP_INDUSTRIAL_SPEED = 0.5; // +50% movement speed at max
-    public static double CAP_NATURE_HEALTH = 10.0; // +10 hearts at max
-    public static double CAP_COMBAT_DAMAGE = 1.0; // +100% damage at max
-    public static double CAP_KNOWLEDGE_XP = 1.0; // +100% xp orbs at max
-    public static double CAP_DOUBLE_DROP = 0.5; // max 50% double drop chance at Industrial parent level 100
-    public static double CAP_DEFENSE_ARMOR = 10.0; // max +10 armor points at Defense level 100
-    public static double CAP_SAFE_LANDING = 1.0; // max 100% fall damage absorbed at Agility level 100 (linear)
+    // Per-parent max bonuses at level 100: movement speed, hearts, damage, xp orbs,
+    // double-drop chance, armor points, fall-damage absorbed (linear).
+    public static double CAP_INDUSTRIAL_SPEED;
+    public static double CAP_NATURE_HEALTH;
+    public static double CAP_COMBAT_DAMAGE;
+    public static double CAP_KNOWLEDGE_XP;
+    public static double CAP_DOUBLE_DROP;
+    public static double CAP_DEFENSE_ARMOR;
+    public static double CAP_SAFE_LANDING;
 
     public static long getSkillCooldown(SkillType skill) {
         return SKILL_COOLDOWNS.getOrDefault(skill.name().toLowerCase(), defaultCooldown(skill));
