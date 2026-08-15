@@ -27,10 +27,6 @@ public record ClaimData(
                         WarpAnchor.CODEC.optionalFieldOf("warp").forGetter(ClaimData::warp))
                         .apply(i, ClaimData::new));
 
-        public ClaimData withOwner(java.util.UUID newOwner) {
-                return new ClaimData(dimension, chunk, newOwner, name, createdAtMillis, warp);
-        }
-
         public ClaimData withName(java.util.Optional<String> newName) {
                 return new ClaimData(dimension, chunk, owner, newName, createdAtMillis, warp);
         }

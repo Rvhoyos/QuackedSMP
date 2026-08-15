@@ -181,24 +181,6 @@ public final class ClaimCommands {
                                     }
                                     return 1;
                                 })))
-                .then(Commands.literal("transfer")
-                        .then(Commands.argument("player", EntityArgument.player())
-                                .executes(ctx -> {
-                                    ServerPlayer sender = ctx.getSource().getPlayerOrException();
-                                    ServerPlayer target = EntityArgument.getPlayer(ctx, "player");
-                                    int result = ClaimService.transfer(sender, target);
-                                    switch (result) {
-                                        case -1 -> ctx.getSource().sendFailure(
-                                                Component.literal("You cannot transfer claims to yourself."));
-                                        case -2 -> ctx.getSource().sendFailure(
-                                                Component.literal("You have no claims to transfer."));
-                                        case -3 -> ctx.getSource().sendFailure(
-                                                Component.literal("That would exceed " + target.getName().getString() + "'s claim limit."));
-                                        default -> ctx.getSource().sendSystemMessage(Component.literal(
-                                                "Transferred " + result + " claim(s) to " + target.getName().getString() + "."));
-                                    }
-                                    return 1;
-                                })))
                 .then(Commands.literal("info")
                         .executes(ctx -> {
                             ServerPlayer p = ctx.getSource().getPlayerOrException();

@@ -209,7 +209,6 @@ Chunk protection: untrusted players cannot build, break, or interact inside your
 | `/claim info` | Owned count, limit, remaining, current chunk | Everyone |
 | `/claim map` | Nearby claim map in chat | Everyone |
 | `/claim name <name>` | Name claim (BlueMap) | VIP / OP |
-| `/claim transfer <player>` | Transfer all claims | Everyone |
 | `/claim trust <player>` | Trust player in all your claims | Everyone |
 | `/claim untrust <player>` | Revoke trust | Everyone |
 | `/claim trustlist` | List trusted players | Everyone |
