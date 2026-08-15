@@ -42,11 +42,14 @@ public final class ClaimManager {
         data.claim(level, pos, owner);
     }
 
-    public boolean setNameIfOwned(ChunkPos pos, UUID owner, String name) {
-        Optional<ClaimData> cd = data.getClaim(level, pos);
-        if (cd.isEmpty() || !cd.get().owner().equals(owner))
-            return false;
-        return data.updateName(level, pos, name);
+    public RegionNames.RenameResult nameRegion(ChunkPos standChunk, UUID owner, String name,
+            mc.smpessentials.claims.model.WarpAnchor anchor) {
+        return RegionNames.nameRegion(data, level, standChunk, owner, name, anchor);
+    }
+
+    /** After a chunk is claimed, resolve any two-named-regions-merged conflict for this owner. */
+    public void resolveMerge(ChunkPos justClaimed, UUID owner) {
+        RegionNames.resolveMerge(data, level, justClaimed, owner);
     }
 
     /** Owner-guarded unclaim: only removes if the same owner. */

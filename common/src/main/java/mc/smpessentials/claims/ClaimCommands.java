@@ -166,16 +166,18 @@ public final class ClaimCommands {
                                         return 0;
                                     }
 
-                                    ChunkPos pos = p.chunkPosition();
                                     ServerLevel lvl = p.level();
 
-                                    boolean success = ClaimService.setName(p, lvl, pos, name);
-                                    if (success) {
-                                        ctx.getSource().sendSystemMessage(
-                                                Component.literal("Claim named to: " + name));
-                                    } else {
-                                        ctx.getSource()
-                                                .sendFailure(Component.literal("You don't own this claim."));
+                                    switch (ClaimService.nameClaim(p, lvl, name)) {
+                                        case OK -> ctx.getSource().sendSystemMessage(Component.literal(
+                                                "Region named to: " + name.trim()
+                                                        + ". Use /visit " + name.trim() + " to travel here."));
+                                        case NAME_TAKEN -> ctx.getSource().sendFailure(Component.literal(
+                                                "That name is already taken. Pick another."));
+                                        case EMPTY -> ctx.getSource().sendFailure(
+                                                Component.literal("Region name cannot be blank."));
+                                        case NOT_OWNER -> ctx.getSource().sendFailure(
+                                                Component.literal("You don't own this claim."));
                                     }
                                     return 1;
                                 })))

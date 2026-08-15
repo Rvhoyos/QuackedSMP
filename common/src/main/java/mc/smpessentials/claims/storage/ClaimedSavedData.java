@@ -1,7 +1,9 @@
 package mc.smpessentials.claims.storage;
 
 import net.minecraft.resources.Identifier;
+import mc.smpessentials.claims.RegionNames;
 import mc.smpessentials.claims.model.ClaimData;
+import mc.smpessentials.claims.model.WarpAnchor;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
@@ -17,13 +19,17 @@ import net.minecraft.world.level.saveddata.SavedDataType;
 import java.util.*;
 import java.util.stream.Collectors;
 
-// Persistent store for claims (1.21 SavedDataType API).
+// Persistent store for claims (1.21 SavedDataType API). Storage primitives only; all region-name
+// policy (naming, uniqueness, merge, migration, visit) lives in RegionNames.
 public final class ClaimedSavedData extends SavedData {
     private final List<ClaimData> claims;
 
     private final Map<ResourceKey<Level>, Long2ObjectOpenHashMap<ClaimData>> indexByDim = new HashMap<>();
 
     private final Map<UUID, Integer> claimCounts = new HashMap<>();
+
+    // One-shot legacy name migration runs the first time the loaded store is fetched.
+    private boolean migrated = false;
 
     public static final Codec<ClaimedSavedData> CODEC = RecordCodecBuilder.create(i -> i.group(
             ClaimData.CODEC.listOf().fieldOf("claims").forGetter(s -> s.claims)).apply(i, ClaimedSavedData::new));
@@ -41,7 +47,12 @@ public final class ClaimedSavedData extends SavedData {
 
     // Stored in the overworld's DataStorage so counts are global across all dimensions.
     public static ClaimedSavedData get(ServerLevel level) {
-        return level.getServer().overworld().getDataStorage().computeIfAbsent(TYPE);
+        ClaimedSavedData data = level.getServer().overworld().getDataStorage().computeIfAbsent(TYPE);
+        if (!data.migrated) {
+            RegionNames.migrate(data);
+            data.migrated = true;
+        }
+        return data;
     }
 
     private void rebuildIndex() {
@@ -57,12 +68,24 @@ public final class ClaimedSavedData extends SavedData {
         return indexByDim.computeIfAbsent(dim, k -> new Long2ObjectOpenHashMap<>());
     }
 
+    // Swaps one claim record for its updated version (same dim + chunk) across the list and index.
+    private void replace(ClaimData old, ClaimData updated) {
+        claims.remove(old);
+        claims.add(updated);
+        dimIndex(updated.dimension()).put(updated.chunk(), updated);
+        setDirty();
+    }
+
     public boolean isClaimed(ServerLevel level, ChunkPos chunk) {
         return dimIndex(level.dimension()).containsKey(chunk.pack());
     }
 
     public Optional<ClaimData> getClaim(ServerLevel level, ChunkPos chunk) {
-        return Optional.ofNullable(dimIndex(level.dimension()).get(chunk.pack()));
+        return getClaim(level.dimension(), chunk);
+    }
+
+    public Optional<ClaimData> getClaim(ResourceKey<Level> dim, ChunkPos chunk) {
+        return Optional.ofNullable(dimIndex(dim).get(chunk.pack()));
     }
 
     public Optional<ClaimData> getClaimAt(ServerLevel level, BlockPos pos) {
@@ -76,7 +99,8 @@ public final class ClaimedSavedData extends SavedData {
         if (map.containsKey(key))
             return false;
 
-        ClaimData cd = new ClaimData(level.dimension(), key, owner, Optional.empty(), System.currentTimeMillis());
+        ClaimData cd = new ClaimData(level.dimension(), key, owner, Optional.empty(),
+                System.currentTimeMillis(), Optional.empty());
         map.put(key, cd);
         claims.add(cd);
         claimCounts.merge(owner, 1, Integer::sum);
@@ -101,31 +125,48 @@ public final class ClaimedSavedData extends SavedData {
         return dimIndex(level.dimension()).values().stream().collect(Collectors.toUnmodifiableList());
     }
 
-    // Pass null to clear the display name. Returns false if the chunk is not claimed.
-    public boolean updateName(ServerLevel level, ChunkPos chunk, String name) {
-        long key = chunk.pack();
-        var map = dimIndex(level.dimension());
-        ClaimData existing = map.get(key);
-        if (existing == null) {
-            return false;
+    public List<ClaimData> allClaims() {
+        return List.copyOf(claims);
+    }
+
+    // Chunks owned by a player in one dimension.
+    public Set<ChunkPos> ownerChunks(ResourceKey<Level> dim, UUID owner) {
+        Set<ChunkPos> out = new HashSet<>();
+        for (ClaimData c : dimIndex(dim).values()) {
+            if (c.owner().equals(owner))
+                out.add(ChunkPos.unpack(c.chunk()));
         }
+        return out;
+    }
 
-        ClaimData updated = new ClaimData(
-                existing.dimension(),
-                existing.chunk(),
-                existing.owner(),
-                Optional.ofNullable(name),
-                existing.createdAtMillis());
+    // The single named chunk in a region, if any (invariant: at most one).
+    public Optional<ClaimData> namedChunkIn(ResourceKey<Level> dim, Set<ChunkPos> region) {
+        for (ChunkPos cp : region) {
+            ClaimData c = dimIndex(dim).get(cp.pack());
+            if (c != null && c.name().isPresent() && !c.name().get().isBlank())
+                return Optional.of(c);
+        }
+        return Optional.empty();
+    }
 
-        map.put(key, updated);
-
-        // Update the list reference
-        claims.remove(existing);
-        claims.add(updated);
-
-        setDirty();
+    // Sets the display name and warp anchor on one chunk. Returns false if the chunk is not claimed.
+    public boolean setNameAnchor(ResourceKey<Level> dim, long chunkKey, String name, WarpAnchor anchor) {
+        ClaimData existing = dimIndex(dim).get(chunkKey);
+        if (existing == null)
+            return false;
+        replace(existing, existing.withName(Optional.of(name)).withWarp(Optional.ofNullable(anchor)));
         return true;
     }
+
+    // Clears the display name and warp anchor on one chunk. Returns false if the chunk is not claimed.
+    public boolean clearName(ResourceKey<Level> dim, long chunkKey) {
+        ClaimData existing = dimIndex(dim).get(chunkKey);
+        if (existing == null)
+            return false;
+        replace(existing, existing.withName(Optional.empty()).withWarp(Optional.empty()));
+        return true;
+    }
+
     public int countByOwner(UUID owner) {
         return claimCounts.getOrDefault(owner, 0);
     }
@@ -158,10 +199,7 @@ public final class ClaimedSavedData extends SavedData {
         if (toTransfer.isEmpty())
             return 0;
         for (ClaimData old : toTransfer) {
-            ClaimData updated = new ClaimData(old.dimension(), old.chunk(), to, old.name(), old.createdAtMillis());
-            claims.remove(old);
-            claims.add(updated);
-            dimIndex(old.dimension()).put(old.chunk(), updated);
+            replace(old, old.withOwner(to));
         }
         int count = toTransfer.size();
         claimCounts.computeIfPresent(from, (k, v) -> v > count ? v - count : null);
@@ -169,5 +207,4 @@ public final class ClaimedSavedData extends SavedData {
         setDirty();
         return count;
     }
-
 }

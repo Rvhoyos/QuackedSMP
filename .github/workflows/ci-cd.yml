@@ -104,6 +104,7 @@ jobs:
           token: ${{ secrets.RELEASE_PAT }}
           files: release-jars/*.jar
           fail_on_unmatched_files: true
+          generate_release_notes: true
 
   deploy-prod:
     if: github.event_name == 'release'
