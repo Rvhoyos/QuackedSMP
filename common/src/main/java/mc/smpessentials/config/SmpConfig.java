@@ -118,6 +118,14 @@ public final class SmpConfig {
     // Owner opt-in: expose the world seed to public downloaders.
     public static boolean BACKUP_PUBLIC_SEED_DISCLOSURE;
 
+    // ---- World-map timelapse ----
+    public static boolean TIMELAPSE_ENABLED;
+    public static int     TIMELAPSE_INTERVAL_MINUTES;
+    public static String  TIMELAPSE_DIR;
+    public static String  TIMELAPSE_DIMENSION;
+    public static int     TIMELAPSE_MAX_DIMENSION;
+    public static int     TIMELAPSE_MAX_FRAMES;
+
     // ---- Web Panel link (gated on public download) ----
     public static String  PANEL_URL;
     public static String  PANEL_MESSAGE;
@@ -294,6 +302,13 @@ public final class SmpConfig {
         BACKUP_PUBLIC_MAX_CONCURRENT = d.backupPublicMaxConcurrent;
         BACKUP_PUBLIC_MAX_PER_IP     = d.backupPublicMaxPerIp;
         BACKUP_PUBLIC_SEED_DISCLOSURE = d.backupPublicSeedDisclosure;
+
+        TIMELAPSE_ENABLED          = d.timelapseEnabled;
+        TIMELAPSE_INTERVAL_MINUTES = d.timelapseIntervalMinutes;
+        TIMELAPSE_DIR              = d.timelapseDir;
+        TIMELAPSE_DIMENSION        = d.timelapseDimension;
+        TIMELAPSE_MAX_DIMENSION    = d.timelapseMaxDimension;
+        TIMELAPSE_MAX_FRAMES       = d.timelapseMaxFrames;
         PANEL_URL                    = d.panelUrl;
         PANEL_MESSAGE                = d.panelMessage;
         PANEL_MESSAGE_ENABLED        = d.panelMessageEnabled;

@@ -53,6 +53,7 @@ public class SmpEvents {
         mc.smpessentials.dashboard.DashboardManager.onServerStart(event.getServer());
         mc.smpessentials.hardcore.HardcoreTeam.seed(event.getServer());
         mc.smpessentials.backup.BackupScheduler.get().start(event.getServer());
+        mc.smpessentials.timelapse.TimelapseService.get().start(event.getServer());
         mc.smpessentials.votifier.VoteHandler.init(event.getServer());
         mc.smpessentials.votifier.VotifierListener.start();
     }
@@ -62,6 +63,7 @@ public class SmpEvents {
         mc.smpessentials.commands.EndResetLogic.onServerStopping(event.getServer());
         mc.smpessentials.dashboard.DashboardManager.onServerStop();
         mc.smpessentials.backup.BackupScheduler.get().stop();
+        mc.smpessentials.timelapse.TimelapseService.get().stop();
         mc.smpessentials.votifier.VotifierListener.stop();
     }
 

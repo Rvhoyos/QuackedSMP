@@ -184,6 +184,22 @@ public final class ConfigData {
     public boolean economyEnabled = false;
     public KitsConfig kits = new KitsConfig();
 
+    // World-map timelapse: periodically snapshots a top-down render of the world,
+    // auto-sized to the generated chunk extent (read from region files, no BlueMap
+    // dependency), to build a timelapse over time. Off by default (opt-in feature).
+    public boolean timelapseEnabled         = false;
+    public int     timelapseIntervalMinutes = 60;
+    public String  timelapseDir             = "timelapse";
+    public String  timelapseDimension       = "minecraft:overworld";
+    // Longer image side, in pixels. Worlds larger than this downsample (more
+    // blocks per pixel). Peak render memory is roughly maxDimension^2 * 12 bytes,
+    // allocated fresh each capture, so a high value spikes RAM every interval.
+    public int     timelapseMaxDimension    = 6000;
+    // 0 = keep every frame. Above 0, once stored frames exceed this the oldest
+    // are downsampled (every Nth dropped) so the timelapse degrades in smoothness
+    // rather than losing its beginning.
+    public int     timelapseMaxFrames       = 0;
+
     public static final class VotifierConfig {
         public boolean enabled = false;
         public int port = 8192;
