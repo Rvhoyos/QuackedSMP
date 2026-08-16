@@ -68,7 +68,9 @@ final class ChunkColumnSampler {
 
         for (SerializableChunkData.SectionData sd : sections) {
             LevelChunkSection section = sd.chunkSection();
-            if (section.hasOnlyAir()) {
+            // Vanilla leaves chunkSection null for light-only slices outside the
+            // dimension height (SerializableChunkData.parse). Treat as air.
+            if (section == null || section.hasOnlyAir()) {
                 if (surface != null) break;   // air below the surface = floor reached
                 continue;                      // still above the surface
             }
