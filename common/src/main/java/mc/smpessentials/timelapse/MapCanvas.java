@@ -1,15 +1,20 @@
 package mc.smpessentials.timelapse;
 
-import net.minecraft.world.level.material.MapColor;
-
 import java.awt.image.BufferedImage;
 
 /**
  * A top-down pixel buffer for one map render. Owns the world-block to pixel
- * mapping (including any downsampling) and the vanilla filled-map relief
- * shading. Plot surface columns into it, then call {@link #toImage()}.
+ * mapping (including any downsampling) and accumulates the plotted columns; the
+ * lighting and rasterization are delegated to {@link ReliefShader}.
+ *
+ * When several blocks fall in the same pixel cell (downsampling), their
+ * colours are averaged so zoomed-out maps stay smooth, while the cell keeps the
+ * tallest column's height so terrain relief survives. Plot surface columns into
+ * it, then call {@link #toImage()}.
  */
 final class MapCanvas {
+
+    private static final int COUNT_MAX = Short.MAX_VALUE;
 
     private final int width;
     private final int height;
@@ -17,9 +22,12 @@ final class MapCanvas {
     private final int minBlockZ;
     private final int blocksPerPixel;
 
-    // Packed 0xRRGGBB base colors; 0 means unplotted (transparent).
+    // Packed 0xRRGGBB running-mean colours; 0 means unplotted (transparent).
     private final int[] rgb;
+    // Tallest surface Y per cell (for relief shading).
     private final int[] heights;
+    // Samples averaged into each cell so far.
+    private final short[] count;
 
     private MapCanvas(int width, int height, int minBlockX, int minBlockZ, int blocksPerPixel) {
         this.width          = width;
@@ -29,6 +37,7 @@ final class MapCanvas {
         this.blocksPerPixel = blocksPerPixel;
         this.rgb     = new int[width * height];
         this.heights = new int[width * height];
+        this.count   = new short[width * height];
     }
 
     /**
@@ -44,8 +53,8 @@ final class MapCanvas {
     }
 
     /**
-     * Plots one surface column. When several blocks fall in the same pixel cell
-     * (downsampling), the highest one wins so terrain relief survives.
+     * Plots one surface column, averaging its colour into the pixel cell and
+     * keeping the cell's tallest height.
      *
      * @param baseColor packed {@code 0xRRGGBB}; {@link BiomeTint#NONE} is ignored
      */
@@ -56,44 +65,28 @@ final class MapCanvas {
         if (px < 0 || px >= width || pz < 0 || pz >= height) return;
 
         int idx = pz * width + px;
-        if (rgb[idx] != 0 && surfaceY <= heights[idx]) return;
-        rgb[idx]     = baseColor;
-        heights[idx] = surfaceY;
-    }
-
-    /**
-     * Rasterizes to an ARGB image. Each column is lit relative to the column to
-     * its north (higher = brighter, lower = darker), matching vanilla maps.
-     * Unplotted pixels are fully transparent.
-     */
-    BufferedImage toImage() {
-        BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
-        for (int z = 0; z < height; z++) {
-            for (int x = 0; x < width; x++) {
-                int idx = z * width + x;
-                image.setRGB(x, z, rgb[idx] == 0 ? 0 : shade(rgb[idx], brightnessAt(x, z, idx)));
-            }
+        int n = count[idx];
+        if (n == 0) {
+            rgb[idx]     = baseColor;
+            heights[idx] = surfaceY;
+            count[idx]   = 1;
+            return;
         }
-        return image;
+        rgb[idx] = mean(rgb[idx], n, baseColor);
+        if (surfaceY > heights[idx]) heights[idx] = surfaceY;
+        if (n < COUNT_MAX) count[idx] = (short) (n + 1);
     }
 
-    private MapColor.Brightness brightnessAt(int x, int z, int idx) {
-        if (z == 0) return MapColor.Brightness.NORMAL;
-        int northIdx = idx - width;
-        if (rgb[northIdx] == 0) return MapColor.Brightness.NORMAL;
-        int dy = heights[idx] - heights[northIdx];
-        if (dy > 0) return MapColor.Brightness.HIGH;
-        if (dy < 0) return MapColor.Brightness.LOW;
-        return MapColor.Brightness.NORMAL;
+    /** Rasterizes to an ARGB image with hillshaded relief; unplotted pixels stay transparent. */
+    BufferedImage toImage() {
+        return new ReliefShader(width, height, rgb, heights, blocksPerPixel).shade();
     }
 
-    // Applies the vanilla brightness modifier (per-channel scale out of 255) and
-    // makes the pixel fully opaque.
-    private static int shade(int color, MapColor.Brightness brightness) {
-        int m = brightness.modifier;
-        int r = (color >> 16 & 0xFF) * m / 255;
-        int g = (color >> 8  & 0xFF) * m / 255;
-        int b = (color       & 0xFF) * m / 255;
-        return 0xFF000000 | r << 16 | g << 8 | b;
+    // Folds one more sample into a per-channel running mean of n prior samples.
+    private static int mean(int accum, int n, int sample) {
+        int r = (((accum >> 16) & 0xFF) * n + ((sample >> 16) & 0xFF)) / (n + 1);
+        int g = (((accum >> 8)  & 0xFF) * n + ((sample >> 8)  & 0xFF)) / (n + 1);
+        int b = (((accum)       & 0xFF) * n + ((sample)       & 0xFF)) / (n + 1);
+        return r << 16 | g << 8 | b;
     }
 }

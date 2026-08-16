@@ -36,6 +36,7 @@ public final class WorldMapRenderer {
         ChunkBounds extent = bounds.get();
 
         ColorMaps.ensureLoaded();
+        BlockColorPalette.ensureLoaded();
 
         MapCanvas canvas = MapCanvas.covering(extent, SmpConfig.TIMELAPSE_MAX_DIMENSION);
         paint(server, level, dimension, regionDir, extent, canvas);

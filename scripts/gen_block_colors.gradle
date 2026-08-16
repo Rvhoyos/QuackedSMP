@@ -1,0 +1,202 @@
+// ── Block colour palette generator ───────────────────────────────────────────
+// Run: ./gradlew generateBlockColors
+//
+// Produces common/src/main/resources/timelapse/block_colors.json, a flat
+// { "minecraft:stone": "6b6b6b", ... } map of each block's average top-face
+// texture colour. The timelapse map renderer uses this instead of the 62-colour
+// vanilla MapColor palette, so different woods/stones/terracottas read distinctly
+// (BlueMap-style). Regenerate on Minecraft version bumps.
+//
+// Reads the deobfuscated client jar NeoForm already downloaded into the Gradle
+// cache. Zero extra dependencies: Groovy's JsonSlurper + the JDK's ImageIO.
+
+import groovy.json.JsonSlurper
+import groovy.json.JsonOutput
+import javax.imageio.ImageIO
+import java.util.zip.ZipFile
+
+tasks.register('generateBlockColors') {
+    group       = 'timelapse'
+    description  = 'Averages block textures from the client jar into block_colors.json'
+
+    doLast {
+        String mcVersion = project.property('minecraft_version')
+        File clientJar = new File(System.getProperty('user.home'),
+                ".gradle/caches/neoformruntime/artifacts/minecraft_${mcVersion}_client.jar")
+        if (!clientJar.exists()) {
+            throw new GradleException(
+                    "Client jar not found at ${clientJar}.\n" +
+                    "Run a build first (e.g. ./gradlew :neoforge:build) so NeoForm downloads it.")
+        }
+
+        File outFile = rootProject.file('common/src/main/resources/timelapse/block_colors.json')
+        new BlockColorExtractor(clientJar).run(outFile, logger)
+    }
+}
+
+// Self-contained extractor. Resolves each blockstate to its top-face texture
+// through the vanilla model system, then averages that texture's pixels.
+class BlockColorExtractor {
+
+    final ZipFile zip
+    final JsonSlurper slurper = new JsonSlurper()
+    final Map<String, Map> modelCache = [:]        // "ns:path" -> resolved {textures, elements}
+    final Map<String, String> colorCache = [:]     // texture path -> hex (avoids re-averaging)
+
+    BlockColorExtractor(File jar) { this.zip = new ZipFile(jar) }
+
+    void run(File outFile, logger) {
+        TreeMap<String, String> result = new TreeMap<>()
+        int scanned = 0, resolved = 0
+
+        zip.entries().each { entry ->
+            def m = (entry.name =~ '^assets/([^/]+)/blockstates/(.+)\\.json$')
+            if (!m.find()) return
+            String ns = m.group(1), id = m.group(2)
+            scanned++
+
+            String modelRef = pickModel(readJson(entry.name))
+            if (modelRef == null) return
+            Map model = resolveModel(qualify(ns, modelRef))
+            if (model == null) return
+            String texRef = topFaceTexture(model)
+            String texPath = resolveTextureRef(model, texRef)
+            if (texPath == null) return
+            String hex = averageTexture(texPath)
+            if (hex == null) return
+
+            result.put("${ns}:${id}".toString(), hex)
+            resolved++
+        }
+
+        outFile.parentFile.mkdirs()
+        outFile.text = JsonOutput.prettyPrint(JsonOutput.toJson(result)) + '\n'
+        zip.close()
+        logger.lifecycle("[Timelapse] block_colors.json: ${resolved} blocks coloured " +
+                "(${scanned} blockstates scanned) → ${outFile}")
+    }
+
+    // Picks a single representative model reference from a blockstate. First
+    // variant (fluids/rotations irrelevant to a flat average), or the first
+    // multipart apply (walls/fences fall back to MapColor at render time anyway).
+    private String pickModel(Object bs) {
+        if (bs == null) return null
+        if (bs.variants != null) {
+            def first = bs.variants.values().iterator().next()
+            if (first instanceof List) first = first[0]
+            return first?.model
+        }
+        if (bs.multipart != null && !bs.multipart.isEmpty()) {
+            def apply = bs.multipart[0].apply
+            if (apply instanceof List) apply = apply[0]
+            return apply?.model
+        }
+        return null
+    }
+
+    // Resolves a model's parent chain into a merged {textures, elements}. Child
+    // textures win; elements come from the nearest ancestor that defines them.
+    private Map resolveModel(String qualified) {
+        if (modelCache.containsKey(qualified)) return modelCache.get(qualified)
+        modelCache.put(qualified, null)   // cycle guard
+
+        String[] p = split(qualified)
+        Object json = readJson("assets/${p[0]}/models/${p[1]}.json")
+        if (json == null) return null
+
+        Map parent = json.parent ? resolveModel(qualify(p[0], json.parent)) : null
+        Map textures = [:]
+        if (parent?.textures) textures.putAll(parent.textures)
+        if (json.textures) textures.putAll(json.textures)
+        Object elements = json.elements ?: parent?.elements
+
+        Map merged = [textures: textures, elements: elements]
+        modelCache.put(qualified, merged)
+        return merged
+    }
+
+    // The texture reference (#key or concrete) painted on the world-up face:
+    // the up face of the tallest element, else the model's own texture key by
+    // priority. The trailing keys (cross, crop, plant) cover the non-cube plants
+    // that carpet the surface (grass, ferns, flowers, saplings, crops) so they
+    // get their true colour instead of the generic MapColor.PLANT bucket.
+    private String topFaceTexture(Map model) {
+        if (model.elements instanceof List) {
+            String best = null
+            double bestY = -1
+            for (el in model.elements) {
+                def up = el.faces?.up
+                if (up?.texture == null) continue
+                double y = (el.to instanceof List) ? (el.to[1] as double) : 16d
+                if (y >= bestY) { bestY = y; best = up.texture }
+            }
+            if (best != null) return best
+        }
+        for (String k : ['up', 'top', 'all', 'end', 'cross', 'crop', 'plant']) {
+            if (model.textures.containsKey(k)) return '#' + k
+        }
+        return null
+    }
+
+    // Follows #key indirection through the textures map to a concrete path.
+    private String resolveTextureRef(Map model, String ref) {
+        Set<String> seen = new HashSet<>()
+        while (ref != null && ref.startsWith('#')) {
+            String key = ref.substring(1)
+            if (!seen.add(key)) return null    // reference cycle
+            ref = model.textures.get(key)
+        }
+        return ref
+    }
+
+    // Alpha-weighted average of a texture's pixels as a 6-digit hex string.
+    // Animation strips average whole (frames are near-identical). Fully
+    // transparent textures return null.
+    private String averageTexture(String qualifiedTex) {
+        if (colorCache.containsKey(qualifiedTex)) return colorCache.get(qualifiedTex)
+        String[] p = split(qualifiedTex)
+        def entry = zip.getEntry("assets/${p[0]}/textures/${p[1]}.png")
+        String hex = null
+        if (entry != null) {
+            def img = ImageIO.read(zip.getInputStream(entry))
+            if (img != null) {
+                long r = 0, g = 0, b = 0, wsum = 0
+                for (int y = 0; y < img.height; y++) {
+                    for (int x = 0; x < img.width; x++) {
+                        int argb = img.getRGB(x, y)
+                        int a = (argb >>> 24) & 0xFF
+                        if (a == 0) continue
+                        r += ((argb >> 16) & 0xFF) * a
+                        g += ((argb >> 8) & 0xFF) * a
+                        b += (argb & 0xFF) * a
+                        wsum += a
+                    }
+                }
+                if (wsum > 0) {
+                    hex = String.format('%02x%02x%02x',
+                            (int) (r / wsum), (int) (g / wsum), (int) (b / wsum))
+                }
+            }
+        }
+        colorCache.put(qualifiedTex, hex)
+        return hex
+    }
+
+    private Object readJson(String entryName) {
+        def entry = zip.getEntry(entryName)
+        if (entry == null) return null
+        zip.getInputStream(entry).withStream { slurper.parse(it) }
+    }
+
+    // "minecraft:block/stone" -> ["minecraft", "block/stone"]; bare paths get the
+    // parent's namespace so #ref resolution stays within the same pack.
+    private static String qualify(String parentNs, String ref) {
+        ref.contains(':') ? ref : "${parentNs}:${ref}"
+    }
+
+    private static String[] split(String qualified) {
+        int i = qualified.indexOf(':')
+        i < 0 ? ['minecraft', qualified] as String[]
+              : [qualified.substring(0, i), qualified.substring(i + 1)] as String[]
+    }
+}
