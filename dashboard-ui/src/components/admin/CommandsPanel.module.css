@@ -15,7 +15,7 @@
   font-family: var(--font-pixel);
   font-size: 7px;
   letter-spacing: 0.5px;
-  color: #666;
+  color: var(--txt-muted);
   text-shadow: 1px 1px 0 rgba(0,0,0,0.5);
   margin-bottom: 12px;
   text-transform: uppercase;
@@ -41,7 +41,7 @@
   border-left:   2px solid #555;
   border-bottom: 2px solid #111;
   border-right:  2px solid #111;
-  color: #AAAAAA;
+  color: var(--txt-secondary);
   cursor: pointer;
   transition: all var(--t-fast);
   text-shadow: 1px 1px 0 rgba(0,0,0,0.5);
@@ -56,8 +56,8 @@
 .quickBtn:active {
   border-top-color:    #111;
   border-left-color:   #111;
-  border-bottom-color: #555;
-  border-right-color:  #555;
+  border-bottom-color: var(--txt-muted);
+  border-right-color:  var(--txt-muted);
   transform: translate(1px, 1px);
 }
 
@@ -99,7 +99,7 @@
   font-family: var(--font-pixel);
   font-size: 7px;
   letter-spacing: 0.5px;
-  color: #666;
+  color: var(--txt-muted);
   text-shadow: 1px 1px 0 rgba(0,0,0,0.5);
   text-transform: uppercase;
 }
@@ -107,7 +107,7 @@
 .termHint {
   font-family: var(--font-pixel);
   font-size: 6px;
-  color: #444;
+  color: var(--txt-faint);
   letter-spacing: 0.3px;
 }
 
@@ -130,7 +130,7 @@
 .termEmpty {
   font-family: var(--font-pixel);
   font-size: 6px;
-  color: #333;
+  color: var(--txt-faint);
   font-style: normal;
   align-self: flex-end;
   letter-spacing: 0.3px;
@@ -195,7 +195,7 @@
   caret-color: var(--green);
 }
 
-.termField::placeholder { color: #333; }
+.termField::placeholder { color: var(--txt-faint); }
 
 .termRun {
   font-size: 14px;
@@ -289,7 +289,7 @@
   border-left:   2px solid #555;
   border-bottom: 2px solid #111;
   border-right:  2px solid #111;
-  color: #888;
+  color: var(--txt-secondary);
   cursor: pointer;
   transition: all var(--t-fast);
   text-shadow: 1px 1px 0 rgba(0,0,0,0.5);
@@ -379,7 +379,7 @@
 
 .warnNote {
   font-size: 11px;
-  color: #666;
+  color: var(--txt-muted);
   line-height: 1.4;
   margin: 0;
 }

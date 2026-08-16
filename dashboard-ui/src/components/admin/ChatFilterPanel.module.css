@@ -22,13 +22,13 @@
   background: none;
   border: none;
   border-bottom: 2px solid transparent;
-  color: #666;
+  color: var(--txt-muted);
   padding: 10px 16px;
   cursor: pointer;
   transition: color var(--t-fast), border-color var(--t-fast);
   white-space: nowrap;
 }
-.subtab:hover { color: #AAA; }
+.subtab:hover { color: var(--txt-secondary); }
 .subtabActive { color: #CCC; border-bottom-color: #A855F7; }
 
 /* ── Feedback ──────────────────────────────────────────────────────── */
@@ -88,13 +88,13 @@
   outline: none;
   transition: border-color var(--t-fast);
 }
-.searchInput:focus { border-color: #555; }
-.searchInput::placeholder { color: #444; }
+.searchInput:focus { border-color: var(--txt-muted); }
+.searchInput::placeholder { color: var(--txt-faint); }
 
 .totalCount {
   font-family: var(--font-pixel);
   font-size: 6px;
-  color: #555;
+  color: var(--txt-muted);
   letter-spacing: 0.3px;
   white-space: nowrap;
 }
@@ -143,7 +143,7 @@
 .selectHint {
   font-family: var(--font-pixel);
   font-size: 6px;
-  color: #555;
+  color: var(--txt-muted);
   letter-spacing: 0.3px;
 }
 
@@ -172,7 +172,7 @@
   padding: 24px 16px;
   font-family: var(--font-pixel);
   font-size: 7px;
-  color: #444;
+  color: var(--txt-faint);
   text-align: center;
   letter-spacing: 0.3px;
 }
@@ -193,7 +193,7 @@
 .word {
   font-family: var(--font-mono);
   font-size: 12px;
-  color: #AAA;
+  color: var(--txt-secondary);
   user-select: none;
 }
 
@@ -214,19 +214,19 @@
   letter-spacing: 0.3px;
   background: none;
   border: 1px solid #333;
-  color: #888;
+  color: var(--txt-secondary);
   padding: 5px 10px;
   cursor: pointer;
   white-space: nowrap;
   transition: color var(--t-fast), border-color var(--t-fast);
 }
-.btnGhost:hover:not(:disabled) { color: #CCC; border-color: #555; }
+.btnGhost:hover:not(:disabled) { color: #CCC; border-color: var(--txt-muted); }
 .btnGhost:disabled { opacity: 0.35; cursor: not-allowed; }
 
 .pageInfo {
   font-family: var(--font-pixel);
   font-size: 6px;
-  color: #555;
+  color: var(--txt-muted);
   letter-spacing: 0.3px;
   flex: 1;
   text-align: center;
@@ -246,7 +246,7 @@
 .addTitle {
   font-family: var(--font-pixel);
   font-size: 6px;
-  color: #666;
+  color: var(--txt-muted);
   letter-spacing: 0.4px;
   text-transform: uppercase;
 }
@@ -264,8 +264,8 @@
   transition: border-color var(--t-fast);
   line-height: 1.5;
 }
-.textarea:focus { border-color: #555; }
-.textarea::placeholder { color: #333; }
+.textarea:focus { border-color: var(--txt-muted); }
+.textarea::placeholder { color: var(--txt-faint); }
 
 /* ── Mutes view ────────────────────────────────────────────────────── */
 .muteList {
@@ -289,14 +289,14 @@
 .count {
   font-family: var(--font-pixel);
   font-size: 6px;
-  color: #555;
+  color: var(--txt-muted);
   letter-spacing: 0.4px;
 }
 
 .refresh {
   font-family: var(--font-pixel);
   font-size: 6px;
-  color: #555;
+  color: var(--txt-muted);
   background: none;
   border: none;
   cursor: pointer;
@@ -332,7 +332,7 @@
 .muteUuid {
   font-family: var(--font-mono);
   font-size: 10px;
-  color: #444;
+  color: var(--txt-faint);
 }
 
 .muteTime {
@@ -345,7 +345,7 @@
 .muteUntil {
   font-family: var(--font-mono);
   font-size: 11px;
-  color: #777;
+  color: var(--txt-secondary);
 }
 
 .muteRemaining {

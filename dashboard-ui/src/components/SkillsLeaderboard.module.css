@@ -42,13 +42,13 @@
   letter-spacing: 0.3px;
   background: none;
   border: 1px solid #2A2A2A;
-  color: #666;
+  color: var(--txt-muted);
   padding: 4px 10px;
   cursor: pointer;
   transition: color var(--t-fast), border-color var(--t-fast);
   white-space: nowrap;
 }
-.tab:hover { color: #AAA; border-color: #444; }
+.tab:hover { color: var(--txt-secondary); border-color: var(--txt-faint); }
 .tabActive { color: #C084FC; border-color: #5B1A8C; background: rgba(88,26,140,0.2); }
 
 /* ── Body ────────────────────────────────────────────────────────── */
@@ -68,7 +68,7 @@
 .thRank, .thPlayer, .thLevel, .thPlaytime, .thTier {
   font-family: var(--font-pixel);
   font-size: 6px;
-  color: #444;
+  color: var(--txt-faint);
   letter-spacing: 0.3px;
   text-transform: uppercase;
   padding: 4px 10px;
@@ -83,7 +83,7 @@
 .rank {
   font-family: var(--font-pixel);
   font-size: 7px;
-  color: #555;
+  color: var(--txt-muted);
   padding: 6px 10px;
   width: 30px;
   letter-spacing: 0.3px;
@@ -108,7 +108,7 @@
 .playtime {
   font-family: var(--font-mono);
   font-size: 11px;
-  color: #555;
+  color: var(--txt-muted);
   padding: 6px 10px;
   text-align: right;
   white-space: nowrap;
@@ -133,7 +133,7 @@
 .noData {
   font-family: var(--font-pixel);
   font-size: 6px;
-  color: #333;
+  color: var(--txt-faint);
   padding: 12px 10px;
   text-align: center;
   letter-spacing: 0.3px;
@@ -163,7 +163,7 @@
 .skillTitle {
   font-family: var(--font-pixel);
   font-size: 6px;
-  color: #888;
+  color: var(--txt-secondary);
   letter-spacing: 0.4px;
   text-transform: uppercase;
   margin-bottom: 6px;
@@ -185,7 +185,7 @@
 .skillRank {
   font-family: var(--font-pixel);
   font-size: 6px;
-  color: #555;
+  color: var(--txt-muted);
   width: 14px;
   letter-spacing: 0.3px;
   flex-shrink: 0;
@@ -194,7 +194,7 @@
 .skillPlayer {
   font-family: var(--font-mono);
   font-size: 11px;
-  color: #AAA;
+  color: var(--txt-secondary);
   flex: 1;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -208,3 +208,36 @@
   white-space: nowrap;
   flex-shrink: 0;
 }
+
+/* ── Top-3 podium (overall) ─────────────────────────────────────────────── */
+.podium {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 10px;
+  padding: 14px 10px 18px;
+}
+.podStep {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  width: 96px;
+  padding: 10px 6px 8px;
+  background: var(--surf-2);
+  border-top:    2px solid var(--mc-stone-light);
+  border-left:   2px solid var(--mc-stone-light);
+  border-bottom: 2px solid var(--mc-stone-dark);
+  border-right:  2px solid var(--mc-stone-dark);
+}
+.pod0 { transform: translateY(-14px); border-top-color: #FFD700; }
+.pod1 { border-top-color: #C0C0C0; }
+.pod2 { border-top-color: #CD7F32; }
+.podHead { image-rendering: pixelated; border: 2px solid var(--mc-stone-dark); }
+.podRank { font-family: var(--font-pixel); font-size: 9px; text-shadow: 1px 1px 0 rgba(0,0,0,0.6); }
+.podName {
+  font-family: var(--font-pixel); font-size: 6px; color: var(--txt-primary);
+  text-shadow: 1px 1px 0 rgba(0,0,0,0.5); max-width: 88px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: center;
+}
+.podLevel { font-family: var(--font-sans); font-size: 11px; color: var(--txt-muted); }

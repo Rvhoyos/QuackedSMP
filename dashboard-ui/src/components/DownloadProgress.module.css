@@ -13,7 +13,7 @@
   flex-wrap: wrap;
   font-family: var(--font-mono);
   font-size: 10px;
-  color: #AAA;
+  color: var(--txt-secondary);
 }
 
 .pct {
@@ -22,9 +22,9 @@
   min-width: 28px;
 }
 
-.bytes { color: #BBB; }
+.bytes { color: var(--txt-secondary); }
 .speed { color: #8EC8A8; }
-.eta   { color: #888; }
+.eta   { color: var(--txt-secondary); }
 
 .bar {
   height: 4px;

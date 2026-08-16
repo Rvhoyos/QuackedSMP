@@ -32,8 +32,10 @@ export default function BackupsPanel({ token, onExpired }) {
     setTimeout(() => setStatus(null), 4000)
   }
 
-  async function loadList() {
-    setLoading(true)
+  // silent skips the loading flag so the 3s running-backup poll does not flicker
+  // the toolbar/list; manual refreshes still show the loading state.
+  async function loadList({ silent = false } = {}) {
+    if (!silent) setLoading(true)
     setError(null)
     try {
       const r = await fetch('/api/admin/backups', { headers: auth })
@@ -45,7 +47,7 @@ export default function BackupsPanel({ token, onExpired }) {
         setRunning(Boolean(d.running))
       }
     } catch { setError('Failed to load snapshots') }
-    setLoading(false)
+    if (!silent) setLoading(false)
   }
 
   useEffect(() => { loadList() }, []) // eslint-disable-line react-hooks/exhaustive-deps
@@ -183,7 +185,7 @@ export default function BackupsPanel({ token, onExpired }) {
       if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null }
       return
     }
-    pollRef.current = setInterval(loadList, 3000)
+    pollRef.current = setInterval(() => loadList({ silent: true }), 3000)
     return () => {
       if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null }
     }

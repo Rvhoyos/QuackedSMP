@@ -23,13 +23,13 @@
   background: none;
   border: none;
   border-bottom: 2px solid transparent;
-  color: #666;
+  color: var(--txt-muted);
   padding: 9px 14px;
   cursor: pointer;
   text-transform: uppercase;
   transition: color var(--t-fast), border-color var(--t-fast);
 }
-.subtab:hover { color: #AAA; }
+.subtab:hover { color: var(--txt-secondary); }
 .subtabActive { color: #C084FC !important; border-bottom-color: #A855F7 !important; }
 
 .searchBox {
@@ -42,7 +42,7 @@
 .sectionTitle {
   font-family: var(--font-pixel);
   font-size: 7px;
-  color: #666;
+  color: var(--txt-muted);
   letter-spacing: 0.5px;
   text-transform: uppercase;
   text-shadow: 1px 1px 0 rgba(0,0,0,0.5);
@@ -68,8 +68,8 @@
   outline: none;
   transition: border-color var(--t-fast);
 }
-.input:focus { border-color: #555; }
-.input::placeholder { color: #444; }
+.input:focus { border-color: var(--txt-muted); }
+.input::placeholder { color: var(--txt-faint); }
 
 .suggestions {
   position: absolute;
@@ -107,7 +107,7 @@
 .suggLevel {
   font-family: var(--font-pixel);
   font-size: 6px;
-  color: #888;
+  color: var(--txt-secondary);
   letter-spacing: 0.3px;
 }
 
@@ -139,7 +139,7 @@
   padding: 32px 16px;
   font-family: var(--font-pixel);
   font-size: 7px;
-  color: #444;
+  color: var(--txt-faint);
   text-align: center;
   letter-spacing: 0.3px;
 }
@@ -171,7 +171,7 @@
 .playerUuid {
   font-family: var(--font-mono);
   font-size: 10px;
-  color: #444;
+  color: var(--txt-faint);
 }
 
 .categories {
@@ -217,7 +217,7 @@
 .skillName {
   font-family: var(--font-pixel);
   font-size: 6px;
-  color: #888;
+  color: var(--txt-secondary);
   letter-spacing: 0.3px;
   text-transform: uppercase;
 }
@@ -238,7 +238,7 @@
 .skillXp {
   font-family: var(--font-mono);
   font-size: 10px;
-  color: #555;
+  color: var(--txt-muted);
   flex: 1;
 }
 
@@ -260,7 +260,7 @@
   padding: 4px 6px;
   outline: none;
 }
-.xpInput:focus { border-color: #555; }
+.xpInput:focus { border-color: var(--txt-muted); }
 
 .btn {
   font-family: var(--font-pixel);
@@ -284,13 +284,13 @@
   letter-spacing: 0.3px;
   background: none;
   border: 1px solid #333;
-  color: #888;
+  color: var(--txt-secondary);
   padding: 4px 8px;
   cursor: pointer;
   white-space: nowrap;
   transition: color var(--t-fast), border-color var(--t-fast);
 }
-.btnGhost:hover { color: #CCC; border-color: #555; }
+.btnGhost:hover { color: #CCC; border-color: var(--txt-muted); }
 
 /* ── Settings tab ────────────────────────────────────────────────── */
 
@@ -346,7 +346,7 @@
 .cfgHint {
   font-family: var(--font-mono);
   font-size: 10px;
-  color: #555;
+  color: var(--txt-muted);
 }
 
 .skillTableHead {
@@ -361,7 +361,7 @@
 .skillColLabel {
   font-family: var(--font-pixel);
   font-size: 6px;
-  color: #555;
+  color: var(--txt-muted);
   letter-spacing: 0.3px;
   text-align: center;
 }
@@ -394,12 +394,12 @@
   text-align: right;
   transition: border-color var(--t-fast);
 }
-.numInput:focus { border-color: #555; }
+.numInput:focus { border-color: var(--txt-muted); }
 
 .suffix {
   font-family: var(--font-mono);
   font-size: 10px;
-  color: #555;
+  color: var(--txt-muted);
 }
 
 .cfgFooter {
@@ -423,5 +423,5 @@
 .cfgDirty {
   font-family: var(--font-mono);
   font-size: 10px;
-  color: #888;
+  color: var(--txt-secondary);
 }

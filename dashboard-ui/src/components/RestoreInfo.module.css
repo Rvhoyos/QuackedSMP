@@ -64,7 +64,7 @@
 .label {
   font-family: var(--font-pixel);
   font-size: 6px;
-  color: #777;
+  color: var(--txt-secondary);
   letter-spacing: 0.3px;
 }
 
@@ -78,7 +78,7 @@
 .note {
   font-family: var(--font-pixel);
   font-size: 6px;
-  color: #555;
+  color: var(--txt-muted);
   line-height: 1.6;
   letter-spacing: 0.3px;
 }

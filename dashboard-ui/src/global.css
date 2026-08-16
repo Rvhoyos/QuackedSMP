@@ -56,6 +56,40 @@
   --mc-stone-dark: #1A1A1A;
   --mc-slot:       #141414;
   --mc-panel:      #2A2A2A;
+
+  /* ── Surfaces (dashboard rework) ─────────────────────────────────
+     Layered dark stone surfaces. Each step up is a lighter panel. */
+  --surf-0:  #191919;   /* app / deepest recess (toolbars, sidebar rail) */
+  --surf-1:  #232323;   /* panel body */
+  --surf-2:  #2A2A2A;   /* raised card on a panel */
+  --surf-3:  #333333;   /* hover / raised control */
+  --surf-slot: #141414; /* inventory-slot recess (inputs, wells) */
+
+  /* ── Text roles ──────────────────────────────────────────────────
+     All chosen to clear WCAG AA (~4.5:1) on the --surf-1/--surf-2
+     panel backgrounds. Use these instead of raw #444/#555/#666.
+     --txt-faint is for PIXEL-FONT labels only, never prose. */
+  --txt-primary:   #ECECF2;
+  --txt-secondary: #BFC2CC;
+  --txt-muted:     #9A9DA8;
+  --txt-faint:     #7E828E;
+
+  /* Semantic accents (reuse Catppuccin hues, named by intent) */
+  --accent:        var(--mc-wood-light);
+  --ok:            var(--green);
+  --warn:          var(--yellow);
+  --danger:        var(--red);
+  --info:          var(--blue);
+
+  /* Focus ring for keyboard a11y on themed controls */
+  --focus-ring:    0 0 0 2px var(--crust), 0 0 0 4px var(--mc-wood-light);
+}
+
+/* Visible keyboard focus for all interactive elements (a11y).
+   Mouse users keep the clean look via :focus-visible. */
+:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
 }
 
 html, body, #root {

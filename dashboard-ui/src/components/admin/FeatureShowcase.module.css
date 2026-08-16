@@ -61,7 +61,7 @@
 }
 
 .pillOff {
-  color: #555;
+  color: var(--txt-muted);
   background: rgba(255,255,255,0.03);
   border-top:    1px solid rgba(255,255,255,0.03);
   border-left:   1px solid rgba(255,255,255,0.03);
@@ -81,7 +81,7 @@
 
 .desc {
   font-size: 10px;
-  color: #666;
+  color: var(--txt-muted);
   line-height: 1.6;
 }
 

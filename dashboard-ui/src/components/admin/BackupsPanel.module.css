@@ -66,13 +66,13 @@
 .toggleLabel {
   font-family: var(--font-pixel);
   font-size: 7px;
-  color: #BBB;
+  color: var(--txt-secondary);
   letter-spacing: 0.3px;
 }
 .toggleHint {
   font-family: var(--font-pixel);
   font-size: 6px;
-  color: #555;
+  color: var(--txt-muted);
   letter-spacing: 0.3px;
   margin-left: auto;
 }
@@ -95,7 +95,7 @@
 .panelHint {
   font-family: var(--font-pixel);
   font-size: 6px;
-  color: #555;
+  color: var(--txt-muted);
   line-height: 1.6;
   letter-spacing: 0.3px;
 }
@@ -107,7 +107,7 @@
 .panelLabel {
   font-family: var(--font-pixel);
   font-size: 7px;
-  color: #999;
+  color: var(--txt-secondary);
   letter-spacing: 0.3px;
 }
 .panelRow {
@@ -166,7 +166,7 @@
   flex: 1;
   font-family: var(--font-pixel);
   font-size: 6px;
-  color: #555;
+  color: var(--txt-muted);
   letter-spacing: 0.3px;
 }
 
@@ -192,13 +192,13 @@
   letter-spacing: 0.3px;
   background: none;
   border: 1px solid #333;
-  color: #888;
+  color: var(--txt-secondary);
   padding: 5px 10px;
   cursor: pointer;
   white-space: nowrap;
   transition: color var(--t-fast), border-color var(--t-fast);
 }
-.btnGhost:hover:not(:disabled) { color: #CCC; border-color: #555; }
+.btnGhost:hover:not(:disabled) { color: #CCC; border-color: var(--txt-muted); }
 .btnGhost:disabled { opacity: 0.35; cursor: not-allowed; }
 
 .btnDanger {
@@ -245,7 +245,7 @@
   padding: 32px 16px;
   font-family: var(--font-pixel);
   font-size: 7px;
-  color: #444;
+  color: var(--txt-faint);
   text-align: center;
   letter-spacing: 0.3px;
 }
@@ -271,7 +271,7 @@
 .snapName {
   font-family: var(--font-mono);
   font-size: 12px;
-  color: #BBB;
+  color: var(--txt-secondary);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -280,7 +280,7 @@
 .snapMeta {
   font-family: var(--font-mono);
   font-size: 10px;
-  color: #444;
+  color: var(--txt-faint);
   white-space: nowrap;
   flex-shrink: 0;
 }

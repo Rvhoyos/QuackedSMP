@@ -100,7 +100,7 @@
   font-family: var(--font-pixel);
   font-size: 7px;
   letter-spacing: 0.5px;
-  color: #AAAAAA;
+  color: var(--txt-secondary);
   text-shadow: 1px 1px 0 rgba(0,0,0,0.5);
 }
 
@@ -123,14 +123,14 @@
 }
 
 .input:focus {
-  border-top-color:  #555;
-  border-left-color: #555;
-  border-bottom-color: #AAA;
-  border-right-color: #AAA;
+  border-top-color:  var(--txt-muted);
+  border-left-color: var(--txt-muted);
+  border-bottom-color: var(--txt-secondary);
+  border-right-color: var(--txt-secondary);
 }
 
 .input::placeholder {
-  color: #555;
+  color: var(--txt-muted);
   letter-spacing: 2px;
   font-size: 12px;
 }
@@ -198,7 +198,7 @@
 .hint {
   font-family: var(--font-pixel);
   font-size: 6px;
-  color: #555;
+  color: var(--txt-muted);
   text-align: center;
   margin-top: 16px;
   letter-spacing: 0.5px;

@@ -25,7 +25,7 @@
   justify-content: center;
   font-family: var(--font-pixel);
   font-size: 7px;
-  color: #444;
+  color: var(--txt-faint);
   letter-spacing: 0.5px;
 }
 
@@ -70,7 +70,7 @@
   font-family: var(--font-pixel);
   font-size: 7px;
   letter-spacing: 0.5px;
-  color: #AAAAAA;
+  color: var(--txt-secondary);
   text-shadow: 1px 1px 0 rgba(0,0,0,0.5);
   text-transform: uppercase;
 }
@@ -115,7 +115,7 @@
 
 .rowHint {
   font-size: 10px;
-  color: #555;
+  color: var(--txt-muted);
   line-height: 1.4;
 }
 
@@ -157,15 +157,15 @@
 }
 
 .numInput:focus {
-  border-top-color:    #333;
-  border-left-color:   #333;
+  border-top-color:    var(--txt-faint);
+  border-left-color:   var(--txt-faint);
   border-bottom-color: var(--blue);
   border-right-color:  var(--blue);
 }
 
 .suffix {
   font-size: 10px;
-  color: #555;
+  color: var(--txt-muted);
   font-family: var(--font-mono);
 }
 
@@ -192,7 +192,7 @@
   border-right-color:  var(--blue);
 }
 
-.textInput::placeholder { color: #333; }
+.textInput::placeholder { color: var(--txt-faint); }
 
 /* Toggle */
 .toggle {
@@ -266,7 +266,7 @@
 /* ── Misc ── */
 .note {
   font-size: 10px;
-  color: #555;
+  color: var(--txt-muted);
   font-style: italic;
   padding: 8px 14px;
 }
@@ -346,7 +346,7 @@
 .dangerToggle {
   font-family: var(--font-mono);
   font-size: 10px;
-  color: #555;
+  color: var(--txt-muted);
   background: none;
   border: none;
   cursor: pointer;
@@ -431,7 +431,7 @@
   border-left:   2px solid #333;
   border-bottom: 2px solid #0A0A0A;
   border-right:  2px solid #0A0A0A;
-  color: #555;
+  color: var(--txt-muted);
   cursor: pointer;
   text-transform: uppercase;
   transition: color var(--t-fast), background var(--t-fast);
@@ -439,13 +439,13 @@
 
 .tabBtn:hover:not(.tabActive) {
   background: #202020;
-  color: #888;
+  color: var(--txt-secondary);
 }
 
 .tabActive {
   background: #222;
-  border-top-color:   #555;
-  border-left-color:  #555;
+  border-top-color:   var(--txt-muted);
+  border-left-color:  var(--txt-muted);
   color: var(--text);
   box-shadow: inset 0 -2px 0 var(--blue);
 }
@@ -563,7 +563,7 @@
 
 .skillColLabel {
   font-size: 9px;
-  color: #444;
+  color: var(--txt-faint);
   font-family: var(--font-mono);
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -662,7 +662,7 @@
   font-family: var(--font-pixel);
   font-size: 5px;
   letter-spacing: 0.5px;
-  color: #555;
+  color: var(--txt-muted);
   text-transform: uppercase;
 }
 
@@ -694,7 +694,7 @@
 
 .legendLabel {
   font-size: 10px;
-  color: #555;
+  color: var(--txt-muted);
   white-space: nowrap;
 }
 
@@ -716,14 +716,14 @@
 .exampleInput {
   font-family: var(--font-mono);
   font-size: 10px;
-  color: #555;
+  color: var(--txt-muted);
   background: var(--mc-slot);
   padding: 2px 6px;
   border: 1px solid #222;
 }
 
 .exampleArrow {
-  color: #333;
+  color: var(--txt-faint);
   font-size: 12px;
   flex-shrink: 0;
 }
@@ -755,7 +755,7 @@
 
 .kitCaret {
   font-size: 8px;
-  color: #555;
+  color: var(--txt-muted);
   flex-shrink: 0;
   width: 10px;
 }
@@ -800,7 +800,7 @@
 
 .kitFieldLabel {
   font-size: 11px;
-  color: #666;
+  color: var(--txt-muted);
   min-width: 80px;
   flex-shrink: 0;
 }
@@ -809,7 +809,7 @@
   font-family: var(--font-pixel);
   font-size: 5px;
   letter-spacing: 0.5px;
-  color: #444;
+  color: var(--txt-faint);
   text-transform: uppercase;
   padding-top: 6px;
   border-top: 1px solid #1A1A1A;
@@ -897,8 +897,8 @@
 }
 
 .itemSlot:hover {
-  border-bottom-color: #555;
-  border-right-color: #555;
+  border-bottom-color: var(--txt-muted);
+  border-right-color: var(--txt-muted);
 }
 
 .itemSlotSelected {
@@ -932,7 +932,7 @@
 }
 
 .itemSlotAdd {
-  color: #333;
+  color: var(--txt-faint);
   font-size: 18px;
   font-weight: 300;
   transition: color var(--t-fast);

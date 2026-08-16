@@ -1,238 +1,191 @@
 import styles from './MetricsPanel.module.css'
 import { IconClock, IconSpeedometer, IconFurnace, IconPlayerHead } from './admin/MinecraftIcons'
 
-function tpsColor(val) {
-  if (val == null) return 'var(--overlay0)'
-  if (val >= 18)   return 'var(--green)'
-  if (val >= 14)   return 'var(--yellow)'
-  return 'var(--red)'
-}
+// ── Threshold colors ──────────────────────────────────────────────────────────
+function tpsColor(v)  { if (v == null) return 'var(--overlay0)'; return v >= 18 ? 'var(--green)' : v >= 14 ? 'var(--yellow)' : 'var(--red)' }
+function msptColor(v) { if (v == null) return 'var(--overlay0)'; return v <= 40 ? 'var(--green)' : v <= 80 ? 'var(--yellow)' : 'var(--red)' }
+function cpuColor(v)  { if (v == null) return 'var(--overlay0)'; return v <= 0.5 ? 'var(--green)' : v <= 0.8 ? 'var(--yellow)' : 'var(--red)' }
+function pctColor(p)  { if (p == null) return 'var(--overlay0)'; return p <= 0.6 ? 'var(--green)' : p <= 0.85 ? 'var(--yellow)' : 'var(--red)' }
+function diskColorP(p){ if (p == null) return 'var(--overlay0)'; return p <= 0.7 ? 'var(--green)' : p <= 0.9 ? 'var(--yellow)' : 'var(--red)' }
 
-function msptColor(val) {
-  if (val == null) return 'var(--overlay0)'
-  if (val <= 40)   return 'var(--green)'
-  if (val <= 80)   return 'var(--yellow)'
-  return 'var(--red)'
+// ── Formatters ─────────────────────────────────────────────────────────────────
+const fmt = (v, d = 1) => (v != null ? v.toFixed(d) : '—')
+const pctStr = (v) => (v != null ? `${(v * 100).toFixed(1)}%` : '—')
+function fmtBytes(b) {
+  if (b == null) return '—'
+  if (b >= 1e9) return `${(b / 1e9).toFixed(1)} GB`
+  if (b >= 1e6) return `${(b / 1e6).toFixed(0)} MB`
+  return `${(b / 1e3).toFixed(0)} KB`
 }
-
-function cpuColor(val) {
-  if (val == null) return 'var(--overlay0)'
-  if (val <= 0.5)  return 'var(--green)'
-  if (val <= 0.8)  return 'var(--yellow)'
-  return 'var(--red)'
-}
-
-function ramColor(used, max) {
-  if (used == null || max == null || max === 0) return 'var(--overlay0)'
-  const pct = used / max
-  if (pct <= 0.6)  return 'var(--green)'
-  if (pct <= 0.85) return 'var(--yellow)'
-  return 'var(--red)'
-}
-
-function diskColor(used, total) {
-  if (used == null || total == null || total === 0) return 'var(--overlay0)'
-  const pct = used / total
-  if (pct <= 0.7)  return 'var(--green)'
-  if (pct <= 0.9)  return 'var(--yellow)'
-  return 'var(--red)'
-}
-
-function fmt(val, decimals = 1) {
-  return val != null ? val.toFixed(decimals) : '—'
-}
-
-function pct(val) {
-  return val != null ? `${(val * 100).toFixed(1)}%` : '—'
-}
-
-function fmtBytes(bytes) {
-  if (bytes == null) return '—'
-  if (bytes >= 1e9) return `${(bytes / 1e9).toFixed(1)} GB`
-  if (bytes >= 1e6) return `${(bytes / 1e6).toFixed(0)} MB`
-  return `${(bytes / 1e3).toFixed(0)} KB`
-}
-
 function fmtUptime(ms) {
   if (ms == null) return '—'
-  const s = Math.floor(ms / 1000)
-  const h = Math.floor(s / 3600)
-  const m = Math.floor((s % 3600) / 60)
-  if (h > 0) return `${h}h ${m}m`
-  return `${m}m`
+  const s = Math.floor(ms / 1000), h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60)
+  return h > 0 ? `${h}h ${m}m` : `${m}m`
+}
+const clamp01 = (n) => Math.max(0, Math.min(1, n))
+
+// ── 270° ring gauge ────────────────────────────────────────────────────────────
+function Gauge({ frac, color, children }) {
+  const arc = 75 // 270° of the full circumference (pathLength=100)
+  const shown = clamp01(frac ?? 0) * arc
+  return (
+    <div className={styles.gaugeWrap}>
+      <svg viewBox="0 0 100 100" className={styles.gauge}>
+        <g transform="rotate(135 50 50)">
+          <circle cx="50" cy="50" r="42" pathLength="100" className={styles.gaugeTrack} strokeDasharray={`${arc} 100`} />
+          <circle cx="50" cy="50" r="42" pathLength="100" className={styles.gaugeArc} strokeDasharray={`${shown} 100`} style={{ stroke: color }} />
+        </g>
+      </svg>
+      <div className={styles.gaugeCenter}>{children}</div>
+    </div>
+  )
 }
 
-export default function MetricsPanel({ tps, cpu, mspt, online, sys }) {
-  const tpsColor5s = tpsColor(tps?.tps5s)
+// ── Tiny sparkline ──────────────────────────────────────────────────────────────
+function Sparkline({ data, color, min, max }) {
+  if (!data || data.length < 2) return <div className={styles.sparkEmpty} />
+  const lo = min ?? Math.min(...data)
+  const hi = max ?? Math.max(...data)
+  const span = hi - lo || 1
+  const w = 100, h = 24
+  const pts = data.map((v, i) => {
+    const x = (i / (data.length - 1)) * w
+    const y = h - ((v - lo) / span) * (h - 4) - 2
+    return `${x.toFixed(1)},${y.toFixed(1)}`
+  }).join(' ')
+  return (
+    <svg viewBox={`0 0 ${w} ${h}`} className={styles.spark} preserveAspectRatio="none">
+      <polyline points={pts} fill="none" stroke={color} strokeWidth="1.5" strokeLinejoin="round" strokeLinecap="round" />
+    </svg>
+  )
+}
 
-  const heapUsed  = sys?.heapUsed  ?? null
-  const heapMax   = sys?.heapMax   ?? null
-  const ramTotal  = sys?.ramTotal  ?? null
-  const ramFree   = sys?.ramFree   ?? null
+function Stat({ label, value, color }) {
+  return (
+    <div className={styles.stat}>
+      <span className={styles.statLabel}>{label}</span>
+      <span className={styles.statValue} style={color ? { color } : undefined}>{value}</span>
+    </div>
+  )
+}
+
+export default function MetricsPanel({ tps, cpu, mspt, online, sys, tpsHist = [], msptHist = [] }) {
+  const heapUsed  = sys?.heapUsed ?? null,  heapMax = sys?.heapMax ?? null
+  const ramTotal  = sys?.ramTotal ?? null,  ramFree = sys?.ramFree ?? null
   const ramUsed   = (ramTotal != null && ramFree != null) ? ramTotal - ramFree : null
-  const diskTotal = sys?.diskTotal ?? null
-  const diskUsable = sys?.diskUsable ?? null
+  const diskTotal = sys?.diskTotal ?? null, diskUsable = sys?.diskUsable ?? null
   const diskUsed  = (diskTotal != null && diskUsable != null) ? diskTotal - diskUsable : null
   const worldSize = sys?.worldSize != null && sys.worldSize >= 0 ? sys.worldSize : null
-  const ramPct    = (ramUsed != null && ramTotal != null && ramTotal > 0) ? ramUsed / ramTotal : null
-  const heapPct   = (heapUsed != null && heapMax != null && heapMax > 0) ? heapUsed / heapMax : null
-  const diskPct   = (diskUsed != null && diskTotal != null && diskTotal > 0) ? diskUsed / diskTotal : null
+  const ramPct    = (ramUsed != null && ramTotal) ? ramUsed / ramTotal : null
+  const diskPct   = (diskUsed != null && diskTotal) ? diskUsed / diskTotal : null
+
+  const tpsV = tps?.tps5s, msptV = mspt?.mean10s, cpuV = cpu?.cpu10s
 
   return (
     <div className={styles.grid}>
       {/* TPS */}
       <div className={styles.card}>
-        <div className={styles.cardTop}>
-          <span className={styles.cardIcon}><IconClock size={22} /></span>
-          <span className={styles.cardLabel}>TPS</span>
+        <div className={styles.head}><span className={styles.icon}><IconClock size={18} /></span><span className={styles.label}>TPS</span></div>
+        <Gauge frac={tpsV != null ? tpsV / 20 : 0} color={tpsColor(tpsV)}>
+          <span className={styles.big} style={{ color: tpsColor(tpsV) }}>{fmt(tpsV)}</span>
+          <span className={styles.unit}>/20</span>
+        </Gauge>
+        <Sparkline data={tpsHist} color={tpsColor(tpsV)} min={0} max={20} />
+        <div className={styles.stats}>
+          <Stat label="1m" value={fmt(tps?.tps1m)} color={tpsColor(tps?.tps1m)} />
+          <Stat label="5m" value={fmt(tps?.tps5m)} color={tpsColor(tps?.tps5m)} />
         </div>
-        <div className={styles.cardPrimary} style={{ color: tpsColor5s }}>
-          {fmt(tps?.tps5s)}
-        </div>
-        <div className={styles.cardSub}>
-          <SubStat label="10s" value={fmt(tps?.tps10s)} color={tpsColor(tps?.tps10s)} />
-          <SubStat label="1m"  value={fmt(tps?.tps1m)}  color={tpsColor(tps?.tps1m)} />
-          <SubStat label="5m"  value={fmt(tps?.tps5m)}  color={tpsColor(tps?.tps5m)} />
-        </div>
-        <div className={styles.cardWindow}>5s window</div>
       </div>
 
       {/* MSPT */}
       <div className={styles.card}>
-        <div className={styles.cardTop}>
-          <span className={styles.cardIcon}><IconSpeedometer size={22} /></span>
-          <span className={styles.cardLabel}>MSPT</span>
+        <div className={styles.head}><span className={styles.icon}><IconSpeedometer size={18} /></span><span className={styles.label}>MSPT</span></div>
+        <Gauge frac={msptV != null ? msptV / 50 : 0} color={msptColor(msptV)}>
+          <span className={styles.big} style={{ color: msptColor(msptV) }}>{fmt(msptV)}</span>
+          <span className={styles.unit}>ms</span>
+        </Gauge>
+        <Sparkline data={msptHist} color={msptColor(msptV)} min={0} max={50} />
+        <div className={styles.stats}>
+          <Stat label="max 10s" value={`${fmt(mspt?.max10s)}ms`} />
+          <Stat label="avg 1m"  value={`${fmt(mspt?.mean1m)}ms`} />
         </div>
-        <div className={styles.cardPrimary} style={{ color: msptColor(mspt?.mean10s) }}>
-          {fmt(mspt?.mean10s)}
-          <span className={styles.cardUnit}>ms</span>
-        </div>
-        <div className={styles.cardSub}>
-          <SubStat label="max 10s" value={`${fmt(mspt?.max10s)}ms`} />
-          <SubStat label="avg 1m"  value={`${fmt(mspt?.mean1m)}ms`} />
-        </div>
-        <div className={styles.cardWindow}>mean 10s</div>
       </div>
 
       {/* CPU */}
       <div className={styles.card}>
-        <div className={styles.cardTop}>
-          <span className={styles.cardIcon}><IconFurnace size={22} /></span>
-          <span className={styles.cardLabel}>CPU</span>
+        <div className={styles.head}><span className={styles.icon}><IconFurnace size={18} /></span><span className={styles.label}>CPU</span></div>
+        <Gauge frac={cpuV ?? 0} color={cpuColor(cpuV)}>
+          <span className={styles.big} style={{ color: cpuColor(cpuV) }}>{pctStr(cpuV)}</span>
+        </Gauge>
+        <div className={styles.sparkEmpty} />
+        <div className={styles.stats}>
+          <Stat label="1m"  value={pctStr(cpu?.cpu1m)} />
+          <Stat label="15m" value={pctStr(cpu?.cpu15m)} />
         </div>
-        <div className={styles.cardPrimary} style={{ color: cpuColor(cpu?.cpu10s) }}>
-          {pct(cpu?.cpu10s)}
-        </div>
-        <div className={styles.cardSub}>
-          <SubStat label="1m"  value={pct(cpu?.cpu1m)} />
-          <SubStat label="15m" value={pct(cpu?.cpu15m)} />
-          {sys?.threads != null && <SubStat label="threads" value={String(sys.threads)} />}
-        </div>
-        <div className={styles.cardWindow}>10s window</div>
       </div>
 
       {/* Players */}
       <div className={styles.card}>
-        <div className={styles.cardTop}>
-          <span className={styles.cardIcon}><IconPlayerHead size={22} /></span>
-          <span className={styles.cardLabel}>Players</span>
+        <div className={styles.head}><span className={styles.icon}><IconPlayerHead size={18} /></span><span className={styles.label}>Players</span></div>
+        <Gauge frac={online != null && sys?.maxPlayers ? online / sys.maxPlayers : (online ? 0.5 : 0)} color="var(--blue)">
+          <span className={styles.big} style={{ color: 'var(--blue)' }}>{online ?? '—'}</span>
+          {sys?.maxPlayers ? <span className={styles.unit}>/{sys.maxPlayers}</span> : <span className={styles.unit}>online</span>}
+        </Gauge>
+        <div className={styles.sparkEmpty} />
+        <div className={styles.stats}>
+          <Stat label="uptime" value={fmtUptime(sys?.uptimeMs)} />
         </div>
-        <div className={styles.cardPrimary} style={{ color: 'var(--blue)' }}>
-          {online ?? '—'}
-        </div>
-        <div className={styles.cardSub}>
-          {sys?.uptimeMs != null && <SubStat label="uptime" value={fmtUptime(sys.uptimeMs)} />}
-        </div>
-        <div className={styles.cardWindow}>online now</div>
       </div>
 
       {/* RAM */}
       <div className={styles.card}>
-        <div className={styles.cardTop}>
-          <span className={styles.cardIcon}>
-            <svg viewBox="0 0 22 22" width={22} height={22} shapeRendering="crispEdges">
-              <rect x="1" y="6" width="20" height="10" rx="2" fill="#2A4A7A" />
-              <rect x="1" y="6" width="20" height="10" rx="2" stroke="#3A6AB0" strokeWidth="1.5" fill="none" />
-              <rect x="3"  y="9" width="3" height="4" rx="0.5" fill="#5B8FD4" />
-              <rect x="7"  y="9" width="3" height="4" rx="0.5" fill="#5B8FD4" />
-              <rect x="11" y="9" width="3" height="4" rx="0.5" fill="#5B8FD4" />
-              <rect x="15" y="9" width="3" height="4" rx="0.5" fill="#5B8FD4" />
-              <rect x="5"  y="15" width="1" height="2" fill="#3A6AB0" />
-              <rect x="9"  y="15" width="1" height="2" fill="#3A6AB0" />
-              <rect x="13" y="15" width="1" height="2" fill="#3A6AB0" />
-              <rect x="17" y="15" width="1" height="2" fill="#3A6AB0" />
-            </svg>
-          </span>
-          <span className={styles.cardLabel}>RAM</span>
+        <div className={styles.head}><span className={styles.icon}><MemIcon /></span><span className={styles.label}>RAM</span></div>
+        <Gauge frac={ramPct} color={pctColor(ramPct)}>
+          <span className={styles.bigSm} style={{ color: pctColor(ramPct) }}>{fmtBytes(ramUsed)}</span>
+          {ramPct != null && <span className={styles.unit}>{(ramPct * 100).toFixed(0)}%</span>}
+        </Gauge>
+        <div className={styles.sparkEmpty} />
+        <div className={styles.stats}>
+          <Stat label="total" value={fmtBytes(ramTotal)} />
+          {heapUsed != null && <Stat label="heap" value={fmtBytes(heapUsed)} />}
         </div>
-        <div className={styles.cardPrimary} style={{ color: ramColor(ramUsed, ramTotal) }}>
-          {fmtBytes(ramUsed)}
-        </div>
-        <div className={styles.bar}>
-          <div
-            className={styles.barFill}
-            style={{
-              width: ramPct != null ? `${(ramPct * 100).toFixed(1)}%` : '0%',
-              background: ramColor(ramUsed, ramTotal),
-            }}
-          />
-        </div>
-        <div className={styles.cardSub}>
-          <SubStat label="total" value={fmtBytes(ramTotal)} />
-          {ramPct != null && <SubStat label="used" value={`${(ramPct * 100).toFixed(0)}%`} color={ramColor(ramUsed, ramTotal)} />}
-          {heapUsed != null && <SubStat label="heap" value={`${fmtBytes(heapUsed)} / ${fmtBytes(heapMax)}`} />}
-        </div>
-        <div className={styles.cardWindow}>system RAM</div>
       </div>
 
       {/* Disk */}
       <div className={styles.card}>
-        <div className={styles.cardTop}>
-          <span className={styles.cardIcon}>
-            <svg viewBox="0 0 22 22" width={22} height={22} shapeRendering="crispEdges">
-              <ellipse cx="11" cy="7"  rx="9" ry="4" fill="#3A2A1A" stroke="#7A5A3A" strokeWidth="1.2" />
-              <rect x="2" y="7" width="18" height="8" fill="#3A2A1A" />
-              <rect x="2" y="7" width="18" height="1" fill="#5A3A1A" />
-              <ellipse cx="11" cy="15" rx="9" ry="4" fill="#2A1A0A" stroke="#7A5A3A" strokeWidth="1.2" />
-              <ellipse cx="11" cy="7"  rx="5" ry="2" fill="#5A3A1A" />
-              <circle cx="15" cy="15" r="1.5" fill="#CC9040" />
-              <circle cx="15" cy="15" r="0.7" fill="#FFCC60" />
-            </svg>
-          </span>
-          <span className={styles.cardLabel}>Disk</span>
+        <div className={styles.head}><span className={styles.icon}><DiskIcon /></span><span className={styles.label}>Disk</span></div>
+        <Gauge frac={diskPct} color={diskColorP(diskPct)}>
+          <span className={styles.bigSm} style={{ color: diskColorP(diskPct) }}>{fmtBytes(diskUsed)}</span>
+          {diskPct != null && <span className={styles.unit}>{(diskPct * 100).toFixed(0)}%</span>}
+        </Gauge>
+        <div className={styles.sparkEmpty} />
+        <div className={styles.stats}>
+          <Stat label="free"  value={fmtBytes(diskUsable)} />
+          <Stat label="world" value={fmtBytes(worldSize)} />
         </div>
-        <div className={styles.cardPrimary} style={{ color: diskColor(diskUsed, diskTotal) }}>
-          {fmtBytes(diskUsed)}
-        </div>
-        <div className={styles.bar}>
-          <div
-            className={styles.barFill}
-            style={{
-              width: diskPct != null ? `${(diskPct * 100).toFixed(1)}%` : '0%',
-              background: diskColor(diskUsed, diskTotal),
-            }}
-          />
-        </div>
-        <div className={styles.cardSub}>
-          <SubStat label="free"  value={fmtBytes(diskUsable)} />
-          <SubStat label="total" value={fmtBytes(diskTotal)} />
-          <SubStat label="world" value={fmtBytes(worldSize)} />
-        </div>
-        <div className={styles.cardWindow}>disk space</div>
       </div>
     </div>
   )
 }
 
-function SubStat({ label, value, color }) {
+function MemIcon() {
   return (
-    <div className={styles.subStat}>
-      <span className={styles.subLabel}>{label}</span>
-      {value != null && (
-        <span className={styles.subValue} style={color ? { color } : undefined}>
-          {value}
-        </span>
-      )}
-    </div>
+    <svg viewBox="0 0 22 22" width={18} height={18} shapeRendering="crispEdges">
+      <rect x="1" y="6" width="20" height="10" rx="2" fill="#2A4A7A" />
+      <rect x="1" y="6" width="20" height="10" rx="2" stroke="#3A6AB0" strokeWidth="1.5" fill="none" />
+      {[3, 7, 11, 15].map(x => <rect key={x} x={x} y="9" width="3" height="4" rx="0.5" fill="#5B8FD4" />)}
+      {[5, 9, 13, 17].map(x => <rect key={x} x={x} y="15" width="1" height="2" fill="#3A6AB0" />)}
+    </svg>
+  )
+}
+function DiskIcon() {
+  return (
+    <svg viewBox="0 0 22 22" width={18} height={18} shapeRendering="crispEdges">
+      <ellipse cx="11" cy="7" rx="9" ry="4" fill="#3A2A1A" stroke="#7A5A3A" strokeWidth="1.2" />
+      <rect x="2" y="7" width="18" height="8" fill="#3A2A1A" />
+      <ellipse cx="11" cy="15" rx="9" ry="4" fill="#2A1A0A" stroke="#7A5A3A" strokeWidth="1.2" />
+      <ellipse cx="11" cy="7" rx="5" ry="2" fill="#5A3A1A" />
+      <circle cx="15" cy="15" r="1.5" fill="#CC9040" /><circle cx="15" cy="15" r="0.7" fill="#FFCC60" />
+    </svg>
   )
 }

@@ -1,0 +1,34 @@
+.wrap { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-height: 0; background: var(--surf-1); }
+
+.disabledNote {
+  margin: 10px 14px; padding: 9px 12px;
+  font-family: var(--font-sans); font-size: 12px; color: var(--yellow);
+  background: rgba(249,226,175,0.08); border-left: 3px solid var(--yellow);
+}
+
+.list { flex: 1; overflow-y: auto; padding: 4px 0; }
+
+.row {
+  display: flex; align-items: center; gap: 14px; padding: 10px 14px;
+  border-left: 3px solid transparent; transition: background var(--t-fast);
+}
+.row:hover { background: rgba(255,255,255,0.04); border-left-color: var(--mc-wood); }
+
+.info { display: flex; flex-direction: column; gap: 3px; min-width: 0; flex: 1; }
+.loc { font-family: var(--font-pixel); font-size: 8px; color: var(--txt-primary); text-shadow: 1px 1px 0 rgba(0,0,0,0.5); }
+.cmd { font-family: var(--font-mono); font-size: 11px; color: var(--txt-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 340px; }
+
+.flags { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+.mode { font-family: var(--font-pixel); font-size: 6px; letter-spacing: 0.3px; padding: 3px 8px; color: #fff; white-space: nowrap; text-shadow: 1px 1px 0 rgba(0,0,0,0.4); }
+
+.actions { display: flex; align-items: center; gap: 5px; flex-shrink: 0; }
+
+/* Inline edit form */
+.editForm {
+  display: flex; flex-direction: column; gap: 12px;
+  padding: 12px 14px 16px 24px; background: var(--surf-0);
+  border-bottom: 1px solid #0d0d0d; border-left: 3px solid var(--mc-wood);
+}
+.editControls { display: flex; gap: 22px; align-items: flex-end; flex-wrap: wrap; }
+.toggleRow { display: flex; align-items: center; gap: 8px; }
+.tLabel { font-family: var(--font-sans); font-size: 12px; color: var(--txt-secondary); }

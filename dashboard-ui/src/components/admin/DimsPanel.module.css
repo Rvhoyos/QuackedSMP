@@ -18,7 +18,7 @@
 .sectionTitle {
   font-family: var(--font-pixel);
   font-size: 7px;
-  color: #666;
+  color: var(--txt-muted);
   letter-spacing: 0.5px;
   text-transform: uppercase;
   text-shadow: 1px 1px 0 rgba(0,0,0,0.5);
@@ -51,8 +51,8 @@
   outline: none;
   transition: border-color var(--t-fast);
 }
-.input:focus { border-color: #555; }
-.input::placeholder { color: #444; }
+.input:focus { border-color: var(--txt-muted); }
+.input::placeholder { color: var(--txt-faint); }
 
 .select {
   background: #111;
@@ -65,7 +65,7 @@
   cursor: pointer;
   transition: border-color var(--t-fast);
 }
-.select:focus { border-color: #555; }
+.select:focus { border-color: var(--txt-muted); }
 
 .btn {
   font-family: var(--font-pixel);
@@ -89,14 +89,14 @@
   letter-spacing: 0.3px;
   background: none;
   border: 1px solid #333;
-  color: #888;
+  color: var(--txt-secondary);
   padding: 5px 10px;
   cursor: pointer;
   text-shadow: 1px 1px 0 rgba(0,0,0,0.4);
   white-space: nowrap;
   transition: color var(--t-fast), border-color var(--t-fast);
 }
-.btnGhost:hover { color: #CCC; border-color: #555; }
+.btnGhost:hover { color: #CCC; border-color: var(--txt-muted); }
 
 .btnDanger {
   font-family: var(--font-pixel);
@@ -143,7 +143,7 @@
 .biomeChipId { color: #C084FC; }
 
 .biomeChipW {
-  color: #666;
+  color: var(--txt-muted);
   font-size: 9px;
 }
 
@@ -194,7 +194,7 @@
   padding: 5px 8px;
   font-family: var(--font-mono);
   font-size: 11px;
-  color: #AAA;
+  color: var(--txt-secondary);
   cursor: pointer;
   transition: background var(--t-fast), color var(--t-fast);
 }
@@ -204,7 +204,7 @@
   padding: 8px;
   font-family: var(--font-pixel);
   font-size: 6px;
-  color: #444;
+  color: var(--txt-faint);
   letter-spacing: 0.3px;
 }
 
@@ -221,12 +221,12 @@
   text-align: center;
   transition: border-color var(--t-fast);
 }
-.weightInput:focus { border-color: #555; }
+.weightInput:focus { border-color: var(--txt-muted); }
 
 .biomeHint {
   font-family: var(--font-pixel);
   font-size: 6px;
-  color: #444;
+  color: var(--txt-faint);
   letter-spacing: 0.3px;
 }
 
@@ -304,7 +304,7 @@
 .count {
   font-family: var(--font-pixel);
   font-size: 6px;
-  color: #555;
+  color: var(--txt-muted);
   letter-spacing: 0.4px;
   text-shadow: 1px 1px 0 rgba(0,0,0,0.4);
 }
@@ -312,7 +312,7 @@
 .refresh {
   font-family: var(--font-pixel);
   font-size: 6px;
-  color: #555;
+  color: var(--txt-muted);
   background: none;
   border: none;
   cursor: pointer;
@@ -333,7 +333,7 @@
   padding: 24px 16px;
   font-family: var(--font-pixel);
   font-size: 7px;
-  color: #444;
+  color: var(--txt-faint);
   text-align: center;
   letter-spacing: 0.3px;
 }
@@ -383,7 +383,7 @@
 .dimConfig {
   font-family: var(--font-mono);
   font-size: 10px;
-  color: #555;
+  color: var(--txt-muted);
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -404,7 +404,7 @@
   font-size: 10px;
   white-space: nowrap;
 }
-.portalSet   { color: #888; }
+.portalSet   { color: var(--txt-secondary); }
 .portalUnset { color: #3A3A3A; font-style: italic; }
 
 .portalEdit {
@@ -423,8 +423,8 @@
   padding: 4px 6px;
   outline: none;
 }
-.inputSm:focus { border-color: #555; }
-.inputSm::placeholder { color: #333; }
+.inputSm:focus { border-color: var(--txt-muted); }
+.inputSm::placeholder { color: var(--txt-faint); }
 
 .confirmDel {
   display: flex;
@@ -443,7 +443,7 @@
   padding: 8px 14px;
   font-family: var(--font-mono);
   font-size: 10px;
-  color: #333;
+  color: var(--txt-faint);
   border-top: 1px solid #111;
   flex-shrink: 0;
   line-height: 1.5;

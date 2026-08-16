@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import MetricsPanel from './components/MetricsPanel'
-import EventFeed from './components/EventFeed'
-import ChatPanel from './components/ChatPanel'
+import LiveFeed from './components/LiveFeed'
 import AdminPanel from './components/admin/AdminPanel'
 import SkillsLeaderboard from './components/SkillsLeaderboard'
 import HardcoreLeaderboard from './components/HardcoreLeaderboard'
@@ -15,6 +14,12 @@ const PUBLIC_DOWNLOAD_URL = '/api/backups/latest/download'
 const PUBLIC_DOWNLOAD_FILENAME = 'world.zip'
 
 const MAX_EVENTS = 150
+const HIST_MAX = 48
+
+function pushHist(setter, value) {
+  if (value == null || Number.isNaN(value)) return
+  setter(h => [...h, value].slice(-HIST_MAX))
+}
 
 function isNewer(latest, current) {
   const a = latest.split('.').map(Number)
@@ -33,6 +38,8 @@ export default function App() {
   const [cpu,         setCpu]         = useState(null)
   const [mspt,        setMspt]        = useState(null)
   const [sysMetrics,  setSysMetrics]  = useState(null)
+  const [tpsHist,     setTpsHist]     = useState([])
+  const [msptHist,    setMsptHist]    = useState([])
   const [leaderboard, setLeaderboard] = useState(null)
   const [hardcore,    setHardcore]    = useState(null)
   const [events,      setEvents]      = useState([])
@@ -62,7 +69,7 @@ export default function App() {
       const msptData = await msptRes.json()
       const sysData  = await sysRes.json()
       if (!cpuData.error)  setCpu(cpuData)
-      if (!msptData.error) setMspt(msptData)
+      if (!msptData.error) { setMspt(msptData); pushHist(setMsptHist, msptData.mean10s) }
       setSysMetrics(sysData)
     } catch { /* server may be starting */ }
   }, [])
@@ -93,7 +100,7 @@ export default function App() {
     ws.onmessage = (e) => {
       try {
         const msg = JSON.parse(e.data)
-        if (msg.type === 'tps_update') setTps(msg.data)
+        if (msg.type === 'tps_update') { setTps(msg.data); pushHist(setTpsHist, msg.data?.tps5s) }
         else pushEvent(msg)
       } catch { /* ignore */ }
     }
@@ -256,15 +263,40 @@ export default function App() {
         </main>
       ) : (
         <main className={styles.main}>
-          <MetricsPanel tps={tps} cpu={cpu} mspt={mspt} online={health?.online ?? null} sys={sysMetrics} />
-          <div className={styles.content}>
-            <EventFeed events={events} />
-            <ChatPanel events={events} />
-          </div>
+          <StatusHero health={health} wsStatus={wsStatus} sys={sysMetrics} />
+          <MetricsPanel tps={tps} cpu={cpu} mspt={mspt} online={health?.online ?? null} sys={sysMetrics} tpsHist={tpsHist} msptHist={msptHist} />
+          <LiveFeed events={events} />
           <SkillsLeaderboard data={leaderboard} />
           <HardcoreLeaderboard data={hardcore} />
         </main>
       )}
+    </div>
+  )
+}
+
+function fmtUptime(ms) {
+  if (ms == null) return null
+  const s = Math.floor(ms / 1000), h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60)
+  return h > 0 ? `${h}h ${m}m` : `${m}m`
+}
+
+function StatusHero({ health, wsStatus, sys }) {
+  const live = wsStatus === 'open'
+  const uptime = fmtUptime(sys?.uptimeMs)
+  return (
+    <div className={styles.hero}>
+      <div className={styles.heroMain}>
+        <span className={`${styles.heroDot} ${live ? styles.heroDotLive : styles.heroDotDown}`} />
+        <span className={styles.heroName}>{health?.serverName || 'QuackedSMP Server'}</span>
+        <span className={`${styles.heroState} ${live ? styles.heroStateLive : styles.heroStateDown}`}>
+          {live ? 'Online' : 'Reconnecting'}
+        </span>
+      </div>
+      <div className={styles.heroStats}>
+        <span className={styles.heroStat}><b>{health?.online ?? '—'}</b> online</span>
+        {uptime && <span className={styles.heroStat}>up <b>{uptime}</b></span>}
+        {health?.version && <span className={styles.heroStat}>v{health.version}</span>}
+      </div>
     </div>
   )
 }

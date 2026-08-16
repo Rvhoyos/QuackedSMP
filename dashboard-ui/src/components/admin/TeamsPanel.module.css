@@ -18,7 +18,7 @@
 .sectionTitle {
   font-family: var(--font-pixel);
   font-size: 7px;
-  color: #666;
+  color: var(--txt-muted);
   letter-spacing: 0.5px;
   text-transform: uppercase;
   text-shadow: 1px 1px 0 rgba(0,0,0,0.5);
@@ -44,8 +44,8 @@
   outline: none;
   transition: border-color var(--t-fast);
 }
-.input:focus { border-color: #555; }
-.input::placeholder { color: #444; }
+.input:focus { border-color: var(--txt-muted); }
+.input::placeholder { color: var(--txt-faint); }
 
 .select {
   background: #111;
@@ -58,7 +58,7 @@
   cursor: pointer;
   transition: border-color var(--t-fast);
 }
-.select:focus { border-color: #555; }
+.select:focus { border-color: var(--txt-muted); }
 
 .btn {
   font-family: var(--font-pixel);
@@ -82,14 +82,14 @@
   letter-spacing: 0.3px;
   background: none;
   border: 1px solid #333;
-  color: #888;
+  color: var(--txt-secondary);
   padding: 5px 10px;
   cursor: pointer;
   text-shadow: 1px 1px 0 rgba(0,0,0,0.4);
   white-space: nowrap;
   transition: color var(--t-fast), border-color var(--t-fast);
 }
-.btnGhost:hover { color: #CCC; border-color: #555; }
+.btnGhost:hover { color: #CCC; border-color: var(--txt-muted); }
 
 .btnDanger {
   font-family: var(--font-pixel);
@@ -144,7 +144,7 @@
 .count {
   font-family: var(--font-pixel);
   font-size: 6px;
-  color: #555;
+  color: var(--txt-muted);
   letter-spacing: 0.4px;
   text-shadow: 1px 1px 0 rgba(0,0,0,0.4);
   white-space: nowrap;
@@ -163,13 +163,13 @@
   outline: none;
   transition: border-color var(--t-fast);
 }
-.searchInput:focus { border-color: #555; }
-.searchInput::placeholder { color: #333; }
+.searchInput:focus { border-color: var(--txt-muted); }
+.searchInput::placeholder { color: var(--txt-faint); }
 
 .refresh {
   font-family: var(--font-pixel);
   font-size: 6px;
-  color: #555;
+  color: var(--txt-muted);
   background: none;
   border: none;
   cursor: pointer;
@@ -191,7 +191,7 @@
   padding: 24px 16px;
   font-family: var(--font-pixel);
   font-size: 7px;
-  color: #444;
+  color: var(--txt-faint);
   text-align: center;
   letter-spacing: 0.3px;
 }
@@ -217,7 +217,7 @@
 
 .caret {
   font-size: 10px;
-  color: #555;
+  color: var(--txt-muted);
   width: 10px;
   flex-shrink: 0;
 }
@@ -241,7 +241,7 @@
 .teamDisplay {
   font-family: var(--font-mono);
   font-size: 11px;
-  color: #666;
+  color: var(--txt-muted);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -287,7 +287,7 @@
 .fieldLabel {
   font-family: var(--font-pixel);
   font-size: 6px;
-  color: #666;
+  color: var(--txt-muted);
   letter-spacing: 0.3px;
   text-shadow: 1px 1px 0 rgba(0,0,0,0.4);
   white-space: nowrap;
@@ -311,7 +311,7 @@
   cursor: pointer;
   transition: border-color var(--t-fast);
 }
-.colorSelect:focus { border-color: #555; }
+.colorSelect:focus { border-color: var(--txt-muted); }
 
 .toggleOn {
   font-family: var(--font-pixel);
@@ -358,7 +358,7 @@
 .membersTitle {
   font-family: var(--font-pixel);
   font-size: 6px;
-  color: #666;
+  color: var(--txt-muted);
   letter-spacing: 0.3px;
   text-shadow: 1px 1px 0 rgba(0,0,0,0.4);
   text-transform: uppercase;
@@ -375,8 +375,8 @@
   padding: 2px 6px;
   outline: none;
 }
-.memberSearchInput:focus { border-color: #555; }
-.memberSearchInput::placeholder { color: #333; }
+.memberSearchInput:focus { border-color: var(--txt-muted); }
+.memberSearchInput::placeholder { color: var(--txt-faint); }
 
 .addPlayerRow {
   display: flex;
@@ -435,7 +435,7 @@
   padding: 5px 8px;
   font-family: var(--font-mono);
   font-size: 11px;
-  color: #AAA;
+  color: var(--txt-secondary);
   cursor: pointer;
   transition: background var(--t-fast), color var(--t-fast);
 }
@@ -445,7 +445,7 @@
   padding: 8px;
   font-family: var(--font-pixel);
   font-size: 6px;
-  color: #444;
+  color: var(--txt-faint);
   letter-spacing: 0.3px;
 }
 
@@ -487,7 +487,7 @@
 .noMembers {
   font-family: var(--font-pixel);
   font-size: 6px;
-  color: #333;
+  color: var(--txt-faint);
   letter-spacing: 0.3px;
   padding: 6px;
 }

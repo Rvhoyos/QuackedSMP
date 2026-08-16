@@ -38,13 +38,13 @@
   letter-spacing: 0.3px;
   background: none;
   border: 1px solid #2A2A2A;
-  color: #666;
+  color: var(--txt-muted);
   padding: 4px 10px;
   cursor: pointer;
   transition: color var(--t-fast), border-color var(--t-fast);
   white-space: nowrap;
 }
-.tab:hover { color: #AAA; border-color: #444; }
+.tab:hover { color: var(--txt-secondary); border-color: var(--txt-faint); }
 .tabActive { color: #F87171; border-color: #7F1D1D; background: rgba(127,29,29,0.25); }
 
 /* ── Records + counters grid (shared fun stats) ──────────────────── */
@@ -146,7 +146,7 @@
 .thRank, .thName, .thNum {
   font-family: var(--font-pixel);
   font-size: 6px;
-  color: #444;
+  color: var(--txt-faint);
   letter-spacing: 0.3px;
   text-transform: uppercase;
   padding: 4px 10px;
@@ -161,7 +161,7 @@
 .rank {
   font-family: var(--font-pixel);
   font-size: 7px;
-  color: #555;
+  color: var(--txt-muted);
   padding: 6px 10px;
   width: 30px;
   letter-spacing: 0.3px;
@@ -175,7 +175,7 @@
 .by {
   font-family: var(--font-mono);
   font-size: 11px;
-  color: #777;
+  color: var(--txt-secondary);
   padding: 6px 10px;
 }
 .num {
@@ -189,7 +189,7 @@
 .noData {
   font-family: var(--font-pixel);
   font-size: 6px;
-  color: #333;
+  color: var(--txt-faint);
   padding: 12px 10px;
   text-align: center;
   letter-spacing: 0.3px;
