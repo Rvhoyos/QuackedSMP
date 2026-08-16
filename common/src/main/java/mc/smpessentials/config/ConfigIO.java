@@ -173,7 +173,8 @@ public final class ConfigIO {
         data.timelapseIntervalMinutes = SmpConfig.TIMELAPSE_INTERVAL_MINUTES;
         data.timelapseDir             = SmpConfig.TIMELAPSE_DIR;
         data.timelapseDimension       = SmpConfig.TIMELAPSE_DIMENSION;
-        data.timelapseMaxDimension    = SmpConfig.TIMELAPSE_MAX_DIMENSION;
+        data.timelapseMaxRenderMb     = SmpConfig.TIMELAPSE_MAX_RENDER_MB;
+        data.timelapseMaxSkips        = SmpConfig.TIMELAPSE_MAX_SKIPS;
         data.timelapseMaxFrames       = SmpConfig.TIMELAPSE_MAX_FRAMES;
         data.kitsEnabled = SmpConfig.KITS_ENABLED;
         data.kits.cooldownSeconds = SmpConfig.KIT_COOLDOWN_SECONDS;

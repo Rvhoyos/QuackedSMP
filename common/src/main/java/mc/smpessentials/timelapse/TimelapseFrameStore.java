@@ -15,17 +15,22 @@ import java.util.stream.Stream;
 
 /**
  * On-disk store of timelapse frames. Each frame is a PNG named
- * {@code frame-<epochMillis>.png}; the timestamp lives in the filename so no
- * separate manifest needs to be kept in sync. Retention thins evenly across the
+ * {@code frame-<epochMillis>-b<blocksPerPixel>.png}; the timestamp and the
+ * render's blocks-per-pixel live in the filename so no separate manifest needs
+ * to be kept in sync. Legacy {@code frame-<epochMillis>.png} names (no bpp) are
+ * still read and treated as full resolution. Retention thins evenly across the
  * whole timeline (dropping frames spread through time) so a capped timelapse
  * loses smoothness rather than its beginning or end.
  */
 public final class TimelapseFrameStore {
 
-    private static final Pattern NAME_RX = Pattern.compile("^frame-(\\d+)\\.png$");
+    private static final Pattern NAME_RX = Pattern.compile("^frame-(\\d+)(?:-b(\\d+))?\\.png$");
 
-    /** A stored frame. {@code capturedAt} is epoch millis parsed from the name. */
-    public record Frame(String name, long capturedAt, long sizeBytes) {}
+    /**
+     * A stored frame. {@code capturedAt} is epoch millis and {@code blocksPerPixel}
+     * (1 = full 1:1) are parsed from the name.
+     */
+    public record Frame(String name, long capturedAt, long sizeBytes, int blocksPerPixel) {}
 
     private final Path dir;
 
@@ -54,9 +59,9 @@ public final class TimelapseFrameStore {
     }
 
     /** Encodes and stores a frame captured at {@code capturedAt}, then applies retention. */
-    public void add(BufferedImage image, long capturedAt) throws IOException {
+    public void add(BufferedImage image, long capturedAt, int blocksPerPixel) throws IOException {
         Files.createDirectories(dir);
-        Path out = dir.resolve("frame-" + capturedAt + ".png");
+        Path out = dir.resolve("frame-" + capturedAt + "-b" + blocksPerPixel + ".png");
         // PNG keeps the alpha channel, so ungenerated void stays transparent
         // rather than a black fill, and its lossless encoding avoids the
         // compression artifacts JPEG produces on flat-color, hard-edged maps.
@@ -111,7 +116,8 @@ public final class TimelapseFrameStore {
         var m = NAME_RX.matcher(p.getFileName().toString());
         if (!m.matches()) return null;
         try {
-            return new Frame(p.getFileName().toString(), Long.parseLong(m.group(1)), Files.size(p));
+            int bpp = m.group(2) != null ? Integer.parseInt(m.group(2)) : 1;
+            return new Frame(p.getFileName().toString(), Long.parseLong(m.group(1)), Files.size(p), bpp);
         } catch (IOException e) {
             return null;
         }

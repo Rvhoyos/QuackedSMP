@@ -17,9 +17,10 @@ export default function TimelapsePanel({ token, onExpired }) {
   const [speed,    setSpeed]    = useState(5)
   const [srcUrl,   setSrcUrl]   = useState(null)
   const [maxHeap,  setMaxHeap]  = useState(0)   // server -Xmx in bytes, from JVM
+  const [progress, setProgress] = useState(null) // live capture progress while running
 
   // Editable capture settings, mirrored from /api/admin/config.
-  const [cfg, setCfg] = useState({ dimension: 'minecraft:overworld', maxDimension: 6000, maxFrames: 0 })
+  const [cfg, setCfg] = useState({ dimension: 'minecraft:overworld', maxRenderMb: 0, maxSkips: 3, maxFrames: 0 })
 
   const auth      = { Authorization: `Bearer ${token}` }
   const blobCache = useRef(new Map())   // name -> objectURL
@@ -28,8 +29,10 @@ export default function TimelapsePanel({ token, onExpired }) {
 
   function flash(msg) { setStatus(msg); setTimeout(() => setStatus(null), 4000) }
 
-  const loadList = useCallback(async () => {
-    setLoading(true)
+  // silent skips the loading flag, so the 1s capture poll does not flicker the
+  // toolbar count and Refresh button; manual refreshes still show "Loading…".
+  const loadList = useCallback(async (silent = false) => {
+    if (!silent) setLoading(true)
     setError(null)
     try {
       const r = await fetch('/api/admin/timelapse', { headers: auth })
@@ -40,11 +43,12 @@ export default function TimelapsePanel({ token, onExpired }) {
       setFrames(list)
       setEnabled(Boolean(d.enabled))
       setRunning(Boolean(d.running))
+      setProgress(d.progress || null)
       if (Number.isFinite(d.intervalMinutes)) setInterval_(d.intervalMinutes)
       if (Number.isFinite(d.serverMaxHeap)) setMaxHeap(d.serverMaxHeap)
       setIdx(i => Math.min(i, Math.max(0, list.length - 1)))
     } catch { setError('Failed to load frames') }
-    setLoading(false)
+    if (!silent) setLoading(false)
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => { loadList() }, [loadList])
@@ -54,9 +58,10 @@ export default function TimelapsePanel({ token, onExpired }) {
       .then(r => r.status === 401 ? null : r.json())
       .then(d => {
         if (d && !d.error) setCfg({
-          dimension:    d.timelapse_dimension || 'minecraft:overworld',
-          maxDimension: Number.isFinite(d.timelapse_max_dimension) ? d.timelapse_max_dimension : 6000,
-          maxFrames:    Number.isFinite(d.timelapse_max_frames) ? d.timelapse_max_frames : 0,
+          dimension:   d.timelapse_dimension || 'minecraft:overworld',
+          maxRenderMb: Number.isFinite(d.timelapse_max_render_mb) ? d.timelapse_max_render_mb : 0,
+          maxSkips:    Number.isFinite(d.timelapse_max_skips) ? d.timelapse_max_skips : 3,
+          maxFrames:   Number.isFinite(d.timelapse_max_frames) ? d.timelapse_max_frames : 0,
         })
       })
       .catch(() => {})
@@ -145,7 +150,7 @@ export default function TimelapsePanel({ token, onExpired }) {
       if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null }
       return
     }
-    pollRef.current = setInterval(loadList, 3000)
+    pollRef.current = setInterval(() => loadList(true), 1000)
     return () => { if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null } }
   }, [running, loadList])
 
@@ -202,11 +207,10 @@ export default function TimelapsePanel({ token, onExpired }) {
 
   const current = frames[idx]
 
-  // Peak heap for one capture: ~12 bytes/px (MapColor refs + height ints + ARGB buffer).
-  const peakBytes = cfg.maxDimension * cfg.maxDimension * 12
-  const heapPct   = maxHeap > 0 ? peakBytes / maxHeap : 0
-  // danger if a single capture would eat a large slice of the server's whole heap.
-  const heapLevel = heapPct >= 0.5 ? 'danger' : heapPct >= 0.25 ? 'warn' : 'ok'
+  // A forced (players-online) capture is bounded by the RAM cap; 0 = auto, which
+  // fits the render to free heap and downsamples only if a capture would not fit.
+  const capBytes = cfg.maxRenderMb > 0 ? cfg.maxRenderMb * 1024 ** 2 : 0
+  const heapPct  = capBytes > 0 && maxHeap > 0 ? capBytes / maxHeap : 0
   function fmtBytes(b) {
     if (b >= 1024 ** 3) return `${(b / 1024 ** 3).toFixed(2)} GB`
     if (b >= 1024 ** 2) return `${Math.round(b / 1024 ** 2)} MB`
@@ -248,10 +252,16 @@ export default function TimelapsePanel({ token, onExpired }) {
                    onBlur={e => saveCfgField('dimension', 'timelapse_dimension', e.target.value.trim())} />
           </div>
           <div className={styles.field}>
-            <label className={styles.fieldLabel}>Max resolution (px, longer side)</label>
-            <input className={styles.numInput} type="number" min={256} step={256} value={cfg.maxDimension}
-                   onChange={e => setCfg(c => ({ ...c, maxDimension: Number(e.target.value) }))}
-                   onBlur={e => saveCfgField('maxDimension', 'timelapse_max_dimension', e.target.value, 256)} />
+            <label className={styles.fieldLabel}>Max render RAM (MB, 0 = auto)</label>
+            <input className={styles.numInput} type="number" min={0} value={cfg.maxRenderMb}
+                   onChange={e => setCfg(c => ({ ...c, maxRenderMb: Number(e.target.value) }))}
+                   onBlur={e => saveCfgField('maxRenderMb', 'timelapse_max_render_mb', e.target.value, 0)} />
+          </div>
+          <div className={styles.field}>
+            <label className={styles.fieldLabel}>Idle-wait skips before forcing (0 = every interval)</label>
+            <input className={styles.numInput} type="number" min={0} value={cfg.maxSkips}
+                   onChange={e => setCfg(c => ({ ...c, maxSkips: Number(e.target.value) }))}
+                   onBlur={e => saveCfgField('maxSkips', 'timelapse_max_skips', e.target.value, 0)} />
           </div>
           <div className={styles.field}>
             <label className={styles.fieldLabel}>Max frames (0 = keep all)</label>
@@ -260,18 +270,26 @@ export default function TimelapsePanel({ token, onExpired }) {
                    onBlur={e => saveCfgField('maxFrames', 'timelapse_max_frames', e.target.value, 0)} />
           </div>
         </div>
-        <div className={styles.memRow} data-level={heapLevel}>
-          <span className={styles.memValue}>~{fmtBytes(peakBytes)}</span>
-          <span className={styles.memLabel}>
-            RAM per capture{maxHeap > 0 && ` · ${Math.round(heapPct * 100)}% of server heap (${fmtBytes(maxHeap)})`}
-          </span>
-          {heapLevel === 'danger' && <span className={styles.memAlert}>⚠ Too high — likely to crash the server</span>}
-          {heapLevel === 'warn'   && <span className={styles.memAlert}>⚠ Heavy spike every interval</span>}
+        <div className={styles.memRow}>
+          {capBytes > 0 ? (
+            <>
+              <span className={styles.memValue}>up to {fmtBytes(capBytes)}</span>
+              <span className={styles.memLabel}>
+                RAM cap for a forced capture{maxHeap > 0 && ` · ${Math.round(heapPct * 100)}% of server heap (${fmtBytes(maxHeap)})`}
+              </span>
+            </>
+          ) : (
+            <span className={styles.memLabel}>
+              Auto: fits each capture to free server RAM, downsampling only if it would not fit.
+            </span>
+          )}
         </div>
         <div className={styles.hint}>
-          Snapshots auto-size to the generated world. While the world is smaller than the max
-          resolution, every block is one pixel; once it grows past that, pixels cover more
-          blocks. Idle periods are skipped.
+          Every block is one pixel, so the image is the size of the generated world. A capture
+          only downsamples if it would not fit available server RAM, and only enough to fit.
+          Captures prefer an idle server; while players are online they are held for the set
+          number of skips, then forced (that is when the RAM cap applies). Set a cap for a
+          server that is always populated; 0 uses free heap.
         </div>
       </div>
 
@@ -289,6 +307,8 @@ export default function TimelapsePanel({ token, onExpired }) {
         </button>
       </div>
 
+      {running && <CaptureMap progress={progress} />}
+
       {frames.length === 0 ? (
         <div className={styles.empty}>No frames yet</div>
       ) : (
@@ -300,7 +320,15 @@ export default function TimelapsePanel({ token, onExpired }) {
           </div>
 
           <div className={styles.timestamp}>
-            {current && `${fmtDate(current.capturedAt)} · frame ${idx + 1} / ${frames.length}`}
+            {current && (
+              <>
+                <span>{fmtDate(current.capturedAt)} · frame {idx + 1} / {frames.length}</span>
+                {(() => {
+                  const b = resBadge(current.blocksPerPixel)
+                  return <span className={b.full ? styles.badgeFull : styles.badgeDown}>{b.text}</span>
+                })()}
+              </>
+            )}
           </div>
 
           <input
@@ -339,6 +367,82 @@ export default function TimelapsePanel({ token, onExpired }) {
           </div>
         </div>
       )}
+    </div>
+  )
+}
+
+// Resolution badge for a stored frame. bpp 1 is full 1:1; higher downsampled,
+// keeping 1/bpp² of the pixels (2x = 25%, 3x = 11%, 4x = 6% of full detail).
+function resBadge(bpp) {
+  const n = bpp || 1
+  if (n <= 1) return { text: '1:1 · full detail', full: true }
+  return { text: `${n}× · ${Math.round(100 / (n * n))}% detail`, full: false }
+}
+
+const PHASE_LABEL = {
+  saving:   'Saving world',
+  scanning: 'Scanning region files',
+  painting: 'Painting terrain',
+  shading:  'Shading relief',
+  writing:  'Writing image',
+  idle:     'Starting…',
+}
+
+// Live "map appearing chunk by chunk" view of a running capture. Mirrors the
+// renderer's cx-major sweep: each poll upgrades scanned cells, so columns of the
+// world light up left to right with the active scan column glowing.
+function CaptureMap({ progress }) {
+  const p = progress || {}
+  const phase = p.phase || 'idle'
+  const done  = p.chunksDone || 0
+  const total = p.chunksTotal || 0
+  const w = p.w || 0
+  const h = p.h || 0
+  const cells = p.cells || ''
+  const pct = total > 0 ? Math.round((done / total) * 100) : 0
+  const label = phase === 'painting' ? `Painting terrain · ${pct}%` : (PHASE_LABEL[phase] || 'Working…')
+
+  // The frontmost scanned column, for the glowing scan edge.
+  let leadCol = -1
+  for (let i = 0; i < cells.length; i++) {
+    if (cells[i] !== '0') { const dx = i % w; if (dx > leadCol) leadCol = dx }
+  }
+
+  const hasGrid = w > 0 && h > 0 && cells.length === w * h
+
+  return (
+    <div className={styles.capture}>
+      <div className={styles.captureHead}>
+        <span className={styles.capturePhase}>{label}</span>
+        {total > 0 && (
+          <span className={styles.captureCount}>
+            {done.toLocaleString()} / {total.toLocaleString()} chunks
+          </span>
+        )}
+      </div>
+
+      <div className={styles.mapFrame} style={{ aspectRatio: hasGrid ? `${w} / ${h}` : '16 / 9' }}>
+        {hasGrid ? (
+          <svg className={styles.mapSvg} viewBox={`0 0 ${w} ${h}`}
+               preserveAspectRatio="xMidYMid meet" shapeRendering="crispEdges">
+            {Array.from(cells).map((ch, i) => {
+              if (ch === '0') return null
+              const dx = i % w, dz = Math.floor(i / w)
+              const fill = ch === '2' ? '#a6e3a1' : '#20202a'
+              return <rect key={i} x={dx + 0.08} y={dz + 0.08} width={0.84} height={0.84} fill={fill} />
+            })}
+            {leadCol >= 0 && (
+              <rect className={styles.mapScanEdge} x={leadCol} y={0} width={1} height={h} />
+            )}
+          </svg>
+        ) : (
+          <div className={styles.mapWaiting}>{PHASE_LABEL[phase] || 'Working…'}</div>
+        )}
+      </div>
+
+      <div className={styles.progressTrack}>
+        <div className={styles.progressFill} style={{ width: `${pct}%` }} />
+      </div>
     </div>
   )
 }

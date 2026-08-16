@@ -1,6 +1,5 @@
 package mc.smpessentials.timelapse;
 
-import mc.smpessentials.config.SmpConfig;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
@@ -22,8 +21,16 @@ import java.util.Optional;
  */
 public final class WorldMapRenderer {
 
-    /** Renders the full generated extent, or returns null if nothing is generated. */
-    public BufferedImage render(MinecraftServer server, ResourceKey<Level> dimension) throws Exception {
+    /** A finished render plus the blocks-per-pixel it settled on (1 = full 1:1). */
+    public record RenderResult(BufferedImage image, int blocksPerPixel) {}
+
+    /**
+     * Renders the full generated extent at 1 block = 1 pixel, downsampling only
+     * as far as {@code budgetBytes} of heap requires. Returns null if nothing is
+     * generated.
+     */
+    public RenderResult render(MinecraftServer server, ResourceKey<Level> dimension, long budgetBytes,
+                               CaptureProgress progress) throws Exception {
         ServerLevel level = server.getLevel(dimension);
         if (level == null) throw new IllegalArgumentException("Dimension not loaded: " + dimension.identifier());
 
@@ -31,6 +38,7 @@ public final class WorldMapRenderer {
                 .getStorageFolder(dimension, server.getWorldPath(LevelResource.ROOT))
                 .resolve("region");
 
+        progress.phase("scanning");
         Optional<ChunkBounds> bounds = new RegionExtentScanner(regionDir).scan();
         if (bounds.isEmpty()) return null;
         ChunkBounds extent = bounds.get();
@@ -38,13 +46,16 @@ public final class WorldMapRenderer {
         ColorMaps.ensureLoaded();
         BlockColorPalette.ensureLoaded();
 
-        MapCanvas canvas = MapCanvas.covering(extent, SmpConfig.TIMELAPSE_MAX_DIMENSION);
-        paint(server, level, dimension, regionDir, extent, canvas);
-        return canvas.toImage();
+        MapCanvas canvas = MapCanvas.covering(extent, budgetBytes);
+        progress.begin(extent);
+        progress.phase("painting");
+        paint(server, level, dimension, regionDir, extent, canvas, progress);
+        progress.phase("shading");
+        return new RenderResult(canvas.toImage(), canvas.blocksPerPixel());
     }
 
     private void paint(MinecraftServer server, ServerLevel level, ResourceKey<Level> dimension,
-                       Path regionDir, ChunkBounds bounds, MapCanvas canvas) throws Exception {
+                       Path regionDir, ChunkBounds bounds, MapCanvas canvas, CaptureProgress progress) throws Exception {
         String levelName = server.getWorldPath(LevelResource.ROOT).getFileName().toString();
         ChunkColumnSampler sampler = new ChunkColumnSampler(server.registryAccess(), level);
 
@@ -52,6 +63,7 @@ public final class WorldMapRenderer {
             for (int cx = bounds.minChunkX(); cx <= bounds.maxChunkX(); cx++) {
                 for (int cz = bounds.minChunkZ(); cz <= bounds.maxChunkZ(); cz++) {
                     Optional<CompoundTag> tag = reader.read(new ChunkPos(cx, cz));
+                    progress.markChunk(cx, cz, tag.isPresent());
                     if (tag.isPresent()) {
                         paintChunk(sampler.sample(tag.get()), cx, cz, canvas);
                     }

@@ -32,6 +32,7 @@ public final class TimelapseService {
     private static final TimelapseService INSTANCE = new TimelapseService();
 
     private final WorldMapRenderer renderer   = new WorldMapRenderer();
+    private final CaptureProgress  progress   = new CaptureProgress();
     private final AtomicBoolean    inProgress = new AtomicBoolean(false);
     // True once at least one player has been seen online since the last capture.
     // Keeps an idle server from filling the timelapse with identical frames: after
@@ -48,6 +49,9 @@ public final class TimelapseService {
     public static TimelapseService get() { return INSTANCE; }
 
     public boolean isRunning() { return inProgress.get(); }
+
+    /** Compact JSON of the current capture's progress, for the dashboard poll. */
+    public String progressJson() { return progress.toJson(); }
 
     public TimelapseFrameStore store() { return TimelapseFrameStore.fromConfig(); }
 
@@ -79,12 +83,18 @@ public final class TimelapseService {
             MinecraftServer srv = server;
             if (srv == null || !SmpConfig.TIMELAPSE_ENABLED || inProgress.get()) return;
 
-            if (srv.getPlayerList().getPlayerCount() > 0) activitySinceCapture = true;
+            boolean playersOnline = srv.getPlayerList().getPlayerCount() > 0;
+            if (playersOnline) activitySinceCapture = true;
 
-            // Skip idle periods: only capture when someone has been on since the
+            // Redundancy gate: only capture when someone has been on since the
             // last frame, so a dormant server does not accrue duplicate frames.
             if (!activitySinceCapture) return;
-            if (System.currentTimeMillis() - lastCaptureOrStart() >= intervalMs()) {
+            if (System.currentTimeMillis() - lastCaptureOrStart() < intervalMs()) return;
+
+            // Prefer an idle server (free heap, full 1:1). While players are on,
+            // defer and hold up to TIMELAPSE_MAX_SKIPS overdue intervals, then
+            // force the capture (its heap budget tightens to the configured cap).
+            if (!playersOnline || intervalsOverdue() > SmpConfig.TIMELAPSE_MAX_SKIPS) {
                 capture(srv);
             }
         } catch (Exception e) {
@@ -94,6 +104,12 @@ public final class TimelapseService {
 
     private long intervalMs() {
         return Math.max(1, SmpConfig.TIMELAPSE_INTERVAL_MINUTES) * 60_000L;
+    }
+
+    // How many full intervals have elapsed since the last capture; 1 the moment
+    // a capture becomes due, so it exceeds MAX_SKIPS only after that many held.
+    private long intervalsOverdue() {
+        return (System.currentTimeMillis() - lastCaptureOrStart()) / intervalMs();
     }
 
     private long lastCaptureOrStart() {
@@ -109,17 +125,24 @@ public final class TimelapseService {
         activitySinceCapture = false;
         Thread worker = new Thread(() -> {
             try {
+                progress.phase("saving");
+                boolean[] playersOnline = {false};
                 runOnServer(srv, () -> {
+                    playersOnline[0] = srv.getPlayerList().getPlayerCount() > 0;
                     srv.saveEverything(true, true, true);
                     for (ServerLevel l : srv.getAllLevels()) l.noSave = true;
                 });
+                long budget = HeapBudget.forRender(SmpConfig.TIMELAPSE_MAX_RENDER_MB, playersOnline[0]);
                 try {
-                    BufferedImage frame = renderer.render(srv, dimensionFromConfig());
-                    if (frame == null) {
+                    WorldMapRenderer.RenderResult result = renderer.render(srv, dimensionFromConfig(), budget, progress);
+                    if (result == null) {
                         SmpUtilsMod.LOGGER.info("[Timelapse] Skipped capture: dimension has no generated chunks.");
                     } else {
-                        store().add(frame, System.currentTimeMillis());
-                        SmpUtilsMod.LOGGER.info("[Timelapse] Captured frame ({}x{}).", frame.getWidth(), frame.getHeight());
+                        BufferedImage frame = result.image();
+                        progress.phase("writing");
+                        store().add(frame, System.currentTimeMillis(), result.blocksPerPixel());
+                        SmpUtilsMod.LOGGER.info("[Timelapse] Captured frame ({}x{}, {} block(s)/pixel).",
+                                frame.getWidth(), frame.getHeight(), result.blocksPerPixel());
                     }
                 } finally {
                     runOnServer(srv, () -> {
@@ -129,6 +152,7 @@ public final class TimelapseService {
             } catch (Exception e) {
                 SmpUtilsMod.LOGGER.error("[Timelapse] Capture failed: {}", e.getMessage(), e);
             } finally {
+                progress.idle();
                 inProgress.set(false);
             }
         }, "Timelapse-Capture");

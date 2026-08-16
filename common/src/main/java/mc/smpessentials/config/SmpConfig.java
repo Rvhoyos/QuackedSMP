@@ -123,7 +123,8 @@ public final class SmpConfig {
     public static int     TIMELAPSE_INTERVAL_MINUTES;
     public static String  TIMELAPSE_DIR;
     public static String  TIMELAPSE_DIMENSION;
-    public static int     TIMELAPSE_MAX_DIMENSION;
+    public static int     TIMELAPSE_MAX_RENDER_MB;
+    public static int     TIMELAPSE_MAX_SKIPS;
     public static int     TIMELAPSE_MAX_FRAMES;
 
     // ---- Web Panel link (gated on public download) ----
@@ -307,7 +308,8 @@ public final class SmpConfig {
         TIMELAPSE_INTERVAL_MINUTES = d.timelapseIntervalMinutes;
         TIMELAPSE_DIR              = d.timelapseDir;
         TIMELAPSE_DIMENSION        = d.timelapseDimension;
-        TIMELAPSE_MAX_DIMENSION    = d.timelapseMaxDimension;
+        TIMELAPSE_MAX_RENDER_MB    = d.timelapseMaxRenderMb;
+        TIMELAPSE_MAX_SKIPS        = d.timelapseMaxSkips;
         TIMELAPSE_MAX_FRAMES       = d.timelapseMaxFrames;
         PANEL_URL                    = d.panelUrl;
         PANEL_MESSAGE                = d.panelMessage;

@@ -191,10 +191,15 @@ public final class ConfigData {
     public int     timelapseIntervalMinutes = 60;
     public String  timelapseDir             = "timelapse";
     public String  timelapseDimension       = "minecraft:overworld";
-    // Longer image side, in pixels. Worlds larger than this downsample (more
-    // blocks per pixel). Peak render memory is roughly maxDimension^2 * 12 bytes,
-    // allocated fresh each capture, so a high value spikes RAM every interval.
-    public int     timelapseMaxDimension    = 6000;
+    // Heap cap in MB for one render. 0 = auto: render 1 block = 1 pixel and fit
+    // to the heap free at capture time, downsampling only if a capture would not
+    // fit. A positive value caps forced (players-online) captures, trading map
+    // resolution for RAM on a server that never idles; it has no effect on idle
+    // captures. Idle captures always render at full resolution.
+    public int     timelapseMaxRenderMb     = 0;
+    // Consecutive overdue intervals to wait for an idle server before forcing a
+    // capture while players are online. 0 = capture every interval regardless.
+    public int     timelapseMaxSkips        = 3;
     // 0 = keep every frame. Above 0, once stored frames exceed this the oldest
     // are downsampled (every Nth dropped) so the timelapse degrades in smoothness
     // rather than losing its beginning.

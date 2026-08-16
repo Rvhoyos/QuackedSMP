@@ -35,15 +35,15 @@ public final class TimelapseHandler {
         sb.append(SmpConfig.TIMELAPSE_ENABLED);
         sb.append(",\"running\":").append(TimelapseService.get().isRunning());
         sb.append(",\"intervalMinutes\":").append(SmpConfig.TIMELAPSE_INTERVAL_MINUTES);
-        sb.append(",\"maxDimension\":").append(SmpConfig.TIMELAPSE_MAX_DIMENSION);
         sb.append(",\"serverMaxHeap\":").append(Runtime.getRuntime().maxMemory());
+        sb.append(",\"progress\":").append(TimelapseService.get().progressJson());
         sb.append(",\"frames\":[");
         for (int i = 0; i < frames.size(); i++) {
             TimelapseFrameStore.Frame f = frames.get(i);
             if (i > 0) sb.append(',');
             sb.append(String.format(Locale.US,
-                    "{\"name\":\"%s\",\"capturedAt\":%d,\"sizeBytes\":%d}",
-                    jsonEscape(f.name()), f.capturedAt(), f.sizeBytes()));
+                    "{\"name\":\"%s\",\"capturedAt\":%d,\"sizeBytes\":%d,\"blocksPerPixel\":%d}",
+                    jsonEscape(f.name()), f.capturedAt(), f.sizeBytes(), f.blocksPerPixel()));
         }
         sb.append("]}");
         return sb.toString();

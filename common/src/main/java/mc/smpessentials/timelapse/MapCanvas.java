@@ -4,15 +4,22 @@ import java.awt.image.BufferedImage;
 
 /**
  * A top-down pixel buffer for one map render. Owns the world-block to pixel
- * mapping (including any downsampling) and accumulates the plotted columns; the
- * lighting and rasterization are delegated to {@link ReliefShader}.
+ * mapping and accumulates the plotted columns; the lighting and rasterization
+ * are delegated to {@link ReliefShader}.
  *
- * When several blocks fall in the same pixel cell (downsampling), their
- * colours are averaged so zoomed-out maps stay smooth, while the cell keeps the
- * tallest column's height so terrain relief survives. Plot surface columns into
- * it, then call {@link #toImage()}.
+ * Renders 1 block = 1 pixel whenever the image fits the render's heap budget.
+ * Only when it would not fit does it downsample by the minimum factor needed:
+ * blocks that then share a pixel have their colours averaged so the map stays
+ * smooth, while the cell keeps the tallest column's height so terrain relief
+ * survives. Plot surface columns into it, then call {@link #toImage()}.
  */
 final class MapCanvas {
+
+    // Peak heap per output pixel while rendering: rgb int(4) + heights int(4) +
+    // count short(2) held here, plus the ARGB image(4) that ReliefShader
+    // allocates in toImage() while this canvas is still live. Single source of
+    // this constant; the dashboard panel mirrors it for its RAM estimate.
+    static final int BYTES_PER_PIXEL = 14;
 
     private static final int COUNT_MAX = Short.MAX_VALUE;
 
@@ -41,14 +48,16 @@ final class MapCanvas {
     }
 
     /**
-     * Builds a canvas covering {@code bounds}, downsampled so its longer side
-     * does not exceed {@code maxImageDim} pixels.
+     * Builds a canvas covering {@code bounds} at 1 block = 1 pixel, stepping up
+     * blocks-per-pixel only as far as needed to keep the image within
+     * {@code budgetBytes} of heap. A world that fits renders 1:1.
      */
-    static MapCanvas covering(ChunkBounds bounds, int maxImageDim) {
-        int wBlocks = bounds.widthBlocks();
-        int hBlocks = bounds.heightBlocks();
-        int bpp = Math.max(1, (Math.max(wBlocks, hBlocks) + maxImageDim - 1) / maxImageDim);
-        return new MapCanvas(Math.max(1, wBlocks / bpp), Math.max(1, hBlocks / bpp),
+    static MapCanvas covering(ChunkBounds bounds, long budgetBytes) {
+        long wBlocks = bounds.widthBlocks();
+        long hBlocks = bounds.heightBlocks();
+        int bpp = 1;
+        while ((wBlocks / bpp) * (hBlocks / bpp) * BYTES_PER_PIXEL > budgetBytes) bpp++;
+        return new MapCanvas((int) Math.max(1, wBlocks / bpp), (int) Math.max(1, hBlocks / bpp),
                 bounds.minBlockX(), bounds.minBlockZ(), bpp);
     }
 
@@ -76,6 +85,9 @@ final class MapCanvas {
         if (surfaceY > heights[idx]) heights[idx] = surfaceY;
         if (n < COUNT_MAX) count[idx] = (short) (n + 1);
     }
+
+    /** Blocks each pixel covers: 1 is full 1:1, higher means this render downsampled. */
+    int blocksPerPixel() { return blocksPerPixel; }
 
     /** Rasterizes to an ARGB image with hillshaded relief; unplotted pixels stay transparent. */
     BufferedImage toImage() {
