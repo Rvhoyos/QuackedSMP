@@ -7,6 +7,7 @@ import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.EmptyBlockGetter;
 import net.minecraft.world.level.LevelHeightAccessor;
 import net.minecraft.world.level.biome.Biome;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.LevelChunkSection;
 import net.minecraft.world.level.chunk.PalettedContainerFactory;
@@ -32,10 +33,15 @@ final class ChunkColumnSampler {
 
     private final PalettedContainerFactory factory;
     private final LevelHeightAccessor heightAccessor;
+    // Roofed dimensions (the Nether) are solid bedrock at the top, so a plain
+    // top-down scan renders the ceiling. When set, the scan first descends past
+    // the roof into open air before it starts looking for the surface.
+    private final boolean hasCeiling;
 
-    ChunkColumnSampler(RegistryAccess registryAccess, LevelHeightAccessor heightAccessor) {
+    ChunkColumnSampler(RegistryAccess registryAccess, LevelHeightAccessor heightAccessor, boolean hasCeiling) {
         this.factory = PalettedContainerFactory.create(registryAccess);
         this.heightAccessor = heightAccessor;
+        this.hasCeiling = hasCeiling;
     }
 
     /**
@@ -60,11 +66,23 @@ final class ChunkColumnSampler {
 
     // Walks one column top-down: first non-air block is the surface; if that
     // block is water, keeps counting water down to the floor for depth shading.
+    // On roofed dimensions the scan first passes the ceiling: skip the leading
+    // air above the roof (roofState 0), skip the solid roof (roofState 1), and
+    // only start the surface search once open air below the roof is reached
+    // (roofState 2), landing on the cavern floor rather than the bedrock roof.
+    // A column of terrain fused floor-to-ceiling never opens into a cavern; for
+    // it the first non-bedrock block below the roof is kept as a fallback, so it
+    // renders as that terrain instead of a transparent hole. The cavern floor is
+    // always preferred; the fallback is used only when no floor is found.
     private Column sampleColumn(List<SerializableChunkData.SectionData> sections, ChunkPos pos, int lx, int lz) {
         BlockState surface = null;
         int surfaceY = 0;
         Biome biome = null;
         int waterDepth = 0;
+        BlockState roofFloor = null;   // fallback: first terrain block below the roof
+        int roofFloorY = 0;
+        Biome roofFloorBiome = null;
+        int roofState = hasCeiling ? 0 : 2;
 
         for (SerializableChunkData.SectionData sd : sections) {
             LevelChunkSection section = sd.chunkSection();
@@ -72,11 +90,25 @@ final class ChunkColumnSampler {
             // dimension height (SerializableChunkData.parse). Treat as air.
             if (section == null || section.hasOnlyAir()) {
                 if (surface != null) break;   // air below the surface = floor reached
+                if (roofState == 1) roofState = 2;  // open air below the roof
                 continue;                      // still above the surface
             }
             int baseY = sd.y() * 16;
             for (int ly = 15; ly >= 0; ly--) {
                 BlockState state = section.getBlockState(lx, ly, lz);
+                if (roofState == 0) {          // above the roof, skip air until the roof
+                    if (!state.isAir()) roofState = 1;
+                    continue;
+                }
+                if (roofState == 1) {          // inside the roof, skip solid until air
+                    if (state.isAir()) { roofState = 2; continue; }
+                    if (roofFloor == null && !state.is(Blocks.BEDROCK)) {
+                        roofFloor = state;
+                        roofFloorY = baseY + ly;
+                        roofFloorBiome = section.getNoiseBiome(lx >> 2, ly >> 2, lz >> 2).value();
+                    }
+                    continue;
+                }
                 if (surface == null) {
                     if (state.isAir()) continue;
                     surface = state;
@@ -91,7 +123,9 @@ final class ChunkColumnSampler {
                 }
             }
         }
-        return surface == null ? null : toColumn(surface, biome, pos, lx, lz, surfaceY, waterDepth);
+        if (surface != null) return toColumn(surface, biome, pos, lx, lz, surfaceY, waterDepth);
+        if (roofFloor != null) return toColumn(roofFloor, roofFloorBiome, pos, lx, lz, roofFloorY, 0);
+        return null;
     }
 
     private Column toColumn(BlockState state, Biome biome, ChunkPos pos, int lx, int lz,

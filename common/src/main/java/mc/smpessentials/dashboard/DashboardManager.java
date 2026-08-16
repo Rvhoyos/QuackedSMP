@@ -306,7 +306,7 @@ public final class DashboardManager {
 
         // World-map timelapse frames
         s.addRoute("/api/admin/timelapse",
-                TimelapseHandler::handleList);
+                (m, h, b) -> TimelapseHandler.handleList(m, h, b, mcServer));
         s.addRoute("/api/admin/timelapse/capture",
                 (m, h, b) -> TimelapseHandler.handleCapture(m, h, b, mcServer));
         s.addRoute("/api/admin/timelapse/delete",

@@ -200,7 +200,7 @@ public final class AdminHandler {
         // Timelapse
         sb.append(String.format("\"timelapse_enabled\":%b,", SmpConfig.TIMELAPSE_ENABLED));
         sb.append(String.format("\"timelapse_interval_minutes\":%d,", SmpConfig.TIMELAPSE_INTERVAL_MINUTES));
-        sb.append(String.format("\"timelapse_dimension\":\"%s\",", jsonEscape(SmpConfig.TIMELAPSE_DIMENSION)));
+        sb.append("\"timelapse_dimensions\":").append(jsonStrArr(SmpConfig.TIMELAPSE_DIMENSIONS)).append(",");
         sb.append(String.format("\"timelapse_max_render_mb\":%d,", SmpConfig.TIMELAPSE_MAX_RENDER_MB));
         sb.append(String.format("\"timelapse_max_skips\":%d,", SmpConfig.TIMELAPSE_MAX_SKIPS));
         sb.append(String.format("\"timelapse_max_frames\":%d,", SmpConfig.TIMELAPSE_MAX_FRAMES));
@@ -349,7 +349,7 @@ public final class AdminHandler {
             // Timelapse
             if (patch.has("timelapse_enabled"))          { SmpConfig.TIMELAPSE_ENABLED          = patch.get("timelapse_enabled").getAsBoolean();                    changed++; }
             if (patch.has("timelapse_interval_minutes")) { SmpConfig.TIMELAPSE_INTERVAL_MINUTES = Math.max(1, patch.get("timelapse_interval_minutes").getAsInt());   changed++; }
-            if (patch.has("timelapse_dimension"))        { SmpConfig.TIMELAPSE_DIMENSION        = patch.get("timelapse_dimension").getAsString();                   changed++; }
+            if (patch.has("timelapse_dimensions") && patch.get("timelapse_dimensions").isJsonArray()) { loadStrArr(patch.getAsJsonArray("timelapse_dimensions"), SmpConfig.TIMELAPSE_DIMENSIONS); changed++; }
             if (patch.has("timelapse_max_render_mb"))    { SmpConfig.TIMELAPSE_MAX_RENDER_MB    = Math.max(0, patch.get("timelapse_max_render_mb").getAsInt());        changed++; }
             if (patch.has("timelapse_max_skips"))        { SmpConfig.TIMELAPSE_MAX_SKIPS        = Math.max(0, patch.get("timelapse_max_skips").getAsInt());            changed++; }
             if (patch.has("timelapse_max_frames"))       { SmpConfig.TIMELAPSE_MAX_FRAMES       = Math.max(0, patch.get("timelapse_max_frames").getAsInt());         changed++; }

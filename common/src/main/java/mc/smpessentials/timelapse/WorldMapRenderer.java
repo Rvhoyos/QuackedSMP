@@ -57,7 +57,8 @@ public final class WorldMapRenderer {
     private void paint(MinecraftServer server, ServerLevel level, ResourceKey<Level> dimension,
                        Path regionDir, ChunkBounds bounds, MapCanvas canvas, CaptureProgress progress) throws Exception {
         String levelName = server.getWorldPath(LevelResource.ROOT).getFileName().toString();
-        ChunkColumnSampler sampler = new ChunkColumnSampler(server.registryAccess(), level);
+        ChunkColumnSampler sampler = new ChunkColumnSampler(
+                server.registryAccess(), level, level.dimensionType().hasCeiling());
 
         try (RegionChunkReader reader = RegionChunkReader.open(dimension, regionDir, levelName)) {
             for (int cx = bounds.minChunkX(); cx <= bounds.maxChunkX(); cx++) {

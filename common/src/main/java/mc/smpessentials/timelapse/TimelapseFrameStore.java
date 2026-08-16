@@ -38,8 +38,23 @@ public final class TimelapseFrameStore {
         this.dir = dir;
     }
 
-    public static TimelapseFrameStore fromConfig() {
-        return new TimelapseFrameStore(Path.of(SmpConfig.TIMELAPSE_DIR).toAbsolutePath().normalize());
+    /** Root timelapse directory holding one subfolder per captured dimension. */
+    public static Path rootDir() {
+        return Path.of(SmpConfig.TIMELAPSE_DIR).toAbsolutePath().normalize();
+    }
+
+    /** Store for one dimension's frames, under its own subfolder of {@link #rootDir()}. */
+    public static TimelapseFrameStore forDimension(String dimId) {
+        return new TimelapseFrameStore(rootDir().resolve(folderName(dimId)));
+    }
+
+    /**
+     * Folder name for a dimension id: {@code namespace:path} becomes
+     * {@code namespace_path}. Any remaining separator or unusual character is
+     * replaced with {@code _}, so the id can never escape {@link #rootDir()}.
+     */
+    static String folderName(String dimId) {
+        return dimId.replace(':', '_').replaceAll("[^a-zA-Z0-9_.-]", "_");
     }
 
     public Path dir() { return dir; }

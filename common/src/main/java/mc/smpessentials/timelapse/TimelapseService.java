@@ -2,6 +2,7 @@ package mc.smpessentials.timelapse;
 
 import mc.smpessentials.SmpUtilsMod;
 import mc.smpessentials.config.SmpConfig;
+import mc.smpessentials.dims.DimManager;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
@@ -10,7 +11,10 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
 
 import java.awt.image.BufferedImage;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -20,10 +24,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * Owns the periodic capture of world-map timelapse frames. Ticks on a daemon
  * thread; when a capture is due it flushes the world and pauses autosave (so
- * region files on disk are current and stable), renders the configured dimension
- * from disk via {@link WorldMapRenderer}, and stores a PNG frame. Full frames
- * are rendered each interval and stored independently, so playback assembly is
- * pure client-side frame flipping.
+ * region files on disk are current and stable), then renders each configured
+ * dimension in sequence from disk via {@link WorldMapRenderer}, storing a PNG
+ * frame per dimension in its own parallel folder. Full frames are rendered each
+ * interval and stored independently, so playback assembly is pure client-side
+ * frame flipping.
  */
 public final class TimelapseService {
 
@@ -52,8 +57,6 @@ public final class TimelapseService {
 
     /** Compact JSON of the current capture's progress, for the dashboard poll. */
     public String progressJson() { return progress.toJson(); }
-
-    public TimelapseFrameStore store() { return TimelapseFrameStore.fromConfig(); }
 
     // ── Lifecycle ────────────────────────────────────────────────────────────
 
@@ -112,9 +115,15 @@ public final class TimelapseService {
         return (System.currentTimeMillis() - lastCaptureOrStart()) / intervalMs();
     }
 
+    // Newest frame across all opted-in dimensions, so scheduling is driven by the
+    // most recent capture of any dimension. startedAt until the first frame exists.
     private long lastCaptureOrStart() {
-        List<TimelapseFrameStore.Frame> all = store().list();
-        return all.isEmpty() ? startedAt : all.get(0).capturedAt();
+        long latest = 0;
+        for (String dimId : SmpConfig.TIMELAPSE_DIMENSIONS) {
+            List<TimelapseFrameStore.Frame> frames = TimelapseFrameStore.forDimension(dimId).list();
+            if (!frames.isEmpty()) latest = Math.max(latest, frames.get(0).capturedAt());
+        }
+        return latest == 0 ? startedAt : latest;
     }
 
     // ── Capture ──────────────────────────────────────────────────────────────
@@ -132,17 +141,27 @@ public final class TimelapseService {
                     srv.saveEverything(true, true, true);
                     for (ServerLevel l : srv.getAllLevels()) l.noSave = true;
                 });
-                long budget = HeapBudget.forRender(SmpConfig.TIMELAPSE_MAX_RENDER_MB, playersOnline[0]);
+                List<ResourceKey<Level>> dims = dimensionsFromConfig(srv);
                 try {
-                    WorldMapRenderer.RenderResult result = renderer.render(srv, dimensionFromConfig(), budget, progress);
-                    if (result == null) {
-                        SmpUtilsMod.LOGGER.info("[Timelapse] Skipped capture: dimension has no generated chunks.");
-                    } else {
+                    int index = 0;
+                    for (ResourceKey<Level> dim : dims) {
+                        index++;
+                        String dimId = dim.identifier().toString();
+                        progress.beginDim(dimId, index, dims.size());
+                        // Recomputed per dimension: heap frees between renders as the
+                        // prior frame is released, so each gets its own fresh budget.
+                        long budget = HeapBudget.forRender(SmpConfig.TIMELAPSE_MAX_RENDER_MB, playersOnline[0]);
+                        WorldMapRenderer.RenderResult result = renderer.render(srv, dim, budget, progress);
+                        if (result == null) {
+                            SmpUtilsMod.LOGGER.info("[Timelapse] Skipped {}: no generated chunks.", dimId);
+                            continue;
+                        }
                         BufferedImage frame = result.image();
                         progress.phase("writing");
-                        store().add(frame, System.currentTimeMillis(), result.blocksPerPixel());
-                        SmpUtilsMod.LOGGER.info("[Timelapse] Captured frame ({}x{}, {} block(s)/pixel).",
-                                frame.getWidth(), frame.getHeight(), result.blocksPerPixel());
+                        TimelapseFrameStore.forDimension(dimId)
+                                .add(frame, System.currentTimeMillis(), result.blocksPerPixel());
+                        SmpUtilsMod.LOGGER.info("[Timelapse] Captured {} ({}x{}, {} block(s)/pixel).",
+                                dimId, frame.getWidth(), frame.getHeight(), result.blocksPerPixel());
                     }
                 } finally {
                     runOnServer(srv, () -> {
@@ -160,8 +179,24 @@ public final class TimelapseService {
         worker.start();
     }
 
-    private static ResourceKey<Level> dimensionFromConfig() {
-        return ResourceKey.create(Registries.DIMENSION, Identifier.parse(SmpConfig.TIMELAPSE_DIMENSION));
+    // Opted-in dimensions that actually exist on the running server, in config
+    // order. Unknown or malformed ids are logged and skipped rather than aborting
+    // the whole batch.
+    private static List<ResourceKey<Level>> dimensionsFromConfig(MinecraftServer srv) {
+        Set<ResourceKey<Level>> present = new HashSet<>(DimManager.listAll(srv));
+        List<ResourceKey<Level>> dims = new ArrayList<>();
+        for (String id : SmpConfig.TIMELAPSE_DIMENSIONS) {
+            ResourceKey<Level> key;
+            try {
+                key = ResourceKey.create(Registries.DIMENSION, Identifier.parse(id));
+            } catch (Exception e) {
+                SmpUtilsMod.LOGGER.warn("[Timelapse] Invalid dimension id '{}'; skipping.", id);
+                continue;
+            }
+            if (present.contains(key)) dims.add(key);
+            else SmpUtilsMod.LOGGER.warn("[Timelapse] Dimension {} not present on server; skipping.", id);
+        }
+        return dims;
     }
 
     private static void runOnServer(MinecraftServer server, Runnable task) throws Exception {

@@ -190,7 +190,10 @@ public final class ConfigData {
     public boolean timelapseEnabled         = false;
     public int     timelapseIntervalMinutes = 60;
     public String  timelapseDir             = "timelapse";
-    public String  timelapseDimension       = "minecraft:overworld";
+    // Dimensions to snapshot. Each capture (periodic or manual) renders every
+    // listed dimension sequentially into its own parallel folder under
+    // timelapseDir. Ids not present on the running server are skipped.
+    public List<String> timelapseDimensions = new ArrayList<>(List.of("minecraft:overworld"));
     // Heap cap in MB for one render. 0 = auto: render 1 block = 1 pixel and fit
     // to the heap free at capture time, downsampling only if a capture would not
     // fit. A positive value caps forced (players-online) captures, trading map
