@@ -1,12 +1,55 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, createContext, useContext } from 'react'
 import {
   IconGrassBlock, IconEnderPearl, IconBookQuill,
-  IconBallot, IconDiscord, IconMapScroll, IconShield,
+  IconBallot, IconDiscord, IconMapScroll,
   IconPlayerHead, IconChest, IconSign, IconClock,
   IconVoiceChat, IconCrown, IconLoot, IconTierStar,
   IconHelmetGhost, IconChestplateGhost, IconLeggingsGhost, IconBootsGhost,
+  IconGavel, IconHardcoreHeart, IconTNT, IconAnvil, IconDyes, IconScoreboard,
 } from './MinecraftIcons'
 import styles from './ConfigEditor.module.css'
+
+// Which settings section is open. Group/Section self-hide unless they match, so
+// the right pane shows only the selected section (two-pane settings navigator).
+const ActiveSectionCtx = createContext(null)
+
+// Left-nav model: sections grouped by save-scope (the 4 config TABS). `id` must
+// match the id passed to the matching <Group> / <Section>.
+const SECTIONS = [
+  { group: 'general', items: [
+    { id: 'gen-claims',   label: 'Claims & Protection', Icon: IconGrassBlock },
+    { id: 'gen-teleport', label: 'Teleport',            Icon: IconEnderPearl },
+    { id: 'gen-chatmod',  label: 'Chat Moderation',     Icon: IconGavel },
+    { id: 'gen-hardcore', label: 'Hardcore',            Icon: IconHardcoreHeart },
+    { id: 'gen-admin',    label: 'Admin Panel',         Icon: IconChest },
+    { id: 'gen-danger',   label: 'Danger Zone',         Icon: IconTNT },
+  ]},
+  { group: 'vip', items: [
+    { id: 'vip-tiers',    label: 'Tiers',        Icon: IconCrown },
+    { id: 'vip-kitset',   label: 'Kit Settings', Icon: IconAnvil },
+    { id: 'vip-kits',     label: 'Kit Definitions', Icon: IconLoot },
+  ]},
+  { group: 'chat', items: [
+    { id: 'chat-colors',   label: 'Color Reference', Icon: IconDyes },
+    { id: 'chat-announce', label: 'Announcements',   Icon: IconSign },
+    { id: 'chat-tips',     label: 'Periodic Tips',   Icon: IconClock },
+    { id: 'chat-rules',    label: 'Server Rules',    Icon: IconBookQuill },
+    { id: 'chat-sidebar',  label: 'Welcome Sidebar', Icon: IconScoreboard },
+  ]},
+  { group: 'integrations', items: [
+    { id: 'int-discord',  label: 'Discord',  Icon: IconDiscord },
+    { id: 'int-voice',    label: 'Voice Chat', Icon: IconVoiceChat },
+    { id: 'int-votifier', label: 'Votifier', Icon: IconBallot },
+    { id: 'int-bluemap',  label: 'BlueMap',  Icon: IconMapScroll },
+  ]},
+]
+const GROUP_LABELS = { general: 'General', vip: 'VIP', chat: 'Chat', integrations: 'Integrations' }
+const SECTION_TO_GROUP = Object.fromEntries(SECTIONS.flatMap(g => g.items.map(it => [it.id, g.group])))
+
+// Renders children only when its id is the active section.
+function Section({ id, children }) {
+  return useContext(ActiveSectionCtx) === id ? children : null
+}
 
 // ── Auth ──────────────────────────────────────────────────────────────────────
 
@@ -41,7 +84,8 @@ const TABS = [
   },
   {
     id: 'chat', label: 'Chat',
-    keys: ['welcome_message', 'message_interval', 'periodic_messages', 'rules'],
+    keys: ['welcome_message', 'message_interval', 'periodic_messages', 'rules',
+      'welcome_sidebar_enabled', 'welcome_sidebar_title', 'welcome_sidebar_lines', 'welcome_sidebar_show_seconds'],
   },
   {
     id: 'integrations', label: 'Integrations',
@@ -58,9 +102,10 @@ const TABS = [
 // ── Main component ────────────────────────────────────────────────────────────
 
 export default function ConfigEditor({ token, onExpired }) {
-  const [cfg,         setCfg]        = useState(null)
-  const [draft,       setDraft]      = useState({})
-  const [tab,         setTab]        = useState('general')
+  const [cfg,           setCfg]           = useState(null)
+  const [draft,         setDraft]         = useState({})
+  const [activeSection, setActiveSection] = useState('gen-claims')
+  const tab = SECTION_TO_GROUP[activeSection]
   const [saving,      setSaving]     = useState({})
   const [msgs,        setMsgs]       = useState({})
   const [loadErr,     setLoadErr]    = useState('')
@@ -154,25 +199,48 @@ export default function ConfigEditor({ token, onExpired }) {
 
   return (
     <div className={styles.wrap}>
-      <div className={styles.tabBar}>
-        {TABS.map(t => (
-          <button
-            key={t.id}
-            className={`${styles.tabBtn} ${tab === t.id ? styles.tabActive : ''}`}
-            onClick={() => setTab(t.id)}
-            type="button"
-          >
-            {t.label}
-            {isTabDirty(t.id) && <span className={styles.tabDot} />}
-          </button>
-        ))}
-      </div>
+      <div className={styles.body2col}>
+        <nav className={styles.nav}>
+          <select className={styles.navSelect} value={activeSection} onChange={e => setActiveSection(e.target.value)}>
+            {SECTIONS.map(g => (
+              <optgroup key={g.group} label={GROUP_LABELS[g.group]}>
+                {g.items.map(it => <option key={it.id} value={it.id}>{it.label}</option>)}
+              </optgroup>
+            ))}
+          </select>
+          <div className={styles.navScroll}>
+            {SECTIONS.map(g => (
+              <div key={g.group} className={styles.navGroup} data-group={g.group}>
+                <div className={styles.navGroupLabel}>
+                  {GROUP_LABELS[g.group]}
+                  {isTabDirty(g.group) && <span className={styles.navDot} />}
+                </div>
+                {g.items.map(it => (
+                  <button
+                    key={it.id}
+                    type="button"
+                    className={`${styles.navItem} ${activeSection === it.id ? styles.navItemActive : ''}`}
+                    onClick={() => setActiveSection(it.id)}
+                  >
+                    <span className={styles.navIcon}><it.Icon size={14} /></span>
+                    {it.label}
+                  </button>
+                ))}
+              </div>
+            ))}
+          </div>
+        </nav>
 
-      <div className={styles.scroll}>
-        {tab === 'general'      && <GeneralTab      draft={draft} patch={patch} onDisable={disableDashboard} disabling={disabling} disableMsg={disableMsg} />}
-        {tab === 'vip'          && <VipTab           draft={draft} patch={patch} />}
-        {tab === 'chat'         && <ChatTab          draft={draft} patch={patch} />}
-        {tab === 'integrations' && <IntegrationsTab  draft={draft} patch={patch} />}
+        <div className={styles.content}>
+          <div className={styles.contentBody}>
+            <ActiveSectionCtx.Provider value={activeSection}>
+              {tab === 'general'      && <GeneralTab      draft={draft} patch={patch} onDisable={disableDashboard} disabling={disabling} disableMsg={disableMsg} />}
+              {tab === 'vip'          && <VipTab           draft={draft} patch={patch} />}
+              {tab === 'chat'         && <ChatTab          draft={draft} patch={patch} />}
+              {tab === 'integrations' && <IntegrationsTab  draft={draft} patch={patch} />}
+            </ActiveSectionCtx.Provider>
+          </div>
+        </div>
       </div>
 
       <div className={styles.footer}>
@@ -181,7 +249,7 @@ export default function ConfigEditor({ token, onExpired }) {
             {tabMsg}
           </span>
         )}
-        {tabDirty && <span className={styles.dirty}>Unsaved changes</span>}
+        {tabDirty && <span className={styles.dirty}>Unsaved changes in {GROUP_LABELS[tab]}</span>}
         <button className={styles.saveBtn} onClick={() => saveTab(tab)} disabled={tabSave || !tabDirty}>
           {tabSave ? 'Saving…' : 'Save & Reload'}
         </button>
@@ -195,7 +263,7 @@ export default function ConfigEditor({ token, onExpired }) {
 function GeneralTab({ draft, patch, onDisable, disabling, disableMsg }) {
   return (
     <>
-      <Group icon={<IconGrassBlock />} title="Claims & Land Protection" accent="green">
+      <Group id="gen-claims" icon={<IconGrassBlock />} title="Claims & Land Protection" accent="green">
         <Row label="Max Claims" hint="Per player base limit">
           <NumInput value={draft.max_claims} onChange={v => patch('max_claims', v)} />
         </Row>
@@ -222,19 +290,19 @@ function GeneralTab({ draft, patch, onDisable, disabling, disableMsg }) {
         </Row>
       </Group>
 
-      <Group icon={<IconEnderPearl />} title="Teleport" accent="teal">
+      <Group id="gen-teleport" icon={<IconEnderPearl />} title="Teleport" accent="teal">
         <Row label="Warmup Duration" hint="Seconds before teleport fires. Moving cancels it.">
           <NumInput value={draft.tp_warmup} onChange={v => patch('tp_warmup', v)} suffix="s" />
         </Row>
       </Group>
 
-      <Group icon={<IconShield />} title="Chat Moderation" accent="red">
+      <Group id="gen-chatmod" icon={<IconGavel />} title="Chat Moderation" accent="red">
         <StackedRow label="Mute Escalation Levels" hint="Duration in minutes for each repeated offence">
           <MuteLevels value={draft.mute_levels_minutes} onChange={v => patch('mute_levels_minutes', v)} />
         </StackedRow>
       </Group>
 
-      <Group icon={<IconShield />} title="Hardcore Mode" accent="red">
+      <Group id="gen-hardcore" icon={<IconHardcoreHeart />} title="Hardcore Mode" accent="red">
         <Row label="Enabled" hint="Allow players to create and join hardcore sessions">
           <Toggle value={draft.hardcore_enabled} onChange={v => patch('hardcore_enabled', v)} />
         </Row>
@@ -258,7 +326,7 @@ function GeneralTab({ draft, patch, onDisable, disabling, disableMsg }) {
         </Row>
       </Group>
 
-      <Group icon={<IconChest />} title="Admin Panel" accent="red">
+      <Group id="gen-admin" icon={<IconChest />} title="Admin Panel" accent="red">
         <Row label="Server Name" hint="Shown in the dashboard header. Leave blank to hide.">
           <TextInput value={draft.server_name} onChange={v => patch('server_name', v)} placeholder="My SMP" />
         </Row>
@@ -271,7 +339,7 @@ function GeneralTab({ draft, patch, onDisable, disabling, disableMsg }) {
         <div className={styles.note}>Password changes: <code>/smp admin setpassword</code> in-game</div>
       </Group>
 
-      <DangerZone onDisable={onDisable} disabling={disabling} disableMsg={disableMsg} />
+      <Section id="gen-danger"><DangerZone onDisable={onDisable} disabling={disabling} disableMsg={disableMsg} /></Section>
     </>
   )
 }
@@ -412,8 +480,8 @@ function ColorLegend() {
 function ChatTab({ draft, patch }) {
   return (
     <>
-      <ColorLegend />
-      <Group icon={<IconSign />} title="Announcements" accent="yellow">
+      <Section id="chat-colors"><ColorLegend /></Section>
+      <Group id="chat-announce" icon={<IconSign />} title="Announcements" accent="yellow">
         <StackedRow label="Welcome Message" hint="{player} = joining player's name, {server} = server name from General tab">
           <TextInput value={draft.welcome_message} onChange={v => patch('welcome_message', v)} />
         </StackedRow>
@@ -422,7 +490,7 @@ function ChatTab({ draft, patch }) {
         </Row>
       </Group>
 
-      <Group icon={<IconClock />} title="Periodic Tips" accent="yellow">
+      <Group id="chat-tips" icon={<IconClock />} title="Periodic Tips" accent="yellow">
         <StackedRow label="Tip Messages" hint="Broadcast in rotation. Supports & color codes.">
           <ListEditor
             value={draft.periodic_messages}
@@ -432,7 +500,7 @@ function ChatTab({ draft, patch }) {
         </StackedRow>
       </Group>
 
-      <Group icon={<IconBookQuill />} title="Server Rules" accent="peach">
+      <Group id="chat-rules" icon={<IconBookQuill />} title="Server Rules" accent="peach">
         <StackedRow label="Rules" hint="Shown with /rules. Supports & color codes.">
           <ListEditor
             value={draft.rules}
@@ -440,6 +508,25 @@ function ChatTab({ draft, patch }) {
             placeholder="&e1. Your rule here…"
           />
         </StackedRow>
+      </Group>
+
+      <Group id="chat-sidebar" icon={<IconScoreboard />} title="Welcome Sidebar" accent="green">
+        <Row label="Enabled" hint="Second MOTD shown on join (unless in a hardcore session) and when returning to survival from one">
+          <Toggle value={draft.welcome_sidebar_enabled} onChange={v => patch('welcome_sidebar_enabled', v)} />
+        </Row>
+        <StackedRow label="Title" hint="Sidebar heading. Supports & color codes and {player}/{server}.">
+          <TextInput value={draft.welcome_sidebar_title} onChange={v => patch('welcome_sidebar_title', v)} />
+        </StackedRow>
+        <StackedRow label="Lines" hint="Top line first. Supports & color codes and {player}/{server}.">
+          <ListEditor
+            value={draft.welcome_sidebar_lines}
+            onChange={v => patch('welcome_sidebar_lines', v)}
+            placeholder="&eNew here? &f/rules"
+          />
+        </StackedRow>
+        <Row label="Show Duration" hint="How long the sidebar stays on screen">
+          <NumInput value={draft.welcome_sidebar_show_seconds} onChange={v => patch('welcome_sidebar_show_seconds', v)} suffix="s" />
+        </Row>
       </Group>
     </>
   )
@@ -450,7 +537,7 @@ function ChatTab({ draft, patch }) {
 function IntegrationsTab({ draft, patch }) {
   return (
     <>
-      <Group icon={<IconDiscord />} title="Discord Webhook" accent="blue">
+      <Group id="int-discord" icon={<IconDiscord />} title="Discord Webhook" accent="blue">
         <StackedRow label="Webhook URL" hint="Paste the webhook URL from your Discord channel settings">
           <SecretInput
             value={draft.discord_webhook_url}
@@ -466,13 +553,13 @@ function IntegrationsTab({ draft, patch }) {
         </Row>
       </Group>
 
-      <Group icon={<IconVoiceChat />} title="Simple Voice Chat" accent="teal">
+      <Group id="int-voice" icon={<IconVoiceChat />} title="Simple Voice Chat" accent="teal">
         <Row label="Enabled" hint="Requires Simple Voice Chat mod on the server.">
           <Toggle value={draft.voicechat_enable} onChange={v => patch('voicechat_enable', v)} />
         </Row>
       </Group>
 
-      <Group icon={<IconBallot />} title="Votifier" accent="peach">
+      <Group id="int-votifier" icon={<IconBallot />} title="Votifier" accent="peach">
         <Row label="Enabled" hint="Receives votes from listing sites via NuVotifier v2.">
           <Toggle value={draft.votifier_enabled} onChange={v => patch('votifier_enabled', v)} />
         </Row>
@@ -503,7 +590,7 @@ function IntegrationsTab({ draft, patch }) {
         />
       </Group>
 
-      <Group icon={<IconMapScroll />} title="BlueMap" accent="sky">
+      <Group id="int-bluemap" icon={<IconMapScroll />} title="BlueMap" accent="sky">
         <Row label="Enabled" hint="Live 3D web map integration">
           <Toggle value={draft.bluemap_enabled} onChange={v => patch('bluemap_enabled', v)} />
         </Row>
@@ -541,7 +628,10 @@ function IntegrationsTab({ draft, patch }) {
 
 // ── Section group ─────────────────────────────────────────────────────────────
 
-function Group({ icon, title, accent = 'blue', children }) {
+function Group({ id, icon, title, accent = 'blue', children }) {
+  // Self-hide unless this is the active section (two-pane navigator).
+  const active = useContext(ActiveSectionCtx)
+  if (id && active !== id) return null
   return (
     <div className={`${styles.group} ${styles[`accent_${accent}`]}`}>
       <div className={styles.groupHeader}>
@@ -772,19 +862,19 @@ function MuteLevels({ value = [], onChange }) {
 function VipTab({ draft, patch }) {
   return (
     <>
-      <Group icon={<IconCrown />} title="Tiers" accent="mauve">
+      <Group id="vip-tiers" icon={<IconCrown />} title="Tiers" accent="mauve">
         <StackedRow label="Tier Definitions" hint="Each tier: level number, display name, min playtime to auto-earn, bonus claims granted">
           <TierDefsEditor value={draft.tiers} onChange={v => patch('tiers', v)} />
         </StackedRow>
       </Group>
 
-      <Group icon={<IconClock />} title="Kit Settings" accent="teal">
+      <Group id="vip-kitset" icon={<IconAnvil />} title="Kit Settings" accent="teal">
         <Row label="Cooldown Duration" hint="Hours between kit claims. Default 24 hours.">
           <NumInput value={draft.kit_cooldown_seconds != null ? draft.kit_cooldown_seconds / 3600 : ''} onChange={v => patch('kit_cooldown_seconds', Math.round(v * 3600))} suffix="h" />
         </Row>
       </Group>
 
-      <Group icon={<IconLoot />} title="Kit Definitions" accent="peach">
+      <Group id="vip-kits" icon={<IconLoot />} title="Kit Definitions" accent="peach">
         <StackedRow label="Kits" hint="Each kit: name (used in /smp kit command), display name (& color codes), min tier, armor, and items.">
           <KitDefsEditor value={draft.kit_definitions} onChange={v => patch('kit_definitions', v)} />
         </StackedRow>

@@ -150,22 +150,22 @@ export function IconGrassBlock({ size = 20 }) {
 export function IconEnderPearl({ size = 20 }) {
   return (
     <svg viewBox="0 0 16 16" width={size} height={size} shapeRendering="crispEdges">
-      {/* Shadow */}
-      {px(4, 13, 8, 2, '#0A1A18')}
-      {/* Pearl body */}
-      {px(4, 2, 8, 1, '#1A4A40')}
-      {px(2, 3, 12, 2, '#1D5548')}
-      {px(1, 5, 14, 6, '#206050')}
-      {px(2, 11, 12, 2, '#1A4A40')}
-      {px(4, 13, 8, 1, '#123830')}
-      {/* Shimmer */}
-      {px(5, 4, 3, 2, '#2A8070')}
-      {px(9, 6, 2, 2, '#2A8070')}
-      {/* Highlight */}
-      {px(6, 4, 2, 1, '#40B090')}
-      {/* Glow dots */}
-      {px(3, 7, 1, 1, '#30C0A0')}
-      {px(12, 8, 1, 1, '#30C0A0')}
+      {/* Round silhouette, shaded darker toward the bottom */}
+      {px(6, 1, 4, 1, '#153F35')}
+      {px(4, 2, 8, 1, '#17453A')}
+      {px(3, 3, 10, 1, '#1A4A40')}
+      {px(2, 4, 12, 7, '#1E5A4C')}
+      {px(3, 11, 10, 1, '#17453A')}
+      {px(4, 12, 8, 1, '#123830')}
+      {px(6, 13, 4, 1, '#0E2C26')}
+      {/* Upper sheen + lower inner glow */}
+      {px(4, 4, 7, 4, '#2A7A66')}
+      {px(6, 9, 4, 2, '#2A7A66')}
+      {/* Glossy specular highlight (reads as a pearl) */}
+      {px(5, 3, 3, 2, '#8FE8D6')}
+      {px(5, 3, 2, 1, '#DFFFF8')}
+      {/* Ender fleck */}
+      {px(10, 8, 1, 1, '#40C8A8')}
     </svg>
   )
 }
@@ -1012,6 +1012,196 @@ export function IconWolf({ size = 20 }) {
       {px(10, 6, 2, 2, '#F0A030')}
       {px(4, 6, 1, 1, '#FFD060')}
       {px(10, 6, 1, 1, '#FFD060')}
+    </svg>
+  )
+}
+
+// ── Distinct nav icons (replace reused shields/clocks/signs) ────────────────────
+
+// Chat Moderation — a judge's gavel over its sound block.
+export function IconGavel({ size = 20 }) {
+  return (
+    <svg viewBox="0 0 16 16" width={size} height={size} shapeRendering="crispEdges">
+      {/* mallet head (horizontal), striking faces at each end */}
+      {px(2, 3, 8, 4, '#A9762F')}
+      {px(2, 3, 8, 1, '#C89446')}
+      {px(2, 3, 1, 4, '#6B4410')}
+      {px(9, 3, 1, 4, '#6B4410')}
+      {/* handle, angled down to the right and clear of the block */}
+      {px(8, 7, 2, 1, '#8A5C22')}
+      {px(9, 8, 2, 1, '#8A5C22')}
+      {px(10, 9, 2, 1, '#8A5C22')}
+      {px(11, 10, 2, 2, '#6B4410')}
+      {px(8, 7, 1, 1, '#A9762F')}
+      {px(10, 9, 1, 1, '#A9762F')}
+      {/* sound block, separated below-left */}
+      {px(2, 12, 6, 2, '#5A3A10')}
+      {px(2, 12, 6, 1, '#7A5320')}
+    </svg>
+  )
+}
+
+// Hardcore — the dark maroon hardcore heart.
+export function IconHardcoreHeart({ size = 20 }) {
+  return (
+    <svg viewBox="0 0 16 16" width={size} height={size} shapeRendering="crispEdges">
+      {px(3, 3, 3, 2, '#7A1414')}
+      {px(9, 3, 3, 2, '#7A1414')}
+      {px(2, 5, 12, 3, '#8B1A1A')}
+      {px(3, 8, 10, 1, '#8B1A1A')}
+      {px(4, 9, 8, 1, '#7A1414')}
+      {px(5, 10, 6, 1, '#6A1010')}
+      {px(6, 11, 4, 1, '#5A0C0C')}
+      {px(7, 12, 2, 1, '#4A0808')}
+      {/* highlight + hardcore vein */}
+      {px(4, 5, 2, 1, '#C24040')}
+      {px(4, 6, 1, 1, '#C24040')}
+      {px(8, 6, 1, 2, '#4A0808')}
+    </svg>
+  )
+}
+
+// Danger Zone — a stick of TNT.
+export function IconTNT({ size = 20 }) {
+  return (
+    <svg viewBox="0 0 16 16" width={size} height={size} shapeRendering="crispEdges">
+      {px(0, 0, 16, 5, '#B4362B')}
+      {px(0, 0, 16, 1, '#D45142')}
+      {px(0, 5, 16, 6, '#E7E1CF')}
+      {px(0, 11, 16, 5, '#B4362B')}
+      {px(0, 15, 16, 1, '#7C1F18')}
+      {/* T N T */}
+      {px(1, 6, 3, 1, '#8B2A20')}{px(2, 6, 1, 4, '#8B2A20')}
+      {px(6, 6, 1, 4, '#8B2A20')}{px(9, 6, 1, 4, '#8B2A20')}{px(7, 7, 1, 1, '#8B2A20')}{px(8, 8, 1, 1, '#8B2A20')}
+      {px(11, 6, 3, 1, '#8B2A20')}{px(12, 6, 1, 4, '#8B2A20')}
+    </svg>
+  )
+}
+
+// Kit Settings — an anvil.
+export function IconAnvil({ size = 20 }) {
+  return (
+    <svg viewBox="0 0 16 16" width={size} height={size} shapeRendering="crispEdges">
+      {px(2, 3, 12, 3, '#4A4A55')}
+      {px(2, 3, 12, 1, '#6C6C79')}
+      {px(1, 4, 1, 2, '#3A3A44')}
+      {px(5, 6, 6, 2, '#3A3A44')}
+      {px(4, 8, 8, 2, '#4A4A55')}
+      {px(4, 8, 8, 1, '#5E5E6B')}
+      {px(2, 11, 12, 3, '#33333C')}
+      {px(2, 11, 12, 1, '#4A4A55')}
+    </svg>
+  )
+}
+
+// Color Reference — a four-swatch dye palette.
+export function IconDyes({ size = 20 }) {
+  return (
+    <svg viewBox="0 0 16 16" width={size} height={size} shapeRendering="crispEdges">
+      {px(2, 2, 5, 5, '#E2413A')}{px(2, 2, 5, 1, '#F26A63')}
+      {px(9, 2, 5, 5, '#3A78E2')}{px(9, 2, 5, 1, '#63A0F2')}
+      {px(2, 9, 5, 5, '#F2C23A')}{px(2, 9, 5, 1, '#FFD86A')}
+      {px(9, 9, 5, 5, '#7A3AE2')}{px(9, 9, 5, 1, '#A063F2')}
+    </svg>
+  )
+}
+
+// Welcome Sidebar — a scoreboard with a coloured title bar and score rows.
+export function IconScoreboard({ size = 20 }) {
+  return (
+    <svg viewBox="0 0 16 16" width={size} height={size} shapeRendering="crispEdges">
+      {px(1, 1, 14, 14, '#2A2A34')}
+      {px(1, 1, 14, 3, '#C8A83A')}
+      {px(3, 6, 7, 1, '#C8C8D2')}
+      {px(3, 8, 9, 1, '#C8C8D2')}
+      {px(3, 10, 6, 1, '#C8C8D2')}
+      {px(3, 12, 8, 1, '#C8C8D2')}
+      {px(12, 6, 2, 1, '#E24A4A')}
+      {px(12, 8, 2, 1, '#E24A4A')}
+      {px(12, 10, 2, 1, '#E24A4A')}
+    </svg>
+  )
+}
+
+// Config — a settings gear.
+export function IconGear({ size = 20 }) {
+  return (
+    <svg viewBox="0 0 16 16" width={size} height={size} shapeRendering="crispEdges">
+      {px(6, 1, 4, 2, '#8A8A95')}
+      {px(6, 13, 4, 2, '#8A8A95')}
+      {px(1, 6, 2, 4, '#8A8A95')}
+      {px(13, 6, 2, 4, '#8A8A95')}
+      {px(3, 3, 2, 2, '#8A8A95')}
+      {px(11, 3, 2, 2, '#8A8A95')}
+      {px(3, 11, 2, 2, '#8A8A95')}
+      {px(11, 11, 2, 2, '#8A8A95')}
+      {px(4, 4, 8, 8, '#9A9AA5')}
+      {px(4, 4, 8, 1, '#B4B4BF')}
+      {px(6, 6, 4, 4, '#2A2A34')}
+    </svg>
+  )
+}
+
+// Timelapse — a camera.
+export function IconCamera({ size = 20 }) {
+  return (
+    <svg viewBox="0 0 16 16" width={size} height={size} shapeRendering="crispEdges">
+      {px(4, 3, 4, 2, '#3A3A44')}
+      {px(1, 5, 14, 9, '#3A3A44')}
+      {px(1, 5, 14, 1, '#54545F')}
+      {px(11, 3, 3, 2, '#F2E23A')}
+      {px(6, 7, 5, 5, '#5A8AC8')}
+      {px(7, 8, 3, 3, '#2A4A78')}
+      {px(6, 7, 2, 1, '#A8C8F0')}
+      {px(2, 6, 2, 1, '#C87A2A')}
+    </svg>
+  )
+}
+
+// Heartbeat / ECG pulse line. Used for the public "Server Vitals" panel title
+// so it no longer shares IconSpeedometer with the MSPT gauge.
+export function IconPulse({ size = 20 }) {
+  const g = '#4ADE5A', d = '#2E9E3A', hi = '#B7FFC0'
+  return (
+    <svg viewBox="0 0 16 16" width={size} height={size} shapeRendering="crispEdges">
+      {/* flat baseline, left */}
+      {px(1, 8, 4, 2, d)}
+      {px(1, 8, 4, 1, g)}
+      {/* rise to peak */}
+      {px(5, 5, 1, 4, g)}
+      {px(6, 1, 2, 4, g)}
+      {px(6, 1, 2, 1, hi)}
+      {/* fall through baseline into the dip */}
+      {px(8, 5, 1, 5, g)}
+      {px(9, 9, 1, 4, g)}
+      {px(9, 12, 1, 1, d)}
+      {/* rise back to baseline, flat right */}
+      {px(10, 8, 1, 4, g)}
+      {px(11, 8, 4, 2, d)}
+      {px(11, 8, 4, 1, g)}
+    </svg>
+  )
+}
+
+// Blood droplet. Used for the Hardcore leaderboard "Bloodiest run" record so it
+// no longer shares IconSkull with the panel title.
+export function IconBloodDrop({ size = 20 }) {
+  const base = '#C21A1A', mid = '#E23A3A', hi = '#FF9090', dk = '#8A0F0F'
+  return (
+    <svg viewBox="0 0 16 16" width={size} height={size} shapeRendering="crispEdges">
+      {/* tapering tip */}
+      {px(7, 1, 2, 2, dk)}
+      {px(7, 3, 2, 2, base)}
+      {px(6, 5, 4, 2, base)}
+      {/* rounded body */}
+      {px(5, 7, 6, 3, base)}
+      {px(4, 9, 8, 3, base)}
+      {px(5, 12, 6, 2, base)}
+      {px(6, 14, 4, 1, dk)}
+      {/* mid tone + highlight */}
+      {px(6, 7, 3, 4, mid)}
+      {px(6, 6, 1, 5, hi)}
+      {px(9, 9, 2, 2, hi)}
     </svg>
   )
 }

@@ -1,234 +1,152 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useMemo } from 'react'
+import { useResource, apiFetch, Toolbar, IconButton, Btn, Badge, Loading, EmptyState, ErrorBanner, Dialog, DialogButtons, Input, StatCard, Menu, MenuItem, MenuSeparator, useToast } from '../../ui'
+import { IconPlayerHead } from './MinecraftIcons'
 import styles from './PlayersPanel.module.css'
 
-function authHeaders(token) {
-  return token ? { Authorization: `Bearer ${token}` } : {}
-}
+async function exec(command, ctx)            { return apiFetch('/api/admin/exec', { ...ctx, json: { command } }) }
+async function setOp(name, uuid, level, ctx)  { return apiFetch('/api/admin/setop', { ...ctx, json: { name, uuid, level } }) }
+async function setTier(name, tier, ctx)      { return apiFetch('/api/admin/players/settier', { ...ctx, json: { name, tier } }) }
 
-async function execCommand(command, token) {
-  await fetch('/api/admin/exec', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...authHeaders(token) },
-    body: JSON.stringify({ command }),
-  })
-}
-
-async function sendSetOp(name, uuid, level, token) {
-  return fetch('/api/admin/setop', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...authHeaders(token) },
-    body: JSON.stringify({ name, uuid, level }),
-  })
-}
-
-async function sendSetTier(name, tier, token) {
-  return fetch('/api/admin/players/settier', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...authHeaders(token) },
-    body: JSON.stringify({ name, tier }),
-  })
-}
-
-function formatPlaytime(ticks) {
-  if (ticks == null) return null
-  const h = Math.floor(ticks / 72000)
-  return `${h}h`
-}
+const formatPlaytime = t => t == null ? null : `${Math.floor(t / 72000)}h`
 
 const OP_LEVELS = [
-  { level: 1, label: 'L1: Spawn protection bypass',     desc: 'Bypass spawn protection only. Minimal trust.' },
-  { level: 2, label: 'L2: Game commands',               desc: '/give, /tp, /gamemode, /time, /weather, command blocks. Standard trusted member.' },
-  { level: 3, label: 'L3: Moderation',                  desc: '/ban, /kick, /op, /deop, /whitelist. Moderator level.' },
-  { level: 4, label: 'L4: Full admin',                  desc: '/stop, bypass player limit. Owner level.' },
+  { level: 1, label: 'L1 · Spawn bypass',  desc: 'Bypass spawn protection only. Minimal trust.' },
+  { level: 2, label: 'L2 · Game commands', desc: '/give, /tp, /gamemode, /time, command blocks. Standard trusted member.' },
+  { level: 3, label: 'L3 · Moderation',    desc: '/ban, /kick, /op, /whitelist. Moderator level.' },
+  { level: 4, label: 'L4 · Full admin',    desc: '/stop, bypass player limit. Owner level.' },
 ]
 
 function dimShort(dim) {
-  const map = {
-    'minecraft:overworld':    'Overworld',
-    'minecraft:the_nether':   'Nether',
-    'minecraft:the_end':      'The End',
-  }
+  const map = { 'minecraft:overworld': 'Overworld', 'minecraft:the_nether': 'Nether', 'minecraft:the_end': 'The End' }
   return map[dim] ?? dim.replace('minecraft:', '').replace(/_/g, ' ')
 }
 
 export default function PlayersPanel({ token, onExpired }) {
-  const [players,  setPlayers]  = useState(null)
-  const [error,    setError]    = useState('')
-  const [confirm,  setConfirm]  = useState(null) // {name, action}
-  const [reason,   setReason]   = useState('')
-  const [opLevel,  setOpLevel]  = useState(4)
-  const [tierInput, setTierInput] = useState(0)
+  const ctx = { token, onExpired }
+  const { data: players, loading, error, refresh } = useResource('/api/admin/players', { token, onExpired, interval: 10_000 })
+  const toast = useToast()
 
-  const fetchPlayers = useCallback(async () => {
+  const [confirm, setConfirm] = useState(null) // { name, uuid, action }
+  const [reason,  setReason]  = useState('')
+  const [opLevel, setOpLevel] = useState(4)
+  const [filter,  setFilter]  = useState('')
+
+  const list = players || []
+  const shown = useMemo(
+    () => filter ? list.filter(p => p.name.toLowerCase().includes(filter.toLowerCase())) : list,
+    [list, filter],
+  )
+  const opCount  = list.filter(p => p.isOp).length
+  const vipCount = list.filter(p => p.tier > 0).length
+
+  function open(action, p) { setConfirm({ name: p.name, uuid: p.uuid, action }); setReason(''); setOpLevel(4) }
+
+  async function doAction() {
+    const { name, uuid, action } = confirm
     try {
-      const res = await fetch('/api/admin/players', { headers: authHeaders(token) })
-      if (res.status === 403) { onExpired(); return }
-      if (!res.ok) { setError('Admin panel disabled'); return }
-      setPlayers(await res.json())
-      setError('')
-    } catch {
-      setError('Could not load player list.')
-    }
-  }, [token]) // eslint-disable-line react-hooks/exhaustive-deps
-
-  useEffect(() => {
-    fetchPlayers()
-    const id = setInterval(fetchPlayers, 10_000)
-    return () => clearInterval(id)
-  }, [fetchPlayers])
-
-  async function doAction(name, uuid, action) {
-    try {
-      if (action === 'op') {
-        const res = await sendSetOp(name, uuid, opLevel, token)
-        if (res.status === 403) { onExpired(); return }
-      } else if (action === 'settier') {
-        const res = await sendSetTier(name, tierInput, token)
-        if (res.status === 403) { onExpired(); return }
-      } else {
-        const cmd = action === 'kick'  ? `kick ${name} ${reason || 'Kicked by admin'}`
-                  : action === 'ban'   ? `ban ${name} ${reason || 'Banned by admin'}`
-                  : action === 'mute'  ? `mute ${name} 60`
-                  : action === 'deop'  ? `deop ${name}`
-                  : `teleport ${name} 0 64 0`
-        await execCommand(cmd, token)
-      }
-    } catch { /* network error — still close dialog */ }
-    setConfirm(null)
-    setReason('')
-    setOpLevel(4)
-    setTierInput(0)
-    setTimeout(fetchPlayers, 500)
+      if (action === 'op') await setOp(name, uuid, opLevel, ctx)
+      else await exec(action === 'kick' ? `kick ${name} ${reason || 'Kicked by admin'}`
+                    : action === 'ban'  ? `ban ${name} ${reason || 'Banned by admin'}`
+                    : `deop ${name}`, ctx)
+      toast(`${action} → ${name}`)
+    } catch (e) { if (!e.expired) toast('Action failed', 'danger') }
+    setConfirm(null); setReason(''); setOpLevel(4)
+    setTimeout(() => refresh({ silent: true }), 400)
   }
 
-  if (error) return <div className={styles.empty}>{error}</div>
-  if (!players) return <div className={styles.empty}>Loading…</div>
-  if (players.length === 0) return (
-    <div className={styles.empty}>
-      <span className={styles.emptyIcon}>⬡</span>
-      No players online
-    </div>
-  )
+  async function quickMute(p) {
+    try { await exec(`mute ${p.name} 60`, ctx); toast(`muted ${p.name}`) }
+    catch (e) { if (!e.expired) toast('Mute failed', 'danger') }
+  }
+  async function bumpTier(p, delta) {
+    try { await setTier(p.name, Math.max(0, (p.tier ?? 0) + delta), ctx) }
+    catch (e) { if (!e.expired) toast('Tier change failed', 'danger') }
+    setTimeout(() => refresh({ silent: true }), 300)
+  }
+
+  if (loading && !players) return <Loading label="Loading players…" />
+  if (error && !players)   return <EmptyState icon={<IconPlayerHead size={30} />} label="Could not load players" hint={error} />
 
   return (
     <div className={styles.wrap}>
-      <div className={styles.toolbar}>
-        <span className={styles.count}>{players.length} online</span>
-        <button className={styles.refresh} onClick={fetchPlayers}>↻ Refresh</button>
+      <Toolbar title="Players" count={`${list.length} online`}>
+        <input className={styles.filter} placeholder="Filter…" value={filter} onChange={e => setFilter(e.target.value)} />
+        <IconButton tip="Refresh" onClick={() => refresh()}>↻</IconButton>
+      </Toolbar>
+
+      <div className={styles.stats}>
+        <StatCard label="Online" value={list.length} tone="info" />
+        <StatCard label="Operators" value={opCount} tone="warn" />
+        <StatCard label="VIP" value={vipCount} tone="vip" />
       </div>
 
-      <div className={styles.list}>
-        {players.map(p => (
-          <div key={p.uuid} className={styles.row}>
-            <img
-              className={styles.head}
-              src={`https://minotar.net/avatar/${p.name}/32`}
-              alt={p.name}
-              width={32} height={32}
-              onError={e => { e.target.style.display = 'none' }}
-            />
-            <div className={styles.info}>
-              <span className={styles.name}>{p.name}</span>
-              <span className={styles.dim}>{dimShort(p.dimension)}</span>
-              <span className={styles.meta}>
-                {formatPlaytime(p.playtime_ticks) && <span>{formatPlaytime(p.playtime_ticks)}</span>}
-                {p.tier > 0 && <span className={styles.tierBadge}>T{p.tier}</span>}
-              </span>
-            </div>
-            {p.isOp && <span className={styles.opBadge}>OP</span>}
-            <div className={styles.actions}>
-              <ActionBtn label="Kick"  color="yellow" onClick={() => { setConfirm({ name: p.name, uuid: p.uuid, action: 'kick' }); setReason('') }} />
-              <ActionBtn label="Mute"  color="peach"  onClick={() => doAction(p.name, p.uuid, 'mute')} />
-              <ActionBtn label="Ban"   color="red"    onClick={() => { setConfirm({ name: p.name, uuid: p.uuid, action: 'ban'  }); setReason('') }} />
-              <ActionBtn label="Op"    color="teal"   onClick={() => { setConfirm({ name: p.name, uuid: p.uuid, action: 'op' }); setOpLevel(4); setReason('') }} />
-              <div className={styles.tierControl}>
-                <button
-                  className={`${styles.tierStep} ${styles.tierMinus}`}
-                  disabled={(p.tier ?? 0) <= (p.earned_tier ?? 0)}
-                  onClick={async () => {
-                    await sendSetTier(p.name, Math.max(0, (p.tier ?? 0) - 1), token)
-                    setTimeout(fetchPlayers, 300)
-                  }}
-                >−</button>
-                <span className={`${styles.tierVal} ${p.tier > 0 ? styles.tierValActive : ''}`}>
-                  {p.tier > 0 ? `T${p.tier}` : '—'}
-                </span>
-                <button
-                  className={`${styles.tierStep} ${styles.tierPlus}`}
-                  onClick={async () => {
-                    await sendSetTier(p.name, (p.tier ?? 0) + 1, token)
-                    setTimeout(fetchPlayers, 300)
-                  }}
-                >+</button>
-              </div>
-              {p.isOp && <ActionBtn label="Deop" color="mauve" onClick={() => { setConfirm({ name: p.name, uuid: p.uuid, action: 'deop' }); setReason('') }} />}
-            </div>
-          </div>
-        ))}
-      </div>
+      <ErrorBanner>{error && players ? error : null}</ErrorBanner>
 
-      {confirm && (
-        <div className={styles.confirmOverlay} onClick={() => setConfirm(null)}>
-          <div className={styles.confirmBox} onClick={e => e.stopPropagation()}>
-            <p className={styles.confirmTitle}>
-              {confirm.action === 'ban' ? 'Ban' : confirm.action === 'op' ? 'Op' : confirm.action === 'deop' ? 'Deop' : 'Kick'}{' '}
-              <strong>{confirm.name}</strong>?
-            </p>
-            {(confirm.action === 'kick' || confirm.action === 'ban') && (
-              <input
-                className={styles.reasonInput}
-                type="text"
-                placeholder="Reason (optional)"
-                value={reason}
-                onChange={e => setReason(e.target.value)}
-                autoFocus
-              />
-            )}
-            {confirm.action === 'op' && (
-              <div className={styles.opLevelPicker}>
-                {OP_LEVELS.map(({ level, label, desc }) => (
-                  <label key={level} className={`${styles.opLevelOption} ${opLevel === level ? styles.opLevelSelected : ''}`}>
-                    <input
-                      type="radio"
-                      name="opLevel"
-                      value={level}
-                      checked={opLevel === level}
-                      onChange={() => setOpLevel(level)}
-                    />
-                    <span className={styles.opLevelLabel}>{label}</span>
-                    <span className={styles.opLevelDesc}>{desc}</span>
-                  </label>
-                ))}
+      {list.length === 0 ? (
+        <EmptyState icon={<IconPlayerHead size={30} />} label="No players online" hint="Players appear here as they join." />
+      ) : shown.length === 0 ? (
+        <EmptyState label="No players match your filter" />
+      ) : (
+        <div className={styles.grid}>
+          {shown.map(p => (
+            <div key={p.uuid} className={styles.card}>
+              <img className={styles.head} src={`https://mc-heads.net/avatar/${encodeURIComponent(p.name)}/40`} alt={p.name} width={40} height={40} onError={e => { e.target.style.visibility = 'hidden' }} />
+              <div className={styles.info}>
+                <span className={styles.name}>{p.name}</span>
+                <span className={styles.dim}>{dimShort(p.dimension)}{formatPlaytime(p.playtime_ticks) ? ` · ${formatPlaytime(p.playtime_ticks)}` : ''}</span>
+                <div className={styles.badges}>
+                  {p.isOp && <Badge variant="warn">OP</Badge>}
+                  {p.tier > 0 && <Badge variant="vip">T{p.tier}</Badge>}
+                </div>
               </div>
-            )}
-            <div className={styles.confirmBtns}>
-              <button className={styles.confirmCancel} onClick={() => setConfirm(null)}>Cancel</button>
-              <button
-                className={`${styles.confirmDo} ${
-                  confirm.action === 'ban'  ? styles.confirmBan  :
-                  confirm.action === 'op'   ? styles.confirmOp   :
-                  confirm.action === 'deop' ? styles.confirmDeop :
-                  styles.confirmKick
-                }`}
-                onClick={() => doAction(confirm.name, confirm.uuid, confirm.action)}
-              >
-                {confirm.action === 'op' ? `Set OP L${opLevel}` : confirm.action.charAt(0).toUpperCase() + confirm.action.slice(1)}
-              </button>
+              <div className={styles.cardActions}>
+                <div className={styles.tier}>
+                  <button className={styles.tierStep} disabled={(p.tier ?? 0) <= (p.earned_tier ?? 0)} onClick={() => bumpTier(p, -1)} aria-label="Lower tier">−</button>
+                  <span className={`${styles.tierVal} ${p.tier > 0 ? styles.tierOn : ''}`}>{p.tier > 0 ? `T${p.tier}` : '—'}</span>
+                  <button className={styles.tierStep} onClick={() => bumpTier(p, +1)} aria-label="Raise tier">+</button>
+                </div>
+                <Menu trigger={<Btn size="sm" aria-label="Actions">⋯</Btn>}>
+                  <MenuItem tone="warn"   onSelect={() => open('kick', p)}>Kick</MenuItem>
+                  <MenuItem              onSelect={() => quickMute(p)}>Mute 60m</MenuItem>
+                  <MenuItem tone="danger" onSelect={() => open('ban', p)}>Ban</MenuItem>
+                  <MenuSeparator />
+                  {p.isOp
+                    ? <MenuItem onSelect={() => open('deop', p)}>Deop</MenuItem>
+                    : <MenuItem onSelect={() => open('op', p)}>Make Operator</MenuItem>}
+                </Menu>
+              </div>
             </div>
-          </div>
+          ))}
         </div>
       )}
-    </div>
-  )
-}
 
-function ActionBtn({ label, color, onClick }) {
-  return (
-    <button
-      className={`${styles.actionBtn} ${styles[`action_${color}`]}`}
-      onClick={onClick}
-    >
-      {label}
-    </button>
+      <Dialog
+        open={!!confirm}
+        onOpenChange={o => !o && setConfirm(null)}
+        title={confirm ? `${confirm.action[0].toUpperCase()}${confirm.action.slice(1)} ${confirm.name}?` : ''}
+        description={confirm?.action === 'op' ? 'Choose an operator level.' : undefined}
+      >
+        {(confirm?.action === 'kick' || confirm?.action === 'ban') && (
+          <Input placeholder="Reason (optional)" value={reason} onChange={e => setReason(e.target.value)} autoFocus />
+        )}
+        {confirm?.action === 'op' && (
+          <div className={styles.opPicker}>
+            {OP_LEVELS.map(({ level, label, desc }) => (
+              <label key={level} className={`${styles.opOption} ${opLevel === level ? styles.opSelected : ''}`}>
+                <input type="radio" name="opLevel" checked={opLevel === level} onChange={() => setOpLevel(level)} />
+                <span className={styles.opLabel}>{label}</span>
+                <span className={styles.opDesc}>{desc}</span>
+              </label>
+            ))}
+          </div>
+        )}
+        <DialogButtons>
+          <Btn variant="ghost" onClick={() => setConfirm(null)}>Cancel</Btn>
+          <Btn variant={confirm?.action === 'ban' ? 'danger' : confirm?.action === 'op' ? 'ok' : 'warn'} onClick={doAction}>
+            {confirm?.action === 'op' ? `Set OP L${opLevel}` : confirm ? `${confirm.action[0].toUpperCase()}${confirm.action.slice(1)}` : ''}
+          </Btn>
+        </DialogButtons>
+      </Dialog>
+    </div>
   )
 }

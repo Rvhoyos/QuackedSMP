@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { IconXPOrb } from './admin/MinecraftIcons'
 import styles from './SkillsLeaderboard.module.css'
 
 const CATEGORIES = [
@@ -28,7 +29,10 @@ export default function SkillsLeaderboard({ data }) {
   return (
     <section className={styles.wrap}>
       <div className={styles.header}>
-        <span className={styles.title}>Skills Leaderboard</span>
+        <div className={styles.titleRow}>
+          <span className={styles.headerIcon}><IconXPOrb size={16} /></span>
+          <span className={styles.title}>Skills Leaderboard</span>
+        </div>
         <div className={styles.tabs}>
           {CATEGORIES.map(c => (
             <button
@@ -44,6 +48,23 @@ export default function SkillsLeaderboard({ data }) {
 
       <div className={styles.body}>
         {tab === 'overall' ? (
+          <>
+          {data.overall.length >= 3 && (
+            <div className={styles.podium}>
+              {[1, 0, 2].map(pos => {
+                const e = data.overall[pos]
+                if (!e) return null
+                return (
+                  <div key={pos} className={`${styles.podStep} ${styles[`pod${pos}`]}`}>
+                    <img className={styles.podHead} src={`https://mc-heads.net/avatar/${encodeURIComponent(e.name)}/40`} alt={e.name} width={40} height={40} onError={ev => { ev.target.style.visibility = 'hidden' }} />
+                    <span className={styles.podRank} style={{ color: RANK_COLORS[pos] }}>#{pos + 1}</span>
+                    <span className={styles.podName}>{e.name}</span>
+                    <span className={styles.podLevel}>Lv {e.level}</span>
+                  </div>
+                )
+              })}
+            </div>
+          )}
           <table className={styles.table}>
             <thead>
               <tr>
@@ -75,6 +96,7 @@ export default function SkillsLeaderboard({ data }) {
               )}
             </tbody>
           </table>
+          </>
         ) : (
           <div className={styles.skillsGrid}>
             {(active?.skills ?? []).map(skillId => {

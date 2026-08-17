@@ -1,28 +1,25 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
+import { Toolbar, Btn, IconButton, Textarea, Loading, EmptyState, ErrorBanner, useToast } from '../../ui'
+import { IconChatFilter } from './MinecraftIcons'
 import styles from './ChatFilterPanel.module.css'
 
 const PAGE_SIZE = 50
 
 export default function ChatFilterPanel({ token, onExpired }) {
-  const [tab,       setTab]      = useState('blocked') // 'blocked' | 'whitelist' | 'mutes'
-  const [words,     setWords]    = useState([])
-  const [total,     setTotal]    = useState(0)
-  const [page,      setPage]     = useState(0)
-  const [search,    setSearch]   = useState('')
-  const [selected,  setSelected] = useState(new Set())
-  const [addText,   setAddText]  = useState('')
-  const [mutes,     setMutes]    = useState([])
-  const [loading,   setLoading]  = useState(false)
-  const [error,     setError]    = useState(null)
-  const [status,    setStatus]   = useState(null)
+  const [tab, setTab] = useState('blocked')
+  const [words, setWords] = useState([])
+  const [total, setTotal] = useState(0)
+  const [page, setPage] = useState(0)
+  const [search, setSearch] = useState('')
+  const [selected, setSelected] = useState(new Set())
+  const [addText, setAddText] = useState('')
+  const [mutes, setMutes] = useState([])
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState(null)
+  const toast = useToast()
 
-  const auth = { 'Authorization': `Bearer ${token}` }
+  const auth = { Authorization: `Bearer ${token}` }
   const debounceRef = useRef(null)
-
-  function flash(msg) {
-    setStatus(msg)
-    setTimeout(() => setStatus(null), 3000)
-  }
 
   const loadWords = useCallback(async (p = 0, q = search) => {
     setLoading(true)
@@ -33,11 +30,8 @@ export default function ChatFilterPanel({ token, onExpired }) {
       const r = await fetch(`/api/admin/chatfilter?${params}`, { headers: auth })
       if (r.status === 401) { onExpired(); return }
       const d = await r.json()
-      if (d.error) { setError(d.error) } else {
-        setWords(d.words || [])
-        setTotal(d.total || 0)
-        setSelected(new Set())
-      }
+      if (d.error) setError(d.error)
+      else { setWords(d.words || []); setTotal(d.total || 0); setSelected(new Set()) }
     } catch { setError('Failed to load') }
     setLoading(false)
   }, [token, tab]) // eslint-disable-line react-hooks/exhaustive-deps
@@ -59,31 +53,21 @@ export default function ChatFilterPanel({ token, onExpired }) {
   }, [tab]) // eslint-disable-line react-hooks/exhaustive-deps
 
   function handleSearch(q) {
-    setSearch(q)
-    setPage(0)
+    setSearch(q); setPage(0)
     clearTimeout(debounceRef.current)
     debounceRef.current = setTimeout(() => loadWords(0, q), 300)
   }
-
-  async function goPage(p) {
-    setPage(p)
-    await loadWords(p, search)
-  }
+  async function goPage(p) { setPage(p); await loadWords(p, search) }
 
   async function addWords() {
     const wordList = addText.split(/[\n,]+/).map(w => w.trim()).filter(Boolean)
     if (!wordList.length) return
     const isWl = tab === 'whitelist'
     try {
-      const r = await fetch('/api/admin/chatfilter/add', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...auth },
-        body: JSON.stringify({ words: wordList, whitelist: isWl }),
-      })
+      const r = await fetch('/api/admin/chatfilter/add', { method: 'POST', headers: { 'Content-Type': 'application/json', ...auth }, body: JSON.stringify({ words: wordList, whitelist: isWl }) })
       if (r.status === 401) { onExpired(); return }
       const d = await r.json()
-      if (d.error) setError(d.error)
-      else { flash(`Added ${d.added} word${d.added !== 1 ? 's' : ''}`); setAddText(''); loadWords(page, search) }
+      if (d.error) setError(d.error); else { toast(`Added ${d.added} word${d.added !== 1 ? 's' : ''}`); setAddText(''); loadWords(page, search) }
     } catch { setError('Failed to add words') }
   }
 
@@ -92,29 +76,19 @@ export default function ChatFilterPanel({ token, onExpired }) {
     if (!wordList.length) return
     const isWl = tab === 'whitelist'
     try {
-      const r = await fetch('/api/admin/chatfilter/remove', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...auth },
-        body: JSON.stringify({ words: wordList, whitelist: isWl }),
-      })
+      const r = await fetch('/api/admin/chatfilter/remove', { method: 'POST', headers: { 'Content-Type': 'application/json', ...auth }, body: JSON.stringify({ words: wordList, whitelist: isWl }) })
       if (r.status === 401) { onExpired(); return }
       const d = await r.json()
-      if (d.error) setError(d.error)
-      else { flash(`Removed ${d.removed} word${d.removed !== 1 ? 's' : ''}`); loadWords(page, search) }
+      if (d.error) setError(d.error); else { toast(`Removed ${d.removed} word${d.removed !== 1 ? 's' : ''}`); loadWords(page, search) }
     } catch { setError('Failed to remove words') }
   }
 
   async function unmute(uuid) {
     try {
-      const r = await fetch('/api/admin/chatfilter/unmute', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...auth },
-        body: JSON.stringify({ uuid }),
-      })
+      const r = await fetch('/api/admin/chatfilter/unmute', { method: 'POST', headers: { 'Content-Type': 'application/json', ...auth }, body: JSON.stringify({ uuid }) })
       if (r.status === 401) { onExpired(); return }
       const d = await r.json()
-      if (d.error) setError(d.error)
-      else { flash('Player unmuted'); loadMutes() }
+      if (d.error) setError(d.error); else { toast('Player unmuted'); loadMutes() }
     } catch { setError('Failed to unmute') }
   }
 
@@ -123,172 +97,98 @@ export default function ChatFilterPanel({ token, onExpired }) {
     try {
       const r = await fetch(`/api/admin/chatfilter?size=99999&tab=${isWl ? 'whitelist' : 'blocked'}`, { headers: auth })
       const d = await r.json()
-      const content = (d.words || []).join('\n')
-      const blob = new Blob([content], { type: 'text/plain' })
+      const blob = new Blob([(d.words || []).join('\n')], { type: 'text/plain' })
       const url = URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = `${isWl ? 'whitelist' : 'blocked_words'}.txt`
-      a.click()
+      const a = document.createElement('a'); a.href = url; a.download = `${isWl ? 'whitelist' : 'blocked_words'}.txt`; a.click()
       URL.revokeObjectURL(url)
     } catch { setError('Export failed') }
   }
 
-  function toggleWord(word) {
-    setSelected(prev => {
-      const next = new Set(prev)
-      if (next.has(word)) next.delete(word)
-      else next.add(word)
-      return next
-    })
-  }
-
-  function toggleAll() {
-    if (selected.size === words.length && words.length > 0) setSelected(new Set())
-    else setSelected(new Set(words))
-  }
+  function toggleWord(word) { setSelected(prev => { const n = new Set(prev); n.has(word) ? n.delete(word) : n.add(word); return n }) }
+  function toggleAll() { (selected.size === words.length && words.length > 0) ? setSelected(new Set()) : setSelected(new Set(words)) }
 
   const totalPages = Math.ceil(total / PAGE_SIZE)
   const nowMs = Date.now()
 
+  const TABS = [
+    { id: 'blocked', label: 'Blocked' },
+    { id: 'whitelist', label: 'Whitelist' },
+    { id: 'mutes', label: `Mutes${tab === 'mutes' ? ` (${mutes.length})` : ''}` },
+  ]
+
   return (
     <div className={styles.wrap}>
+      <Toolbar title="Chat Filter" count={tab !== 'mutes' ? `${total.toLocaleString()} words` : `${mutes.length} muted`}>
+        {tab !== 'mutes' && <Btn size="sm" onClick={exportWords}>Export</Btn>}
+        <IconButton tip="Refresh" onClick={() => tab === 'mutes' ? loadMutes() : loadWords(page, search)}>↻</IconButton>
+      </Toolbar>
+
       <div className={styles.subtabs}>
-        <button
-          className={`${styles.subtab} ${tab === 'blocked' ? styles.subtabActive : ''}`}
-          onClick={() => setTab('blocked')}
-        >
-          Blocked Words{tab === 'blocked' && total > 0 ? ` (${total.toLocaleString()})` : ''}
-        </button>
-        <button
-          className={`${styles.subtab} ${tab === 'whitelist' ? styles.subtabActive : ''}`}
-          onClick={() => setTab('whitelist')}
-        >
-          Whitelist{tab === 'whitelist' && total > 0 ? ` (${total.toLocaleString()})` : ''}
-        </button>
-        <button
-          className={`${styles.subtab} ${tab === 'mutes' ? styles.subtabActive : ''}`}
-          onClick={() => setTab('mutes')}
-        >
-          Mutes{tab === 'mutes' ? ` (${mutes.length})` : ''}
-        </button>
+        {TABS.map(t => <button key={t.id} className={`${styles.subtab} ${tab === t.id ? styles.subtabOn : ''}`} onClick={() => setTab(t.id)}>{t.label}</button>)}
       </div>
 
-      {error && (
-        <div className={styles.error}>
-          {error}
-          <button className={styles.dismiss} onClick={() => setError(null)}>x</button>
-        </div>
-      )}
-      {status && <div className={styles.statusMsg}>{status}</div>}
+      <ErrorBanner>{error}</ErrorBanner>
 
       {tab !== 'mutes' ? (
-        <>
-          <div className={styles.toolbar}>
-            <input
-              className={styles.searchInput}
-              placeholder="Search words..."
-              value={search}
-              onChange={e => handleSearch(e.target.value)}
-            />
-            <span className={styles.totalCount}>{total.toLocaleString()} words</span>
-            <button className={styles.btn} onClick={exportWords}>Export</button>
-          </div>
-
-          <div className={styles.bulkBar}>
-            <label className={styles.selectAllLabel}>
-              <input
-                type="checkbox"
-                checked={selected.size === words.length && words.length > 0}
-                onChange={toggleAll}
-              />
-              {selected.size > 0
-                ? <span className={styles.selectedCount}>{selected.size} selected</span>
-                : <span className={styles.selectHint}>Select all on page</span>
-              }
+        <div className={styles.body}>
+          <div className={styles.controls}>
+            <input className={styles.searchInput} placeholder="Search words…" value={search} onChange={e => handleSearch(e.target.value)} />
+            <label className={styles.selectAll}>
+              <input type="checkbox" checked={selected.size === words.length && words.length > 0} onChange={toggleAll} />
+              {selected.size > 0 ? `${selected.size} selected` : 'Select page'}
             </label>
-            {selected.size > 0 && (
-              <button className={styles.btnDanger} onClick={deleteSelected}>
-                Delete selected ({selected.size})
-              </button>
-            )}
+            {selected.size > 0 && <Btn size="sm" variant="danger" onClick={deleteSelected}>Delete ({selected.size})</Btn>}
           </div>
 
-          <div className={styles.wordList}>
-            {loading && <div className={styles.empty}>Loading...</div>}
-            {!loading && words.length === 0 && (
-              <div className={styles.empty}>{search ? 'No words match your search.' : 'No words in list.'}</div>
+          {loading ? <Loading label="Loading…" />
+            : words.length === 0 ? <EmptyState icon={<IconChatFilter size={30} />} label={search ? 'No words match your search' : 'No words in this list'} />
+            : (
+              <div className={styles.words}>
+                {words.map(word => (
+                  <button key={word} className={`${styles.word} ${selected.has(word) ? styles.wordOn : ''}`} onClick={() => toggleWord(word)}>
+                    <span className={styles.checkbox}>{selected.has(word) ? '✓' : ''}</span>{word}
+                  </button>
+                ))}
+              </div>
             )}
-            {words.map(word => (
-              <label key={word} className={`${styles.wordRow} ${selected.has(word) ? styles.wordSelected : ''}`}>
-                <input type="checkbox" checked={selected.has(word)} onChange={() => toggleWord(word)} />
-                <span className={styles.word}>{word}</span>
-              </label>
-            ))}
-          </div>
 
           {totalPages > 1 && (
             <div className={styles.pagination}>
-              <button className={styles.btnGhost} disabled={page === 0} onClick={() => goPage(0)}>
-                First
-              </button>
-              <button className={styles.btnGhost} disabled={page === 0} onClick={() => goPage(page - 1)}>
-                Prev
-              </button>
+              <Btn size="sm" variant="ghost" disabled={page === 0} onClick={() => goPage(0)}>«</Btn>
+              <Btn size="sm" variant="ghost" disabled={page === 0} onClick={() => goPage(page - 1)}>Prev</Btn>
               <span className={styles.pageInfo}>Page {page + 1} / {totalPages}</span>
-              <button className={styles.btnGhost} disabled={page >= totalPages - 1} onClick={() => goPage(page + 1)}>
-                Next
-              </button>
-              <button className={styles.btnGhost} disabled={page >= totalPages - 1} onClick={() => goPage(totalPages - 1)}>
-                Last
-              </button>
+              <Btn size="sm" variant="ghost" disabled={page >= totalPages - 1} onClick={() => goPage(page + 1)}>Next</Btn>
+              <Btn size="sm" variant="ghost" disabled={page >= totalPages - 1} onClick={() => goPage(totalPages - 1)}>»</Btn>
             </div>
           )}
 
-          <div className={styles.addSection}>
-            <div className={styles.addTitle}>
-              Add words to {tab === 'whitelist' ? 'whitelist' : 'filter'}, comma or newline separated
-            </div>
-            <textarea
-              className={styles.textarea}
-              placeholder={'word1, word2\nword3'}
-              value={addText}
-              onChange={e => setAddText(e.target.value)}
-              rows={3}
-            />
-            <button className={styles.btn} disabled={!addText.trim()} onClick={addWords}>
-              Add to {tab === 'whitelist' ? 'Whitelist' : 'Filter'}
-            </button>
+          <div className={styles.addCard}>
+            <div className={styles.addLabel}>Add to {tab === 'whitelist' ? 'whitelist' : 'filter'} — comma or newline separated</div>
+            <Textarea placeholder={'word1, word2\nword3'} value={addText} onChange={e => setAddText(e.target.value)} rows={3} />
+            <div className={styles.addFoot}><Btn variant="primary" disabled={!addText.trim()} onClick={addWords}>Add to {tab === 'whitelist' ? 'Whitelist' : 'Filter'}</Btn></div>
           </div>
-        </>
+        </div>
       ) : (
-        <div className={styles.muteList}>
-          <div className={styles.muteToolbar}>
-            <span className={styles.count}>{mutes.length} active mute{mutes.length !== 1 ? 's' : ''}</span>
-            <button className={styles.refresh} onClick={loadMutes} disabled={loading}>
-              {loading ? 'Refreshing...' : 'Refresh'}
-            </button>
-          </div>
-          {!loading && mutes.length === 0 && (
-            <div className={styles.empty}>No active mutes.</div>
-          )}
-          {mutes.map(m => {
-            const remaining = Math.max(0, m.muteEnd - nowMs)
-            const mins = Math.ceil(remaining / 60000)
-            return (
-              <div key={m.uuid} className={styles.muteRow}>
-                <div className={styles.muteInfo}>
-                  <span className={styles.muteName}>{m.name}</span>
-                  <span className={styles.muteUuid}>{m.uuid.substring(0, 8)}...</span>
-                </div>
-                <div className={styles.muteTime}>
-                  <span className={styles.muteUntil}>Until {new Date(m.muteEnd).toLocaleString()}</span>
-                  <span className={styles.muteRemaining}>{mins}m remaining</span>
-                </div>
-                <button className={styles.btnDanger} onClick={() => unmute(m.uuid)}>Unmute</button>
+        <div className={styles.body}>
+          {loading ? <Loading label="Loading mutes…" />
+            : mutes.length === 0 ? <EmptyState icon={<IconChatFilter size={30} />} label="No active mutes" hint="Players auto-muted by the filter show up here with a countdown." />
+            : (
+              <div className={styles.muteGrid}>
+                {mutes.map(m => {
+                  const mins = Math.ceil(Math.max(0, m.muteEnd - nowMs) / 60000)
+                  return (
+                    <div key={m.uuid} className={styles.muteCard}>
+                      <div className={styles.muteTop}>
+                        <span className={styles.muteName}>{m.name}</span>
+                        <Btn size="sm" variant="warn" onClick={() => unmute(m.uuid)}>Unmute</Btn>
+                      </div>
+                      <span className={styles.muteUuid}>{m.uuid.substring(0, 8)}…</span>
+                      <span className={styles.muteRemaining}>{mins}m remaining · until {new Date(m.muteEnd).toLocaleTimeString()}</span>
+                    </div>
+                  )
+                })}
               </div>
-            )
-          })}
+            )}
         </div>
       )}
     </div>

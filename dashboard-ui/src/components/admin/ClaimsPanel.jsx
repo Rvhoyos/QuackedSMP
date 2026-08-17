@@ -1,99 +1,74 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState } from 'react'
+import { useResource, apiFetch, Toolbar, IconButton, Btn, Meter, StatCard, Loading, EmptyState, ErrorBanner, ConfirmDialog, Menu, MenuItem, useToast } from '../../ui'
+import { IconFlag } from './MinecraftIcons'
 import styles from './ClaimsPanel.module.css'
 
+const RANK_COLORS = ['#FFD700', '#C0C0C0', '#CD7F32']
+
 export default function ClaimsPanel({ token, onExpired }) {
-  const [data,         setData]         = useState(null)
-  const [loading,      setLoading]      = useState(false)
-  const [error,        setError]        = useState(null)
-  const [confirmUuid,  setConfirmUuid]  = useState(null)
+  const { data, loading, error, refresh } = useResource('/api/admin/claims', { token, onExpired })
+  const [confirm, setConfirm] = useState(null)
+  const toast = useToast()
 
-  const auth = { 'Authorization': `Bearer ${token}` }
-
-  const load = useCallback(async () => {
-    setLoading(true)
+  async function unclaimAll() {
     try {
-      const r = await fetch('/api/admin/claims', { headers: auth })
-      if (r.status === 401) { onExpired(); return }
-      const d = await r.json()
-      if (d.error) setError(d.error)
-      else setData(d)
-    } catch { setError('Failed to load claims') }
-    setLoading(false)
-  }, [token])
-
-  useEffect(() => { load() }, [load])
-
-  async function unclaimAll(player) {
-    try {
-      const r = await fetch('/api/admin/claims/unclaim', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...auth },
-        body: JSON.stringify({ uuid: player.uuid }),
-      })
-      if (r.status === 401) { onExpired(); return }
-      const d = await r.json()
-      if (d.error) { setError(d.error); return }
-      setConfirmUuid(null)
-      load()
-    } catch { setError('Failed to unclaim') }
+      await apiFetch('/api/admin/claims/unclaim', { token, onExpired, json: { uuid: confirm.uuid } })
+      toast(`Unclaimed ${confirm.name}`)
+    } catch (e) { if (!e.expired) toast('Failed to unclaim', 'danger') }
+    setConfirm(null)
+    refresh({ silent: true })
   }
 
-  const maxCount = data?.players?.[0]?.count ?? 1
+  if (loading && !data) return <Loading label="Loading claims…" />
+
+  const players = data?.players || []
+  const maxCount = players[0]?.count ?? 1
 
   return (
     <div className={styles.wrap}>
-      <div className={styles.toolbar}>
-        <span className={styles.count}>
-          {data
-            ? `${data.total} total claims across ${data.players?.length ?? 0} players`
-            : loading ? 'Loading...' : 'No data'}
-        </span>
-        <button className={styles.refresh} onClick={load} disabled={loading}>
-          {loading ? 'Refreshing...' : 'Refresh'}
-        </button>
+      <Toolbar title="Claims" count={data ? `${data.total} total` : ''}>
+        <IconButton tip="Refresh" onClick={() => refresh()}>↻</IconButton>
+      </Toolbar>
+
+      <div className={styles.stats}>
+        <StatCard label="Total Claims" value={data?.total ?? '—'} tone="info" />
+        <StatCard label="Claimers" value={players.length} />
       </div>
 
-      {error && (
-        <div className={styles.error}>
-          {error}
-          <button className={styles.dismiss} onClick={() => setError(null)}>x</button>
+      <ErrorBanner>{error}</ErrorBanner>
+
+      {players.length === 0 ? (
+        <EmptyState icon={<IconFlag size={30} />} label="No claims found" hint="Land claims appear here as players claim chunks." />
+      ) : (
+        <div className={styles.list}>
+          {players.map((p, i) => (
+            <div key={p.uuid} className={styles.row}>
+              <span className={styles.rank} style={i < 3 ? { color: RANK_COLORS[i] } : undefined}>{i + 1}</span>
+              <div className={styles.info}>
+                <span className={styles.name}>{p.name}</span>
+                <span className={styles.uuid}>{p.uuid.substring(0, 8)}…</span>
+              </div>
+              <div className={styles.barWrap}>
+                <Meter value={p.count} max={maxCount} color={i < 3 ? RANK_COLORS[i] : 'var(--mc-wood-light)'} />
+              </div>
+              <span className={styles.count}>{p.count}</span>
+              <Menu trigger={<Btn size="sm" aria-label="Actions">⋯</Btn>}>
+                <MenuItem tone="danger" onSelect={() => setConfirm({ uuid: p.uuid, name: p.name })}>Unclaim All</MenuItem>
+              </Menu>
+            </div>
+          ))}
         </div>
       )}
 
-      <div className={styles.list}>
-        {!data && !loading && <div className={styles.empty}>No data</div>}
-        {data?.players?.length === 0 && <div className={styles.empty}>No claims found</div>}
-        {data?.players?.map(p => (
-          <div key={p.uuid} className={styles.row}>
-            <div className={styles.playerInfo}>
-              <span className={styles.playerName}>{p.name}</span>
-              <span className={styles.playerUuid}>{p.uuid.substring(0, 8)}...</span>
-            </div>
-            <div className={styles.barWrap}>
-              <div className={styles.bar}>
-                <div
-                  className={styles.barFill}
-                  style={{ width: `${Math.round((p.count / maxCount) * 100)}%` }}
-                />
-              </div>
-              <span className={styles.claimCount}>{p.count} claims</span>
-            </div>
-            <div className={styles.actions}>
-              {confirmUuid === p.uuid ? (
-                <>
-                  <span className={styles.confirmLabel}>Unclaim all?</span>
-                  <button className={styles.btnDanger} onClick={() => unclaimAll(p)}>Confirm</button>
-                  <button className={styles.btnGhost} onClick={() => setConfirmUuid(null)}>Cancel</button>
-                </>
-              ) : (
-                <button className={styles.btnDanger} onClick={() => setConfirmUuid(p.uuid)}>
-                  Unclaim All
-                </button>
-              )}
-            </div>
-          </div>
-        ))}
-      </div>
+      <ConfirmDialog
+        open={!!confirm}
+        onOpenChange={o => !o && setConfirm(null)}
+        title={confirm ? `Unclaim all of ${confirm.name}'s land?` : ''}
+        description="Removes every chunk claim this player owns. Cannot be undone."
+        confirmLabel="Unclaim All"
+        tone="danger"
+        onConfirm={unclaimAll}
+      />
     </div>
   )
 }

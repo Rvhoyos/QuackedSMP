@@ -197,6 +197,13 @@ public final class AdminHandler {
         sb.append(String.format("\"backup_max_count\":%d,", SmpConfig.BACKUP_MAX_COUNT));
         sb.append(String.format("\"backup_periodic_enabled\":%b,", SmpConfig.BACKUP_PERIODIC_ENABLED));
         sb.append(String.format("\"backup_interval_hours\":%d,", SmpConfig.BACKUP_INTERVAL_HOURS));
+        // Timelapse
+        sb.append(String.format("\"timelapse_enabled\":%b,", SmpConfig.TIMELAPSE_ENABLED));
+        sb.append(String.format("\"timelapse_interval_minutes\":%d,", SmpConfig.TIMELAPSE_INTERVAL_MINUTES));
+        sb.append("\"timelapse_dimensions\":").append(jsonStrArr(SmpConfig.TIMELAPSE_DIMENSIONS)).append(",");
+        sb.append(String.format("\"timelapse_max_render_mb\":%d,", SmpConfig.TIMELAPSE_MAX_RENDER_MB));
+        sb.append(String.format("\"timelapse_max_skips\":%d,", SmpConfig.TIMELAPSE_MAX_SKIPS));
+        sb.append(String.format("\"timelapse_max_frames\":%d,", SmpConfig.TIMELAPSE_MAX_FRAMES));
         // Web panel link (gated on public download)
         sb.append(String.format("\"panel_url\":\"%s\",", jsonEscape(SmpConfig.PANEL_URL)));
         sb.append(String.format("\"panel_message\":\"%s\",", jsonEscape(SmpConfig.PANEL_MESSAGE)));
@@ -210,6 +217,10 @@ public final class AdminHandler {
         sb.append(String.format("\"hardcore_sidebar_interval_seconds\":%d,", SmpConfig.HARDCORE_SIDEBAR_INTERVAL_SECONDS));
         sb.append(String.format("\"hardcore_sidebar_show_seconds\":%d,", SmpConfig.HARDCORE_SIDEBAR_SHOW_SECONDS));
         sb.append(String.format("\"hardcore_sidebar_on_entry_seconds\":%d,", SmpConfig.HARDCORE_SIDEBAR_ON_ENTRY_SECONDS));
+        sb.append(String.format("\"welcome_sidebar_enabled\":%b,", SmpConfig.WELCOME_SIDEBAR_ENABLED));
+        sb.append(String.format("\"welcome_sidebar_title\":\"%s\",", jsonEscape(SmpConfig.WELCOME_SIDEBAR_TITLE)));
+        sb.append("\"welcome_sidebar_lines\":").append(jsonStrArr(SmpConfig.WELCOME_SIDEBAR_LINES)).append(",");
+        sb.append(String.format("\"welcome_sidebar_show_seconds\":%d,", SmpConfig.WELCOME_SIDEBAR_SHOW_SECONDS));
         // Admin
         sb.append(String.format("\"admin_enabled\":%b,", SmpConfig.ADMIN_ENABLED));
         sb.append(String.format("\"dashboard_port\":%d,", SmpConfig.DASHBOARD_PORT));
@@ -335,6 +346,13 @@ public final class AdminHandler {
             if (patch.has("backup_max_count")) { SmpConfig.BACKUP_MAX_COUNT = Math.max(1, patch.get("backup_max_count").getAsInt()); changed++; }
             if (patch.has("backup_periodic_enabled")) { SmpConfig.BACKUP_PERIODIC_ENABLED = patch.get("backup_periodic_enabled").getAsBoolean(); changed++; }
             if (patch.has("backup_interval_hours")) { SmpConfig.BACKUP_INTERVAL_HOURS = Math.max(1, patch.get("backup_interval_hours").getAsInt()); changed++; }
+            // Timelapse
+            if (patch.has("timelapse_enabled"))          { SmpConfig.TIMELAPSE_ENABLED          = patch.get("timelapse_enabled").getAsBoolean();                    changed++; }
+            if (patch.has("timelapse_interval_minutes")) { SmpConfig.TIMELAPSE_INTERVAL_MINUTES = Math.max(1, patch.get("timelapse_interval_minutes").getAsInt());   changed++; }
+            if (patch.has("timelapse_dimensions") && patch.get("timelapse_dimensions").isJsonArray()) { loadStrArr(patch.getAsJsonArray("timelapse_dimensions"), SmpConfig.TIMELAPSE_DIMENSIONS); changed++; }
+            if (patch.has("timelapse_max_render_mb"))    { SmpConfig.TIMELAPSE_MAX_RENDER_MB    = Math.max(0, patch.get("timelapse_max_render_mb").getAsInt());        changed++; }
+            if (patch.has("timelapse_max_skips"))        { SmpConfig.TIMELAPSE_MAX_SKIPS        = Math.max(0, patch.get("timelapse_max_skips").getAsInt());            changed++; }
+            if (patch.has("timelapse_max_frames"))       { SmpConfig.TIMELAPSE_MAX_FRAMES       = Math.max(0, patch.get("timelapse_max_frames").getAsInt());         changed++; }
             // Web panel link
             if (patch.has("panel_url")) {
                 String url = patch.get("panel_url").getAsString().trim();
@@ -365,6 +383,10 @@ public final class AdminHandler {
             if (patch.has("hardcore_sidebar_interval_seconds")) { SmpConfig.HARDCORE_SIDEBAR_INTERVAL_SECONDS = Math.max(10, patch.get("hardcore_sidebar_interval_seconds").getAsInt()); changed++; }
             if (patch.has("hardcore_sidebar_show_seconds"))     { SmpConfig.HARDCORE_SIDEBAR_SHOW_SECONDS     = Math.max(1,  patch.get("hardcore_sidebar_show_seconds").getAsInt());     changed++; }
             if (patch.has("hardcore_sidebar_on_entry_seconds")) { SmpConfig.HARDCORE_SIDEBAR_ON_ENTRY_SECONDS = Math.max(1,  patch.get("hardcore_sidebar_on_entry_seconds").getAsInt()); changed++; }
+            if (patch.has("welcome_sidebar_enabled")) { SmpConfig.WELCOME_SIDEBAR_ENABLED = patch.get("welcome_sidebar_enabled").getAsBoolean(); changed++; }
+            if (patch.has("welcome_sidebar_title"))   { SmpConfig.WELCOME_SIDEBAR_TITLE   = patch.get("welcome_sidebar_title").getAsString(); changed++; }
+            if (patch.has("welcome_sidebar_lines") && patch.get("welcome_sidebar_lines").isJsonArray()) { loadStrArr(patch.getAsJsonArray("welcome_sidebar_lines"), SmpConfig.WELCOME_SIDEBAR_LINES); changed++; }
+            if (patch.has("welcome_sidebar_show_seconds")) { SmpConfig.WELCOME_SIDEBAR_SHOW_SECONDS = Math.max(1, patch.get("welcome_sidebar_show_seconds").getAsInt()); changed++; }
             // Admin
             if (patch.has("admin_enabled"))         { SmpConfig.ADMIN_ENABLED         = patch.get("admin_enabled").getAsBoolean();        changed++; }
             if (patch.has("dashboard_port"))        { SmpConfig.DASHBOARD_PORT        = patch.get("dashboard_port").getAsInt();           changed++; }

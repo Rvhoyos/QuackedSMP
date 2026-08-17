@@ -125,32 +125,6 @@ public final class ClaimService {
         return Result.SUCCESS;
     }
 
-    // Returns claims transferred, or negative: -1 same player, -2 no claims, -3 would exceed target limit.
-    public static int transfer(ServerPlayer sender, ServerPlayer target) {
-        if (sender.getUUID().equals(target.getUUID()))
-            return -1;
-
-        var data = mc.smpessentials.claims.storage.ClaimedSavedData.get((ServerLevel) sender.level());
-        int senderCount = data.countByOwner(sender.getUUID());
-        if (senderCount == 0)
-            return -2;
-
-
-        boolean isTargetOp = ((ServerLevel) sender.level()).getServer().getPlayerList().isOp(target.nameAndId());
-        if (!isTargetOp) {
-            int targetCount = data.countByOwner(target.getUUID());
-            int targetLimit = mc.smpessentials.config.SmpConfig.MAX_CLAIMS
-                    + mc.smpessentials.tier.TierService.getBonusClaims(
-                            mc.smpessentials.tier.TierService.getTier(target.getUUID(),
-                                    ((net.minecraft.server.level.ServerLevel) target.level()).getServer()));
-            if (targetCount + senderCount > targetLimit)
-                return -3;
-        }
-
-        data.transferClaims(sender.getUUID(), target.getUUID());
-        return senderCount;
-    }
-
     public enum Result {
         SUCCESS,
         ALREADY_CLAIMED,

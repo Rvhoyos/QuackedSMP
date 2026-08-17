@@ -303,6 +303,18 @@ public final class DashboardManager {
         // Public latest-snapshot download (gated by BACKUP_PUBLIC_DOWNLOAD)
         s.addDownloadRoute("/api/backups/latest/download",
                 (m, h) -> BackupHandler.handleLatestPublic(m, h, mcServer));
+
+        // World-map timelapse frames
+        s.addRoute("/api/admin/timelapse",
+                (m, h, b) -> TimelapseHandler.handleList(m, h, b, mcServer));
+        s.addRoute("/api/admin/timelapse/capture",
+                (m, h, b) -> TimelapseHandler.handleCapture(m, h, b, mcServer));
+        s.addRoute("/api/admin/timelapse/delete",
+                TimelapseHandler::handleDelete);
+        s.addDownloadRoute("/api/admin/timelapse/frame",
+                TimelapseHandler::handleFrame);
+        s.addDownloadRoute("/api/admin/timelapse/export",
+                TimelapseHandler::handleExport);
     }
 
     // ── Scheduled ─────────────────────────────────────────────────────────────

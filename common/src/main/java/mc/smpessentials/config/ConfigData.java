@@ -122,14 +122,33 @@ public final class ConfigData {
     public boolean hardcoreTeamVisibility = false;
     public String  hardcoreTeamName       = "hardcore";
     // Per-player run-time sidebar for session members. Transient: shown periodically and on
-    // session entry, not permanently on screen.
-    public boolean hardcoreSidebarEnabled        = false;
+    // session entry, not permanently on screen. On by default; inert until hardcore is enabled
+    // since it only ever targets players in a hardcore session.
+    public boolean hardcoreSidebarEnabled        = true;
     // Mean gap between periodic sidebar pulses (jittered +/-50% at runtime). ~45 minutes.
     public int     hardcoreSidebarIntervalSeconds = 2700;
     // How long the periodic pulse stays on screen.
     public int     hardcoreSidebarShowSeconds     = 20;
     // How long the flash on session create/join stays on screen.
     public int     hardcoreSidebarOnEntrySeconds  = 10;
+
+    // Welcome sidebar (2nd MOTD). Shown transiently when a player enters normal survival: on join
+    // (unless in a hardcore session) and when returning to survival from a session. On by default,
+    // and the default content is itself the nudge: it tells the owner to customize it in the panel
+    // or config. Title and lines support & color codes and {player}/{server} placeholders.
+    public boolean welcomeSidebarEnabled     = true;
+    public String  welcomeSidebarTitle       = "&6{server}";
+    public List<String> welcomeSidebarLines  = new ArrayList<>(List.of(
+            "&eNew here? &f/rules",
+            "&aProtect land: &f/claim",
+            "&bSleep in a bed to set &f/home",
+            "&dMore commands: &f/smp help",
+            " ",
+            "&8Owners: edit this in the panel",
+            "&8(Config > Chat) or",
+            "&8config/quackedsmp.json + /smp reload"));
+    // How long the welcome sidebar stays on screen.
+    public int     welcomeSidebarShowSeconds = 12;
 
     public VotifierConfig votifier = new VotifierConfig();
     public DashboardConfig dashboard = new DashboardConfig();
@@ -164,6 +183,30 @@ public final class ConfigData {
     public boolean shopsEnabled = false;
     public boolean economyEnabled = false;
     public KitsConfig kits = new KitsConfig();
+
+    // World-map timelapse: periodically snapshots a top-down render of the world,
+    // auto-sized to the generated chunk extent (read from region files, no BlueMap
+    // dependency), to build a timelapse over time. Off by default (opt-in feature).
+    public boolean timelapseEnabled         = false;
+    public int     timelapseIntervalMinutes = 60;
+    public String  timelapseDir             = "timelapse";
+    // Dimensions to snapshot. Each capture (periodic or manual) renders every
+    // listed dimension sequentially into its own parallel folder under
+    // timelapseDir. Ids not present on the running server are skipped.
+    public List<String> timelapseDimensions = new ArrayList<>(List.of("minecraft:overworld"));
+    // Heap cap in MB for one render. 0 = auto: render 1 block = 1 pixel and fit
+    // to the heap free at capture time, downsampling only if a capture would not
+    // fit. A positive value caps forced (players-online) captures, trading map
+    // resolution for RAM on a server that never idles; it has no effect on idle
+    // captures. Idle captures always render at full resolution.
+    public int     timelapseMaxRenderMb     = 0;
+    // Consecutive overdue intervals to wait for an idle server before forcing a
+    // capture while players are online. 0 = capture every interval regardless.
+    public int     timelapseMaxSkips        = 3;
+    // 0 = keep every frame. Above 0, once stored frames exceed this the oldest
+    // are downsampled (every Nth dropped) so the timelapse degrades in smoothness
+    // rather than losing its beginning.
+    public int     timelapseMaxFrames       = 0;
 
     public static final class VotifierConfig {
         public boolean enabled = false;

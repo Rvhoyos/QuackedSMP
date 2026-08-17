@@ -1,0 +1,38 @@
+.wrap { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-height: 0; background: var(--panel-surface); }
+
+.tabs { display: flex; gap: 3px; }
+.tab {
+  font-family: var(--font-pixel); font-size: 6px; letter-spacing: 0.3px; padding: 5px 8px;
+  color: var(--txt-faint); background: var(--panel-card); border: 1px solid #0d0d0d; cursor: pointer;
+  transition: color var(--t-fast), background var(--t-fast); text-shadow: 1px 1px 0 rgba(0,0,0,0.5);
+}
+.tab:hover { color: var(--txt-secondary); }
+.tabOn { color: #fff; background: var(--mc-wood); border-color: var(--mc-wood-dark); }
+
+.stats { display: flex; gap: 10px; padding: 12px 14px 4px; flex-wrap: wrap; }
+
+.grid {
+  flex: 1; overflow-y: auto; padding: 12px 14px;
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; align-content: start;
+}
+.card {
+  display: flex; flex-direction: column; gap: 6px; padding: 12px;
+  background: var(--panel-card);
+  border-top: 2px solid #56546a; border-left: 2px solid #56546a; border-bottom: 2px solid #0d0d0d; border-right: 2px solid #0d0d0d;
+  animation: fadeIn 120ms ease;
+}
+@keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+.cardTop { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.item { font-family: var(--font-pixel); font-size: 8px; color: var(--txt-primary); text-transform: capitalize; text-shadow: 1px 1px 0 rgba(0,0,0,0.5); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.price { font-family: var(--font-sans); font-size: 13px; color: var(--green); text-transform: capitalize; }
+.meta { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.stock { font-family: var(--font-sans); font-size: 11px; color: var(--txt-muted); }
+.owner { font-family: var(--font-sans); font-size: 11px; color: var(--txt-faint); }
+.loc { font-family: var(--font-mono); font-size: 10px; color: var(--txt-faint); }
+
+.list { flex: 1; overflow-y: auto; padding: 8px 14px; display: flex; flex-direction: column; gap: 2px; }
+.econRow { display: flex; align-items: center; gap: 12px; padding: 9px 10px; border-left: 3px solid transparent; transition: background var(--t-fast); }
+.econRow:hover { background: rgba(255,255,255,0.04); border-left-color: var(--mc-wood); }
+.rank { font-family: var(--font-pixel); font-size: 9px; color: var(--txt-faint); width: 22px; text-align: center; flex-shrink: 0; text-shadow: 1px 1px 0 rgba(0,0,0,0.5); }
+.econName { font-family: var(--font-pixel); font-size: 8px; color: var(--txt-primary); flex: 1; text-shadow: 1px 1px 0 rgba(0,0,0,0.5); }
+.balance { display: inline-flex; align-items: center; gap: 5px; font-family: var(--font-sans); font-size: 13px; color: var(--green); }

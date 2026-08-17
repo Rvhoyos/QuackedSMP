@@ -1,7 +1,7 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
+import { Btn, Meter, SectionCard, Loading, EmptyState, ErrorBanner, Field, Input, Slider, Badge, useToast } from '../../ui'
+import { IconSkills } from './MinecraftIcons'
 import styles from './SkillsPanel.module.css'
-
-// ── Constants ─────────────────────────────────────────────────────────────────
 
 const CATEGORIES = [
   { name: 'Industrial', skills: ['MINING', 'EXCAVATION', 'WOODCUTTING'] },
@@ -15,14 +15,7 @@ const SKILL_LABELS = {
   MELEE: 'Melee', ARCHERY: 'Archery', DEFENSE: 'Defense',
   ENCHANTING: 'Enchanting', ALCHEMY: 'Alchemy', TRADING: 'Trading',
 }
-
-const SKILL_NAMES = [
-  'mining', 'excavation', 'woodcutting',
-  'farming', 'fishing', 'agility',
-  'melee', 'archery', 'defense',
-  'enchanting', 'alchemy', 'trading',
-]
-
+const SKILL_NAMES = ['mining', 'excavation', 'woodcutting', 'farming', 'fishing', 'agility', 'melee', 'archery', 'defense', 'enchanting', 'alchemy', 'trading']
 const CFG_KEYS = [
   'skill_xp_exponent',
   ...SKILL_NAMES.map(s => `skill_cooldown_${s}`),
@@ -30,56 +23,42 @@ const CFG_KEYS = [
   'cap_industrial_speed', 'cap_nature_health', 'cap_combat_damage', 'cap_knowledge_xp',
   'cap_double_drop', 'cap_defense_armor', 'cap_safe_landing',
 ]
-
 const STAT_CAPS = [
-  { key: 'cap_industrial_speed', label: 'Industrial Speed',   hint: 'Max movement speed bonus at level 100 (0.5 = +50%)',          step: 0.05 },
-  { key: 'cap_nature_health',    label: 'Nature Health',      hint: 'Max bonus hearts at level 100 (10.0 = +10 hearts)',            step: 0.5  },
-  { key: 'cap_combat_damage',    label: 'Combat Damage',      hint: 'Max bonus damage multiplier at level 100 (1.0 = +100%)',       step: 0.05 },
-  { key: 'cap_knowledge_xp',     label: 'Knowledge XP',       hint: 'Max bonus XP orb multiplier at level 100 (1.0 = +100%)',      step: 0.05 },
-  { key: 'cap_double_drop',      label: 'Double Drop Chance', hint: 'Max double drop chance at Industrial level 100 (0.5 = 50%)',   step: 0.05 },
-  { key: 'cap_defense_armor',    label: 'Defense Armor',      hint: 'Max bonus armor points at Defense level 100 (10.0 = +10)',     step: 0.5  },
-  { key: 'cap_safe_landing',     label: 'Safe Landing',       hint: 'Max fall damage absorbed at Agility level 100 (1.0 = 100%)',  step: 0.05 },
+  { key: 'cap_industrial_speed', label: 'Industrial Speed',   hint: 'Max move-speed bonus at lvl 100 (0.5 = +50%)',        step: 0.05 },
+  { key: 'cap_nature_health',    label: 'Nature Health',      hint: 'Max bonus hearts at lvl 100 (10 = +10 hearts)',        step: 0.5 },
+  { key: 'cap_combat_damage',    label: 'Combat Damage',      hint: 'Max bonus damage multiplier at lvl 100 (1 = +100%)',   step: 0.05 },
+  { key: 'cap_knowledge_xp',     label: 'Knowledge XP',       hint: 'Max XP-orb multiplier at lvl 100 (1 = +100%)',         step: 0.05 },
+  { key: 'cap_double_drop',      label: 'Double Drop Chance', hint: 'Max double-drop chance at Industrial 100 (0.5 = 50%)', step: 0.05 },
+  { key: 'cap_defense_armor',    label: 'Defense Armor',      hint: 'Max bonus armor at Defense 100 (10 = +10)',            step: 0.5 },
+  { key: 'cap_safe_landing',     label: 'Safe Landing',       hint: 'Max fall damage absorbed at Agility 100 (1 = 100%)',   step: 0.05 },
 ]
 
-// ── Main component ────────────────────────────────────────────────────────────
-
 export default function SkillsPanel({ token, onExpired }) {
-  const [activeTab, setActiveTab] = useState('settings')
-
+  const [tab, setTab] = useState('settings')
   return (
     <div className={styles.wrap}>
       <div className={styles.subtabs}>
-        <button
-          className={`${styles.subtab} ${activeTab === 'players' ? styles.subtabActive : ''}`}
-          onClick={() => setActiveTab('players')}
-        >Players</button>
-        <button
-          className={`${styles.subtab} ${activeTab === 'settings' ? styles.subtabActive : ''}`}
-          onClick={() => setActiveTab('settings')}
-        >Settings</button>
+        <button className={`${styles.subtab} ${tab === 'players' ? styles.subtabOn : ''}`} onClick={() => setTab('players')}>Players</button>
+        <button className={`${styles.subtab} ${tab === 'settings' ? styles.subtabOn : ''}`} onClick={() => setTab('settings')}>Settings</button>
       </div>
-
-      {activeTab === 'players'  && <PlayersTab  token={token} onExpired={onExpired} />}
-      {activeTab === 'settings' && <SettingsTab token={token} onExpired={onExpired} />}
+      {tab === 'players' ? <PlayersTab token={token} onExpired={onExpired} /> : <SettingsTab token={token} onExpired={onExpired} />}
     </div>
   )
 }
 
-// ── Players tab ───────────────────────────────────────────────────────────────
-
 function PlayersTab({ token, onExpired }) {
   const [allPlayers, setAllPlayers] = useState([])
-  const [query,      setQuery]      = useState('')
-  const [showSugg,   setShowSugg]   = useState(false)
-  const [selected,   setSelected]   = useState(null)
+  const [query, setQuery] = useState('')
+  const [showSugg, setShowSugg] = useState(false)
+  const [selected, setSelected] = useState(null)
   const [playerData, setPlayerData] = useState(null)
-  const [editSkill,  setEditSkill]  = useState(null)
-  const [editLevel,  setEditLevel]  = useState('')
-  const [saving,     setSaving]     = useState(false)
-  const [loading,    setLoading]    = useState(false)
-  const [error,      setError]      = useState(null)
-
+  const [editSkill, setEditSkill] = useState(null)
+  const [editLevel, setEditLevel] = useState('')
+  const [saving, setSaving] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState(null)
   const auth = { Authorization: `Bearer ${token}` }
+  const toast = useToast()
 
   useEffect(() => {
     fetch('/api/admin/skills/players', { headers: auth })
@@ -88,18 +67,15 @@ function PlayersTab({ token, onExpired }) {
       .catch(() => {})
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const filtered = allPlayers
-    .filter(p => p.name.toLowerCase().includes(query.toLowerCase()) || p.uuid.startsWith(query))
-    .slice(0, 20)
+  const filtered = allPlayers.filter(p => p.name.toLowerCase().includes(query.toLowerCase()) || p.uuid.startsWith(query)).slice(0, 20)
 
   async function selectPlayer(p) {
-    setSelected(p); setQuery(p.name); setShowSugg(false)
-    setPlayerData(null); setEditSkill(null); setLoading(true)
+    setSelected(p); setQuery(p.name); setShowSugg(false); setPlayerData(null); setEditSkill(null); setLoading(true)
     try {
       const r = await fetch(`/api/admin/skills?player=${encodeURIComponent(p.uuid)}`, { headers: auth })
       if (r.status === 401) { onExpired(); return }
       const d = await r.json()
-      if (d.error) { setError(d.error) } else { setPlayerData(d) }
+      if (d.error) setError(d.error); else setPlayerData(d)
     } catch { setError('Failed to load player data') }
     setLoading(false)
   }
@@ -109,102 +85,66 @@ function PlayersTab({ token, onExpired }) {
     if (isNaN(level) || level < 0 || level > 100) { setError('Level must be 0–100'); return }
     setSaving(true)
     try {
-      const r = await fetch('/api/admin/skills/set', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...auth },
-        body: JSON.stringify({ uuid: selected.uuid, skill, level }),
-      })
+      const r = await fetch('/api/admin/skills/set', { method: 'POST', headers: { 'Content-Type': 'application/json', ...auth }, body: JSON.stringify({ uuid: selected.uuid, skill, level }) })
       if (r.status === 401) { onExpired(); return }
       const d = await r.json()
       if (d.error) setError(d.error)
-      else {
-        setPlayerData(prev => ({ ...prev, skills: { ...prev.skills, [skill]: { level: d.level, xp: d.xp } } }))
-        setEditSkill(null)
-      }
+      else { setPlayerData(prev => ({ ...prev, skills: { ...prev.skills, [skill]: { level: d.level, xp: d.xp } } })); setEditSkill(null); toast(`${SKILL_LABELS[skill]} → ${d.level}`) }
     } catch { setError('Failed to save') }
     setSaving(false)
   }
 
   return (
-    <>
-      <div className={styles.searchBox}>
-        <div className={styles.sectionTitle}>Skills Editor</div>
-        <div className={styles.searchRow}>
-          <div className={styles.searchCombo}>
-            <input
-              className={styles.input}
-              placeholder="Search player name or UUID..."
-              value={query}
-              onChange={e => { setQuery(e.target.value); setSelected(null); setPlayerData(null); setShowSugg(true) }}
-              onFocus={() => setShowSugg(true)}
-              onBlur={() => setTimeout(() => setShowSugg(false), 150)}
-            />
-            {showSugg && query && !selected && filtered.length > 0 && (
-              <div className={styles.suggestions}>
-                {filtered.map(p => (
-                  <button key={p.uuid} className={styles.suggestion} onMouseDown={() => selectPlayer(p)}>
-                    <span className={styles.suggName}>{p.name}</span>
-                    <span className={styles.suggLevel}>Total Lv {p.totalLevel}</span>
-                  </button>
-                ))}
-              </div>
-            )}
+    <div className={styles.body}>
+      <div className={styles.searchCombo}>
+        <input className={styles.searchInput} placeholder="Search player name or UUID…" value={query}
+          onChange={e => { setQuery(e.target.value); setSelected(null); setPlayerData(null); setShowSugg(true) }}
+          onFocus={() => setShowSugg(true)} onBlur={() => setTimeout(() => setShowSugg(false), 150)} />
+        {showSugg && query && !selected && filtered.length > 0 && (
+          <div className={styles.suggestions}>
+            {filtered.map(p => (
+              <button key={p.uuid} className={styles.suggestion} onMouseDown={() => selectPlayer(p)}>
+                <span>{p.name}</span><span className={styles.suggLevel}>Total {p.totalLevel}</span>
+              </button>
+            ))}
           </div>
-        </div>
+        )}
       </div>
 
-      {error && (
-        <div className={styles.error}>
-          {error}
-          <button className={styles.dismiss} onClick={() => setError(null)}>x</button>
-        </div>
-      )}
+      <ErrorBanner>{error}</ErrorBanner>
 
-      {!selected && !loading && (
-        <div className={styles.empty}>Search for a player to view and edit their skills.</div>
-      )}
-      {loading && <div className={styles.empty}>Loading...</div>}
-
-      {playerData && !loading && (
-        <div className={styles.playerSkills}>
-          <div className={styles.playerHeader}>
-            <span className={styles.playerName}>{playerData.name}</span>
-            <span className={styles.playerUuid}>{playerData.uuid}</span>
-          </div>
-          <div className={styles.categories}>
+      {loading ? <Loading label="Loading skills…" />
+        : !selected ? <EmptyState icon={<IconSkills size={30} />} label="Search for a player" hint="Pick a player to view and edit their 12 skill levels." />
+        : playerData && (
+          <div className={styles.playerBlock}>
+            <div className={styles.playerHead}>
+              <span className={styles.playerName}>{playerData.name}</span>
+              <span className={styles.playerUuid}>{playerData.uuid}</span>
+            </div>
             {CATEGORIES.map(cat => (
-              <div key={cat.name} className={styles.category}>
-                <div className={styles.catTitle}>{cat.name}</div>
-                <div className={styles.skillCards}>
+              <div key={cat.name} className={styles.catBlock}>
+                <div className={styles.catLabel}>{cat.name}</div>
+                <div className={styles.skillGrid}>
                   {cat.skills.map(skill => {
                     const s = playerData.skills[skill] || { level: 0, xp: 0 }
                     const isEditing = editSkill === skill
                     return (
                       <div key={skill} className={styles.skillCard}>
-                        <div className={styles.skillName}>{SKILL_LABELS[skill]}</div>
-                        <div className={styles.skillLevel}>Lv {s.level}</div>
+                        <div className={styles.skillTop}>
+                          <span className={styles.skillName}>{SKILL_LABELS[skill]}</span>
+                          <Badge variant={s.level >= 100 ? 'vip' : undefined}>Lv {s.level}</Badge>
+                        </div>
+                        <Meter value={s.level} max={100} color={s.level >= 100 ? 'var(--mauve)' : 'var(--mc-wood-light)'} />
                         {isEditing ? (
                           <div className={styles.editRow}>
-                            <input
-                              className={styles.xpInput}
-                              type="number"
-                              value={editLevel}
-                              onChange={e => setEditLevel(e.target.value)}
-                              placeholder="Level (0–100)"
-                              min="0" max="100" autoFocus
-                            />
-                            <button className={styles.btn} disabled={saving} onClick={() => saveLevel(skill)}>
-                              {saving ? '...' : 'Save'}
-                            </button>
-                            <button className={styles.btnGhost} onClick={() => setEditSkill(null)}>Cancel</button>
+                            <input className={styles.levelInput} type="number" value={editLevel} onChange={e => setEditLevel(e.target.value)} placeholder="0–100" min="0" max="100" autoFocus />
+                            <Btn size="sm" variant="ok" disabled={saving} onClick={() => saveLevel(skill)}>{saving ? '…' : 'Save'}</Btn>
+                            <Btn size="sm" variant="ghost" onClick={() => setEditSkill(null)}>×</Btn>
                           </div>
                         ) : (
-                          <div className={styles.skillXpRow}>
-                            <span className={styles.skillXp}>{Math.round(s.xp).toLocaleString()} XP</span>
-                            <button
-                              className={styles.btnGhost}
-                              onClick={() => { setEditSkill(skill); setEditLevel(String(s.level)) }}
-                            >Edit</button>
+                          <div className={styles.skillFoot}>
+                            <span className={styles.xp}>{Math.round(s.xp).toLocaleString()} XP</span>
+                            <Btn size="sm" onClick={() => { setEditSkill(skill); setEditLevel(String(s.level)) }}>Edit</Btn>
                           </div>
                         )}
                       </div>
@@ -214,51 +154,35 @@ function PlayersTab({ token, onExpired }) {
               </div>
             ))}
           </div>
-        </div>
-      )}
-    </>
+        )}
+    </div>
   )
 }
 
-// ── Settings tab ──────────────────────────────────────────────────────────────
-
 function SettingsTab({ token, onExpired }) {
-  const [cfg,     setCfg]     = useState(null)
-  const [draft,   setDraft]   = useState({})
-  const [saving,  setSaving]  = useState(false)
-  const [msg,     setMsg]     = useState('')
+  const [cfg, setCfg] = useState(null)
+  const [draft, setDraft] = useState({})
+  const [saving, setSaving] = useState(false)
+  const [msg, setMsg] = useState('')
   const [loadErr, setLoadErr] = useState('')
-
   const auth = { Authorization: `Bearer ${token}` }
 
   useEffect(() => {
     fetch('/api/admin/config', { headers: auth })
-      .then(r => {
-        if (r.status === 401 || r.status === 403) { onExpired(); throw new Error('session') }
-        if (!r.ok) throw new Error('server')
-        return r.json()
-      })
+      .then(r => { if (r.status === 401 || r.status === 403) { onExpired(); throw new Error('session') } if (!r.ok) throw new Error('server'); return r.json() })
       .then(d => { setCfg(d); setDraft(d) })
       .catch(e => { if (e.message !== 'session') setLoadErr('Failed to load config.') })
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   function patch(key, val) { setDraft(d => ({ ...d, [key]: val })) }
-
   const isDirty = cfg && CFG_KEYS.some(k => String(draft[k]) !== String(cfg[k]))
 
   async function save() {
     const payload = {}
-    for (const k of CFG_KEYS) {
-      if (draft[k] === undefined) continue
-      if (String(draft[k]) !== String(cfg[k])) payload[k] = draft[k]
-    }
+    for (const k of CFG_KEYS) { if (draft[k] === undefined) continue; if (String(draft[k]) !== String(cfg[k])) payload[k] = draft[k] }
     setSaving(true); setMsg('')
     try {
-      const r = await fetch('/api/admin/config', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...auth },
-        body: JSON.stringify(payload),
-      })
+      const r = await fetch('/api/admin/config', { method: 'POST', headers: { 'Content-Type': 'application/json', ...auth }, body: JSON.stringify(payload) })
       if (r.status === 403) { onExpired(); return }
       const d = await r.json()
       if (!r.ok) setMsg(d.error || 'Save failed.')
@@ -267,79 +191,51 @@ function SettingsTab({ token, onExpired }) {
     setSaving(false)
   }
 
-  if (!cfg) return <div className={styles.empty}>{loadErr || 'Loading…'}</div>
+  if (!cfg) return loadErr ? <ErrorBanner>{loadErr}</ErrorBanner> : <Loading label="Loading settings…" />
+
+  const expo = draft.skill_xp_exponent ?? 1.5
 
   return (
-    <div className={styles.cfgWrap}>
-      <div className={styles.cfgScroll}>
+    <div className={styles.settingsWrap}>
+      <div className={styles.settingsScroll}>
+        <SectionCard title="XP Scaling">
+          <Field label="XP Exponent" hint="Higher = slower leveling. Default 1.5.">
+            <Slider value={expo} min={1} max={Math.max(3, expo)} step={0.05} onChange={v => patch('skill_xp_exponent', v)} />
+          </Field>
+        </SectionCard>
 
-        {/* XP Scaling */}
-        <div className={styles.cfgSection}>XP Scaling</div>
-        <div className={styles.cfgRow}>
-          <div className={styles.cfgLeft}>
-            <span className={styles.cfgLabel}>XP Exponent</span>
-            <span className={styles.cfgHint}>Higher = slower level scaling. Default 1.5, change carefully.</span>
-          </div>
-          <input className={styles.numInput} type="number" step="0.05"
-            value={draft.skill_xp_exponent ?? ''}
-            onChange={e => patch('skill_xp_exponent', parseFloat(e.target.value))} />
-        </div>
-
-        {/* Per-skill cooldowns and unlock levels */}
         {CATEGORIES.map(cat => (
-          <div key={cat.name}>
-            <div className={styles.cfgSection}>{cat.name} Skills</div>
-            <div className={styles.skillTableHead}>
-              <span />
-              <span className={styles.skillColLabel}>Cooldown</span>
-              <span className={styles.skillColLabel}>Unlock Lvl</span>
-            </div>
+          <SectionCard key={cat.name} title={`${cat.name} Skills`}>
+            <div className={styles.skillTableHead}><span /><span>Cooldown (s)</span><span>Unlock Lvl</span></div>
             {cat.skills.map(skill => {
               const s = skill.toLowerCase()
+              const unlock = draft[`skill_unlock_${s}`] ?? 0
               return (
                 <div key={skill} className={styles.skillTableRow}>
-                  <span className={styles.cfgLabel}>{SKILL_LABELS[skill]}</span>
-                  <div className={styles.numWrap}>
-                    <input className={styles.numInput} type="number" step="1"
-                      value={draft[`skill_cooldown_${s}`] ?? ''}
-                      onChange={e => patch(`skill_cooldown_${s}`, parseInt(e.target.value))} />
-                    <span className={styles.suffix}>s</span>
-                  </div>
-                  <input className={styles.numInput} type="number" step="1"
-                    value={draft[`skill_unlock_${s}`] ?? ''}
-                    onChange={e => patch(`skill_unlock_${s}`, parseInt(e.target.value))} />
+                  <span className={styles.rowLabel}>{SKILL_LABELS[skill]}</span>
+                  <Input type="number" step="1" value={draft[`skill_cooldown_${s}`] ?? ''} onChange={e => patch(`skill_cooldown_${s}`, parseInt(e.target.value))} />
+                  <Slider value={unlock} min={0} max={100} step={1} onChange={v => patch(`skill_unlock_${s}`, v)} />
                 </div>
               )
             })}
-          </div>
+          </SectionCard>
         ))}
 
-        {/* Passive stat caps */}
-        <div className={styles.cfgSection}>Passive Stat Caps</div>
-        {STAT_CAPS.map(({ key, label, hint, step }) => (
-          <div key={key} className={styles.cfgRow}>
-            <div className={styles.cfgLeft}>
-              <span className={styles.cfgLabel}>{label}</span>
-              <span className={styles.cfgHint}>{hint}</span>
-            </div>
-            <input className={styles.numInput} type="number" step={step}
-              value={draft[key] ?? ''}
-              onChange={e => patch(key, parseFloat(e.target.value))} />
+        <SectionCard title="Passive Stat Caps">
+          <div className={styles.capGrid}>
+            {STAT_CAPS.map(({ key, label, hint, step }) => (
+              <Field key={key} label={label} hint={hint}>
+                <Input type="number" step={step} value={draft[key] ?? ''} onChange={e => patch(key, parseFloat(e.target.value))} />
+              </Field>
+            ))}
           </div>
-        ))}
-
+        </SectionCard>
       </div>
 
-      <div className={styles.cfgFooter}>
-        {msg && (
-          <span className={`${styles.cfgMsg} ${msg.startsWith('Saved') ? styles.cfgOk : styles.cfgErr}`}>
-            {msg}
-          </span>
-        )}
-        {isDirty && <span className={styles.cfgDirty}>Unsaved changes</span>}
-        <button className={styles.btn} onClick={save} disabled={saving || !isDirty}>
-          {saving ? 'Saving…' : 'Save & Reload'}
-        </button>
+      <div className={styles.saveBar}>
+        {msg && <span className={msg.startsWith('Saved') ? styles.msgOk : styles.msgErr}>{msg}</span>}
+        {isDirty && <span className={styles.dirty}>Unsaved changes</span>}
+        <Btn variant="primary" onClick={save} disabled={saving || !isDirty}>{saving ? 'Saving…' : 'Save & Reload'}</Btn>
       </div>
     </div>
   )

@@ -1,105 +1,77 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
+import { Toolbar, IconButton, Btn, Badge, SectionCard, Loading, EmptyState, ErrorBanner, ConfirmDialog, Field, Input, Select, Menu, MenuItem, useToast } from '../../ui'
+import { IconPortal } from './MinecraftIcons'
 import styles from './DimsPanel.module.css'
 
-function authHeaders(token) {
-  return token ? { Authorization: `Bearer ${token}` } : {}
-}
+function authHeaders(token) { return token ? { Authorization: `Bearer ${token}` } : {} }
 
 const TYPE_OPTIONS = [
-  { value: 'overworld',        label: 'Overworld (default biomes)' },
+  { value: 'overworld', label: 'Overworld (default biomes)' },
   { value: 'overworld-biomes', label: 'Overworld (custom biomes)' },
-  { value: 'overworld-flat',   label: 'Overworld Flat' },
-  { value: 'ether',            label: 'Ether - floating islands (default biomes)' },
-  { value: 'ether-biomes',     label: 'Ether - floating islands (custom biomes)' },
-  { value: 'nether',           label: 'Nether' },
-  { value: 'end',              label: 'End' },
+  { value: 'overworld-flat', label: 'Overworld Flat' },
+  { value: 'ether', label: 'Ether — floating islands (default biomes)' },
+  { value: 'ether-biomes', label: 'Ether — floating islands (custom biomes)' },
+  { value: 'nether', label: 'Nether' },
+  { value: 'end', label: 'End' },
 ]
-
 const BIOME_TYPES = new Set(['overworld-biomes', 'ether-biomes'])
 
 function buildApiPayload(uiType, flatConfig, selectedBiomes) {
   switch (uiType) {
-    case 'overworld':        return { type: 'overworld' }
-    case 'overworld-biomes': {
-      if (!selectedBiomes.length) return { type: 'overworld' }
-      return { type: 'overworld', config: `biomes ${selectedBiomes.map(b => `${b.id}:${b.weight}`).join(' ')}` }
-    }
+    case 'overworld': return { type: 'overworld' }
+    case 'overworld-biomes':
+      return selectedBiomes.length ? { type: 'overworld', config: `biomes ${selectedBiomes.map(b => `${b.id}:${b.weight}`).join(' ')}` } : { type: 'overworld' }
     case 'overworld-flat': {
       const raw = flatConfig.trim()
-      return {
-        type: 'overworld',
-        config: raw ? `flat ${raw}` : 'flat minecraft:bedrock:1 minecraft:stone:6 minecraft:dirt:2 minecraft:grass_block:1',
-      }
+      return { type: 'overworld', config: raw ? `flat ${raw}` : 'flat minecraft:bedrock:1 minecraft:stone:6 minecraft:dirt:2 minecraft:grass_block:1' }
     }
-    case 'ether':            return { type: 'ether' }
-    case 'ether-biomes': {
-      if (!selectedBiomes.length) return { type: 'ether' }
-      return { type: 'ether', config: `biomes ${selectedBiomes.map(b => `${b.id}:${b.weight}`).join(' ')}` }
-    }
-    case 'nether':           return { type: 'nether' }
-    case 'end':              return { type: 'end' }
-    default:                 return { type: uiType }
+    case 'ether': return { type: 'ether' }
+    case 'ether-biomes':
+      return selectedBiomes.length ? { type: 'ether', config: `biomes ${selectedBiomes.map(b => `${b.id}:${b.weight}`).join(' ')}` } : { type: 'ether' }
+    case 'nether': return { type: 'nether' }
+    case 'end': return { type: 'end' }
+    default: return { type: uiType }
   }
 }
 
 export default function DimsPanel({ token, onExpired }) {
-  const [dims,          setDims]          = useState([])
-  const [loading,       setLoading]       = useState(true)
-  const [error,         setError]         = useState(null)
-
-  const [allBlocks,     setAllBlocks]     = useState([])
-  const [blocksLoaded,  setBlocksLoaded]  = useState(false)
-  const [allBiomes,     setAllBiomes]     = useState([])
-  const [biomesLoaded,  setBiomesLoaded]  = useState(false)
-
-  // Create form
-  const [createId,       setCreateId]       = useState('')
-  const [createUiType,   setCreateUiType]   = useState('overworld')
-  const [flatConfig,     setFlatConfig]     = useState('')
+  const [dims, setDims] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+  const [allBlocks, setAllBlocks] = useState([])
+  const [blocksLoaded, setBlocksLoaded] = useState(false)
+  const [allBiomes, setAllBiomes] = useState([])
+  const [biomesLoaded, setBiomesLoaded] = useState(false)
+  const [createId, setCreateId] = useState('')
+  const [createUiType, setCreateUiType] = useState('overworld')
+  const [flatConfig, setFlatConfig] = useState('')
   const [selectedBiomes, setSelectedBiomes] = useState([])
-  const [biomeSearch,    setBiomeSearch]    = useState('')
-  const [biomeWeight,    setBiomeWeight]    = useState('1')
-  const [biomeOpen,      setBiomeOpen]      = useState(false)
-  const [creating,       setCreating]       = useState(false)
-  const [warning,        setWarning]        = useState(null)
-
-  // Portal set
-  const [portalEditing,  setPortalEditing]  = useState(null)
-  const [portalInput,    setPortalInput]    = useState('')
-  const [portalSaving,   setPortalSaving]   = useState(false)
-
-  // Delete confirm
-  const [confirmDel,     setConfirmDel]     = useState(null)
-  const [deleting,       setDeleting]       = useState(false)
-
+  const [biomeSearch, setBiomeSearch] = useState('')
+  const [biomeWeight, setBiomeWeight] = useState('1')
+  const [biomeOpen, setBiomeOpen] = useState(false)
+  const [creating, setCreating] = useState(false)
+  const [portalEditing, setPortalEditing] = useState(null)
+  const [portalInput, setPortalInput] = useState('')
+  const [portalSaving, setPortalSaving] = useState(false)
+  const [confirmDel, setConfirmDel] = useState(null)
   const biomeComboRef = useRef(null)
+  const toast = useToast()
 
-  // Close biome dropdown on outside click
   useEffect(() => {
-    function onMouseDown(e) {
-      if (biomeComboRef.current && !biomeComboRef.current.contains(e.target)) {
-        setBiomeOpen(false)
-      }
-    }
+    function onMouseDown(e) { if (biomeComboRef.current && !biomeComboRef.current.contains(e.target)) setBiomeOpen(false) }
     document.addEventListener('mousedown', onMouseDown)
     return () => document.removeEventListener('mousedown', onMouseDown)
   }, [])
 
-  // Data fetchers
   const fetchDims = useCallback(async () => {
-    setLoading(true)
-    setError(null)
+    setLoading(true); setError(null)
     try {
       const res = await fetch('/api/admin/dims', { headers: authHeaders(token) })
       if (res.status === 401 || res.status === 403) { onExpired(); return }
       const data = await res.json()
       if (data.error) { setError(data.error); return }
       setDims(data)
-    } catch {
-      setError('Failed to load dimensions')
-    } finally {
-      setLoading(false)
-    }
+    } catch { setError('Failed to load dimensions') } finally { setLoading(false) }
   }, [token]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchBlocks = useCallback(async () => {
@@ -123,355 +95,156 @@ export default function DimsPanel({ token, onExpired }) {
   }, [biomesLoaded, token, onExpired])
 
   useEffect(() => { fetchDims() }, [fetchDims])
+  useEffect(() => { if (BIOME_TYPES.has(createUiType)) fetchBiomes() }, [createUiType]) // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (portalEditing != null) fetchBlocks() }, [portalEditing]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  useEffect(() => {
-    if (BIOME_TYPES.has(createUiType)) fetchBiomes()
-  }, [createUiType]) // eslint-disable-line react-hooks/exhaustive-deps
-
-  useEffect(() => {
-    if (portalEditing != null) fetchBlocks()
-  }, [portalEditing]) // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Handlers
   async function handleCreate(e) {
     e.preventDefault()
-    setCreating(true)
-    setError(null)
-    setWarning(null)
+    setCreating(true); setError(null)
     try {
       const { type, config } = buildApiPayload(createUiType, flatConfig, selectedBiomes)
       const body = { id: createId.trim(), type }
       if (config) body.config = config
-      const res = await fetch('/api/admin/dims/create', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...authHeaders(token) },
-        body: JSON.stringify(body),
-      })
+      const res = await fetch('/api/admin/dims/create', { method: 'POST', headers: { 'Content-Type': 'application/json', ...authHeaders(token) }, body: JSON.stringify(body) })
       if (res.status === 401 || res.status === 403) { onExpired(); return }
       const data = await res.json()
       if (data.error) { setError(data.error); return }
       setCreateId(''); setFlatConfig(''); setSelectedBiomes([])
-      setWarning('Server restart required for block breaking/placing in the new dimension. Until then it is read-only.')
+      toast('Dimension created — restart required for block editing')
       await fetchDims()
-    } catch {
-      setError('Create failed')
-    } finally {
-      setCreating(false)
-    }
+    } catch { setError('Create failed') } finally { setCreating(false) }
   }
 
-  async function handleDelete(dimId) {
-    setDeleting(true)
-    setError(null)
+  async function handleDelete() {
+    const dimId = confirmDel
     try {
-      const res = await fetch('/api/admin/dims/delete', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...authHeaders(token) },
-        body: JSON.stringify({ id: dimId }),
-      })
+      const res = await fetch('/api/admin/dims/delete', { method: 'POST', headers: { 'Content-Type': 'application/json', ...authHeaders(token) }, body: JSON.stringify({ id: dimId }) })
       if (res.status === 401 || res.status === 403) { onExpired(); return }
       const data = await res.json()
       if (data.error) { setError(data.error); return }
-      setConfirmDel(null)
-      await fetchDims()
-    } catch {
-      setError('Delete failed')
-    } finally {
-      setDeleting(false)
-    }
+      setConfirmDel(null); toast('Dimension deleted'); await fetchDims()
+    } catch { setError('Delete failed') }
   }
 
   async function handleSetPortal(dimId) {
     const blockId = portalInput.trim()
     if (!blockId) return
-    setPortalSaving(true)
-    setError(null)
+    setPortalSaving(true); setError(null)
     try {
-      const res = await fetch('/api/admin/dims/setportal', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...authHeaders(token) },
-        body: JSON.stringify({ dimId, blockId }),
-      })
+      const res = await fetch('/api/admin/dims/setportal', { method: 'POST', headers: { 'Content-Type': 'application/json', ...authHeaders(token) }, body: JSON.stringify({ dimId, blockId }) })
       if (res.status === 401 || res.status === 403) { onExpired(); return }
       const data = await res.json()
       if (data.error) { setError(data.error); return }
-      setPortalEditing(null); setPortalInput('')
-      await fetchDims()
-    } catch {
-      setError('Set portal failed')
-    } finally {
-      setPortalSaving(false)
-    }
+      setPortalEditing(null); setPortalInput(''); toast('Portal block set'); await fetchDims()
+    } catch { setError('Set portal failed') } finally { setPortalSaving(false) }
   }
 
   function selectBiome(id) {
     const w = Math.max(1, parseInt(biomeWeight, 10) || 1)
-    setSelectedBiomes(prev => [...prev, { id, weight: w }])
-    setBiomeSearch('')
-    setBiomeOpen(false)
+    setSelectedBiomes(prev => [...prev, { id, weight: w }]); setBiomeSearch(''); setBiomeOpen(false)
   }
 
-  function removeBiome(idx) {
-    setSelectedBiomes(prev => prev.filter((_, i) => i !== idx))
-  }
-
-  // Filtered lists
   const portalIsKnown = !blocksLoaded || !portalInput.trim() || allBlocks.includes(portalInput.trim())
-
-  const blockSuggestions = (() => {
-    const q = portalInput.trim()
-    if (!q) return allBlocks.slice(0, 60)
-    return allBlocks.filter(id => id.startsWith(q) || (q.length >= 2 && id.includes(q))).slice(0, 60)
-  })()
-
-  const filteredBiomes = (() => {
-    const q = biomeSearch.trim().toLowerCase()
-    if (!q) return allBiomes
-    return allBiomes.filter(id => id.includes(q))
-  })()
-
+  const blockSuggestions = (() => { const q = portalInput.trim(); if (!q) return allBlocks.slice(0, 60); return allBlocks.filter(id => id.startsWith(q) || (q.length >= 2 && id.includes(q))).slice(0, 60) })()
+  const filteredBiomes = (() => { const q = biomeSearch.trim().toLowerCase(); if (!q) return allBiomes; return allBiomes.filter(id => id.includes(q)) })()
   const isBiomeType = BIOME_TYPES.has(createUiType)
-  const isFlatType  = createUiType === 'overworld-flat'
+  const isFlatType = createUiType === 'overworld-flat'
+
+  if (loading && dims.length === 0) return <Loading label="Loading dimensions…" />
 
   return (
     <div className={styles.wrap}>
+      <Toolbar title="Dimensions" count={`${dims.length} custom`}>
+        <IconButton tip="Refresh" onClick={fetchDims}>↻</IconButton>
+      </Toolbar>
 
-      {/* Create form */}
-      <div className={styles.createBox}>
-        <div className={styles.sectionTitle}>Create Dimension</div>
-        <form className={styles.createForm} onSubmit={handleCreate}>
-
-          <div className={styles.createRow}>
-            <input
-              className={styles.input}
-              placeholder="quacksmp:pvp"
-              value={createId}
-              onChange={e => setCreateId(e.target.value)}
-              required
-              spellCheck={false}
-            />
-            <select
-              className={styles.select}
-              value={createUiType}
-              onChange={e => {
-                setCreateUiType(e.target.value)
-                setFlatConfig('')
-                setSelectedBiomes([])
-                setBiomeSearch('')
-              }}
-            >
-              {TYPE_OPTIONS.map(o => (
-                <option key={o.value} value={o.value}>{o.label}</option>
-              ))}
-            </select>
-            <button type="submit" className={styles.btn} disabled={creating || !createId.trim()}>
-              {creating ? '...' : 'Create'}
-            </button>
-          </div>
-
-          {/* Flat layers input */}
-          {isFlatType && (
-            <input
-              className={styles.input}
-              placeholder="minecraft:bedrock:1  minecraft:stone:6  minecraft:dirt:2  minecraft:grass_block:1"
-              title="Layers bottom to top (block:height). Leave blank for default."
-              value={flatConfig}
-              onChange={e => setFlatConfig(e.target.value)}
-              spellCheck={false}
-            />
-          )}
-
-          {/* Biome builder */}
-          {isBiomeType && (
-            <div className={styles.biomeBuilder}>
-
-              {selectedBiomes.length > 0 && (
-                <div className={styles.biomeChips}>
-                  {selectedBiomes.map((b, i) => (
-                    <span key={i} className={styles.biomeChip}>
-                      <span className={styles.biomeChipId}>{b.id}</span>
-                      <span className={styles.biomeChipW}>x{b.weight}</span>
-                      <button
-                        type="button"
-                        className={styles.biomeChipRemove}
-                        onClick={() => removeBiome(i)}
-                      >x</button>
-                    </span>
-                  ))}
-                </div>
-              )}
-
-              <div className={styles.biomeAddRow}>
-                {/* Custom combobox */}
-                <div className={styles.biomeCombo} ref={biomeComboRef}>
-                  <input
-                    className={styles.input}
-                    placeholder={biomesLoaded ? `Search ${allBiomes.length} biomes...` : 'minecraft:plains'}
-                    value={biomeSearch}
-                    onChange={e => { setBiomeSearch(e.target.value); setBiomeOpen(true) }}
-                    onFocus={() => setBiomeOpen(true)}
-                    spellCheck={false}
-                  />
-                  {biomeOpen && (
-                    <div className={styles.biomeDropdown}>
-                      {!biomesLoaded && (
-                        <div className={styles.biomeDropdownMsg}>Loading...</div>
-                      )}
-                      {biomesLoaded && filteredBiomes.length === 0 && (
-                        <div className={styles.biomeDropdownMsg}>No matches</div>
-                      )}
-                      {filteredBiomes.slice(0, 200).map(id => (
-                        <button
-                          key={id}
-                          type="button"
-                          className={styles.biomeDropdownItem}
-                          onMouseDown={e => { e.preventDefault(); selectBiome(id) }}
-                        >
-                          {id}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                <input
-                  className={styles.weightInput}
-                  type="number"
-                  min="1"
-                  max="999"
-                  value={biomeWeight}
-                  onChange={e => setBiomeWeight(e.target.value)}
-                  title="Relative weight"
-                />
-              </div>
-
-              {selectedBiomes.length === 0 && (
-                <div className={styles.biomeHint}>
-                  No biomes selected - will use all default biomes for this type.
-                </div>
-              )}
-            </div>
-          )}
-        </form>
-
-        {error && (
-          <div className={styles.error}>
-            {error}
-            <button className={styles.dismiss} onClick={() => setError(null)}>x</button>
-          </div>
-        )}
-        {warning && (
-          <div className={styles.warning}>
-            {warning}
-            <button className={styles.dismiss} onClick={() => setWarning(null)}>x</button>
-          </div>
-        )}
-      </div>
-
-      {/* Dim list toolbar */}
-      <div className={styles.toolbar}>
-        <span className={styles.count}>
-          {loading ? 'Loading...' : `${dims.length} custom dimension${dims.length !== 1 ? 's' : ''}`}
-        </span>
-        <button className={styles.refresh} onClick={fetchDims} disabled={loading}>Refresh</button>
-      </div>
-
-      <div className={styles.list}>
-        {!loading && dims.length === 0 && (
-          <div className={styles.empty}>No custom dimensions. Create one above.</div>
-        )}
-        {dims.map(dim => (
-          <div key={dim.id} className={styles.row}>
-            <div className={styles.dimInfo}>
-              <span className={styles.dimId}>{dim.id}</span>
-              <span className={styles.dimType}>{dim.generatorType}</span>
-              {dim.generatorConfig && (
-                <span className={styles.dimConfig} title={dim.generatorConfig}>
-                  {dim.generatorConfig.length > 40
-                    ? dim.generatorConfig.slice(0, 38) + '...'
-                    : dim.generatorConfig}
-                </span>
-              )}
+      <div className={styles.body}>
+        <SectionCard title="Create Dimension">
+          <form className={styles.createForm} onSubmit={handleCreate}>
+            <div className={styles.createRow}>
+              <Field label="Dimension ID"><Input placeholder="quacksmp:pvp" value={createId} onChange={e => setCreateId(e.target.value)} required spellCheck={false} /></Field>
+              <Field label="Type"><Select value={createUiType} onChange={e => { setCreateUiType(e.target.value); setFlatConfig(''); setSelectedBiomes([]); setBiomeSearch('') }}>{TYPE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}</Select></Field>
+              <Btn variant="primary" type="submit" disabled={creating || !createId.trim()}>{creating ? '…' : 'Create'}</Btn>
             </div>
 
-            <div className={styles.dimActions}>
-              <span className={styles.portalTag}>
-                {dim.portalBlock
-                  ? <span className={styles.portalSet}>{dim.portalBlock}</span>
-                  : <span className={styles.portalUnset}>no portal</span>}
-              </span>
+            {isFlatType && (
+              <Field label="Flat layers (block:height, bottom→top)" hint="Leave blank for default layers.">
+                <Input placeholder="minecraft:bedrock:1  minecraft:stone:6  minecraft:dirt:2  minecraft:grass_block:1" value={flatConfig} onChange={e => setFlatConfig(e.target.value)} spellCheck={false} />
+              </Field>
+            )}
 
-              {portalEditing === dim.id ? (
-                <span className={styles.portalEdit}>
-                  <span className={styles.portalInputWrap}>
-                    <input
-                      className={`${styles.inputSm} ${!portalIsKnown ? styles.inputInvalid : ''}`}
-                      list="block-datalist"
-                      placeholder="minecraft:glowstone"
-                      value={portalInput}
-                      onChange={e => setPortalInput(e.target.value)}
-                      onKeyDown={e => { if (e.key === 'Enter') handleSetPortal(dim.id) }}
-                      autoFocus
-                      spellCheck={false}
-                    />
-                    <datalist id="block-datalist">
-                      {blockSuggestions.map(id => <option key={id} value={id} />)}
-                    </datalist>
-                    {!portalIsKnown && (
-                      <span className={styles.inputWarn}>Unknown block</span>
+            {isBiomeType && (
+              <div className={styles.biomeBuilder}>
+                {selectedBiomes.length > 0 && (
+                  <div className={styles.chips}>
+                    {selectedBiomes.map((b, i) => (
+                      <span key={i} className={styles.chip}>{b.id}<span className={styles.chipW}>×{b.weight}</span><button type="button" className={styles.chipRemove} onClick={() => setSelectedBiomes(p => p.filter((_, j) => j !== i))}>×</button></span>
+                    ))}
+                  </div>
+                )}
+                <div className={styles.biomeRow}>
+                  <div className={styles.combo} ref={biomeComboRef}>
+                    <input className={styles.comboInput} placeholder={biomesLoaded ? `Search ${allBiomes.length} biomes…` : 'minecraft:plains'} value={biomeSearch} onChange={e => { setBiomeSearch(e.target.value); setBiomeOpen(true) }} onFocus={() => setBiomeOpen(true)} spellCheck={false} />
+                    {biomeOpen && (
+                      <div className={styles.dropdown}>
+                        {!biomesLoaded && <div className={styles.dropMsg}>Loading…</div>}
+                        {biomesLoaded && filteredBiomes.length === 0 && <div className={styles.dropMsg}>No matches</div>}
+                        {filteredBiomes.slice(0, 200).map(id => <button key={id} type="button" className={styles.dropItem} onMouseDown={e => { e.preventDefault(); selectBiome(id) }}>{id}</button>)}
+                      </div>
                     )}
-                  </span>
-                  <button
-                    className={styles.btn}
-                    onClick={() => handleSetPortal(dim.id)}
-                    disabled={portalSaving || !portalInput.trim()}
-                  >
-                    {portalSaving ? '...' : 'Set'}
-                  </button>
-                  <button
-                    className={styles.btnGhost}
-                    onClick={() => { setPortalEditing(null); setPortalInput('') }}
-                  >
-                    Cancel
-                  </button>
-                </span>
-              ) : (
-                <button
-                  className={styles.btnGhost}
-                  onClick={() => {
-                    setPortalEditing(dim.id)
-                    setPortalInput(dim.portalBlock ?? '')
-                  }}
-                >
-                  Set Portal
-                </button>
-              )}
+                  </div>
+                  <input className={styles.weightInput} type="number" min="1" max="999" value={biomeWeight} onChange={e => setBiomeWeight(e.target.value)} title="Relative weight" />
+                </div>
+                {selectedBiomes.length === 0 && <div className={styles.hint}>No biomes selected — uses all default biomes for this type.</div>}
+              </div>
+            )}
+          </form>
+        </SectionCard>
 
-              {confirmDel === dim.id ? (
-                <span className={styles.confirmDel}>
-                  <span className={styles.confirmLabel}>Delete?</span>
-                  <button
-                    className={styles.btnDanger}
-                    onClick={() => handleDelete(dim.id)}
-                    disabled={deleting}
-                  >
-                    {deleting ? '...' : 'Yes'}
-                  </button>
-                  <button className={styles.btnGhost} onClick={() => setConfirmDel(null)}>No</button>
-                </span>
-              ) : (
-                <button className={styles.btnDanger} onClick={() => setConfirmDel(dim.id)}>
-                  Delete
-                </button>
-              )}
-            </div>
+        <ErrorBanner>{error}</ErrorBanner>
+
+        {dims.length === 0 ? (
+          <EmptyState icon={<IconPortal size={30} />} label="No custom dimensions" hint="Create one above. A server restart is required before you can build in a new dimension." />
+        ) : (
+          <div className={styles.grid}>
+            {dims.map(dim => (
+              <div key={dim.id} className={styles.card}>
+                <div className={styles.cardTop}>
+                  <span className={styles.dimId}>{dim.id}</span>
+                  <Menu trigger={<Btn size="sm" aria-label="Actions">⋯</Btn>}>
+                    <MenuItem onSelect={() => { setPortalEditing(dim.id); setPortalInput(dim.portalBlock ?? '') }}>Set Portal Block</MenuItem>
+                    <MenuItem tone="danger" onSelect={() => setConfirmDel(dim.id)}>Delete</MenuItem>
+                  </Menu>
+                </div>
+                <div className={styles.tags}>
+                  <Badge variant="info">{dim.generatorType}</Badge>
+                  {dim.portalBlock ? <Badge variant="ok">portal: {dim.portalBlock.split(':').pop()}</Badge> : <Badge>no portal</Badge>}
+                </div>
+                {dim.generatorConfig && <span className={styles.config} title={dim.generatorConfig}>{dim.generatorConfig.length > 60 ? dim.generatorConfig.slice(0, 58) + '…' : dim.generatorConfig}</span>}
+
+                {portalEditing === dim.id && (
+                  <div className={styles.portalEdit}>
+                    <input className={`${styles.comboInput} ${!portalIsKnown ? styles.invalid : ''}`} list="block-datalist" placeholder="minecraft:glowstone" value={portalInput} onChange={e => setPortalInput(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') handleSetPortal(dim.id) }} autoFocus spellCheck={false} />
+                    <datalist id="block-datalist">{blockSuggestions.map(id => <option key={id} value={id} />)}</datalist>
+                    <Btn size="sm" variant="ok" onClick={() => handleSetPortal(dim.id)} disabled={portalSaving || !portalInput.trim()}>{portalSaving ? '…' : 'Set'}</Btn>
+                    <Btn size="sm" variant="ghost" onClick={() => { setPortalEditing(null); setPortalInput('') }}>Cancel</Btn>
+                    {!portalIsKnown && <span className={styles.warn}>Unknown block</span>}
+                  </div>
+                )}
+              </div>
+            ))}
           </div>
-        ))}
+        )}
+
+        <div className={styles.footHint}>
+          Portal: build a nether-portal-shaped frame (2–21 wide, 3–21 tall) with the portal block, then right-click a frame block with a water bucket.
+        </div>
       </div>
 
-      <div className={styles.hint}>
-        Portal: build a nether-portal-shaped frame (2-21 wide, 3-21 tall) with your portal block, then right-click a frame block with a water bucket.
-      </div>
+      <ConfirmDialog open={!!confirmDel} onOpenChange={o => !o && setConfirmDel(null)}
+        title={confirmDel ? `Delete dimension "${confirmDel}"?` : ''}
+        description="The dimension and its world data are removed. This cannot be undone."
+        confirmLabel="Delete" tone="danger" onConfirm={handleDelete} />
     </div>
   )
 }

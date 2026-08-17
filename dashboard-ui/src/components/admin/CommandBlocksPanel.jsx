@@ -1,5 +1,7 @@
-import { useState, useEffect, useCallback } from 'react'
-import styles from './ClaimsPanel.module.css'
+import { useState, useEffect, useCallback, useMemo } from 'react'
+import { Toolbar, IconButton, Btn, Badge, StatCard, Loading, EmptyState, ErrorBanner, ConfirmDialog, Field, Input, Select, Toggle, Menu, MenuItem, useToast } from '../../ui'
+import { IconRepeatCmdBlock } from './MinecraftIcons'
+import styles from './CommandBlocksPanel.module.css'
 
 const MODE_LABELS = { REDSTONE: 'Impulse', AUTO: 'Repeat', SEQUENCE: 'Chain' }
 const MODE_COLORS = { REDSTONE: '#C8721E', AUTO: '#8932B8', SEQUENCE: '#3D8B3D' }
@@ -18,223 +20,130 @@ export default function CommandBlocksPanel({ token, onExpired }) {
   const [editState,  setEditState]  = useState({})
   const [confirmDel, setConfirmDel] = useState(null)
   const [copied,     setCopied]     = useState(null)
+  const toast = useToast()
 
   const auth = { Authorization: `Bearer ${token}` }
 
   const load = useCallback(async () => {
-    setLoading(true)
-    setError(null)
+    setLoading(true); setError(null)
     try {
       const r = await fetch('/api/admin/commandblocks', { headers: auth })
       if (r.status === 401 || r.status === 403) { onExpired(); return }
       if (!r.ok) { setError(`Server error (${r.status})`); setLoading(false); return }
       const d = await r.json()
-      if (d.error) { setError(d.error) }
+      if (d.error) setError(d.error)
       else { setBlocks(d.blocks || []); setEnabled(d.enabled !== false) }
     } catch { setError('Failed to load command blocks') }
     setLoading(false)
-  }, [token])
-
+  }, [token]) // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { load() }, [load])
 
   const blockKey = b => `${b.dim}:${b.x},${b.y},${b.z}`
-  const dimName = d => d.split(':').pop()
+  const dimName = d => d.split(':').pop().replace(/_/g, ' ')
+
+  const byDim = useMemo(() => {
+    const m = {}
+    for (const b of blocks) { (m[b.dim] ??= []).push(b) }
+    return m
+  }, [blocks])
 
   function startEdit(b) {
     setEditing(blockKey(b))
-    setEditState({
-      command: b.command,
-      mode: b.mode,
-      auto: b.auto,
-      conditional: b.conditional,
-      trackOutput: b.trackOutput,
-    })
+    setEditState({ command: b.command, mode: b.mode, auto: b.auto, conditional: b.conditional, trackOutput: b.trackOutput })
   }
-
   async function saveEdit(b) {
     try {
-      const r = await fetch('/api/admin/commandblocks/update', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...auth },
-        body: JSON.stringify({ dim: b.dim, x: b.x, y: b.y, z: b.z, ...editState }),
-      })
+      const r = await fetch('/api/admin/commandblocks/update', { method: 'POST', headers: { 'Content-Type': 'application/json', ...auth }, body: JSON.stringify({ dim: b.dim, x: b.x, y: b.y, z: b.z, ...editState }) })
       if (r.status === 401 || r.status === 403) { onExpired(); return }
       const d = await r.json()
       if (d.error) { setError(d.error); return }
-      setEditing(null)
-      load()
+      setEditing(null); toast('Command block updated'); load()
     } catch { setError('Update failed') }
   }
-
-  async function deleteBlock(b) {
+  async function deleteBlock() {
+    const b = confirmDel
     try {
-      const r = await fetch('/api/admin/commandblocks/delete', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...auth },
-        body: JSON.stringify({ dim: b.dim, x: b.x, y: b.y, z: b.z }),
-      })
+      const r = await fetch('/api/admin/commandblocks/delete', { method: 'POST', headers: { 'Content-Type': 'application/json', ...auth }, body: JSON.stringify({ dim: b.dim, x: b.x, y: b.y, z: b.z }) })
       if (r.status === 401 || r.status === 403) { onExpired(); return }
       const d = await r.json()
       if (d.error) { setError(d.error); return }
-      setConfirmDel(null)
-      load()
+      setConfirmDel(null); toast('Command block deleted'); load()
     } catch { setError('Delete failed') }
   }
-
   function copyTp(b) {
-    const cmd = `/tp @s ${b.x} ${b.y} ${b.z}`
-    navigator.clipboard.writeText(cmd).then(() => {
-      setCopied(blockKey(b))
-      setTimeout(() => setCopied(null), 1500)
-    })
+    navigator.clipboard.writeText(`/tp @s ${b.x} ${b.y} ${b.z}`).then(() => { setCopied(blockKey(b)); setTimeout(() => setCopied(null), 1500) })
   }
+
+  if (loading && blocks.length === 0) return <Loading label="Scanning loaded chunks…" />
 
   return (
     <div className={styles.wrap}>
-      <div className={styles.toolbar}>
-        <span className={styles.count}>
-          {loading ? 'Scanning...' : `${blocks.length} command block${blocks.length !== 1 ? 's' : ''} in loaded chunks`}
-        </span>
-        <button className={styles.refresh} onClick={load} disabled={loading}>
-          {loading ? 'Refreshing...' : 'Refresh'}
-        </button>
-      </div>
+      <Toolbar title="Command Blocks" count={`${blocks.length} in loaded chunks`}>
+        <IconButton tip="Refresh" onClick={load}>↻</IconButton>
+      </Toolbar>
 
-      {!enabled && (
-        <div className={styles.error} style={{ background: '#2A1A00', borderColor: '#5A3A00', color: '#FFCC55' }}>
-          Command blocks are disabled (gamerule commandBlocksEnabled)
-        </div>
-      )}
+      {!enabled && <div className={styles.disabledNote}>Command blocks are disabled (gamerule commandBlocksEnabled)</div>}
+      <ErrorBanner>{error}</ErrorBanner>
 
-      {error && (
-        <div className={styles.error}>
-          {error}
-          <button className={styles.dismiss} onClick={() => setError(null)}>x</button>
-        </div>
-      )}
-
-      <div className={styles.list}>
-        {blocks.length === 0 && !loading && (
-          <div className={styles.empty}>No command blocks found in loaded chunks</div>
-        )}
-        {blocks.map(b => {
-          const key = blockKey(b)
-          const isEditing = editing === key
-          return (
-            <div key={key}>
-              <div className={styles.row}>
-                <div className={styles.playerInfo}>
-                  <span className={styles.playerName}>
-                    {dimName(b.dim)} [{b.x}, {b.y}, {b.z}]
-                  </span>
-                  <span className={styles.playerUuid} style={{ maxWidth: 260, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {b.command || '(empty)'}
-                  </span>
-                </div>
-                <div className={styles.barWrap}>
-                  <span style={{
-                    fontFamily: 'var(--font-pixel)', fontSize: '6px', letterSpacing: '0.3px',
-                    padding: '3px 8px', background: MODE_COLORS[b.mode] || '#555',
-                    color: '#FFF', whiteSpace: 'nowrap',
-                  }}>
-                    {MODE_LABELS[b.mode] || b.mode}
-                  </span>
-                  {b.conditional && (
-                    <span className={styles.claimCount} style={{ minWidth: 'auto', color: '#FFAA00', fontSize: '10px' }}>
-                      Conditional
-                    </span>
-                  )}
-                  {b.auto && (
-                    <span className={styles.claimCount} style={{ minWidth: 'auto', color: '#4CAF50', fontSize: '10px' }}>
-                      Always Active
-                    </span>
-                  )}
-                  {b.customName && b.customName !== '@' && (
-                    <span className={styles.claimCount} style={{ minWidth: 'auto', color: '#888', fontSize: '10px' }}>
-                      {b.customName}
-                    </span>
-                  )}
-                </div>
-                <div className={styles.actions}>
-                  <button className={styles.btnGhost} onClick={() => copyTp(b)}>
-                    {copied === key ? 'Copied!' : 'TP'}
-                  </button>
-                  <button className={styles.btnGhost} onClick={() => isEditing ? setEditing(null) : startEdit(b)}>
-                    {isEditing ? 'Cancel' : 'Edit'}
-                  </button>
-                  {confirmDel === key ? (
-                    <>
-                      <span className={styles.confirmLabel}>Delete?</span>
-                      <button className={styles.btnDanger} onClick={() => deleteBlock(b)}>Confirm</button>
-                      <button className={styles.btnGhost} onClick={() => setConfirmDel(null)}>Cancel</button>
-                    </>
-                  ) : (
-                    <button className={styles.btnDanger} onClick={() => setConfirmDel(key)}>Delete</button>
-                  )}
-                </div>
+      {blocks.length === 0 ? (
+        <EmptyState icon={<IconRepeatCmdBlock size={30} />} label="No command blocks found" hint="Only command blocks inside currently-loaded chunks are listed." />
+      ) : (
+        <div className={styles.body}>
+          {Object.entries(byDim).map(([dim, list]) => (
+            <div key={dim} className={styles.dimGroup}>
+              <div className={styles.dimHead}>
+                <span className={styles.dimName}>{dimName(dim)}</span>
+                <span className={styles.dimCount}>{list.length}</span>
               </div>
-
-              {isEditing && (
-                <div style={{ padding: '10px 14px 14px 20px', borderBottom: '1px solid #0F0F0F', background: '#111' }}>
-                  <div style={{ marginBottom: 8 }}>
-                    <label style={{ fontFamily: 'var(--font-pixel)', fontSize: '6px', color: '#666', display: 'block', marginBottom: 4 }}>
-                      Command
-                    </label>
-                    <input
-                      type="text"
-                      value={editState.command}
-                      onChange={e => setEditState(s => ({ ...s, command: e.target.value }))}
-                      style={{
-                        width: '100%', boxSizing: 'border-box',
-                        fontFamily: 'var(--font-mono)', fontSize: '12px',
-                        background: '#0A0A0A', border: '1px solid #333', color: '#DDD',
-                        padding: '6px 8px',
-                      }}
-                    />
+              {list.map(b => {
+                const key = blockKey(b)
+                const isEditing = editing === key
+                return (
+                  <div key={key} className={styles.block}>
+                    <div className={styles.row}>
+                      <span className={styles.mode} style={{ background: MODE_COLORS[b.mode] || '#555' }}>{MODE_LABELS[b.mode] || b.mode}</span>
+                      <div className={styles.info}>
+                        <span className={styles.coords}>[{b.x}, {b.y}, {b.z}]</span>
+                        <span className={styles.cmd}>{b.command || '(empty)'}</span>
+                      </div>
+                      <div className={styles.flags}>
+                        {b.conditional && <Badge variant="warn">Cond</Badge>}
+                        {b.auto && <Badge variant="ok">Auto</Badge>}
+                      </div>
+                      <Menu trigger={<Btn size="sm" aria-label="Actions">⋯</Btn>}>
+                        <MenuItem onSelect={() => copyTp(b)}>{copied === key ? 'Copied!' : 'Copy TP'}</MenuItem>
+                        <MenuItem onSelect={() => isEditing ? setEditing(null) : startEdit(b)}>{isEditing ? 'Close Editor' : 'Edit'}</MenuItem>
+                        <MenuItem tone="danger" onSelect={() => setConfirmDel(b)}>Delete</MenuItem>
+                      </Menu>
+                    </div>
+                    {isEditing && (
+                      <div className={styles.editForm}>
+                        <Field label="Command"><Input value={editState.command} onChange={e => setEditState(s => ({ ...s, command: e.target.value }))} style={{ fontFamily: 'var(--font-mono)' }} /></Field>
+                        <div className={styles.editControls}>
+                          <Field label="Mode"><Select value={editState.mode} onChange={e => setEditState(s => ({ ...s, mode: e.target.value }))}>{MODE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}</Select></Field>
+                          <div className={styles.toggleRow}><span className={styles.tLabel}>Always Active</span><Toggle checked={editState.auto} onChange={v => setEditState(s => ({ ...s, auto: v }))} aria-label="Always active" /></div>
+                          <div className={styles.toggleRow}><span className={styles.tLabel}>Conditional</span><Toggle checked={editState.conditional} onChange={v => setEditState(s => ({ ...s, conditional: v }))} aria-label="Conditional" /></div>
+                          <div className={styles.toggleRow}><span className={styles.tLabel}>Track Output</span><Toggle checked={editState.trackOutput} onChange={v => setEditState(s => ({ ...s, trackOutput: v }))} aria-label="Track output" /></div>
+                        </div>
+                        <Btn variant="ok" onClick={() => saveEdit(b)}>Save</Btn>
+                      </div>
+                    )}
                   </div>
-                  <div style={{ display: 'flex', gap: 16, alignItems: 'center', marginBottom: 10, flexWrap: 'wrap' }}>
-                    <label style={{ fontFamily: 'var(--font-pixel)', fontSize: '6px', color: '#666', display: 'flex', alignItems: 'center', gap: 6 }}>
-                      Mode
-                      <select
-                        value={editState.mode}
-                        onChange={e => setEditState(s => ({ ...s, mode: e.target.value }))}
-                        style={{
-                          fontFamily: 'var(--font-mono)', fontSize: '11px',
-                          background: '#0A0A0A', border: '1px solid #333', color: '#DDD',
-                          padding: '4px 6px',
-                        }}
-                      >
-                        {MODE_OPTIONS.map(o => (
-                          <option key={o.value} value={o.value}>{o.label}</option>
-                        ))}
-                      </select>
-                    </label>
-                    <label style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: '#888', display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}>
-                      <input type="checkbox" checked={editState.auto} onChange={e => setEditState(s => ({ ...s, auto: e.target.checked }))} />
-                      Always Active
-                    </label>
-                    <label style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: '#888', display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}>
-                      <input type="checkbox" checked={editState.conditional} onChange={e => setEditState(s => ({ ...s, conditional: e.target.checked }))} />
-                      Conditional
-                    </label>
-                    <label style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: '#888', display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}>
-                      <input type="checkbox" checked={editState.trackOutput} onChange={e => setEditState(s => ({ ...s, trackOutput: e.target.checked }))} />
-                      Track Output
-                    </label>
-                  </div>
-                  <button
-                    className={styles.btnGhost}
-                    style={{ borderColor: '#4CAF50', color: '#4CAF50' }}
-                    onClick={() => saveEdit(b)}
-                  >
-                    Save
-                  </button>
-                </div>
-              )}
+                )
+              })}
             </div>
-          )
-        })}
-      </div>
+          ))}
+        </div>
+      )}
+
+      <ConfirmDialog
+        open={!!confirmDel}
+        onOpenChange={o => !o && setConfirmDel(null)}
+        title={confirmDel ? `Delete command block at [${confirmDel.x}, ${confirmDel.y}, ${confirmDel.z}]?` : ''}
+        confirmLabel="Delete"
+        tone="danger"
+        onConfirm={deleteBlock}
+      />
     </div>
   )
 }

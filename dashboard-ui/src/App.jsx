@@ -1,13 +1,12 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
+import Hero from './components/Hero'
 import MetricsPanel from './components/MetricsPanel'
-import EventFeed from './components/EventFeed'
-import ChatPanel from './components/ChatPanel'
+import LiveFeed from './components/LiveFeed'
 import AdminPanel from './components/admin/AdminPanel'
 import SkillsLeaderboard from './components/SkillsLeaderboard'
 import HardcoreLeaderboard from './components/HardcoreLeaderboard'
 import DownloadProgress from './components/DownloadProgress'
 import RestoreInfo from './components/RestoreInfo'
-import { IconDuck } from './components/admin/MinecraftIcons'
 import { streamingDownload, hasFileSystemAccess } from './lib/streamingDownload'
 import styles from './App.module.css'
 
@@ -15,6 +14,12 @@ const PUBLIC_DOWNLOAD_URL = '/api/backups/latest/download'
 const PUBLIC_DOWNLOAD_FILENAME = 'world.zip'
 
 const MAX_EVENTS = 150
+const HIST_MAX = 48
+
+function pushHist(setter, value) {
+  if (value == null || Number.isNaN(value)) return
+  setter(h => [...h, value].slice(-HIST_MAX))
+}
 
 function isNewer(latest, current) {
   const a = latest.split('.').map(Number)
@@ -33,6 +38,8 @@ export default function App() {
   const [cpu,         setCpu]         = useState(null)
   const [mspt,        setMspt]        = useState(null)
   const [sysMetrics,  setSysMetrics]  = useState(null)
+  const [tpsHist,     setTpsHist]     = useState([])
+  const [msptHist,    setMsptHist]    = useState([])
   const [leaderboard, setLeaderboard] = useState(null)
   const [hardcore,    setHardcore]    = useState(null)
   const [events,      setEvents]      = useState([])
@@ -62,7 +69,7 @@ export default function App() {
       const msptData = await msptRes.json()
       const sysData  = await sysRes.json()
       if (!cpuData.error)  setCpu(cpuData)
-      if (!msptData.error) setMspt(msptData)
+      if (!msptData.error) { setMspt(msptData); pushHist(setMsptHist, msptData.mean10s) }
       setSysMetrics(sysData)
     } catch { /* server may be starting */ }
   }, [])
@@ -93,7 +100,7 @@ export default function App() {
     ws.onmessage = (e) => {
       try {
         const msg = JSON.parse(e.data)
-        if (msg.type === 'tps_update') setTps(msg.data)
+        if (msg.type === 'tps_update') { setTps(msg.data); pushHist(setTpsHist, msg.data?.tps5s) }
         else pushEvent(msg)
       } catch { /* ignore */ }
     }
@@ -156,46 +163,6 @@ export default function App() {
 
   return (
     <div className={styles.layout}>
-      <header className={styles.header}>
-        <a href="https://quackedmod.wiki" className={styles.brandLink} target="_blank" rel="noopener noreferrer">
-          <div className={styles.brand}>
-            <span className={styles.brandIcon}><IconDuck size={36} /></span>
-            <div className={styles.brandText}>
-              <span className={styles.brandName}>QuackedSMP</span>
-              <span className={styles.brandSub}>made by quackedmod</span>
-            </div>
-          </div>
-        </a>
-        <div className={styles.headerCenter}>
-          {health?.serverName && (
-            <span className={styles.serverName}>{health.serverName}</span>
-          )}
-        </div>
-        <div className={styles.headerRight}>
-          <span className={styles.playerCount}>
-            {health != null ? `${health.online} online` : '— online'}
-          </span>
-          {health?.backupPublicEnabled && view !== 'admin' && (
-            <button
-              className={styles.navTab}
-              onClick={() => { setDlError(null); setDlProgress(null); setDlPrompt(true) }}
-              disabled={dlProgress != null}
-            >
-              {dlProgress != null ? 'Downloading…' : 'Download World'}
-            </button>
-          )}
-          {health?.adminEnabled && (
-            <button
-              className={`${styles.navTab} ${view === 'admin' ? styles.navTabActive : ''}`}
-              onClick={() => setView(v => v === 'admin' ? 'dashboard' : 'admin')}
-            >
-              {view === 'admin' ? '← Back' : 'Admin'}
-            </button>
-          )}
-          <StatusPill status={wsStatus} />
-        </div>
-      </header>
-
       {update && (
         <div className={styles.updateBanner}>
           <span>
@@ -237,7 +204,7 @@ export default function App() {
                 for large downloads.
               </p>
             )}
-            {health?.seed != null && <RestoreInfo info={health} title="Restore info" />}
+            {(health?.seed != null || health?.mcVersion) && <RestoreInfo info={health} title="Restore info" />}
             <div className={styles.dlBtns}>
               <button className={styles.btnGhost} onClick={() => setDlPrompt(false)}>
                 Cancel
@@ -251,29 +218,30 @@ export default function App() {
       )}
 
       {view === 'admin' ? (
-        <main className={styles.main}>
-          <AdminPanel health={health} />
+        <main className={styles.mainAdmin}>
+          <AdminPanel health={health} wsStatus={wsStatus} onBack={() => setView('dashboard')} />
         </main>
       ) : (
         <main className={styles.main}>
-          <MetricsPanel tps={tps} cpu={cpu} mspt={mspt} online={health?.online ?? null} sys={sysMetrics} />
-          <div className={styles.content}>
-            <EventFeed events={events} />
-            <ChatPanel events={events} />
+          <Hero
+            health={health}
+            wsStatus={wsStatus}
+            sys={sysMetrics}
+            downloading={dlProgress != null}
+            onDownload={health?.backupPublicEnabled ? () => { setDlError(null); setDlProgress(null); setDlPrompt(true) } : null}
+            onAdmin={health?.adminEnabled ? () => setView('admin') : null}
+          />
+          <div className={styles.grid}>
+            <MetricsPanel tps={tps} cpu={cpu} mspt={mspt} online={health?.online ?? null} sys={sysMetrics} tpsHist={tpsHist} msptHist={msptHist} />
+            <LiveFeed events={events} />
+            <div className={styles.boards}>
+              <SkillsLeaderboard data={leaderboard} />
+              <HardcoreLeaderboard data={hardcore} />
+            </div>
           </div>
-          <SkillsLeaderboard data={leaderboard} />
-          <HardcoreLeaderboard data={hardcore} />
         </main>
       )}
     </div>
   )
 }
 
-function StatusPill({ status }) {
-  const labels = { connecting: 'Connecting', open: 'Live', closed: 'Reconnecting' }
-  return (
-    <span className={`${styles.wsDot} ${styles[status]}`}>
-      {labels[status]}
-    </span>
-  )
-}

@@ -53,6 +53,7 @@ public class SmpEvents {
         mc.smpessentials.dashboard.DashboardManager.onServerStart(event.getServer());
         mc.smpessentials.hardcore.HardcoreTeam.seed(event.getServer());
         mc.smpessentials.backup.BackupScheduler.get().start(event.getServer());
+        mc.smpessentials.timelapse.TimelapseService.get().start(event.getServer());
         mc.smpessentials.votifier.VoteHandler.init(event.getServer());
         mc.smpessentials.votifier.VotifierListener.start();
     }
@@ -62,6 +63,7 @@ public class SmpEvents {
         mc.smpessentials.commands.EndResetLogic.onServerStopping(event.getServer());
         mc.smpessentials.dashboard.DashboardManager.onServerStop();
         mc.smpessentials.backup.BackupScheduler.get().stop();
+        mc.smpessentials.timelapse.TimelapseService.get().stop();
         mc.smpessentials.votifier.VotifierListener.stop();
     }
 
@@ -89,6 +91,7 @@ public class SmpEvents {
                     mc.smpessentials.hardcore.HardcoreSavedData.get(((net.minecraft.server.level.ServerLevel) player.level()).getServer());
             hc.markHeartsSent(player);
             hc.onPlayerReconnect(player);
+            mc.smpessentials.sidebar.SidebarManager.INSTANCE.onJoin(player);
         }
     }
 
@@ -98,7 +101,7 @@ public class SmpEvents {
         mc.smpessentials.teleport.TeleportService.clearForPlayer(event.getEntity().getUUID());
         mc.smpessentials.antixray.AntiXrayEngine.onPlayerDisconnect(event.getEntity().getUUID());
         if (event.getEntity() instanceof ServerPlayer sp) {
-            mc.smpessentials.hardcore.sidebar.HardcoreSidebarController.INSTANCE.onDisconnect(sp);
+            mc.smpessentials.sidebar.SidebarManager.INSTANCE.onDisconnect(sp);
         }
         mc.smpessentials.dashboard.DashboardManager.broadcastPlayerLeave(event.getEntity().getGameProfile().name());
     }
@@ -137,7 +140,7 @@ public class SmpEvents {
             hc.tickSpectatorHud(player);
             hc.tickEndEntry(player);
         }
-        mc.smpessentials.hardcore.sidebar.HardcoreSidebarController.INSTANCE.tick(event.getServer());
+        mc.smpessentials.sidebar.SidebarManager.INSTANCE.tick(event.getServer());
     }
 
     @SubscribeEvent

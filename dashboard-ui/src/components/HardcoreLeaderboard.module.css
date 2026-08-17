@@ -1,9 +1,13 @@
 .wrap {
   flex-shrink: 0;
-  background: var(--mc-panel);
-  border: 1px solid #1A1A1A;
+  background: var(--panel-surface);
+  border-top:    3px solid var(--mc-stone-light);
+  border-left:   3px solid var(--mc-stone-light);
+  border-bottom: 3px solid var(--mc-stone-dark);
+  border-right:  3px solid var(--mc-stone-dark);
   display: flex;
   flex-direction: column;
+  min-height: 0;
   overflow: hidden;
 }
 
@@ -13,12 +17,14 @@
   align-items: center;
   justify-content: space-between;
   padding: 8px 14px;
-  border-bottom: 1px solid #111;
-  background: #181818;
+  border-bottom: 2px solid #8a2a2a;
+  background: linear-gradient(90deg, rgba(239,68,68,0.16), var(--surf-0) 44%);
   flex-shrink: 0;
   flex-wrap: wrap;
   gap: 8px;
 }
+.titleRow { display: flex; align-items: center; gap: 8px; }
+.headerIcon { display: flex; image-rendering: pixelated; }
 
 .title {
   font-family: var(--font-pixel);
@@ -38,13 +44,13 @@
   letter-spacing: 0.3px;
   background: none;
   border: 1px solid #2A2A2A;
-  color: #666;
+  color: var(--txt-muted);
   padding: 4px 10px;
   cursor: pointer;
   transition: color var(--t-fast), border-color var(--t-fast);
   white-space: nowrap;
 }
-.tab:hover { color: #AAA; border-color: #444; }
+.tab:hover { color: var(--txt-secondary); border-color: var(--txt-faint); }
 .tabActive { color: #F87171; border-color: #7F1D1D; background: rgba(127,29,29,0.25); }
 
 /* ── Records + counters grid (shared fun stats) ──────────────────── */
@@ -146,7 +152,7 @@
 .thRank, .thName, .thNum {
   font-family: var(--font-pixel);
   font-size: 6px;
-  color: #444;
+  color: var(--txt-faint);
   letter-spacing: 0.3px;
   text-transform: uppercase;
   padding: 4px 10px;
@@ -161,7 +167,7 @@
 .rank {
   font-family: var(--font-pixel);
   font-size: 7px;
-  color: #555;
+  color: var(--txt-muted);
   padding: 6px 10px;
   width: 30px;
   letter-spacing: 0.3px;
@@ -175,7 +181,7 @@
 .by {
   font-family: var(--font-mono);
   font-size: 11px;
-  color: #777;
+  color: var(--txt-secondary);
   padding: 6px 10px;
 }
 .num {
@@ -189,7 +195,7 @@
 .noData {
   font-family: var(--font-pixel);
   font-size: 6px;
-  color: #333;
+  color: var(--txt-faint);
   padding: 12px 10px;
   text-align: center;
   letter-spacing: 0.3px;
@@ -221,3 +227,19 @@
   background: rgba(239,68,68,0.1);
   border: 1px solid rgba(239,68,68,0.25);
 }
+
+/* ── Top-3 podium ───────────────────────────────────────────────────────────── */
+.podium { display: flex; align-items: flex-end; justify-content: center; gap: 10px; padding: 8px 12px 14px; }
+.podStep {
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  width: 104px; padding: 9px 6px 7px;
+  background: var(--panel-card);
+  border-top: 2px solid var(--mc-stone-light); border-left: 2px solid var(--mc-stone-light);
+  border-bottom: 2px solid var(--mc-stone-dark); border-right: 2px solid var(--mc-stone-dark);
+}
+.pod0 { transform: translateY(-12px); border-top-color: #FFD700; }
+.pod1 { border-top-color: #C0C0C0; }
+.pod2 { border-top-color: #CD7F32; }
+.podRank { font-family: var(--font-pixel); font-size: 9px; text-shadow: 1px 1px 0 rgba(0,0,0,0.6); }
+.podName { font-family: var(--font-pixel); font-size: 6px; color: var(--txt-primary); text-shadow: 1px 1px 0 rgba(0,0,0,0.5); max-width: 96px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: center; }
+.podSub { font-family: var(--font-sans); font-size: 11px; color: var(--txt-muted); }

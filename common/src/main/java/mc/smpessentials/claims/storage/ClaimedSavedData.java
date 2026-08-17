@@ -190,21 +190,4 @@ public final class ClaimedSavedData extends SavedData {
         setDirty();
         return toRemove.size();
     }
-
-    // Moves all claims from one UUID to another. Returns the count transferred.
-    public int transferClaims(UUID from, UUID to) {
-        List<ClaimData> toTransfer = claims.stream()
-                .filter(c -> c.owner().equals(from))
-                .collect(Collectors.toList());
-        if (toTransfer.isEmpty())
-            return 0;
-        for (ClaimData old : toTransfer) {
-            replace(old, old.withOwner(to));
-        }
-        int count = toTransfer.size();
-        claimCounts.computeIfPresent(from, (k, v) -> v > count ? v - count : null);
-        claimCounts.merge(to, count, Integer::sum);
-        setDirty();
-        return count;
-    }
 }

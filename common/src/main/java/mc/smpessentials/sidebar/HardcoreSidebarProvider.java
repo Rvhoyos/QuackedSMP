@@ -1,4 +1,4 @@
-package mc.smpessentials.hardcore.sidebar;
+package mc.smpessentials.sidebar;
 
 import mc.smpessentials.config.SmpConfig;
 import mc.smpessentials.hardcore.HardcoreFormat;
@@ -7,87 +7,86 @@ import mc.smpessentials.hardcore.HardcoreSavedData;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
-// Decides WHEN the per-player sidebar is shown (periodic pulse + on session entry) and builds
-// its per-player content. Runs on the server thread. Delegates all packet work to PlayerSidebar.
-public final class HardcoreSidebarController {
+// Decides WHEN the hardcore run-time board is shown (periodic pulse + on session entry) and builds
+// its per-player content. The viewer's own live session + career, then the shared leaderboard.
+// Runs on the server thread; SidebarManager owns the actual packet send.
+public final class HardcoreSidebarProvider implements SidebarProvider {
 
-    public static final HardcoreSidebarController INSTANCE = new HardcoreSidebarController();
+    private static final Component TITLE =
+            Component.literal("HARDCORE").withStyle(ChatFormatting.RED, ChatFormatting.BOLD);
 
-    // Server tick at which each player's current show window ends.
+    // Server tick at which each member's current show window ends.
     private final Map<UUID, Long> showUntilTick = new HashMap<>();
     // Server tick of the next periodic pulse. -1 means schedule on the first tick.
     private long nextPeriodicTick = -1L;
 
-    private HardcoreSidebarController() {}
+    // Per-tick context, refreshed in tick() and read by contentFor().
+    private long now;
+    private HardcoreSavedData data;
+    private HardcoreLeaderboard board; // built lazily, at most once per tick, only when pushing
 
+    @Override
     public void tick(MinecraftServer server) {
         if (!SmpConfig.HARDCORE_SIDEBAR_ENABLED) {
-            if (!showUntilTick.isEmpty()) clearAll(server);
+            showUntilTick.clear();
+            data = null;
             return;
         }
+        now = server.getTickCount();
+        data = HardcoreSavedData.get(server);
+        board = null;
 
-        long now = server.getTickCount();
         if (nextPeriodicTick < 0) nextPeriodicTick = now + randomIntervalTicks();
         if (now >= nextPeriodicTick) {
             openWindowForMembers(server, seconds(SmpConfig.HARDCORE_SIDEBAR_SHOW_SECONDS));
             nextPeriodicTick = now + randomIntervalTicks();
         }
-
-        HardcoreSavedData data = HardcoreSavedData.get(server);
-        HardcoreLeaderboard board = null; // built lazily, at most once per tick, only when pushing
-        for (ServerPlayer player : server.getPlayerList().getPlayers()) {
-            UUID id = player.getUUID();
-            boolean member = data.getPlayerSessionName(id) != null;
-            Long until = showUntilTick.get(id);
-            boolean windowOpen = member && until != null && now < until;
-            if (windowOpen) {
-                // Push on open, then refresh about once a second while the window lasts.
-                if (!PlayerSidebar.INSTANCE.isShown(id) || now % 20 == 0) {
-                    if (board == null) board = HardcoreLeaderboard.of(data, System.currentTimeMillis());
-                    PlayerSidebar.INSTANCE.show(player, buildLines(data, board, player));
-                }
-            } else if (PlayerSidebar.INSTANCE.isShown(id)) {
-                PlayerSidebar.INSTANCE.clear(player);
-                showUntilTick.remove(id);
-            }
-        }
     }
 
-    // Flashes the sidebar for all current members on any session entry (create/join/rejoin).
+    @Override
+    public Optional<SidebarContent> contentFor(ServerPlayer player) {
+        if (data == null) return Optional.empty();
+        UUID id = player.getUUID();
+        if (data.getPlayerSessionName(id) == null) return Optional.empty();
+
+        Long until = showUntilTick.get(id);
+        if (until == null || now >= until) {
+            showUntilTick.remove(id);
+            return Optional.empty();
+        }
+        if (board == null) board = HardcoreLeaderboard.of(data, System.currentTimeMillis());
+        return Optional.of(new SidebarContent(TITLE, buildLines(data, board, player)));
+    }
+
+    // Flashes the board for all current members on any session entry (create/join/rejoin).
     public void onSessionEntry(MinecraftServer server) {
         if (!SmpConfig.HARDCORE_SIDEBAR_ENABLED) return;
         openWindowForMembers(server, seconds(SmpConfig.HARDCORE_SIDEBAR_ON_ENTRY_SECONDS));
     }
 
+    @Override
     public void onDisconnect(ServerPlayer player) {
-        UUID id = player.getUUID();
-        showUntilTick.remove(id);
-        PlayerSidebar.INSTANCE.forget(id);
+        showUntilTick.remove(player.getUUID());
     }
 
     private void openWindowForMembers(MinecraftServer server, long durationTicks) {
-        HardcoreSavedData data = HardcoreSavedData.get(server);
+        HardcoreSavedData d = HardcoreSavedData.get(server);
         long end = server.getTickCount() + durationTicks;
         for (ServerPlayer player : server.getPlayerList().getPlayers()) {
-            if (data.getPlayerSessionName(player.getUUID()) != null) {
+            if (d.getPlayerSessionName(player.getUUID()) != null) {
                 showUntilTick.put(player.getUUID(), end);
             }
         }
-    }
-
-    private void clearAll(MinecraftServer server) {
-        for (ServerPlayer player : server.getPlayerList().getPlayers()) {
-            if (PlayerSidebar.INSTANCE.isShown(player.getUUID())) PlayerSidebar.INSTANCE.clear(player);
-        }
-        showUntilTick.clear();
     }
 
     // Builds the viewer's own data (live session + career) followed by the shared leaderboard,
@@ -121,7 +120,7 @@ public final class HardcoreSidebarController {
         lines.add(kv("Body count:", String.valueOf(board.bodyCount()), ChatFormatting.RED));
         if (board.champion() != null) {
             lines.add(kv("Champion:", HardcoreSavedData.resolveName(
-                    ((net.minecraft.server.level.ServerLevel) player.level()).getServer(), board.champion().player())
+                    ((ServerLevel) player.level()).getServer(), board.champion().player())
                     + " (" + board.champion().wins() + "W)", ChatFormatting.YELLOW));
         }
         if (board.biggestParty() != null) {
@@ -141,7 +140,7 @@ public final class HardcoreSidebarController {
     }
 
     // Randomized gap until the next periodic pulse: the configured interval jittered by +/-50%,
-    // so the sidebar appears at irregular times instead of on a fixed clock.
+    // so the board appears at irregular times instead of on a fixed clock.
     private static long randomIntervalTicks() {
         long base = seconds(SmpConfig.HARDCORE_SIDEBAR_INTERVAL_SECONDS);
         double factor = 0.5 + java.util.concurrent.ThreadLocalRandom.current().nextDouble();

@@ -30,11 +30,6 @@ dashboard-ui/dist/
 # --- Planning / scratch docs (not release artifacts) ---
 docs/
 
-# --- Screenshots / images accidentally added ---
-*.png
-*.jpg
-*.jpeg
-
 # --- Root-level build artifact (fabric/neoforge META-INF are legitimate) ---
 /META-INF/
 

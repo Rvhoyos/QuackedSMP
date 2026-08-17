@@ -4,6 +4,9 @@ plugins {
     id 'com.gradleup.shadow' version '8.3.6' apply false
 }
 
+// Timelapse block-colour palette generator (./gradlew generateBlockColors).
+apply from: 'scripts/gen_block_colors.gradle'
+
 // ── Dashboard UI build task ──────────────────────────────────────────────────
 // Run: ./gradlew npmBuild
 // Requires Node.js + npm. Builds the React UI and copies it into the common

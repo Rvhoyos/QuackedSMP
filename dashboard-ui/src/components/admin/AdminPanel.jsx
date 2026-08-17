@@ -14,112 +14,152 @@ import TeamsPanel from './TeamsPanel'
 import ShopsPanel from './ShopsPanel'
 import CommandBlocksPanel from './CommandBlocksPanel'
 import BackupsPanel from './BackupsPanel'
-import { IconPlayerHead, IconCommandBlock, IconChest, IconBookshelf, IconPortal, IconSkills, IconFlag, IconChatFilter, IconMod, IconShield, IconSword, IconEmerald, IconRepeatCmdBlock, IconShulkerBox } from './MinecraftIcons'
+import TimelapsePanel from './TimelapsePanel'
+import { TooltipProvider, ToastHost } from '../../ui'
+import { IconPlayerHead, IconCommandBlock, IconBookshelf, IconPortal, IconSkills, IconFlag, IconChatFilter, IconMod, IconSword, IconEmerald, IconRepeatCmdBlock, IconShulkerBox, IconHardcoreHeart, IconGear, IconCamera } from './MinecraftIcons'
 import styles from './AdminPanel.module.css'
 
-const TABS = [
-  { id: 'players',    label: 'Players',     Icon: IconPlayerHead },
-  { id: 'commands',   label: 'Commands',    Icon: IconCommandBlock },
-  { id: 'dims',       label: 'Dimensions',  Icon: IconPortal },
-  { id: 'skills',     label: 'Skills',      Icon: IconSkills,      configKey: 'skills_enabled' },
-  { id: 'claims',     label: 'Claims',      Icon: IconFlag,        configKey: 'claims_enabled' },
-  { id: 'chatfilter', label: 'Chat Filter', Icon: IconChatFilter,  configKey: 'chatfilter_enabled' },
-  { id: 'hardcore',   label: 'Hardcore',    Icon: IconShield,      configKey: 'hardcore_enabled' },
-  { id: 'teams',      label: 'Teams',       Icon: IconSword },
-  { id: 'shops',      label: 'Shops',       Icon: IconEmerald,     configKey: 'shops_enabled' },
-  { id: 'cmdblocks',  label: 'Cmd Blocks',  Icon: IconRepeatCmdBlock, configKey: 'commandblocks_enabled' },
-  { id: 'mods',       label: 'Mods',        Icon: IconMod },
-  { id: 'backups',    label: 'Backups',     Icon: IconShulkerBox },
-  { id: 'config',     label: 'Config',      Icon: IconChest },
-  { id: 'features',   label: 'Features',    Icon: IconBookshelf },
+// Sidebar groups. Each item optionally gates on a config flag (hidden when the
+// feature is disabled). Panels are looked up by id in PANELS below.
+const GROUPS = [
+  { label: 'People', items: [
+    { id: 'players', label: 'Players', Icon: IconPlayerHead },
+    { id: 'teams',   label: 'Teams',   Icon: IconSword },
+  ]},
+  { label: 'World', items: [
+    { id: 'dims',   label: 'Dimensions', Icon: IconPortal },
+    { id: 'claims', label: 'Claims',     Icon: IconFlag,    configKey: 'claims_enabled' },
+    { id: 'shops',  label: 'Shops',      Icon: IconEmerald, configKey: 'shops_enabled' },
+  ]},
+  { label: 'Gameplay', items: [
+    { id: 'skills',   label: 'Skills',   Icon: IconSkills, configKey: 'skills_enabled' },
+    { id: 'hardcore', label: 'Hardcore', Icon: IconHardcoreHeart, configKey: 'hardcore_enabled' },
+  ]},
+  { label: 'Moderation', items: [
+    { id: 'chatfilter', label: 'Chat Filter', Icon: IconChatFilter, configKey: 'chatfilter_enabled' },
+    { id: 'cmdblocks',  label: 'Cmd Blocks',  Icon: IconRepeatCmdBlock, configKey: 'commandblocks_enabled' },
+    { id: 'commands',   label: 'Commands',    Icon: IconCommandBlock },
+  ]},
+  { label: 'Systems', items: [
+    { id: 'mods',      label: 'Mods',      Icon: IconMod },
+    { id: 'backups',   label: 'Backups',   Icon: IconShulkerBox },
+    { id: 'timelapse', label: 'Timelapse', Icon: IconCamera },
+  ]},
+  { label: 'Setup', items: [
+    { id: 'config',   label: 'Config',   Icon: IconGear },
+    { id: 'features', label: 'Features', Icon: IconBookshelf },
+  ]},
 ]
 
 const TOKEN_KEY = 'quack_admin_token'
 
-export default function AdminPanel({ health }) {
-  const [token,      setToken]  = useState(() => sessionStorage.getItem(TOKEN_KEY) || '')
-  const [activeTab,  setTab]    = useState('players')
-  const [cfg,        setCfg]    = useState(null)
+export default function AdminPanel({ health, wsStatus, onBack }) {
+  const [token,     setToken]   = useState(() => sessionStorage.getItem(TOKEN_KEY) || '')
+  const [activeTab, setTab]     = useState('players')
+  const [cfg,       setCfg]     = useState(null)
+  const [navOpen,   setNavOpen] = useState(false)
 
   useEffect(() => {
     if (!token) return
     fetch('/api/admin/config', { headers: { Authorization: `Bearer ${token}` } })
-      .then(r => {
-        if (r.status === 401 || r.status === 403) return null
-        return r.json()
-      })
+      .then(r => (r.status === 401 || r.status === 403) ? null : r.json())
       .then(d => { if (d && !d.error) setCfg(d) })
       .catch(() => {})
   }, [token])
 
-  const visibleTabs = TABS.filter(t => !t.configKey || cfg?.[t.configKey] !== false)
+  // Filter items by config flags; drop groups that end up empty.
+  const visibleGroups = GROUPS
+    .map(g => ({ ...g, items: g.items.filter(it => !it.configKey || cfg?.[it.configKey] !== false) }))
+    .filter(g => g.items.length > 0)
 
-  // If active tab got hidden, fall back to first visible
-  const activeVisible = visibleTabs.some(t => t.id === activeTab)
-  const resolvedTab = activeVisible ? activeTab : visibleTabs[0]?.id || 'players'
+  const flatItems   = visibleGroups.flatMap(g => g.items)
+  const activeItem  = flatItems.find(it => it.id === activeTab)
+  const resolvedTab = activeItem ? activeTab : (flatItems[0]?.id || 'players')
+  const resolvedLbl = flatItems.find(it => it.id === resolvedTab)?.label || 'Admin'
 
-  // If a password is set and we have no token, require login.
-  // If no password is set, the server bypasses auth — go straight to the panel.
   const needsAuth = health?.hasPassword && !token
 
-  function onAuth(tok) {
-    sessionStorage.setItem(TOKEN_KEY, tok)
-    setToken(tok)
-  }
-
+  function onAuth(tok) { sessionStorage.setItem(TOKEN_KEY, tok); setToken(tok) }
   function logout() {
     if (token) {
-      fetch('/api/admin/logout', {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
-      }).catch(() => {})
+      fetch('/api/admin/logout', { method: 'POST', headers: { Authorization: `Bearer ${token}` } }).catch(() => {})
     }
     sessionStorage.removeItem(TOKEN_KEY)
     setToken('')
   }
+  function pick(id) { setTab(id); setNavOpen(false) }
 
-  if (needsAuth) {
-    return <AdminGate onAuth={onAuth} />
-  }
+  if (needsAuth) return <AdminGate onAuth={onAuth} />
+
+  const panelProps = { token, onExpired: logout }
 
   return (
-    <div className={styles.panel}>
-      <div className={styles.header}>
-        <div className={styles.tabs}>
-          {visibleTabs.map(({ id, label, Icon }) => (
-            <button
-              key={id}
-              className={`${styles.tab} ${resolvedTab === id ? styles.tabActive : ''}`}
-              onClick={() => setTab(id)}
-            >
-              <span className={styles.tabIcon}><Icon size={16} /></span>
-              {label}
-            </button>
-          ))}
-        </div>
-        {health?.hasPassword && (
-          <button className={styles.logout} onClick={logout} title="Sign out">
-            Sign Out
-          </button>
-        )}
-      </div>
+    <TooltipProvider>
+      <ToastHost>
+        <div className={styles.shell}>
+          {/* Top bar: back to dashboard + live status */}
+          <div className={styles.topbar}>
+            <button className={styles.hamburger} onClick={() => setNavOpen(o => !o)} aria-label="Menu">≡</button>
+            {onBack && <button className={styles.back} onClick={onBack}>Dashboard</button>}
+            <span className={styles.mobileTitle}>{resolvedLbl}</span>
+            <span className={styles.topSpacer} />
+            <span className={`${styles.livePill} ${wsStatus === 'open' ? styles.liveOn : styles.liveOff}`}>
+              <span className={styles.liveDot} />{wsStatus === 'open' ? 'Live' : 'Reconnecting'}
+            </span>
+          </div>
 
-      <div className={styles.body}>
-        {resolvedTab === 'players'    && <PlayersPanel token={token} onExpired={logout} />}
-        {resolvedTab === 'commands'   && <CommandsPanel token={token} onExpired={logout} />}
-        {resolvedTab === 'dims'       && <DimsPanel token={token} onExpired={logout} />}
-        {resolvedTab === 'skills'     && <SkillsPanel token={token} onExpired={logout} />}
-        {resolvedTab === 'claims'     && <ClaimsPanel token={token} onExpired={logout} />}
-        {resolvedTab === 'chatfilter' && <ChatFilterPanel token={token} onExpired={logout} />}
-        {resolvedTab === 'hardcore'   && <HardcorePanel token={token} onExpired={logout} />}
-        {resolvedTab === 'teams'      && <TeamsPanel token={token} onExpired={logout} />}
-        {resolvedTab === 'shops'      && <ShopsPanel token={token} onExpired={logout} />}
-        {resolvedTab === 'cmdblocks'  && <CommandBlocksPanel token={token} onExpired={logout} />}
-        {resolvedTab === 'mods'       && <ModsPanel token={token} onExpired={logout} />}
-        {resolvedTab === 'backups'    && <BackupsPanel token={token} onExpired={logout} />}
-        {resolvedTab === 'config'     && <ConfigEditor token={token} onExpired={logout} />}
-        {resolvedTab === 'features'   && <FeatureShowcase token={token} onExpired={logout} />}
-      </div>
-    </div>
+          <div className={styles.mainRow}>
+          {navOpen && <div className={styles.scrim} onClick={() => setNavOpen(false)} />}
+
+          {/* Sidebar rail */}
+          <nav className={`${styles.rail} ${navOpen ? styles.railOpen : ''}`}>
+            <div className={styles.railHead}>
+              <span className={styles.railServer}>{health?.serverName || 'QuackedSMP'}</span>
+              <span className={styles.railSub}>Admin</span>
+            </div>
+            <div className={styles.railScroll}>
+              {visibleGroups.map(g => (
+                <div key={g.label} className={styles.group}>
+                  <div className={styles.groupLabel}>{g.label}</div>
+                  {g.items.map(({ id, label, Icon }) => (
+                    <button
+                      key={id}
+                      className={`${styles.item} ${resolvedTab === id ? styles.itemActive : ''}`}
+                      onClick={() => pick(id)}
+                    >
+                      <span className={styles.itemIcon}><Icon size={16} /></span>
+                      <span className={styles.itemLabel}>{label}</span>
+                    </button>
+                  ))}
+                </div>
+              ))}
+            </div>
+            {health?.hasPassword && (
+              <button className={styles.signout} onClick={logout}>Sign Out</button>
+            )}
+          </nav>
+
+          {/* Panel body */}
+          <div className={styles.body}>
+            {resolvedTab === 'players'    && <PlayersPanel {...panelProps} />}
+            {resolvedTab === 'commands'   && <CommandsPanel {...panelProps} />}
+            {resolvedTab === 'dims'       && <DimsPanel {...panelProps} />}
+            {resolvedTab === 'skills'     && <SkillsPanel {...panelProps} />}
+            {resolvedTab === 'claims'     && <ClaimsPanel {...panelProps} />}
+            {resolvedTab === 'chatfilter' && <ChatFilterPanel {...panelProps} />}
+            {resolvedTab === 'hardcore'   && <HardcorePanel {...panelProps} />}
+            {resolvedTab === 'teams'      && <TeamsPanel {...panelProps} />}
+            {resolvedTab === 'shops'      && <ShopsPanel {...panelProps} />}
+            {resolvedTab === 'cmdblocks'  && <CommandBlocksPanel {...panelProps} />}
+            {resolvedTab === 'mods'       && <ModsPanel {...panelProps} />}
+            {resolvedTab === 'backups'    && <BackupsPanel {...panelProps} />}
+            {resolvedTab === 'timelapse'  && <TimelapsePanel {...panelProps} />}
+            {resolvedTab === 'config'     && <ConfigEditor {...panelProps} />}
+            {resolvedTab === 'features'   && <FeatureShowcase {...panelProps} />}
+          </div>
+          </div>
+        </div>
+      </ToastHost>
+    </TooltipProvider>
   )
 }
