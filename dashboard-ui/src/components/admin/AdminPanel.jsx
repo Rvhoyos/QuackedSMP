@@ -100,7 +100,7 @@ export default function AdminPanel({ health, wsStatus, onBack }) {
           {/* Top bar: back to dashboard + live status */}
           <div className={styles.topbar}>
             <button className={styles.hamburger} onClick={() => setNavOpen(o => !o)} aria-label="Menu">≡</button>
-            {onBack && <button className={styles.back} onClick={onBack}>← Dashboard</button>}
+            {onBack && <button className={styles.back} onClick={onBack}>Dashboard</button>}
             <span className={styles.mobileTitle}>{resolvedLbl}</span>
             <span className={styles.topSpacer} />
             <span className={`${styles.livePill} ${wsStatus === 'open' ? styles.liveOn : styles.liveOff}`}>

@@ -1,6 +1,6 @@
 /* Cohesive vitals band — one titled panel, gauges as tiles inside it. */
 .band {
-  background: var(--surf-1);
+  background: var(--panel-surface);
   border-top:    3px solid var(--mc-stone-light);
   border-left:   3px solid var(--mc-stone-light);
   border-bottom: 3px solid var(--mc-stone-dark);
@@ -34,10 +34,10 @@
   align-items: center;
   gap: 8px;
   padding: 16px 10px 14px;
-  background: var(--surf-1);
+  background: var(--panel-card);
   transition: background var(--t-fast);
 }
-.card:hover { background: var(--surf-2); }
+.card:hover { background: var(--panel-card-hover); }
 
 .head { display: flex; align-items: center; gap: 7px; align-self: flex-start; }
 .icon { display: flex; image-rendering: pixelated; }

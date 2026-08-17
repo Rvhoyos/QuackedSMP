@@ -1,4 +1,4 @@
-.wrap { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-height: 0; background: var(--surf-1); }
+.wrap { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-height: 0; background: var(--panel-surface); }
 .scroll { flex: 1; overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 16px; }
 
 .group { display: flex; flex-direction: column; gap: 8px; }

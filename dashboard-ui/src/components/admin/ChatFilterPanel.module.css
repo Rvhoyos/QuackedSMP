@@ -1,9 +1,9 @@
-.wrap { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-height: 0; background: var(--surf-1); }
+.wrap { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-height: 0; background: var(--panel-surface); }
 
 .subtabs { display: flex; gap: 3px; padding: 10px 14px 0; }
 .subtab {
   font-family: var(--font-pixel); font-size: 7px; letter-spacing: 0.3px; padding: 7px 12px;
-  color: var(--txt-faint); background: var(--surf-2); border: 1px solid #0d0d0d; border-bottom: none; cursor: pointer;
+  color: var(--txt-faint); background: var(--panel-card); border: 1px solid #0d0d0d; border-bottom: none; cursor: pointer;
   transition: color var(--t-fast), background var(--t-fast); text-shadow: 1px 1px 0 rgba(0,0,0,0.5);
 }
 .subtab:hover { color: var(--txt-secondary); }
@@ -21,7 +21,7 @@
 .word {
   display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px;
   font-family: var(--font-mono); font-size: 12px; color: var(--txt-secondary);
-  background: var(--surf-2); border: 1px solid #0d0d0d; cursor: pointer;
+  background: var(--panel-card); border: 1px solid #0d0d0d; cursor: pointer;
   transition: background var(--t-fast), border-color var(--t-fast);
 }
 .word:hover { border-color: #4a4a4a; }
@@ -32,12 +32,12 @@
 .pagination { display: flex; align-items: center; gap: 8px; justify-content: center; }
 .pageInfo { font-family: var(--font-sans); font-size: 12px; color: var(--txt-muted); }
 
-.addCard { display: flex; flex-direction: column; gap: 8px; padding: 12px; background: var(--surf-2); border: 1px solid #0d0d0d; }
+.addCard { display: flex; flex-direction: column; gap: 8px; padding: 12px; background: var(--panel-card); border: 1px solid #0d0d0d; }
 .addLabel { font-family: var(--font-sans); font-size: 12px; color: var(--txt-muted); }
 .addFoot { display: flex; justify-content: flex-end; }
 
 .muteGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 10px; }
-.muteCard { display: flex; flex-direction: column; gap: 5px; padding: 12px; background: var(--surf-2); border-top: 2px solid #3a3a3a; border-left: 2px solid #3a3a3a; border-bottom: 2px solid #0d0d0d; border-right: 2px solid #0d0d0d; }
+.muteCard { display: flex; flex-direction: column; gap: 5px; padding: 12px; background: var(--panel-card); border-top: 2px solid #56546a; border-left: 2px solid #56546a; border-bottom: 2px solid #0d0d0d; border-right: 2px solid #0d0d0d; }
 .muteTop { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .muteName { font-family: var(--font-pixel); font-size: 8px; color: var(--txt-primary); text-shadow: 1px 1px 0 rgba(0,0,0,0.5); }
 .muteUuid { font-family: var(--font-mono); font-size: 10px; color: var(--txt-faint); }

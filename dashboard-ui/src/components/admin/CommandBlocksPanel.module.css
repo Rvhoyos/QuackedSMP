@@ -1,4 +1,4 @@
-.wrap { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-height: 0; background: var(--surf-1); }
+.wrap { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-height: 0; background: var(--panel-surface); }
 
 .disabledNote {
   margin: 10px 14px; padding: 9px 12px;
@@ -13,7 +13,7 @@
 .dimName { font-family: var(--font-pixel); font-size: 8px; letter-spacing: 0.4px; color: var(--txt-secondary); text-transform: capitalize; text-shadow: 1px 1px 0 rgba(0,0,0,0.5); }
 .dimCount { font-family: var(--font-pixel); font-size: 6px; color: var(--txt-faint); background: var(--surf-3); padding: 2px 6px; }
 
-.block { background: var(--surf-2); border-left: 3px solid var(--surf-3); }
+.block { background: var(--panel-card); border-left: 3px solid var(--surf-3); }
 .block:hover { border-left-color: var(--mc-wood); }
 .row { display: flex; align-items: center; gap: 10px; padding: 9px 12px; }
 .mode { font-family: var(--font-pixel); font-size: 6px; letter-spacing: 0.3px; padding: 4px 7px; color: #fff; white-space: nowrap; text-shadow: 1px 1px 0 rgba(0,0,0,0.4); flex-shrink: 0; }

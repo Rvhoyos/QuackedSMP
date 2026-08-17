@@ -3,7 +3,7 @@
   flex-direction: column;
   min-height: 0;
   height: clamp(300px, 40vh, 460px);
-  background: var(--surf-1);
+  background: var(--panel-surface);
   border-top:    3px solid var(--mc-stone-light);
   border-left:   3px solid var(--mc-stone-light);
   border-bottom: 3px solid var(--mc-stone-dark);
@@ -27,7 +27,7 @@
 .tab {
   font-family: var(--font-pixel); font-size: 6px; letter-spacing: 0.3px;
   padding: 5px 8px; color: var(--txt-faint);
-  background: var(--surf-2); border: 1px solid #0d0d0d;
+  background: var(--panel-card); border: 1px solid #0d0d0d;
   cursor: pointer; transition: color var(--t-fast), background var(--t-fast);
   text-shadow: 1px 1px 0 rgba(0,0,0,0.5);
 }

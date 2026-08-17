@@ -1,6 +1,6 @@
 .wrap {
   flex-shrink: 0;
-  background: var(--surf-1);
+  background: var(--panel-surface);
   border-top:    3px solid var(--mc-stone-light);
   border-left:   3px solid var(--mc-stone-light);
   border-bottom: 3px solid var(--mc-stone-dark);
@@ -233,7 +233,7 @@
 .podStep {
   display: flex; flex-direction: column; align-items: center; gap: 3px;
   width: 104px; padding: 9px 6px 7px;
-  background: var(--surf-2);
+  background: var(--panel-card);
   border-top: 2px solid var(--mc-stone-light); border-left: 2px solid var(--mc-stone-light);
   border-bottom: 2px solid var(--mc-stone-dark); border-right: 2px solid var(--mc-stone-dark);
 }

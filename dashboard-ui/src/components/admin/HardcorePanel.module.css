@@ -1,4 +1,4 @@
-.wrap { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-height: 0; background: var(--surf-1); }
+.wrap { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-height: 0; background: var(--panel-surface); }
 
 .grid {
   flex: 1; overflow-y: auto; padding: 14px;
@@ -7,8 +7,8 @@
 
 .card {
   display: flex; flex-direction: column; gap: 9px; padding: 14px;
-  background: var(--surf-2);
-  border-top: 2px solid #3a3a3a; border-left: 2px solid #3a3a3a;
+  background: var(--panel-card);
+  border-top: 2px solid #56546a; border-left: 2px solid #56546a;
   border-bottom: 2px solid #0d0d0d; border-right: 2px solid #0d0d0d;
   animation: fadeIn 120ms ease;
 }

@@ -1,5 +1,5 @@
 import styles from './MetricsPanel.module.css'
-import { IconClock, IconSpeedometer, IconFurnace, IconPlayerHead } from './admin/MinecraftIcons'
+import { IconClock, IconSpeedometer, IconFurnace, IconPlayerHead, IconPulse } from './admin/MinecraftIcons'
 
 // ── Threshold colors ──────────────────────────────────────────────────────────
 function tpsColor(v)  { if (v == null) return 'var(--overlay0)'; return v >= 18 ? 'var(--green)' : v >= 14 ? 'var(--yellow)' : 'var(--red)' }
@@ -85,7 +85,7 @@ export default function MetricsPanel({ tps, cpu, mspt, online, sys, tpsHist = []
     <section className={styles.band}>
       <div className={styles.bandHead}>
         <div className={styles.bandTitleRow}>
-          <span className={styles.bandIcon}><IconSpeedometer size={18} /></span>
+          <span className={styles.bandIcon}><IconPulse size={18} /></span>
           <span className={styles.bandTitle}>Server Vitals</span>
         </div>
         <span className={styles.bandSub}>live · 15s refresh</span>

@@ -4,7 +4,7 @@
   flex-direction: column;
   overflow: hidden;
   min-height: 0;
-  background: var(--surf-1);
+  background: var(--panel-surface);
 }
 .body {
   flex: 1;

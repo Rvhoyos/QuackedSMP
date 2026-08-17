@@ -4,7 +4,7 @@
    ConfigEditor JSX references.
    ========================================================================== */
 
-.wrap { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-height: 0; background: var(--surf-1); }
+.wrap { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-height: 0; background: var(--panel-surface); }
 .loading { flex: 1; display: flex; align-items: center; justify-content: center; font-family: var(--font-pixel); font-size: 8px; color: var(--txt-muted); }
 
 /* ── Segmented tab bar ─────────────────────────────────────────────────────── */
@@ -12,8 +12,8 @@
 .tabBtn {
   position: relative; display: inline-flex; align-items: center; gap: 6px;
   font-family: var(--font-pixel); font-size: 7px; letter-spacing: 0.3px;
-  padding: 8px 14px; color: var(--txt-faint); background: var(--surf-2);
-  border-top: 2px solid #3a3a3a; border-left: 2px solid #3a3a3a; border-bottom: 2px solid #0d0d0d; border-right: 2px solid #0d0d0d;
+  padding: 8px 14px; color: var(--txt-faint); background: var(--panel-card);
+  border-top: 2px solid #56546a; border-left: 2px solid #56546a; border-bottom: 2px solid #0d0d0d; border-right: 2px solid #0d0d0d;
   cursor: pointer; text-shadow: 1px 1px 0 rgba(0,0,0,0.5); transition: color var(--t-fast), background var(--t-fast);
 }
 .tabBtn:hover { color: var(--txt-secondary); }
@@ -26,7 +26,7 @@
 /* ── Group card (accent-striped) ───────────────────────────────────────────── */
 .group {
   --accent-c: var(--blue);
-  background: var(--surf-2);
+  background: var(--panel-card);
   border: 1px solid #0d0d0d;
   border-top: 3px solid var(--accent-c);
 }
@@ -39,7 +39,7 @@
 .accent_teal   { --accent-c: var(--teal); }
 .accent_yellow { --accent-c: var(--yellow); }
 
-.groupHeader { display: flex; align-items: center; gap: 9px; padding: 11px 14px; background: var(--surf-0); border-bottom: 1px solid #0d0d0d; }
+.groupHeader { display: flex; align-items: center; gap: 9px; padding: 11px 14px; background: var(--panel-card-head); border-bottom: 1px solid #0d0d0d; box-shadow: inset 0 1px 0 rgba(255,255,255,0.04); }
 .groupIcon { display: flex; image-rendering: pixelated; }
 .groupTitle { font-family: var(--font-pixel); font-size: 8px; letter-spacing: 0.4px; color: var(--txt-primary); text-shadow: 1px 1px 0 rgba(0,0,0,0.5); }
 .groupBody { padding: 6px 14px 12px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 22px; }
@@ -154,7 +154,7 @@
 .disableMsg { font-family: var(--font-sans); font-size: 12px; color: var(--yellow); }
 
 /* ── Color legend ──────────────────────────────────────────────────────────── */
-.legend { border: 1px solid #0d0d0d; background: var(--surf-2); }
+.legend { border: 1px solid #0d0d0d; background: var(--panel-card); }
 .legendToggle { display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px 14px; background: var(--surf-0); border: none; cursor: pointer; }
 .legendCaret { font-family: var(--font-mono); font-size: 11px; color: var(--txt-muted); }
 .legendToggleTitle { font-family: var(--font-pixel); font-size: 8px; color: var(--txt-secondary); letter-spacing: 0.3px; text-shadow: 1px 1px 0 rgba(0,0,0,0.5); }
@@ -176,7 +176,7 @@
 
 /* ── Kit definitions editor ────────────────────────────────────────────────── */
 .kitCard { background: var(--surf-1); border: 1px solid #0d0d0d; margin-bottom: 8px; }
-.kitHeader { display: flex; align-items: center; gap: 9px; padding: 10px 12px; cursor: pointer; background: var(--surf-0); }
+.kitHeader { display: flex; align-items: center; gap: 9px; padding: 10px 12px; cursor: pointer; background: var(--panel-card-head); }
 .kitCaret { font-family: var(--font-mono); font-size: 11px; color: var(--txt-muted); }
 .kitTierBadge { font-family: var(--font-pixel); font-size: 6px; color: var(--mauve); background: rgba(203,166,247,0.12); border: 1px solid rgba(203,166,247,0.3); padding: 2px 6px; }
 .kitName { font-family: var(--font-pixel); font-size: 8px; color: var(--txt-primary); text-shadow: 1px 1px 0 rgba(0,0,0,0.5); }
@@ -210,7 +210,7 @@
 
 .nav {
   width: 208px; flex-shrink: 0; display: flex; flex-direction: column; min-height: 0;
-  background: var(--surf-0); border-right: 2px solid var(--mc-wood-dark);
+  background: var(--panel-rail); border-right: 2px solid var(--mc-wood-dark);
 }
 .navSelect { display: none; }
 .navScroll { flex: 1; overflow-y: auto; min-height: 0; padding: 10px 0 14px; scrollbar-width: thin; scrollbar-color: var(--mc-wood-dark) transparent; }
@@ -244,7 +244,7 @@
 .navGroup[data-group="chat"]         .navItemActive { background: rgba(250,179,135,0.15); border-left-color: #fab387; }
 .navGroup[data-group="integrations"] .navItemActive { background: rgba(203,166,247,0.15); border-left-color: #cba6f7; }
 
-.content { flex: 1; display: flex; flex-direction: column; min-height: 0; overflow: hidden; background: var(--surf-1); }
+.content { flex: 1; display: flex; flex-direction: column; min-height: 0; overflow: hidden; background: var(--panel-surface); }
 .contentBody { flex: 1; overflow-y: auto; min-height: 0; padding: 14px; display: flex; flex-direction: column; gap: 12px; }
 
 @media (max-width: 760px) {

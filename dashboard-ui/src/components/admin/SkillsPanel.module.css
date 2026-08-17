@@ -1,9 +1,9 @@
-.wrap { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-height: 0; background: var(--surf-1); }
+.wrap { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-height: 0; background: var(--panel-surface); }
 
 .subtabs { display: flex; gap: 3px; padding: 10px 14px 0; flex-shrink: 0; }
 .subtab {
   font-family: var(--font-pixel); font-size: 7px; letter-spacing: 0.3px; padding: 7px 14px;
-  color: var(--txt-faint); background: var(--surf-2); border: 1px solid #0d0d0d; border-bottom: none; cursor: pointer;
+  color: var(--txt-faint); background: var(--panel-card); border: 1px solid #0d0d0d; border-bottom: none; cursor: pointer;
   transition: color var(--t-fast), background var(--t-fast); text-shadow: 1px 1px 0 rgba(0,0,0,0.5);
 }
 .subtab:hover { color: var(--txt-secondary); }
@@ -29,7 +29,7 @@
 .catBlock { display: flex; flex-direction: column; gap: 8px; }
 .catLabel { font-family: var(--font-pixel); font-size: 7px; letter-spacing: 0.4px; color: var(--txt-faint); text-shadow: 1px 1px 0 rgba(0,0,0,0.5); }
 .skillGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
-.skillCard { display: flex; flex-direction: column; gap: 8px; padding: 11px; background: var(--surf-2); border-top: 2px solid #3a3a3a; border-left: 2px solid #3a3a3a; border-bottom: 2px solid #0d0d0d; border-right: 2px solid #0d0d0d; }
+.skillCard { display: flex; flex-direction: column; gap: 8px; padding: 11px; background: var(--panel-card); border-top: 2px solid #56546a; border-left: 2px solid #56546a; border-bottom: 2px solid #0d0d0d; border-right: 2px solid #0d0d0d; }
 .skillTop { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .skillName { font-family: var(--font-pixel); font-size: 7px; color: var(--txt-secondary); text-shadow: 1px 1px 0 rgba(0,0,0,0.5); }
 .skillFoot { display: flex; align-items: center; justify-content: space-between; gap: 8px; }

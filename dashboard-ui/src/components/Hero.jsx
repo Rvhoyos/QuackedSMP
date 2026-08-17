@@ -67,7 +67,7 @@ export default function Hero({ health, wsStatus, sys, onDownload, onAdmin, downl
             </Btn>
           )}
           {onAdmin && (
-            <Btn variant="primary" size="lg" onClick={onAdmin}>Admin Panel →</Btn>
+            <Btn variant="primary" size="lg" onClick={onAdmin}>Admin Panel</Btn>
           )}
         </div>
       </div>

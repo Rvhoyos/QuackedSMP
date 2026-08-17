@@ -1,4 +1,4 @@
-.wrap { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-height: 0; background: var(--surf-1); }
+.wrap { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-height: 0; background: var(--panel-surface); }
 
 .filter {
   font-family: var(--font-sans); font-size: 12px; color: var(--txt-primary);
@@ -13,7 +13,7 @@
 
 .list { display: flex; flex-direction: column; gap: 8px; }
 
-.teamCard { background: var(--surf-2); border-top: 2px solid #3a3a3a; border-left: 2px solid #3a3a3a; border-bottom: 2px solid #0d0d0d; border-right: 2px solid #0d0d0d; }
+.teamCard { background: var(--panel-card); border-top: 2px solid #56546a; border-left: 2px solid #56546a; border-bottom: 2px solid #0d0d0d; border-right: 2px solid #0d0d0d; }
 .teamHeader { display: flex; align-items: center; gap: 10px; width: 100%; padding: 11px 12px; background: none; border: none; cursor: pointer; text-align: left; }
 .teamHeader:hover { background: rgba(255,255,255,0.03); }
 .caret { font-family: var(--font-mono); font-size: 11px; color: var(--txt-muted); width: 10px; }
