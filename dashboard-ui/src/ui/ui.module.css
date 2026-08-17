@@ -238,3 +238,57 @@
 .toast.ok     { color: var(--green); }
 .toast.danger { color: var(--red); }
 @keyframes toastIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+/* ── Overflow menu (Radix DropdownMenu) ───────────────────────────────────── */
+.menu {
+  min-width: 150px; padding: 4px;
+  background: var(--surf-3); border: 1px solid #0d0d0d;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.55); z-index: 120;
+  animation: pop 110ms ease;
+}
+.menuItem {
+  display: flex; align-items: center; gap: 8px;
+  padding: 7px 10px; font-family: var(--font-pixel); font-size: 7px; letter-spacing: 0.3px;
+  color: var(--txt-secondary); text-shadow: 1px 1px 0 rgba(0,0,0,0.5);
+  cursor: pointer; outline: none; user-select: none;
+}
+.menuItem[data-highlighted] { background: var(--mc-wood-dark); color: #fff; }
+.menuItem[data-disabled] { opacity: 0.35; cursor: default; }
+.menu_danger { color: var(--red); }
+.menu_danger[data-highlighted] { background: rgba(243,139,168,0.2); color: #ffd8e0; }
+.menu_warn { color: var(--yellow); }
+.menu_warn[data-highlighted] { background: rgba(249,226,175,0.2); }
+.menuSep { height: 1px; background: #0d0d0d; margin: 4px 0; }
+
+/* ── Meter ─────────────────────────────────────────────────────────────────── */
+.meter { height: 8px; background: var(--surf-slot); border: 1px solid #0a0a0a; overflow: hidden; }
+.meterFill { height: 100%; transition: width 300ms ease; }
+
+/* ── Stat tile ─────────────────────────────────────────────────────────────── */
+.statCard {
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  padding: 8px 14px; background: var(--surf-2);
+  border-top: 1px solid #444; border-left: 1px solid #444;
+  border-bottom: 1px solid #0d0d0d; border-right: 1px solid #0d0d0d;
+}
+.statVal { font-family: var(--font-pixel); font-size: 12px; color: var(--txt-primary); text-shadow: 1px 1px 0 rgba(0,0,0,0.5); }
+.stat_ok { color: var(--green); } .stat_warn { color: var(--yellow); } .stat_danger { color: var(--red); }
+.stat_info { color: var(--blue); } .stat_vip { color: var(--mauve); }
+.statLabel { font-family: var(--font-sans); font-size: 10px; color: var(--txt-faint); text-transform: uppercase; letter-spacing: 0.4px; }
+
+/* ── Section card ──────────────────────────────────────────────────────────── */
+.section { background: var(--surf-2); border-top: 2px solid #3a3a3a; border-left: 2px solid #3a3a3a; border-bottom: 2px solid #0d0d0d; border-right: 2px solid #0d0d0d; }
+.sectionHead { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 14px; background: var(--surf-0); border-bottom: 1px solid #0d0d0d; }
+.sectionTitles { display: flex; flex-direction: column; gap: 2px; }
+.sectionTitle { font-family: var(--font-pixel); font-size: 8px; letter-spacing: 0.4px; color: var(--txt-secondary); text-shadow: 1px 1px 0 rgba(0,0,0,0.5); }
+.sectionSub { font-family: var(--font-sans); font-size: 11px; color: var(--txt-muted); }
+.sectionActions { display: flex; align-items: center; gap: 8px; }
+.sectionBody { padding: 14px; }
+
+/* ── Slider ────────────────────────────────────────────────────────────────── */
+.slider { display: flex; align-items: center; gap: 10px; }
+.sliderInput { flex: 1; accent-color: var(--mc-wood-light); height: 4px; cursor: pointer; }
+.sliderVal { font-family: var(--font-mono); font-size: 12px; color: var(--txt-secondary); min-width: 44px; text-align: right; }
+
+/* ── Swatch ────────────────────────────────────────────────────────────────── */
+.swatch { display: inline-block; border: 1px solid rgba(0,0,0,0.5); flex-shrink: 0; }

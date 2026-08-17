@@ -107,6 +107,10 @@ export default function AdminPanel({ health }) {
 
           {/* Sidebar rail */}
           <nav className={`${styles.rail} ${navOpen ? styles.railOpen : ''}`}>
+            <div className={styles.railHead}>
+              <span className={styles.railServer}>{health?.serverName || 'QuackedSMP'}</span>
+              <span className={styles.railSub}>Admin</span>
+            </div>
             <div className={styles.railScroll}>
               {visibleGroups.map(g => (
                 <div key={g.label} className={styles.group}>

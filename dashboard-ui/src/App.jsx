@@ -173,15 +173,8 @@ export default function App() {
             </div>
           </div>
         </a>
-        <div className={styles.headerCenter}>
-          {health?.serverName && (
-            <span className={styles.serverName}>{health.serverName}</span>
-          )}
-        </div>
+        <div className={styles.headerCenter} />
         <div className={styles.headerRight}>
-          <span className={styles.playerCount}>
-            {health != null ? `${health.online} online` : '— online'}
-          </span>
           {health?.backupPublicEnabled && view !== 'admin' && (
             <button
               className={styles.navTab}

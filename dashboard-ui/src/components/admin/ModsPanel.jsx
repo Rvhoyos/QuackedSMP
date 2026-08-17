@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { Toolbar, IconButton, Btn, Badge, Loading, EmptyState, ErrorBanner, ConfirmDialog, useToast } from '../../ui'
+import { Toolbar, IconButton, Badge, StatCard, Loading, EmptyState, ErrorBanner, ConfirmDialog, Menu, MenuItem, Btn, useToast } from '../../ui'
 import { IconMod } from './MinecraftIcons'
 import styles from './ModsPanel.module.css'
 
@@ -9,6 +9,7 @@ export default function ModsPanel({ token, onExpired }) {
   const [error,      setError]      = useState(null)
   const [uploading,  setUploading]  = useState(false)
   const [uploadPct,  setUploadPct]  = useState(0)
+  const [dragging,   setDragging]   = useState(false)
   const [confirmDel, setConfirmDel] = useState(null)
   const fileRef = useRef(null)
   const toast = useToast()
@@ -25,30 +26,26 @@ export default function ModsPanel({ token, onExpired }) {
     } catch { setError('Failed to load mod list') }
     setLoading(false)
   }
-
   useEffect(() => { loadMods() }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function deleteMod() {
     const filename = confirmDel
     setConfirmDel(null); setError(null)
     try {
-      const r = await fetch('/api/admin/mods', {
-        method: 'DELETE', headers: { 'Content-Type': 'application/json', ...auth },
-        body: JSON.stringify({ filename }),
-      })
+      const r = await fetch('/api/admin/mods', { method: 'DELETE', headers: { 'Content-Type': 'application/json', ...auth }, body: JSON.stringify({ filename }) })
       if (r.status === 401) { onExpired(); return }
       const d = await r.json()
       if (d.error) setError(d.error); else { toast(`Deleted ${filename}`); loadMods() }
     } catch { setError('Delete failed') }
   }
 
-  function onFileChange(e) {
-    const file = e.target.files?.[0]
-    e.target.value = ''
+  function pickFile(file) {
     if (!file) return
     if (!file.name.endsWith('.jar')) { setError('Only .jar files are allowed'); return }
     uploadFile(file)
   }
+  function onFileChange(e) { const f = e.target.files?.[0]; e.target.value = ''; pickFile(f) }
+  function onDrop(e) { e.preventDefault(); setDragging(false); pickFile(e.dataTransfer.files?.[0]) }
 
   function uploadFile(file) {
     setUploading(true); setUploadPct(0); setError(null)
@@ -61,10 +58,8 @@ export default function ModsPanel({ token, onExpired }) {
     xhr.onload = () => {
       setUploading(false)
       if (xhr.status === 401) { onExpired(); return }
-      try {
-        const d = JSON.parse(xhr.responseText)
-        if (d.error) setError(d.error); else { toast(`Uploaded ${d.filename}`); loadMods() }
-      } catch { setError('Upload failed') }
+      try { const d = JSON.parse(xhr.responseText); if (d.error) setError(d.error); else { toast(`Uploaded ${d.filename}`); loadMods() } }
+      catch { setError('Upload failed') }
     }
     xhr.onerror = () => { setUploading(false); setError('Network error during upload') }
     xhr.send(file)
@@ -73,47 +68,81 @@ export default function ModsPanel({ token, onExpired }) {
   const fmtSize = b => b < 1024 ? `${b} B` : b < 1048576 ? `${(b / 1024).toFixed(1)} KB` : `${(b / 1048576).toFixed(1)} MB`
   const fmtDate = ms => new Date(ms).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
 
-  if (loading && mods.length === 0) return <Loading label="Loading mods…" />
+  const active = mods.filter(m => m.active)
+  const others = mods.filter(m => !m.active)
 
   return (
     <div className={styles.wrap}>
       <Toolbar title="Mods" count={`${mods.length} installed`}>
         <IconButton tip="Refresh" onClick={loadMods} disabled={loading || uploading}>↻</IconButton>
-        <Btn size="sm" variant="primary" disabled={uploading} onClick={() => fileRef.current?.click()}>
-          {uploading ? `Uploading… ${uploadPct}%` : 'Upload Mod'}
-        </Btn>
-        <input ref={fileRef} type="file" accept=".jar" style={{ display: 'none' }} onChange={onFileChange} />
       </Toolbar>
 
-      <div className={styles.banner}>Changes take effect after a server restart.</div>
-      <ErrorBanner>{error}</ErrorBanner>
-
-      {uploading && <div className={styles.track}><div className={styles.fill} style={{ width: `${uploadPct}%` }} /></div>}
-
-      {mods.length === 0 ? (
-        <EmptyState icon={<IconMod size={30} />} label="No mods found" hint="Upload a .jar to add it to the server's mods/ directory." />
-      ) : (
-        <div className={styles.list}>
-          {mods.map(mod => (
-            <div key={mod.name} className={`${styles.row} ${mod.active ? styles.rowActive : ''}`}>
-              <div className={styles.info}>
-                <span className={styles.name}>{mod.name}</span>
-                {mod.active && <Badge variant="ok">active</Badge>}
-              </div>
-              <span className={styles.meta}>{fmtSize(mod.size)} · {fmtDate(mod.modified)}</span>
-              {mod.active
-                ? <span className={styles.hint}>managed automatically</span>
-                : <Btn size="sm" variant="danger" onClick={() => setConfirmDel(mod.name)}>Delete</Btn>}
-            </div>
-          ))}
+      <div className={styles.body}>
+        <div
+          className={`${styles.dropzone} ${dragging ? styles.dropActive : ''}`}
+          onDragOver={e => { e.preventDefault(); setDragging(true) }}
+          onDragLeave={() => setDragging(false)}
+          onDrop={onDrop}
+          onClick={() => !uploading && fileRef.current?.click()}
+        >
+          <IconMod size={28} />
+          {uploading
+            ? <span className={styles.dropText}>Uploading… {uploadPct}%</span>
+            : <span className={styles.dropText}>Drop a <b>.jar</b> here or click to upload</span>}
+          <span className={styles.dropHint}>Changes take effect after a server restart.</span>
+          {uploading && <div className={styles.track}><div className={styles.fill} style={{ width: `${uploadPct}%` }} /></div>}
+          <input ref={fileRef} type="file" accept=".jar" style={{ display: 'none' }} onChange={onFileChange} />
         </div>
-      )}
+
+        <ErrorBanner>{error}</ErrorBanner>
+
+        {loading && mods.length === 0 ? <Loading label="Loading mods…" />
+          : mods.length === 0 ? <EmptyState icon={<IconMod size={30} />} label="No mods found" hint="Drop a .jar above to add it to the server." />
+          : (
+            <>
+              {others.length > 0 && (
+                <div className={styles.section}>
+                  <div className={styles.sectionLabel}>Installed</div>
+                  <div className={styles.grid}>
+                    {others.map(m => (
+                      <div key={m.name} className={styles.card}>
+                        <div className={styles.cardTop}>
+                          <span className={styles.name}>{m.name}</span>
+                          <Menu trigger={<Btn size="sm" aria-label="Actions">⋯</Btn>}>
+                            <MenuItem tone="danger" onSelect={() => setConfirmDel(m.name)}>Delete</MenuItem>
+                          </Menu>
+                        </div>
+                        <span className={styles.meta}>{fmtSize(m.size)} · {fmtDate(m.modified)}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {active.length > 0 && (
+                <div className={styles.section}>
+                  <div className={styles.sectionLabel}>Managed (active)</div>
+                  <div className={styles.grid}>
+                    {active.map(m => (
+                      <div key={m.name} className={`${styles.card} ${styles.cardActive}`}>
+                        <div className={styles.cardTop}>
+                          <span className={styles.name}>{m.name}</span>
+                          <Badge variant="ok">active</Badge>
+                        </div>
+                        <span className={styles.meta}>{fmtSize(m.size)} · managed automatically</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+      </div>
 
       <ConfirmDialog
         open={!!confirmDel}
         onOpenChange={o => !o && setConfirmDel(null)}
         title={confirmDel ? `Delete ${confirmDel}?` : ''}
-        description="The file is removed from the mods/ directory. Takes effect after a restart."
+        description="Removes the file from mods/. Takes effect after a restart."
         confirmLabel="Delete"
         tone="danger"
         onConfirm={deleteMod}

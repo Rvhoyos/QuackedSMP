@@ -1,7 +1,9 @@
 import { useState, useEffect, useCallback } from 'react'
-import { Toolbar, IconButton, Btn, Badge, Loading, EmptyState, ErrorBanner, ConfirmDialog, useToast } from '../../ui'
+import { Toolbar, IconButton, Btn, Badge, StatCard, Loading, EmptyState, ErrorBanner, ConfirmDialog, Menu, MenuItem, useToast } from '../../ui'
 import { IconEmerald } from './MinecraftIcons'
 import styles from './ShopsPanel.module.css'
+
+const RANK_COLORS = ['#FFD700', '#C0C0C0', '#CD7F32']
 
 export default function ShopsPanel({ token, onExpired }) {
   const [shops,      setShops]      = useState([])
@@ -17,8 +19,7 @@ export default function ShopsPanel({ token, onExpired }) {
   const auth = { Authorization: `Bearer ${token}` }
 
   const load = useCallback(async () => {
-    setLoading(true)
-    setError(null)
+    setLoading(true); setError(null)
     try {
       const cr = await fetch('/api/admin/config', { headers: auth })
       if (cr.ok) { const cd = await cr.json(); if (cd && !cd.error) setEconEnabled(!!cd.economy_enabled) }
@@ -43,15 +44,8 @@ export default function ShopsPanel({ token, onExpired }) {
     setToggling(true)
     try {
       const next = !econEnabled
-      const r = await fetch('/api/admin/config', {
-        method: 'POST', headers: { 'Content-Type': 'application/json', ...auth },
-        body: JSON.stringify({ economy_enabled: next }),
-      })
-      if (r.ok) {
-        setEconEnabled(next)
-        if (next) load(); else { setEconomy(null); setTab('shops') }
-        toast(next ? 'Economy enabled' : 'Economy disabled')
-      }
+      const r = await fetch('/api/admin/config', { method: 'POST', headers: { 'Content-Type': 'application/json', ...auth }, body: JSON.stringify({ economy_enabled: next }) })
+      if (r.ok) { setEconEnabled(next); if (next) load(); else { setEconomy(null); setTab('shops') } toast(next ? 'Economy enabled' : 'Economy disabled') }
     } catch {}
     setToggling(false)
   }
@@ -59,10 +53,7 @@ export default function ShopsPanel({ token, onExpired }) {
   async function deleteShop() {
     const shop = confirmDel
     try {
-      const r = await fetch('/api/admin/shops/delete', {
-        method: 'POST', headers: { 'Content-Type': 'application/json', ...auth },
-        body: JSON.stringify({ dim: shop.dim, x: shop.x, y: shop.y, z: shop.z }),
-      })
+      const r = await fetch('/api/admin/shops/delete', { method: 'POST', headers: { 'Content-Type': 'application/json', ...auth }, body: JSON.stringify({ dim: shop.dim, x: shop.x, y: shop.y, z: shop.z }) })
       if (r.status === 401 || r.status === 403) { onExpired(); return }
       const d = await r.json()
       if (d.error) { setError(d.error); return }
@@ -72,6 +63,8 @@ export default function ShopsPanel({ token, onExpired }) {
 
   const dimName = d => d.split(':').pop()
   const itemName = id => id.split(':').pop().replace(/_/g, ' ')
+  const spawnCount = shops.filter(s => s.spawnShop).length
+  const sortedEcon = economy ? [...economy].sort((a, b) => b.balance - a.balance) : []
 
   if (loading && shops.length === 0) return <Loading label="Loading shops…" />
 
@@ -80,13 +73,18 @@ export default function ShopsPanel({ token, onExpired }) {
       <Toolbar title="Shops" count={`${shops.length}`}>
         <div className={styles.tabs}>
           <button className={`${styles.tab} ${tab === 'shops' ? styles.tabOn : ''}`} onClick={() => setTab('shops')}>Shops</button>
-          {econEnabled && <button className={`${styles.tab} ${tab === 'economy' ? styles.tabOn : ''}`} onClick={() => setTab('economy')}>Economy{economy ? ` (${economy.length})` : ''}</button>}
+          {econEnabled && <button className={`${styles.tab} ${tab === 'economy' ? styles.tabOn : ''}`} onClick={() => setTab('economy')}>Economy</button>}
         </div>
-        <Btn size="sm" variant={econEnabled ? 'ghost' : 'ok'} disabled={toggling} onClick={toggleEconomy}>
-          {toggling ? '…' : econEnabled ? 'Disable Economy' : 'Enable Economy'}
-        </Btn>
+        <Btn size="sm" variant={econEnabled ? 'ghost' : 'ok'} disabled={toggling} onClick={toggleEconomy}>{toggling ? '…' : econEnabled ? 'Disable Economy' : 'Enable Economy'}</Btn>
         <IconButton tip="Refresh" onClick={load}>↻</IconButton>
       </Toolbar>
+
+      {tab === 'shops' && (
+        <div className={styles.stats}>
+          <StatCard label="Shops" value={shops.length} tone="info" />
+          <StatCard label="Spawn Shops" value={spawnCount} tone="ok" />
+        </div>
+      )}
 
       <ErrorBanner>{error}</ErrorBanner>
 
@@ -94,19 +92,21 @@ export default function ShopsPanel({ token, onExpired }) {
         shops.length === 0
           ? <EmptyState icon={<IconEmerald size={30} />} label="No shops registered" hint="Player chest shops appear here once created in-game." />
           : (
-            <div className={styles.list}>
+            <div className={styles.grid}>
               {shops.map(s => (
-                <div key={`${s.dim}:${s.x},${s.y},${s.z}`} className={styles.row}>
-                  <div className={styles.info}>
-                    <span className={styles.name}>{itemName(s.item)}</span>
-                    <span className={styles.loc}>{dimName(s.dim)} [{s.x}, {s.y}, {s.z}]</span>
+                <div key={`${s.dim}:${s.x},${s.y},${s.z}`} className={styles.card}>
+                  <div className={styles.cardTop}>
+                    <span className={styles.item}>{itemName(s.item)}</span>
+                    <Menu trigger={<Btn size="sm" aria-label="Actions">⋯</Btn>}>
+                      <MenuItem tone="danger" onSelect={() => setConfirmDel(s)}>Delete Shop</MenuItem>
+                    </Menu>
                   </div>
-                  <div className={styles.detail}>
-                    <span className={styles.price}>{s.price} {itemName(s.currency || 'minecraft:emerald')}{s.unit > 1 && ` / ${s.unit}`}</span>
-                    {s.spawnShop ? <Badge variant="ok">unlimited</Badge> : <span className={styles.stock}>{s.stock} stock</span>}
+                  <span className={styles.price}>{s.price} {itemName(s.currency || 'minecraft:emerald')}{s.unit > 1 && ` / ${s.unit}`}</span>
+                  <div className={styles.meta}>
+                    {s.spawnShop ? <Badge variant="ok">unlimited</Badge> : <span className={styles.stock}>{s.stock} in stock</span>}
                     <span className={styles.owner}>{s.ownerName}</span>
                   </div>
-                  <Btn size="sm" variant="danger" onClick={() => setConfirmDel(s)}>Delete</Btn>
+                  <span className={styles.loc}>{dimName(s.dim)} [{s.x}, {s.y}, {s.z}]</span>
                 </div>
               ))}
             </div>
@@ -114,21 +114,19 @@ export default function ShopsPanel({ token, onExpired }) {
       )}
 
       {tab === 'economy' && econEnabled && (
-        (economy && economy.length > 0)
+        sortedEcon.length > 0
           ? (
             <div className={styles.list}>
-              {economy.map(e => (
-                <div key={e.uuid} className={styles.row}>
-                  <div className={styles.info}>
-                    <span className={styles.name}>{e.name}</span>
-                    <span className={styles.loc}>{e.uuid.substring(0, 8)}…</span>
-                  </div>
-                  <span className={styles.balance}>{e.balance.toLocaleString()} emeralds</span>
+              {sortedEcon.map((e, i) => (
+                <div key={e.uuid} className={styles.econRow}>
+                  <span className={styles.rank} style={i < 3 ? { color: RANK_COLORS[i] } : undefined}>{i + 1}</span>
+                  <span className={styles.econName}>{e.name}</span>
+                  <span className={styles.balance}>{e.balance.toLocaleString()} <IconEmerald size={12} /></span>
                 </div>
               ))}
             </div>
           )
-          : <EmptyState icon={<IconEmerald size={30} />} label="No balances" />
+          : <EmptyState icon={<IconEmerald size={30} />} label="No balances yet" />
       )}
 
       <ConfirmDialog

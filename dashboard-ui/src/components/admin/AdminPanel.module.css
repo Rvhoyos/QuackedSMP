@@ -27,6 +27,31 @@
   border-right: 3px solid var(--mc-wood-dark);
 }
 
+.railHead {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 12px 14px 10px;
+  border-bottom: 2px solid var(--mc-wood-dark);
+  flex-shrink: 0;
+}
+.railServer {
+  font-family: var(--font-pixel);
+  font-size: 9px;
+  color: #FFFF55;
+  text-shadow: 1px 1px 0 rgba(0,0,0,0.6);
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.railSub {
+  font-family: var(--font-pixel);
+  font-size: 6px;
+  color: var(--txt-faint);
+  letter-spacing: 0.6px;
+}
+
 .railScroll {
   flex: 1;
   overflow-y: auto;

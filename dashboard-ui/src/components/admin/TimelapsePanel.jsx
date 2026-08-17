@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { streamingDownload } from '../../lib/streamingDownload'
+import { Toolbar, IconButton, Btn, Toggle, Field, Input, SectionCard, EmptyState, ErrorBanner } from '../../ui'
+import { IconMapScroll } from './MinecraftIcons'
 import styles from './TimelapsePanel.module.css'
 
 const SPEEDS = [1, 2, 5, 10, 20]
@@ -257,175 +259,92 @@ export default function TimelapsePanel({ token, onExpired }) {
 
   return (
     <div className={styles.wrap}>
-      <div className={styles.banner}>
-        Timelapse frames are top-down renders of the world, auto-sized to the generated area,
-        captured on a schedule and assembled into a timelapse here in your browser.
+      <Toolbar title="Timelapse" count={`${frames.length} frames${totalBytes > 0 ? ` · ${fmtBytes(totalBytes)}` : ''}`}>
+        <IconButton tip="Refresh" onClick={() => loadList()} disabled={loading}>↻</IconButton>
+        <Btn size="sm" onClick={exportFrames} disabled={frames.length === 0}>Export .zip</Btn>
+        <Btn size="sm" variant="primary" onClick={captureNow} disabled={running}>{running ? 'Capturing…' : 'Capture Now'}</Btn>
+      </Toolbar>
+
+      <ErrorBanner>{error}</ErrorBanner>
+      {status && <div className={styles.status}>{status}</div>}
+
+      <div className={styles.body}>
+        <SectionCard title="Capture Settings" subtitle="One pixel per block, per selected dimension. Runs when idle; forced after the skip limit.">
+          <div className={styles.toggleRow}>
+            <span className={styles.tLabel}>Automatically capture on a schedule{enabled ? ` — every ${interval} min` : ''}</span>
+            <Toggle checked={enabled} onChange={toggleEnabled} aria-label="Auto capture" />
+          </div>
+
+          <Field label="Capture these dimensions">
+            <div className={styles.dimList}>
+              {available.length === 0
+                ? <span className={styles.dimEmpty}>No dimensions reported by the server yet.</span>
+                : available.map(id => (
+                    <label key={id} className={`${styles.dimCheck} ${cfg.dimensions.includes(id) ? styles.dimOn : ''}`}>
+                      <input type="checkbox" checked={cfg.dimensions.includes(id)} onChange={e => toggleCaptureDim(id, e.target.checked)} />
+                      {dimLabel(id)}
+                    </label>
+                  ))}
+            </div>
+          </Field>
+
+          <div className={styles.fieldGrid}>
+            <Field label="Interval (minutes)"><Input type="number" min={1} value={interval} onChange={e => setInterval_(Number(e.target.value))} onBlur={e => saveInterval(e.target.value)} /></Field>
+            <Field label="Max render RAM (MB, 0 = auto)"><Input type="number" min={0} value={cfg.maxRenderMb} onChange={e => setCfg(c => ({ ...c, maxRenderMb: Number(e.target.value) }))} onBlur={e => saveCfgField('maxRenderMb', 'timelapse_max_render_mb', e.target.value, 0)} /></Field>
+            <Field label="Idle skips before forcing (0 = every interval)"><Input type="number" min={0} value={cfg.maxSkips} onChange={e => setCfg(c => ({ ...c, maxSkips: Number(e.target.value) }))} onBlur={e => saveCfgField('maxSkips', 'timelapse_max_skips', e.target.value, 0)} /></Field>
+            <Field label="Max frames (0 = keep all)"><Input type="number" min={0} value={cfg.maxFrames} onChange={e => setCfg(c => ({ ...c, maxFrames: Number(e.target.value) }))} onBlur={e => saveCfgField('maxFrames', 'timelapse_max_frames', e.target.value, 0)} /></Field>
+          </div>
+
+          <div className={styles.memRow}>
+            {capBytes > 0
+              ? <><span className={styles.memValue}>up to {fmtBytes(capBytes)}</span><span className={styles.memLabel}>RAM cap for a forced capture{maxHeap > 0 && ` · ${Math.round(heapPct * 100)}% of server heap (${fmtBytes(maxHeap)})`}</span></>
+              : <span className={styles.memLabel}>Auto: fits each capture to free server RAM, downsampling only if it would not fit.</span>}
+          </div>
+        </SectionCard>
+
+        {running && <CaptureMap progress={progress} />}
+
+        {dims.length === 0 ? (
+          <EmptyState icon={<IconMapScroll size={30} />} label="No frames yet" hint="Turn on capture or hit Capture Now. Frames render as top-down maps you can play back here." />
+        ) : (
+          <SectionCard
+            title="Playback"
+            actions={
+              <label className={styles.viewSel}>
+                <span>Dimension</span>
+                <select value={viewDim} onChange={e => setViewDim(e.target.value)}>{dims.map(d => <option key={d.id} value={d.id}>{dimLabel(d.id)}</option>)}</select>
+              </label>
+            }
+          >
+            <div className={styles.stage}>
+              {srcUrl ? <img className={styles.frame} src={srcUrl} alt={`Frame ${idx + 1}`} /> : <div className={styles.frameLoading}>Loading frame…</div>}
+            </div>
+
+            <div className={styles.timestamp}>
+              {current && (
+                <>
+                  <span>{fmtDate(current.capturedAt)} · frame {idx + 1} / {frames.length}</span>
+                  {(() => { const b = resBadge(current.blocksPerPixel); return <span className={b.full ? styles.badgeFull : styles.badgeDown}>{b.text}</span> })()}
+                  {dimEntry && <span className={styles.viewSize}>{fmtBytes(dimEntry.sizeBytes)} this dim</span>}
+                </>
+              )}
+            </div>
+
+            <input className={styles.scrub} type="range" min={0} max={Math.max(0, frames.length - 1)} value={idx} onChange={e => { setPlaying(false); setIdx(Number(e.target.value)) }} />
+
+            <div className={styles.controls}>
+              <Btn size="sm" variant="ghost" onClick={() => { setPlaying(false); setIdx(0) }}>⏮</Btn>
+              <Btn size="sm" variant="ghost" onClick={() => { setPlaying(false); setIdx(i => Math.max(0, i - 1)) }}>◀</Btn>
+              <Btn size="sm" variant="primary" onClick={() => { if (idx >= frames.length - 1) setIdx(0); setPlaying(p => !p) }}>{playing ? '⏸ Pause' : '▶ Play'}</Btn>
+              <Btn size="sm" variant="ghost" onClick={() => { setPlaying(false); setIdx(i => Math.min(frames.length - 1, i + 1)) }}>▶</Btn>
+              <Btn size="sm" variant="ghost" onClick={() => { setPlaying(false); setIdx(frames.length - 1) }}>⏭</Btn>
+              <label className={styles.speed}><span>Speed</span><select value={speed} onChange={e => setSpeed(Number(e.target.value))}>{SPEEDS.map(s => <option key={s} value={s}>{s} fps</option>)}</select></label>
+              <span className={styles.ctrlSpacer} />
+              {current && <Btn size="sm" variant="danger" onClick={() => deleteFrame(current.name)}>Delete frame</Btn>}
+            </div>
+          </SectionCard>
+        )}
       </div>
-
-      {error && (
-        <div className={styles.error}>
-          {error}
-          <button className={styles.dismiss} onClick={() => setError(null)}>✕</button>
-        </div>
-      )}
-      {status && <div className={styles.statusMsg}>{status}</div>}
-
-      <div className={styles.settings}>
-        <label className={styles.toggleRow}>
-          <input type="checkbox" checked={enabled} onChange={e => toggleEnabled(e.target.checked)} />
-          <span className={styles.toggleLabel}>Automatically capture frames on a schedule</span>
-        </label>
-
-        <div className={styles.field}>
-          <label className={styles.fieldLabel}>Capture these dimensions</label>
-          <div className={styles.dimList}>
-            {available.length === 0
-              ? <span className={styles.dimCheckEmpty}>No dimensions reported by the server yet.</span>
-              : available.map(id => (
-                  <label key={id} className={styles.dimCheck}>
-                    <input type="checkbox" checked={cfg.dimensions.includes(id)}
-                           onChange={e => toggleCaptureDim(id, e.target.checked)} />
-                    {id}
-                  </label>
-                ))}
-          </div>
-        </div>
-
-        <div className={styles.grid} style={{ marginTop: 10 }}>
-          <div className={styles.field}>
-            <label className={styles.fieldLabel}>Interval (minutes)</label>
-            <input className={styles.numInput} type="number" min={1} value={interval}
-                   onChange={e => setInterval_(Number(e.target.value))}
-                   onBlur={e => saveInterval(e.target.value)} />
-          </div>
-          <div className={styles.field}>
-            <label className={styles.fieldLabel}>Max render RAM (MB, 0 = auto)</label>
-            <input className={styles.numInput} type="number" min={0} value={cfg.maxRenderMb}
-                   onChange={e => setCfg(c => ({ ...c, maxRenderMb: Number(e.target.value) }))}
-                   onBlur={e => saveCfgField('maxRenderMb', 'timelapse_max_render_mb', e.target.value, 0)} />
-          </div>
-          <div className={styles.field}>
-            <label className={styles.fieldLabel}>Idle-wait skips before forcing (0 = every interval)</label>
-            <input className={styles.numInput} type="number" min={0} value={cfg.maxSkips}
-                   onChange={e => setCfg(c => ({ ...c, maxSkips: Number(e.target.value) }))}
-                   onBlur={e => saveCfgField('maxSkips', 'timelapse_max_skips', e.target.value, 0)} />
-          </div>
-          <div className={styles.field}>
-            <label className={styles.fieldLabel}>Max frames (0 = keep all)</label>
-            <input className={styles.numInput} type="number" min={0} value={cfg.maxFrames}
-                   onChange={e => setCfg(c => ({ ...c, maxFrames: Number(e.target.value) }))}
-                   onBlur={e => saveCfgField('maxFrames', 'timelapse_max_frames', e.target.value, 0)} />
-          </div>
-        </div>
-        <div className={styles.memRow}>
-          {capBytes > 0 ? (
-            <>
-              <span className={styles.memValue}>up to {fmtBytes(capBytes)}</span>
-              <span className={styles.memLabel}>
-                RAM cap for a forced capture{maxHeap > 0 && ` · ${Math.round(heapPct * 100)}% of server heap (${fmtBytes(maxHeap)})`}
-              </span>
-            </>
-          ) : (
-            <span className={styles.memLabel}>
-              Auto: fits each capture to free server RAM, downsampling only if it would not fit.
-            </span>
-          )}
-        </div>
-        <div className={styles.hint}>
-          One pixel per block, per selected dimension. Runs when the server is idle, forced
-          after the skip limit. Downsamples only if a frame won't fit RAM (0 = free heap).
-        </div>
-      </div>
-
-      <div className={styles.toolbar}>
-        <span className={styles.count}>
-          {loading ? 'Loading…' : `${frames.length} frame${frames.length !== 1 ? 's' : ''}`}
-          {totalBytes > 0 && ` · ${fmtBytes(totalBytes)} on disk`}
-          {enabled && ` · every ${interval} min`}
-        </span>
-        <button className={styles.btnGhost} onClick={loadList} disabled={loading}>Refresh</button>
-        <button className={styles.btnGhost} onClick={exportFrames} disabled={frames.length === 0}>
-          Export frames (.zip)
-        </button>
-        <button className={styles.btn} onClick={captureNow} disabled={running}>
-          {running ? 'Capturing…' : 'Capture now'}
-        </button>
-      </div>
-
-      {running && <CaptureMap progress={progress} />}
-
-      {dims.length === 0 ? (
-        <div className={styles.empty}>No frames yet</div>
-      ) : (
-        <div className={styles.player}>
-          <div className={styles.viewRow}>
-            <label>
-              Dimension
-              <select value={viewDim} onChange={e => setViewDim(e.target.value)}>
-                {dims.map(d => <option key={d.id} value={d.id}>{dimLabel(d.id)}</option>)}
-              </select>
-            </label>
-            {dimEntry && (
-              <span className={styles.viewSize}>
-                {fmtBytes(dimEntry.sizeBytes)} this dimension · {fmtBytes(totalBytes)} total
-              </span>
-            )}
-          </div>
-
-          <div className={styles.stage}>
-            {srcUrl
-              ? <img className={styles.frame} src={srcUrl} alt={`Frame ${idx + 1}`} />
-              : <div className={styles.frameLoading}>Loading frame…</div>}
-          </div>
-
-          <div className={styles.timestamp}>
-            {current && (
-              <>
-                <span>{fmtDate(current.capturedAt)} · frame {idx + 1} / {frames.length}</span>
-                {(() => {
-                  const b = resBadge(current.blocksPerPixel)
-                  return <span className={b.full ? styles.badgeFull : styles.badgeDown}>{b.text}</span>
-                })()}
-              </>
-            )}
-          </div>
-
-          <input
-            className={styles.scrub}
-            type="range"
-            min={0}
-            max={Math.max(0, frames.length - 1)}
-            value={idx}
-            onChange={e => { setPlaying(false); setIdx(Number(e.target.value)) }}
-          />
-
-          <div className={styles.controls}>
-            <button className={styles.btnGhost} onClick={() => { setPlaying(false); setIdx(0) }}>⏮</button>
-            <button className={styles.btnGhost} onClick={() => { setPlaying(false); setIdx(i => Math.max(0, i - 1)) }}>◀</button>
-            <button className={styles.btn} onClick={() => {
-              if (idx >= frames.length - 1) setIdx(0)
-              setPlaying(p => !p)
-            }}>
-              {playing ? '⏸ Pause' : '▶ Play'}
-            </button>
-            <button className={styles.btnGhost} onClick={() => { setPlaying(false); setIdx(i => Math.min(frames.length - 1, i + 1)) }}>▶</button>
-            <button className={styles.btnGhost} onClick={() => { setPlaying(false); setIdx(frames.length - 1) }}>⏭</button>
-
-            <label className={styles.speed}>
-              Speed
-              <select value={speed} onChange={e => setSpeed(Number(e.target.value))}>
-                {SPEEDS.map(s => <option key={s} value={s}>{s} fps</option>)}
-              </select>
-            </label>
-
-            {current && (
-              <button className={styles.btnDanger} onClick={() => deleteFrame(current.name)}>
-                Delete frame
-              </button>
-            )}
-          </div>
-        </div>
-      )}
     </div>
   )
 }

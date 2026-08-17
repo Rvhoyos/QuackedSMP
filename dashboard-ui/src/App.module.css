@@ -410,13 +410,13 @@
   border-bottom: 3px solid var(--mc-stone-dark);
   border-right:  3px solid var(--mc-stone-dark);
 }
-.heroMain { display: flex; align-items: center; gap: 12px; }
-.heroDot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
-.heroDotLive { background: var(--green); box-shadow: 0 0 8px var(--green); }
-.heroDotDown { background: var(--red); box-shadow: 0 0 8px var(--red); animation: pulse 1.2s infinite; }
+.heroMain { display: flex; align-items: center; gap: 14px; }
+.heroDot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+.heroDotLive { background: var(--green); box-shadow: 0 0 10px var(--green); }
+.heroDotDown { background: var(--red); box-shadow: 0 0 10px var(--red); animation: pulse 1.2s infinite; }
 .heroName {
-  font-family: var(--font-pixel); font-size: 12px; color: #FFFF55;
-  text-shadow: 2px 2px 0 rgba(0,0,0,0.6); letter-spacing: 0.5px;
+  font-family: var(--font-pixel); font-size: 17px; color: #FFFF55;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.6); letter-spacing: 0.5px; line-height: 1.2;
 }
 .heroState { font-family: var(--font-pixel); font-size: 7px; padding: 4px 8px; letter-spacing: 0.4px; }
 .heroStateLive { color: var(--green); background: rgba(166,227,161,0.12); }

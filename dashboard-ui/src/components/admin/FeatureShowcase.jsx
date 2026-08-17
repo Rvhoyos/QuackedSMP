@@ -1,120 +1,38 @@
 import { useState, useEffect } from 'react'
+import { Badge, Toggle } from '../../ui'
+import { IconFlag, IconSkills, IconPortal, IconChatFilter, IconDiscord, IconVoiceChat, IconBallot, IconMapScroll, IconShield, IconChest, IconEmerald, IconSign } from './MinecraftIcons'
 import styles from './FeatureShowcase.module.css'
 
 const FEATURES = [
-  {
-    name: 'Land Claims',
-    desc: 'Chunk-based land protection. Players claim plots, lock chests, and control access.',
-    tag: 'claims',
-    configKey: 'claims_enabled',
-    toggleable: true,
-  },
-  {
-    name: 'Skills',
-    desc: '12 RPG skills: Mining, Farming, Fishing, Combat and more. XP scales with a configurable exponent. Active abilities unlock at key levels.',
-    tag: 'skills',
-    configKey: 'skills_enabled',
-    toggleable: true,
-  },
-  {
-    name: 'Teleport',
-    desc: 'Homes, /spawn, and /tpa with configurable warmup timers. Movement during warmup cancels the teleport.',
-    tag: 'teleport',
-  },
-  {
-    name: 'Chat Filter',
-    desc: 'Keyword blocking with leet-speak detection. Auto-mutes escalate with repeat violations.',
-    tag: 'chatfilter',
-    configKey: 'chatfilter_enabled',
-    toggleable: true,
-  },
-  {
-    name: 'Custom Dimensions',
-    desc: 'Create and manage custom world dimensions in-game. Includes the Ether, a sky-islands dimension.',
-    tag: 'dims',
-  },
-  {
-    name: 'Discord',
-    desc: 'Webhook integration. Relays in-game join/leave events and chat messages to a Discord channel.',
-    tag: 'discord',
-    configKey: 'discord_enabled',
-    toggleable: true,
-    disableOnly: true,
-    disablePayload: { discord_webhook_url: '' },
-  },
-  {
-    name: 'Simple Voice Chat',
-    desc: 'Proximity voice chat integration. Requires the Simple Voice Chat mod on server and clients.',
-    tag: 'voicechat',
-    configKey: 'voicechat_enable',
-    toggleable: true,
-    restartRequired: true,
-  },
-  {
-    name: 'Votifier',
-    desc: 'NuVotifier v2 listener. Randomized reward commands on vote. Queued rewards are delivered on next login if the player is offline.',
-    tag: 'votifier',
-    configKey: 'votifier_enabled',
-    toggleable: true,
-  },
-  {
-    name: 'BlueMap',
-    desc: 'Live web map integration. Claim regions and player homes shown as markers.',
-    tag: 'bluemap',
-    configKey: 'bluemap_enabled',
-    toggleable: true,
-    restartRequired: true,
-  },
-  {
-    name: 'Hardcore Mode',
-    desc: 'Player-managed hardcore sessions. Shared start position, inventory stash, spectator on death. Resets when death threshold is reached.',
-    tag: 'hardcore',
-    configKey: 'hardcore_enabled',
-    toggleable: true,
-  },
-  {
-    name: 'Kits',
-    desc: 'Daily kit claim system. Players pick one kit per cooldown period. Tier-gated VIP kits.',
-    tag: 'kits',
-    configKey: 'kits_enabled',
-    toggleable: true,
-  },
-  {
-    name: 'Shops',
-    desc: 'Chest-based player shops. Configurable currency per shop. Spawn shops have unlimited stock.',
-    tag: 'shops',
-    configKey: 'shops_enabled',
-    toggleable: true,
-  },
-  {
-    name: 'Admin Panel',
-    desc: 'Manage players, run commands, and edit server config from the browser. Password-protected.',
-    tag: 'admin',
-    configKey: 'admin_enabled',
-  },
-  {
-    name: 'Dashboard',
-    desc: 'Public metrics dashboard. Live player count, TPS, memory, activity feed, and live chat.',
-    tag: 'dashboard',
-  },
+  { name: 'Land Claims', group: 'Gameplay', Icon: IconFlag, desc: 'Chunk-based land protection. Players claim plots, lock chests, and control access.', tag: 'claims', configKey: 'claims_enabled', toggleable: true },
+  { name: 'Skills', group: 'Gameplay', Icon: IconSkills, desc: '12 RPG skills with a configurable XP curve and level-gated active abilities.', tag: 'skills', configKey: 'skills_enabled', toggleable: true },
+  { name: 'Teleport', group: 'Gameplay', Icon: IconPortal, desc: 'Homes, /spawn, and /tpa with configurable warmup timers. Movement cancels the warp.', tag: 'teleport' },
+  { name: 'Custom Dimensions', group: 'Gameplay', Icon: IconPortal, desc: 'Create and manage custom dimensions in-game, including the Ether sky-islands world.', tag: 'dims' },
+  { name: 'Hardcore Mode', group: 'Gameplay', Icon: IconShield, desc: 'Player-run hardcore sessions with shared start, inventory stash, and death threshold.', tag: 'hardcore', configKey: 'hardcore_enabled', toggleable: true },
+  { name: 'Kits', group: 'Gameplay', Icon: IconChest, desc: 'Daily kit claims on a cooldown. Tier-gated VIP kits.', tag: 'kits', configKey: 'kits_enabled', toggleable: true },
+  { name: 'Shops', group: 'Gameplay', Icon: IconEmerald, desc: 'Chest-based player shops with per-shop currency. Spawn shops have unlimited stock.', tag: 'shops', configKey: 'shops_enabled', toggleable: true },
+  { name: 'Chat Filter', group: 'Moderation', Icon: IconChatFilter, desc: 'Keyword blocking with leet-speak detection and escalating auto-mutes.', tag: 'chatfilter', configKey: 'chatfilter_enabled', toggleable: true },
+  { name: 'Discord', group: 'Integrations', Icon: IconDiscord, desc: 'Webhook relay of join/leave and chat to a Discord channel.', tag: 'discord', configKey: 'discord_enabled', toggleable: true, disableOnly: true, disablePayload: { discord_webhook_url: '' } },
+  { name: 'Simple Voice Chat', group: 'Integrations', Icon: IconVoiceChat, desc: 'Proximity voice chat. Requires the Simple Voice Chat mod on server and clients.', tag: 'voicechat', configKey: 'voicechat_enable', toggleable: true, restartRequired: true },
+  { name: 'Votifier', group: 'Integrations', Icon: IconBallot, desc: 'NuVotifier v2 listener with randomized, offline-queued vote rewards.', tag: 'votifier', configKey: 'votifier_enabled', toggleable: true },
+  { name: 'BlueMap', group: 'Integrations', Icon: IconMapScroll, desc: 'Live web map with claim regions and player homes as markers.', tag: 'bluemap', configKey: 'bluemap_enabled', toggleable: true, restartRequired: true },
+  { name: 'Admin Panel', group: 'System', Icon: IconChest, desc: 'Manage players, run commands, and edit config from the browser. Password-protected.', tag: 'admin', configKey: 'admin_enabled' },
+  { name: 'Dashboard', group: 'System', Icon: IconSign, desc: 'Public live metrics, activity feed, chat, and leaderboards.', tag: 'dashboard' },
 ]
 
-function authHeaders(token) {
-  return token ? { Authorization: `Bearer ${token}` } : {}
-}
+const GROUP_ORDER = ['Gameplay', 'Moderation', 'Integrations', 'System']
+
+function authHeaders(token) { return token ? { Authorization: `Bearer ${token}` } : {} }
 
 export default function FeatureShowcase({ token, onExpired }) {
-  const [cfg,       setCfg]       = useState(null)
+  const [cfg, setCfg] = useState(null)
   const [overrides, setOverrides] = useState({})
-  const [toggling,  setToggling]  = useState({})
+  const [toggling, setToggling] = useState({})
 
   useEffect(() => {
     if (!token) return
     fetch('/api/admin/config', { headers: authHeaders(token) })
-      .then(r => {
-        if (r.status === 401 || r.status === 403) { onExpired?.(); return null }
-        return r.json()
-      })
+      .then(r => (r.status === 401 || r.status === 403) ? (onExpired?.(), null) : r.json())
       .then(d => { if (d) setCfg(d) })
       .catch(() => {})
   }, [token]) // eslint-disable-line react-hooks/exhaustive-deps
@@ -129,27 +47,17 @@ export default function FeatureShowcase({ token, onExpired }) {
   }
 
   async function toggle(feature) {
-    const key     = feature.configKey
+    const key = feature.configKey
     const current = resolve(feature)
-    const next    = !current
-
+    const next = !current
     setOverrides(o => ({ ...o, [key]: next }))
     setToggling(t => ({ ...t, [key]: true }))
-
     const payload = (feature.disablePayload && !next) ? feature.disablePayload : { [key]: next }
-
     try {
-      const res = await fetch('/api/admin/config', {
-        method:  'POST',
-        headers: { 'Content-Type': 'application/json', ...authHeaders(token) },
-        body:    JSON.stringify(payload),
-      })
+      const res = await fetch('/api/admin/config', { method: 'POST', headers: { 'Content-Type': 'application/json', ...authHeaders(token) }, body: JSON.stringify(payload) })
       if (res.status === 401 || res.status === 403) { onExpired?.(); return }
-      if (!res.ok) {
-        setOverrides(o => ({ ...o, [key]: current }))
-      } else {
-        setCfg(c => c ? { ...c, [key]: next } : c)
-      }
+      if (!res.ok) setOverrides(o => ({ ...o, [key]: current }))
+      else setCfg(c => c ? { ...c, [key]: next } : c)
     } catch {
       setOverrides(o => ({ ...o, [key]: current }))
     } finally {
@@ -159,44 +67,37 @@ export default function FeatureShowcase({ token, onExpired }) {
 
   return (
     <div className={styles.wrap}>
-      <div className={styles.grid}>
-        {FEATURES.map(f => (
-          <FeatureCard
-            key={f.tag}
-            feature={f}
-            active={resolve(f)}
-            canToggle={!!token && !!f.toggleable}
-            toggling={!!toggling[f.configKey]}
-            onToggle={() => toggle(f)}
-          />
-        ))}
+      <div className={styles.scroll}>
+        {GROUP_ORDER.map(group => {
+          const items = FEATURES.filter(f => f.group === group)
+          if (!items.length) return null
+          return (
+            <div key={group} className={styles.group}>
+              <div className={styles.groupLabel}>{group}</div>
+              <div className={styles.grid}>
+                {items.map(f => {
+                  const active = resolve(f)
+                  const canToggle = !!token && !!f.toggleable && (active || !f.disableOnly)
+                  return (
+                    <div key={f.tag} className={`${styles.card} ${active ? styles.cardOn : styles.cardOff}`}>
+                      <div className={styles.cardTop}>
+                        <span className={styles.icon}><f.Icon size={22} /></span>
+                        <span className={styles.name}>{f.name}</span>
+                        <Badge variant={active ? 'ok' : undefined}>{active ? 'Active' : 'Off'}</Badge>
+                      </div>
+                      <p className={styles.desc}>{f.desc}</p>
+                      <div className={styles.cardFoot}>
+                        {f.restartRequired && <span className={styles.restart}>Restart required</span>}
+                        {canToggle && <Toggle checked={active} onChange={() => toggle(f)} disabled={!!toggling[f.configKey]} aria-label={`Toggle ${f.name}`} />}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )
+        })}
       </div>
-    </div>
-  )
-}
-
-function FeatureCard({ feature, active, canToggle, toggling, onToggle }) {
-  return (
-    <div className={`${styles.card} ${active ? styles.cardActive : styles.cardOff}`}>
-      <div className={styles.cardTop}>
-        <div className={styles.name}>{feature.name}</div>
-        <span className={`${styles.pill} ${active ? styles.pillOn : styles.pillOff}`}>
-          {active ? 'Active' : 'Disabled'}
-        </span>
-      </div>
-      <div className={styles.desc}>{feature.desc}</div>
-      {feature.restartRequired && (
-        <div className={styles.restartNote}>Restart required to apply changes</div>
-      )}
-      {canToggle && (active || !feature.disableOnly) && (
-        <button
-          className={`${styles.toggle} ${active ? styles.toggleOff : styles.toggleOn}`}
-          onClick={onToggle}
-          disabled={toggling}
-        >
-          {toggling ? '···' : active ? 'Disable' : 'Enable'}
-        </button>
-      )}
     </div>
   )
 }

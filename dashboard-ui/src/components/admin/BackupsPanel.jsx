@@ -2,6 +2,8 @@ import { useState, useEffect, useRef } from 'react'
 import DownloadProgress from '../DownloadProgress'
 import RestoreInfo from '../RestoreInfo'
 import { streamingDownload } from '../../lib/streamingDownload'
+import { Toolbar, IconButton, Btn, Toggle, Field, Input, SectionCard, EmptyState, ErrorBanner, ConfirmDialog } from '../../ui'
+import { IconShulkerBox } from './MinecraftIcons'
 import styles from './BackupsPanel.module.css'
 
 export default function BackupsPanel({ token, onExpired }) {
@@ -23,6 +25,7 @@ export default function BackupsPanel({ token, onExpired }) {
   const [maxCount,        setMaxCount]        = useState(5)
   const [periodicEnabled, setPeriodicEnabled] = useState(false)
   const [intervalHours,   setIntervalHours]   = useState(24)
+  const [tab,             setTab]             = useState('snapshots')
   const pollRef = useRef(null)
 
   const auth = { Authorization: `Bearer ${token}` }
@@ -256,230 +259,93 @@ export default function BackupsPanel({ token, onExpired }) {
     })
   }
 
+  const urlErr = panelUrlError(panelUrl)
+
   return (
     <div className={styles.wrap}>
-
-      <div className={styles.banner}>
-        Snapshots zip the world folder. The server pauses autosave during the zip.
-        Large downloads share upload bandwidth with players and may cause lag.
-      </div>
-
-      {error && (
-        <div className={styles.error}>
-          {error}
-          <button className={styles.dismiss} onClick={() => setError(null)}>✕</button>
+      <Toolbar title="Backups" count={`${snapshots.length} snapshots`}>
+        <div className={styles.tabs}>
+          <button className={`${styles.tab} ${tab === 'snapshots' ? styles.tabOn : ''}`} onClick={() => setTab('snapshots')}>Snapshots</button>
+          <button className={`${styles.tab} ${tab === 'settings' ? styles.tabOn : ''}`} onClick={() => setTab('settings')}>Settings</button>
         </div>
-      )}
-      {status && <div className={styles.statusMsg}>{status}</div>}
+        <IconButton tip="Refresh" onClick={() => loadList()} disabled={loading}>↻</IconButton>
+        <Btn size="sm" variant="primary" onClick={createSnapshot} disabled={running}>{running ? 'Creating…' : 'Create Snapshot'}</Btn>
+      </Toolbar>
 
-      <RestoreInfo info={restoreInfo} />
+      <ErrorBanner>{error}</ErrorBanner>
+      {status && <div className={styles.status}>{status}</div>}
+      {running && <div className={styles.runningBar}><div className={styles.runningPulse} /></div>}
 
-      <div className={styles.panelBox}>
-        <div className={styles.panelTitle}>Scheduled backups</div>
-
-        <label className={`${styles.toggleRow} ${styles.panelInner}`}>
-          <input
-            type="checkbox"
-            checked={periodicEnabled}
-            onChange={e => togglePeriodic(e.target.checked)}
-          />
-          <span className={styles.toggleLabel}>Automatically back up on a schedule</span>
-        </label>
-
-        {periodicEnabled && (
-          <>
-            <div className={styles.panelField}>
-              <label className={styles.panelLabel}>Interval (hours)</label>
-              <input
-                className={styles.numInput}
-                type="number"
-                min={1}
-                value={intervalHours}
-                onChange={e => setIntervalHours(Number(e.target.value))}
-                onBlur={e => saveIntervalHours(e.target.value)}
-              />
+      {tab === 'snapshots' ? (
+        <div className={styles.body}>
+          <RestoreInfo info={restoreInfo} />
+          {!loading && snapshots.length === 0 ? (
+            <EmptyState icon={<IconShulkerBox size={30} />} label="No snapshots yet" hint="Create one above. Snapshots zip the world folder; autosave pauses during the zip." />
+          ) : (
+            <div className={styles.list}>
+              {snapshots.map(snap => (
+                <div key={snap.name} className={styles.row}>
+                  <div className={styles.snapInfo}>
+                    <span className={styles.snapName}>{snap.name}</span>
+                    <span className={styles.snapMeta}>{fmtSize(snap.sizeBytes)} · {fmtDate(snap.createdAt)}</span>
+                  </div>
+                  {downloading === snap.name && dlProgress && <DownloadProgress {...dlProgress} />}
+                  <div className={styles.actions}>
+                    <Btn size="sm" onClick={() => downloadSnapshot(snap.name)} disabled={downloading != null}>{downloading === snap.name ? 'Downloading…' : 'Download'}</Btn>
+                    <Btn size="sm" variant="danger" onClick={() => setConfirmDelete(snap.name)} disabled={downloading === snap.name}>Delete</Btn>
+                  </div>
+                </div>
+              ))}
             </div>
-            <div className={styles.panelHint}>
-              A due backup waits until no players are online, then runs automatically.
-              If it stays overdue for a full extra interval, it runs anyway.
-              <br />Next backup: {nextBackupLabel()}
-            </div>
-          </>
-        )}
-
-        <div className={styles.panelField}>
-          <label className={styles.panelLabel}>Keep last N snapshots</label>
-          <input
-            className={styles.numInput}
-            type="number"
-            min={1}
-            value={maxCount}
-            onChange={e => setMaxCount(Number(e.target.value))}
-            onBlur={e => saveMaxCount(e.target.value)}
-          />
-          <div className={styles.panelHint}>
-            Applies to all snapshots, manual and scheduled. Older ones are pruned after each backup.
-          </div>
+          )}
         </div>
-      </div>
+      ) : (
+        <div className={styles.body}>
+          <SectionCard title="Schedule">
+            <div className={styles.toggleRow}><span className={styles.tLabel}>Automatic scheduled backups</span><Toggle checked={periodicEnabled} onChange={togglePeriodic} aria-label="Scheduled backups" /></div>
+            {periodicEnabled && (
+              <Field label="Interval (hours)" hint={`A due backup waits for an empty server, then runs. Next: ${nextBackupLabel()}`}>
+                <Input type="number" min={1} value={intervalHours} onChange={e => setIntervalHours(Number(e.target.value))} onBlur={e => saveIntervalHours(e.target.value)} />
+              </Field>
+            )}
+            <Field label="Keep last N snapshots" hint="Older snapshots are pruned after each backup.">
+              <Input type="number" min={1} value={maxCount} onChange={e => setMaxCount(Number(e.target.value))} onBlur={e => saveMaxCount(e.target.value)} />
+            </Field>
+          </SectionCard>
 
-      <label className={styles.toggleRow}>
-        <input
-          type="checkbox"
-          checked={publicEnabled}
-          onChange={e => togglePublic(e.target.checked)}
-        />
-        <span className={styles.toggleLabel}>
-          Allow public download of latest snapshot
-        </span>
-        <span className={styles.toggleHint}>
-          Shows a "Download World" button on the public dashboard
-        </span>
-      </label>
+          <SectionCard title="Public Download" subtitle="Shows a Download World button on the public dashboard.">
+            <div className={styles.toggleRow}><span className={styles.tLabel}>Allow public download of latest snapshot</span><Toggle checked={publicEnabled} onChange={togglePublic} aria-label="Public download" /></div>
+            {publicEnabled && (
+              <div className={styles.toggleRow}><span className={styles.tLabel}>Also disclose the seed to downloaders</span><Toggle checked={seedDisclosure} onChange={toggleSeedDisclosure} aria-label="Seed disclosure" /></div>
+            )}
+            {publicEnabled && <div className={styles.note}>Disclosing the seed lets guests restore matching terrain but exposes it to seed-finder tools. Admins always see the seed.</div>}
+          </SectionCard>
 
-      {publicEnabled && (
-        <div className={styles.panelBox}>
-          <div className={styles.panelTitle}>Public seed disclosure</div>
-          <label className={`${styles.toggleRow} ${styles.panelInner}`}>
-            <input
-              type="checkbox"
-              checked={seedDisclosure}
-              onChange={e => toggleSeedDisclosure(e.target.checked)}
-            />
-            <span className={styles.toggleLabel}>Also give the seed to public downloaders</span>
-          </label>
-          <div className={styles.panelHint}>
-            Lets guests restore matching terrain, but exposes the seed to online seed-finder
-            tools (structure/loot locating). Off by default. Admins always see the seed above.
-          </div>
-        </div>
-      )}
-
-      {publicEnabled && (
-        <div className={styles.panelBox}>
-          <div className={styles.panelTitle}>Web panel link</div>
-          <div className={styles.panelHint}>
-            Players get this link via /smp download. Requires a URL below. Nothing shows if it's empty.
-          </div>
-
-          <div className={styles.panelField}>
-            <label className={styles.panelLabel}>Panel URL</label>
-            <div className={styles.panelRow}>
-              <input
-                className={styles.textInput}
-                type="text"
-                placeholder="https://panel.example.com"
-                value={panelUrl}
-                onChange={e => setPanelUrl(e.target.value)}
-              />
-              <button
-                className={styles.btn}
-                onClick={savePanelUrl}
-                disabled={panelUrl.trim() === panelUrlSaved || Boolean(panelUrlError(panelUrl))}
-              >
-                Save
-              </button>
-            </div>
-            {panelUrlError(panelUrl)
-              ? <div className={styles.panelError}>{panelUrlError(panelUrl)}</div>
-              : <div className={styles.panelHint}>Must include http:// or https:// or it won't be clickable in chat.</div>}
-          </div>
-
-          <label className={`${styles.toggleRow} ${styles.panelInner} ${!panelUrlSaved ? styles.disabledRow : ''}`}>
-            <input
-              type="checkbox"
-              checked={panelMsgEnabled}
-              disabled={!panelUrlSaved}
-              onChange={e => togglePanelMsg(e.target.checked)}
-            />
-            <span className={styles.toggleLabel}>Periodically announce the link in chat</span>
-          </label>
-
-          {panelMsgEnabled && panelUrlSaved && (
-            <div className={styles.panelField}>
-              <label className={styles.panelLabel}>Interval (seconds)</label>
-              <input
-                className={styles.numInput}
-                type="number"
-                min={60}
-                value={panelInterval}
-                onChange={e => setPanelInterval(Number(e.target.value))}
-                onBlur={e => savePanelInterval(e.target.value)}
-              />
-            </div>
+          {publicEnabled && (
+            <SectionCard title="Web Panel Link" subtitle="Sent to players via /smp download. Empty hides the feature.">
+              <Field label="Panel URL">
+                <div className={styles.urlRow}>
+                  <Input type="text" placeholder="https://panel.example.com" value={panelUrl} onChange={e => setPanelUrl(e.target.value)} />
+                  <Btn onClick={savePanelUrl} disabled={panelUrl.trim() === panelUrlSaved || Boolean(urlErr)}>Save</Btn>
+                </div>
+              </Field>
+              {urlErr && <div className={styles.note} style={{ color: 'var(--red)' }}>{urlErr}</div>}
+              <div className={`${styles.toggleRow} ${!panelUrlSaved ? styles.disabled : ''}`}>
+                <span className={styles.tLabel}>Periodically announce the link in chat</span>
+                <Toggle checked={panelMsgEnabled} disabled={!panelUrlSaved} onChange={togglePanelMsg} aria-label="Announce link" />
+              </div>
+              {panelMsgEnabled && panelUrlSaved && (
+                <Field label="Interval (seconds)"><Input type="number" min={60} value={panelInterval} onChange={e => setPanelInterval(Number(e.target.value))} onBlur={e => savePanelInterval(e.target.value)} /></Field>
+              )}
+            </SectionCard>
           )}
         </div>
       )}
 
-      <div className={styles.toolbar}>
-        <span className={styles.count}>
-          {loading
-            ? 'Loading…'
-            : `${snapshots.length} snapshot${snapshots.length !== 1 ? 's' : ''}`}
-        </span>
-        <button className={styles.btnGhost} onClick={loadList} disabled={loading}>
-          Refresh
-        </button>
-        <button className={styles.btn} onClick={createSnapshot} disabled={running}>
-          {running ? 'Creating snapshot…' : 'Create Snapshot'}
-        </button>
-      </div>
-
-      {running && (
-        <div className={styles.runningBar}>
-          <div className={styles.runningPulse} />
-        </div>
-      )}
-
-      <div className={styles.list}>
-        {!loading && snapshots.length === 0 && (
-          <div className={styles.empty}>No snapshots yet</div>
-        )}
-
-        {snapshots.map(snap => (
-          <div key={snap.name} className={styles.row}>
-            <div className={styles.snapInfo}>
-              <span className={styles.snapName}>{snap.name}</span>
-            </div>
-            <span className={styles.snapMeta}>
-              {fmtSize(snap.sizeBytes)} · {fmtDate(snap.createdAt)}
-            </span>
-
-            {downloading === snap.name && dlProgress && (
-              <DownloadProgress {...dlProgress} />
-            )}
-
-            {confirmDelete === snap.name ? (
-              <div className={styles.confirmRow}>
-                <span className={styles.confirmText}>Delete {snap.name}?</span>
-                <button className={styles.btnDanger} onClick={() => deleteSnapshot(snap.name)}>
-                  Confirm
-                </button>
-                <button className={styles.btnGhost} onClick={() => setConfirmDelete(null)}>
-                  Cancel
-                </button>
-              </div>
-            ) : (
-              <div className={styles.actions}>
-                <button
-                  className={styles.btnGhost}
-                  onClick={() => downloadSnapshot(snap.name)}
-                  disabled={downloading != null}
-                >
-                  {downloading === snap.name ? 'Downloading…' : 'Download'}
-                </button>
-                <button
-                  className={styles.btnDanger}
-                  onClick={() => setConfirmDelete(snap.name)}
-                  disabled={downloading === snap.name}
-                >
-                  Delete
-                </button>
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
+      <ConfirmDialog open={!!confirmDelete} onOpenChange={o => !o && setConfirmDelete(null)}
+        title={confirmDelete ? `Delete ${confirmDelete}?` : ''}
+        description="This permanently removes the snapshot zip."
+        confirmLabel="Delete" tone="danger" onConfirm={() => deleteSnapshot(confirmDelete)} />
     </div>
   )
 }

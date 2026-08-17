@@ -1,134 +1,24 @@
-.wrap {
-  flex: 1;
-  overflow-y: auto;
-  padding: 16px;
-  background: var(--mc-panel);
-}
+.wrap { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-height: 0; background: var(--surf-1); }
+.scroll { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 18px; }
 
-.grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
-  gap: 10px;
-}
+.group { display: flex; flex-direction: column; gap: 10px; }
+.groupLabel { font-family: var(--font-pixel); font-size: 8px; letter-spacing: 0.5px; color: var(--txt-faint); text-shadow: 1px 1px 0 rgba(0,0,0,0.5); }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 12px; }
 
-/* ── Feature card — inventory slot ── */
 .card {
-  background: #1E1E1E;
-  border-top:    2px solid var(--mc-stone-dark);
-  border-left:   2px solid var(--mc-stone-dark);
-  border-bottom: 2px solid var(--mc-stone-light);
-  border-right:  2px solid var(--mc-stone-light);
-  padding: 14px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  transition: filter var(--t-base);
+  display: flex; flex-direction: column; gap: 8px; padding: 14px;
+  background: var(--surf-2);
+  border-top: 2px solid #3a3a3a; border-left: 2px solid #3a3a3a; border-bottom: 2px solid #0d0d0d; border-right: 2px solid #0d0d0d;
+  transition: border-color var(--t-fast), opacity var(--t-fast);
 }
+.cardOff { opacity: 0.6; }
+.cardOn:hover { border-top-color: var(--mc-wood); border-left-color: var(--mc-wood); }
 
-.cardActive:hover {
-  filter: brightness(1.1);
-}
+.cardTop { display: flex; align-items: center; gap: 9px; }
+.icon { display: flex; image-rendering: pixelated; flex-shrink: 0; }
+.name { font-family: var(--font-pixel); font-size: 8px; color: var(--txt-primary); text-shadow: 1px 1px 0 rgba(0,0,0,0.5); flex: 1; }
 
-.cardOff {
-  opacity: 0.4;
-  filter: grayscale(0.5);
-}
+.desc { font-family: var(--font-sans); font-size: 12px; color: var(--txt-muted); line-height: 1.5; margin: 0; flex: 1; }
 
-.cardTop {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-}
-
-/* Status pill — MC style */
-.pill {
-  font-family: var(--font-pixel);
-  font-size: 6px;
-  letter-spacing: 0.3px;
-  padding: 3px 7px;
-  flex-shrink: 0;
-}
-
-.pillOn {
-  color: var(--green);
-  background: rgba(166,227,161,0.1);
-  border-top:    1px solid rgba(166,227,161,0.1);
-  border-left:   1px solid rgba(166,227,161,0.1);
-  border-bottom: 1px solid rgba(166,227,161,0.35);
-  border-right:  1px solid rgba(166,227,161,0.35);
-  text-shadow: 1px 1px 0 rgba(0,0,0,0.5);
-}
-
-.pillOff {
-  color: var(--txt-muted);
-  background: rgba(255,255,255,0.03);
-  border-top:    1px solid rgba(255,255,255,0.03);
-  border-left:   1px solid rgba(255,255,255,0.03);
-  border-bottom: 1px solid rgba(255,255,255,0.08);
-  border-right:  1px solid rgba(255,255,255,0.08);
-}
-
-.name {
-  font-family: var(--font-pixel);
-  font-size: 7px;
-  color: var(--text);
-  text-shadow: 1px 1px 0 rgba(0,0,0,0.5);
-  flex: 1;
-  letter-spacing: 0.3px;
-  line-height: 1.4;
-}
-
-.desc {
-  font-size: 10px;
-  color: var(--txt-muted);
-  line-height: 1.6;
-}
-
-.restartNote {
-  font-size: 9px;
-  color: #886644;
-  line-height: 1.4;
-}
-
-.toggle {
-  font-family: var(--font-pixel);
-  font-size: 6px;
-  letter-spacing: 0.3px;
-  padding: 4px 8px;
-  cursor: pointer;
-  border: none;
-  margin-top: 2px;
-  align-self: flex-start;
-}
-
-.toggle:disabled {
-  opacity: 0.5;
-  cursor: default;
-}
-
-.toggleOn {
-  background: rgba(166,227,161,0.15);
-  color: var(--green);
-  border-top:    1px solid rgba(166,227,161,0.1);
-  border-left:   1px solid rgba(166,227,161,0.1);
-  border-bottom: 1px solid rgba(166,227,161,0.4);
-  border-right:  1px solid rgba(166,227,161,0.4);
-}
-
-.toggleOn:hover:not(:disabled) {
-  background: rgba(166,227,161,0.25);
-}
-
-.toggleOff {
-  background: rgba(255,100,100,0.1);
-  color: #c0392b;
-  border-top:    1px solid rgba(255,100,100,0.08);
-  border-left:   1px solid rgba(255,100,100,0.08);
-  border-bottom: 1px solid rgba(255,100,100,0.3);
-  border-right:  1px solid rgba(255,100,100,0.3);
-}
-
-.toggleOff:hover:not(:disabled) {
-  background: rgba(255,100,100,0.18);
-}
+.cardFoot { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 20px; }
+.restart { font-family: var(--font-sans); font-size: 11px; color: var(--yellow); }

@@ -1,29 +1,18 @@
-.wrap {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  min-height: 0;
-  background: var(--surf-1);
-}
+.wrap { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-height: 0; background: var(--surf-1); }
 
-.list { flex: 1; overflow-y: auto; padding: 4px 0; }
+.stats { display: flex; gap: 10px; padding: 12px 14px 4px; flex-wrap: wrap; }
+
+.list { flex: 1; overflow-y: auto; padding: 8px 14px; display: flex; flex-direction: column; gap: 2px; }
 
 .row {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 10px 14px;
-  border-left: 3px solid transparent;
-  transition: background var(--t-fast);
+  display: flex; align-items: center; gap: 12px; padding: 9px 10px;
+  border-left: 3px solid transparent; transition: background var(--t-fast);
 }
 .row:hover { background: rgba(255,255,255,0.04); border-left-color: var(--mc-wood); }
 
-.info { display: flex; flex-direction: column; gap: 3px; width: 140px; flex-shrink: 0; }
+.rank { font-family: var(--font-pixel); font-size: 9px; color: var(--txt-faint); width: 22px; text-align: center; text-shadow: 1px 1px 0 rgba(0,0,0,0.5); flex-shrink: 0; }
+.info { display: flex; flex-direction: column; gap: 2px; width: 130px; flex-shrink: 0; }
 .name { font-family: var(--font-pixel); font-size: 8px; color: var(--txt-primary); text-shadow: 1px 1px 0 rgba(0,0,0,0.5); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .uuid { font-family: var(--font-mono); font-size: 10px; color: var(--txt-faint); }
-
-.barWrap { flex: 1; display: flex; align-items: center; gap: 10px; min-width: 0; }
-.bar { flex: 1; height: 12px; background: var(--surf-slot); border: 1px solid #0a0a0a; overflow: hidden; }
-.barFill { height: 100%; background: linear-gradient(90deg, var(--mc-wood), var(--mc-wood-light)); transition: width 300ms ease; }
-.claimCount { font-family: var(--font-sans); font-size: 12px; color: var(--txt-secondary); white-space: nowrap; flex-shrink: 0; }
+.barWrap { flex: 1; min-width: 0; }
+.count { font-family: var(--font-pixel); font-size: 8px; color: var(--txt-secondary); width: 42px; text-align: right; flex-shrink: 0; }
