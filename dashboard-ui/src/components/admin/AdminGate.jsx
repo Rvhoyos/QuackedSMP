@@ -9,8 +9,7 @@ export default function AdminGate({ onAuth }) {
 
   async function submit(e) {
     e.preventDefault()
-    setError('')
-    setLoading(true)
+    setError(''); setLoading(true)
     try {
       const res = await fetch('/api/admin/login', {
         method: 'POST',
@@ -18,11 +17,8 @@ export default function AdminGate({ onAuth }) {
         body: JSON.stringify({ password }),
       })
       const data = await res.json()
-      if (!res.ok) {
-        setError(data.error || 'Invalid password.')
-      } else {
-        onAuth(data.token || '')
-      }
+      if (!res.ok) setError(data.error || 'Invalid password.')
+      else onAuth(data.token || '')
     } catch {
       setError('Could not reach the server.')
     } finally {
@@ -32,46 +28,34 @@ export default function AdminGate({ onAuth }) {
 
   return (
     <div className={styles.page}>
-      <div className={styles.container}>
-        {/* Wood header — server entry */}
-        <div className={styles.woodHeader}>
-          <div className={styles.serverIcon}>
-            <IconDuck size={40} />
-          </div>
-          <div className={styles.serverInfo}>
-            <span className={styles.serverName}>QuackedSMP</span>
-            <span className={styles.serverSub}>Admin Panel</span>
+      <form className={styles.card} onSubmit={submit}>
+        <div className={styles.accent} />
+        <div className={styles.brand}>
+          <span className={styles.duck}><IconDuck size={44} /></span>
+          <div className={styles.brandText}>
+            <span className={styles.name}>QuackedSMP</span>
+            <span className={styles.sub}>Admin Access</span>
           </div>
         </div>
 
-        {/* Dark body */}
-        <div className={styles.body}>
-          <form className={styles.form} onSubmit={submit}>
-            <label className={styles.label}>Password</label>
-            <input
-              className={styles.input}
-              type="password"
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              placeholder="enter password..."
-              autoFocus
-              required
-            />
+        <label className={styles.label}>Password</label>
+        <input
+          className={styles.input}
+          type="password"
+          value={password}
+          onChange={e => setPassword(e.target.value)}
+          placeholder="Enter admin password"
+          autoFocus
+          required
+        />
 
-            {error && (
-              <div className={styles.error}>
-                <span className={styles.errorX}>✗</span> {error}
-              </div>
-            )}
+        {error && <div className={styles.error}>✗ {error}</div>}
 
-            <button className={styles.connectBtn} type="submit" disabled={loading}>
-              {loading ? 'Verifying...' : 'Connect'}
-            </button>
-          </form>
-
-          <p className={styles.hint}>/smp admin setpassword to reset</p>
-        </div>
-      </div>
+        <button className={styles.connect} type="submit" disabled={loading}>
+          {loading ? 'Verifying…' : 'Connect'}
+        </button>
+        <p className={styles.hint}>Reset in-game with <code>/smp admin setpassword</code></p>
+      </form>
     </div>
   )
 }

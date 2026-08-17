@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { IconXPOrb } from './admin/MinecraftIcons'
 import styles from './SkillsLeaderboard.module.css'
 
 const CATEGORIES = [
@@ -28,7 +29,10 @@ export default function SkillsLeaderboard({ data }) {
   return (
     <section className={styles.wrap}>
       <div className={styles.header}>
-        <span className={styles.title}>Skills Leaderboard</span>
+        <div className={styles.titleRow}>
+          <span className={styles.headerIcon}><IconXPOrb size={16} /></span>
+          <span className={styles.title}>Skills Leaderboard</span>
+        </div>
         <div className={styles.tabs}>
           {CATEGORIES.map(c => (
             <button

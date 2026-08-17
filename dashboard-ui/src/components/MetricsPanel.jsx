@@ -82,7 +82,15 @@ export default function MetricsPanel({ tps, cpu, mspt, online, sys, tpsHist = []
   const tpsV = tps?.tps5s, msptV = mspt?.mean10s, cpuV = cpu?.cpu10s
 
   return (
-    <div className={styles.grid}>
+    <section className={styles.band}>
+      <div className={styles.bandHead}>
+        <div className={styles.bandTitleRow}>
+          <span className={styles.bandIcon}><IconSpeedometer size={18} /></span>
+          <span className={styles.bandTitle}>Server Vitals</span>
+        </div>
+        <span className={styles.bandSub}>live · 15s refresh</span>
+      </div>
+      <div className={styles.grid}>
       {/* TPS */}
       <div className={styles.card}>
         <div className={styles.head}><span className={styles.icon}><IconClock size={18} /></span><span className={styles.label}>TPS</span></div>
@@ -164,7 +172,8 @@ export default function MetricsPanel({ tps, cpu, mspt, online, sys, tpsHist = []
           <Stat label="world" value={fmtBytes(worldSize)} />
         </div>
       </div>
-    </div>
+      </div>
+    </section>
   )
 }
 

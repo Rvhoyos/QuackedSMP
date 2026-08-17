@@ -1,0 +1,94 @@
+/* Framed GUI window onto a live pixel-art world. */
+.hero {
+  position: relative;
+  overflow: hidden;
+  min-height: 200px;
+  border-top:    3px solid var(--mc-stone-light);
+  border-left:   3px solid var(--mc-stone-light);
+  border-bottom: 3px solid var(--mc-stone-dark);
+  border-right:  3px solid var(--mc-stone-dark);
+  box-shadow: 0 6px 22px rgba(0,0,0,0.5), inset 0 0 0 1px rgba(0,0,0,0.4);
+}
+
+/* Bottom scrim guarantees text/button contrast over the scene. */
+.scrim {
+  position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(180deg, transparent 42%, rgba(0,0,0,0.18) 64%, rgba(0,0,0,0.5) 100%);
+}
+
+/* Foreground identity, anchored to the ground line. */
+.plate {
+  position: relative; z-index: 1;
+  min-height: 200px;
+  display: flex; align-items: flex-end; justify-content: space-between;
+  gap: 20px; flex-wrap: wrap;
+  padding: 20px 24px 18px;
+}
+
+.left { display: flex; align-items: flex-end; gap: 16px; min-width: 0; }
+.mark { text-decoration: none; display: flex; flex-shrink: 0; }
+.duck {
+  display: flex; align-items: center; justify-content: center;
+  padding: 7px;
+  background: rgba(0,0,0,0.5);
+  border-top: 2px solid var(--mc-stone-light); border-left: 2px solid var(--mc-stone-light);
+  border-bottom: 2px solid var(--mc-stone-dark); border-right: 2px solid var(--mc-stone-dark);
+  image-rendering: pixelated;
+  filter: drop-shadow(2px 3px 0 rgba(0,0,0,0.6));
+  transition: transform var(--t-fast);
+}
+.mark:hover .duck { transform: translateY(-2px); }
+
+.titleWrap { display: flex; flex-direction: column; gap: 9px; min-width: 0; padding-bottom: 2px; }
+.titleRow { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.name {
+  font-family: var(--font-pixel);
+  font-size: 24px;
+  line-height: 1;
+  color: #FFF3C4;
+  /* carved: dark drop below + faint light lift above */
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.8), -1px -1px 0 rgba(255,255,255,0.08);
+  letter-spacing: 0.5px;
+  margin: 0;
+}
+
+/* Lamp status tag — carved stone plate holding the lamp + label. */
+.lampTag {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-family: var(--font-pixel); font-size: 7px; letter-spacing: 0.5px;
+  padding: 4px 8px 4px 6px;
+  background: rgba(0,0,0,0.5);
+  border-top: 1px solid rgba(255,255,255,0.12); border-left: 1px solid rgba(255,255,255,0.12);
+  border-bottom: 1px solid rgba(0,0,0,0.6); border-right: 1px solid rgba(0,0,0,0.6);
+  text-shadow: 1px 1px 0 rgba(0,0,0,0.7);
+}
+.tagLive { color: var(--lamp-on); }
+.tagDown { color: #f38ba8; }
+.lampOn  { filter: drop-shadow(0 0 4px var(--lamp-on-glow)); }
+.lampOff { animation: lampPulse 1.3s ease-in-out infinite; }
+@keyframes lampPulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+.metaRow { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.sub {
+  font-family: var(--font-pixel); font-size: 6px; color: #f2cf94; letter-spacing: 0.5px;
+  text-shadow: 1px 1px 0 rgba(0,0,0,0.7);
+}
+.chip {
+  font-family: var(--font-sans); font-size: 11px; color: #e9e3d2;
+  padding: 2px 8px;
+  background: rgba(0,0,0,0.5);
+  border: 1px solid rgba(255,255,255,0.12);
+  text-shadow: 1px 1px 0 rgba(0,0,0,0.6);
+}
+
+.actions { display: flex; align-items: flex-end; gap: 10px; flex-wrap: wrap; }
+
+@media (max-width: 640px) {
+  .hero, .plate { min-height: 168px; }
+  .name { font-size: 18px; }
+  .plate { padding: 16px; }
+  .duck { padding: 6px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lampOff { animation: none; }
+}

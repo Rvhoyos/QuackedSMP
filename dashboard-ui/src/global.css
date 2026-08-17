@@ -83,6 +83,26 @@
 
   /* Focus ring for keyboard a11y on themed controls */
   --focus-ring:    0 0 0 2px var(--crust), 0 0 0 4px var(--mc-wood-light);
+
+  /* ── World-strata palette ("Depth of the World") ─────────────────────
+     Dusk sky at the surface, descending through dirt/stone/deepslate.
+     Drives the World Header scene and the page background. */
+  --sky-top:     #171733;   /* zenith dusk indigo */
+  --sky-mid:     #3a2f5c;   /* mid-sky mauve */
+  --sky-low:     #7b4b63;   /* lower sky rose */
+  --sky-horizon: #c8843a;   /* warm horizon band */
+  --sky-glow:    #e6ad6a;   /* sun glow at the skyline */
+  --hill-far:    #2f3a4a;   /* distant desaturated ridge */
+  --hill-near:   #3f6b3a;   /* near green hill */
+  --hill-grass:  #5a9c46;   /* lit grass edge */
+  --tree:        #22371f;   /* tree silhouette */
+  --dirt:        #4a3524;   /* topsoil band */
+  --dirt-dark:   #33251a;
+  --stone-deep:  #262631;   /* mid-depth stone */
+  --deepslate:   #16171d;   /* bedrock depth */
+  --lamp-on:     #93e485;   /* redstone lamp lit */
+  --lamp-on-glow:#3ecf6a;
+  --lamp-off:    #6a2333;   /* lamp unlit (reconnecting) */
 }
 
 /* Visible keyboard focus for all interactive elements (a11y).
@@ -97,12 +117,7 @@ html, body, #root {
 }
 
 body {
-  background: var(--crust);
-  /* Subtle 16×16 pixel grid — the Minecraft block grid */
-  background-image:
-    linear-gradient(rgba(255,255,255,0.018) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255,255,255,0.018) 1px, transparent 1px);
-  background-size: 16px 16px;
+  background: var(--deepslate);
   color: var(--text);
   font-family: var(--font-sans);
   font-size: 13px;

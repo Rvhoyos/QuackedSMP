@@ -13,8 +13,8 @@
 .header {
   display: flex; align-items: center; justify-content: space-between; gap: 10px;
   padding: 9px 12px; flex-shrink: 0;
-  background: var(--surf-0);
-  border-bottom: 2px solid var(--mc-wood-dark);
+  background: linear-gradient(90deg, rgba(90,160,230,0.14), var(--surf-0) 44%);
+  border-bottom: 2px solid #2a5a8a;
 }
 .titleRow { display: flex; align-items: center; gap: 8px; }
 .headerIcon { display: flex; image-rendering: pixelated; }

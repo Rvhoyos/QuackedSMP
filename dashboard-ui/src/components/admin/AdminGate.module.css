@@ -3,205 +3,74 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: var(--s-8);
-  /* Warm ambient glow from below center */
-  background: radial-gradient(ellipse 60% 40% at 50% 80%, rgba(154, 107, 46, 0.12) 0%, transparent 70%);
+  padding: 24px;
+  min-height: 0;
 }
 
-/* ── Main container — Minecraft GUI style ── */
-.container {
-  width: 100%;
-  max-width: 420px;
-  /* Classic MC bevel border */
+.card {
+  position: relative;
+  overflow: hidden;
+  width: 380px;
+  max-width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 26px 24px 20px;
+  background:
+    radial-gradient(120% 120% at 20% -10%, rgba(200,151,58,0.16), transparent 55%),
+    linear-gradient(180deg, var(--surf-1), var(--crust));
   border-top:    3px solid var(--mc-stone-light);
   border-left:   3px solid var(--mc-stone-light);
   border-bottom: 3px solid var(--mc-stone-dark);
   border-right:  3px solid var(--mc-stone-dark);
-  box-shadow: 0 12px 48px rgba(0,0,0,0.7), 0 0 0 1px #000;
-  animation: popIn 200ms ease;
+  box-shadow: 0 16px 48px rgba(0,0,0,0.6);
+  animation: rise 200ms ease;
+}
+@keyframes rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+.accent {
+  position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  background: linear-gradient(90deg, var(--mc-wood-light), var(--green) 50%, var(--mc-wood-light));
 }
 
-@keyframes popIn {
-  from { opacity: 0; transform: translateY(12px) scale(0.97); }
-  to   { opacity: 1; transform: translateY(0) scale(1); }
+.brand { display: flex; align-items: center; gap: 13px; margin-bottom: 6px; }
+.duck {
+  display: flex; padding: 7px; background: rgba(0,0,0,0.35);
+  border-top: 2px solid var(--mc-stone-light); border-left: 2px solid var(--mc-stone-light);
+  border-bottom: 2px solid var(--mc-stone-dark); border-right: 2px solid var(--mc-stone-dark);
+  image-rendering: pixelated; filter: drop-shadow(2px 3px 0 rgba(0,0,0,0.5));
 }
+.brandText { display: flex; flex-direction: column; gap: 5px; }
+.name { font-family: var(--font-pixel); font-size: 13px; color: #FFF3C4; text-shadow: 2px 2px 0 rgba(0,0,0,0.6); }
+.sub { font-family: var(--font-pixel); font-size: 6px; color: var(--mc-wood-light); letter-spacing: 0.6px; }
 
-/* ── Wood plank header ── */
-.woodHeader {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 14px 18px;
-  background: var(--mc-wood);
-  background-image: repeating-linear-gradient(
-    90deg,
-    transparent 0px, transparent 47px,
-    rgba(0,0,0,0.14) 47px, rgba(0,0,0,0.14) 50px
-  );
-  border-bottom: 3px solid var(--mc-wood-dark);
-}
-
-/* Server icon — slot style */
-.serverIcon {
-  width: 52px;
-  height: 52px;
-  background: var(--mc-slot);
-  border-top:    2px solid var(--mc-stone-dark);
-  border-left:   2px solid var(--mc-stone-dark);
-  border-bottom: 2px solid var(--mc-stone-light);
-  border-right:  2px solid var(--mc-stone-light);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  image-rendering: pixelated;
-  flex-shrink: 0;
-}
-
-.serverInfo {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  min-width: 0;
-}
-
-.serverName {
-  font-family: var(--font-pixel);
-  font-size: 11px;
-  color: #FFFFFF;
-  text-shadow: 2px 2px 0 rgba(0,0,0,0.6);
-  letter-spacing: 0px;
-  line-height: 1;
-}
-
-.serverSub {
-  font-family: var(--font-pixel);
-  font-size: 7px;
-  color: var(--mc-wood-light);
-  text-shadow: 1px 1px 0 rgba(0,0,0,0.5);
-  letter-spacing: 0.5px;
-}
-
-/* ── Dark body ── */
-.body {
-  background: var(--mc-panel);
-  padding: 24px 20px 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-}
-
-.form {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.label {
-  font-family: var(--font-pixel);
-  font-size: 7px;
-  letter-spacing: 0.5px;
-  color: var(--txt-secondary);
-  text-shadow: 1px 1px 0 rgba(0,0,0,0.5);
-}
-
-/* Minecraft text field — dark slot with inverted bevel */
+.label { font-family: var(--font-pixel); font-size: 7px; color: var(--txt-faint); letter-spacing: 0.3px; text-shadow: 1px 1px 0 rgba(0,0,0,0.5); }
 .input {
-  width: 100%;
-  background: var(--mc-slot);
-  border-top:    2px solid var(--mc-stone-dark);
-  border-left:   2px solid var(--mc-stone-dark);
-  border-bottom: 2px solid var(--mc-stone-light);
-  border-right:  2px solid var(--mc-stone-light);
-  padding: 10px 12px;
-  font-family: var(--font-mono);
-  font-size: 13px;
-  color: #FFFFFF;
-  outline: none;
-  letter-spacing: 3px;
-  caret-color: #FFFFFF;
-  transition: border-color var(--t-fast);
+  font-family: var(--font-sans); font-size: 14px; color: var(--txt-primary);
+  background: var(--surf-slot);
+  border-top: 2px solid #0a0a0a; border-left: 2px solid #0a0a0a;
+  border-bottom: 2px solid #3a3a3a; border-right: 2px solid #3a3a3a;
+  padding: 10px 12px; outline: none;
 }
+.input:focus { border-color: var(--mc-wood-light); }
+.input::placeholder { color: var(--txt-faint); }
 
-.input:focus {
-  border-top-color:  var(--txt-muted);
-  border-left-color: var(--txt-muted);
-  border-bottom-color: var(--txt-secondary);
-  border-right-color: var(--txt-secondary);
-}
-
-.input::placeholder {
-  color: var(--txt-muted);
-  letter-spacing: 2px;
-  font-size: 12px;
-}
-
-/* Error — red tinted row */
 .error {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: rgba(243, 139, 168, 0.1);
-  border-left: 3px solid var(--red);
-  padding: 8px 10px;
-  font-family: var(--font-pixel);
-  font-size: 7px;
-  color: var(--red);
-  text-shadow: 1px 1px 0 rgba(0,0,0,0.4);
-  letter-spacing: 0.5px;
-  line-height: 1.6;
+  font-family: var(--font-sans); font-size: 12px; color: #ffc7d0;
+  background: rgba(243,139,168,0.1); border-left: 3px solid var(--red); padding: 8px 10px;
 }
 
-.errorX {
-  font-size: 12px;
-  flex-shrink: 0;
-  font-family: var(--font-sans);
+.connect {
+  font-family: var(--font-pixel); font-size: 9px; letter-spacing: 0.4px;
+  padding: 12px; margin-top: 4px; cursor: pointer;
+  color: #FFF8E1; background: var(--mc-wood);
+  border-top: 2px solid var(--mc-wood-light); border-left: 2px solid var(--mc-wood-light);
+  border-bottom: 2px solid var(--mc-wood-dark); border-right: 2px solid var(--mc-wood-dark);
+  text-shadow: 1px 1px 0 rgba(0,0,0,0.5); transition: filter var(--t-fast);
 }
+.connect:hover:not(:disabled) { filter: brightness(1.13); }
+.connect:active:not(:disabled) { transform: translate(1px,1px); }
+.connect:disabled { opacity: 0.55; cursor: default; }
 
-/* ── Minecraft button ── */
-.connectBtn {
-  width: 100%;
-  margin-top: 4px;
-  padding: 12px;
-  background: var(--mc-stone);
-  border-top:    3px solid var(--mc-stone-light);
-  border-left:   3px solid var(--mc-stone-light);
-  border-bottom: 3px solid #222;
-  border-right:  3px solid #222;
-  font-family: var(--font-pixel);
-  font-size: 9px;
-  color: #E0E0E0;
-  text-shadow: 2px 2px 0 rgba(0,0,0,0.6);
-  cursor: pointer;
-  transition: background var(--t-fast), color var(--t-fast);
-  letter-spacing: 0.5px;
-}
-
-.connectBtn:hover:not(:disabled) {
-  background: #6E6E6E;
-  color: #FFFF55;
-}
-
-.connectBtn:active:not(:disabled) {
-  border-top-color:    #222;
-  border-left-color:   #222;
-  border-bottom-color: var(--mc-stone-light);
-  border-right-color:  var(--mc-stone-light);
-  transform: translate(1px, 1px);
-}
-
-.connectBtn:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
-}
-
-/* Hint */
-.hint {
-  font-family: var(--font-pixel);
-  font-size: 6px;
-  color: var(--txt-muted);
-  text-align: center;
-  margin-top: 16px;
-  letter-spacing: 0.5px;
-  line-height: 2;
-  text-shadow: none;
-}
+.hint { font-family: var(--font-sans); font-size: 11px; color: var(--txt-faint); text-align: center; margin: 2px 0 0; }
+.hint code { background: #0A0A0A; padding: 1px 5px; border: 1px solid #222; font-size: 10px; color: var(--txt-muted); }

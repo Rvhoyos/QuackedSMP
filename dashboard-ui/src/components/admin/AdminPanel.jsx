@@ -16,7 +16,7 @@ import CommandBlocksPanel from './CommandBlocksPanel'
 import BackupsPanel from './BackupsPanel'
 import TimelapsePanel from './TimelapsePanel'
 import { TooltipProvider, ToastHost } from '../../ui'
-import { IconPlayerHead, IconCommandBlock, IconChest, IconBookshelf, IconPortal, IconSkills, IconFlag, IconChatFilter, IconMod, IconShield, IconSword, IconEmerald, IconRepeatCmdBlock, IconShulkerBox, IconMapScroll } from './MinecraftIcons'
+import { IconPlayerHead, IconCommandBlock, IconBookshelf, IconPortal, IconSkills, IconFlag, IconChatFilter, IconMod, IconSword, IconEmerald, IconRepeatCmdBlock, IconShulkerBox, IconHardcoreHeart, IconGear, IconCamera } from './MinecraftIcons'
 import styles from './AdminPanel.module.css'
 
 // Sidebar groups. Each item optionally gates on a config flag (hidden when the
@@ -33,7 +33,7 @@ const GROUPS = [
   ]},
   { label: 'Gameplay', items: [
     { id: 'skills',   label: 'Skills',   Icon: IconSkills, configKey: 'skills_enabled' },
-    { id: 'hardcore', label: 'Hardcore', Icon: IconShield, configKey: 'hardcore_enabled' },
+    { id: 'hardcore', label: 'Hardcore', Icon: IconHardcoreHeart, configKey: 'hardcore_enabled' },
   ]},
   { label: 'Moderation', items: [
     { id: 'chatfilter', label: 'Chat Filter', Icon: IconChatFilter, configKey: 'chatfilter_enabled' },
@@ -43,17 +43,17 @@ const GROUPS = [
   { label: 'Systems', items: [
     { id: 'mods',      label: 'Mods',      Icon: IconMod },
     { id: 'backups',   label: 'Backups',   Icon: IconShulkerBox },
-    { id: 'timelapse', label: 'Timelapse', Icon: IconMapScroll },
+    { id: 'timelapse', label: 'Timelapse', Icon: IconCamera },
   ]},
   { label: 'Setup', items: [
-    { id: 'config',   label: 'Config',   Icon: IconChest },
+    { id: 'config',   label: 'Config',   Icon: IconGear },
     { id: 'features', label: 'Features', Icon: IconBookshelf },
   ]},
 ]
 
 const TOKEN_KEY = 'quack_admin_token'
 
-export default function AdminPanel({ health }) {
+export default function AdminPanel({ health, wsStatus, onBack }) {
   const [token,     setToken]   = useState(() => sessionStorage.getItem(TOKEN_KEY) || '')
   const [activeTab, setTab]     = useState('players')
   const [cfg,       setCfg]     = useState(null)
@@ -97,12 +97,18 @@ export default function AdminPanel({ health }) {
     <TooltipProvider>
       <ToastHost>
         <div className={styles.shell}>
-          {/* Mobile top bar */}
-          <div className={styles.mobileBar}>
+          {/* Top bar: back to dashboard + live status */}
+          <div className={styles.topbar}>
             <button className={styles.hamburger} onClick={() => setNavOpen(o => !o)} aria-label="Menu">≡</button>
+            {onBack && <button className={styles.back} onClick={onBack}>← Dashboard</button>}
             <span className={styles.mobileTitle}>{resolvedLbl}</span>
+            <span className={styles.topSpacer} />
+            <span className={`${styles.livePill} ${wsStatus === 'open' ? styles.liveOn : styles.liveOff}`}>
+              <span className={styles.liveDot} />{wsStatus === 'open' ? 'Live' : 'Reconnecting'}
+            </span>
           </div>
 
+          <div className={styles.mainRow}>
           {navOpen && <div className={styles.scrim} onClick={() => setNavOpen(false)} />}
 
           {/* Sidebar rail */}
@@ -150,6 +156,7 @@ export default function AdminPanel({ health }) {
             {resolvedTab === 'timelapse'  && <TimelapsePanel {...panelProps} />}
             {resolvedTab === 'config'     && <ConfigEditor {...panelProps} />}
             {resolvedTab === 'features'   && <FeatureShowcase {...panelProps} />}
+          </div>
           </div>
         </div>
       </ToastHost>

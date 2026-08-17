@@ -1,0 +1,37 @@
+/* Decoupled dusk scene: sky fills the header, terrain anchors to the bottom,
+   sky detail (moon/stars/clouds) lives in the upper area. Nothing crops. */
+.scene { position: absolute; inset: 0; overflow: hidden; image-rendering: pixelated; }
+
+/* Banded (hard-stop) dusk gradient = deliberate pixel sky, not a smooth wash. */
+.sky {
+  position: absolute; inset: 0;
+  background: linear-gradient(180deg,
+    #12122b 0 14%, #191834 14% 26%, #241f47 26% 38%,
+    #332a55 38% 50%, #4a3358 50% 60%, #6b4460 60% 70%,
+    #98555a 70% 80%, #c8843a 80% 90%, #e6ad6a 90% 100%);
+}
+
+.moon { position: absolute; top: 22px; right: 7%; image-rendering: pixelated; filter: drop-shadow(0 0 6px rgba(228,224,240,0.3)); }
+
+.star { position: absolute; background: #e8e6f2; opacity: 0.6; }
+
+.cloudA, .cloudB { position: absolute; image-rendering: pixelated; }
+.cloudA { top: 30px; animation: driftA 90s linear infinite; }
+.cloudB { top: 56px; animation: driftB 130s linear infinite; }
+@keyframes driftA { from { left: -80px; } to { left: 100%; } }
+@keyframes driftB { from { left: 100%; } to { left: -80px; } }
+
+/* Wide, short terrain pinned to the bottom edge; slice never crops the hills. */
+.terrain {
+  position: absolute; left: 0; bottom: 0;
+  width: 100%; height: 130px;
+  display: block;
+}
+
+@media (max-width: 640px) {
+  .terrain { height: 96px; }
+  .moon { top: 16px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cloudA, .cloudB { animation: none; }
+}

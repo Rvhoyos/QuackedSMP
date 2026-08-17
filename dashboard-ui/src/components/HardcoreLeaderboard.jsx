@@ -36,7 +36,10 @@ export default function HardcoreLeaderboard({ data }) {
   return (
     <section className={styles.wrap}>
       <div className={styles.header}>
-        <span className={styles.title}>Hardcore Leaderboard</span>
+        <div className={styles.titleRow}>
+          <span className={styles.headerIcon}><IconSkull size={16} /></span>
+          <span className={styles.title}>Hardcore Leaderboard</span>
+        </div>
         <div className={styles.tabs}>
           {TABS.map(t => (
             <button
@@ -66,6 +69,22 @@ export default function HardcoreLeaderboard({ data }) {
 
       {/* Ranking table the tabs control. Bounded scroll box so it never pushes the records off. */}
       <div className={styles.rankingHeading}>Rankings</div>
+      {rows.length >= 3 && (
+        <div className={styles.podium}>
+          {[1, 0, 2].map(pos => {
+            const e = rows[pos]
+            if (!e) return null
+            const sub = tab === 'topPlayers' ? `${e.wins} wins` : fmtDur(e.durationMs)
+            return (
+              <div key={pos} className={`${styles.podStep} ${styles[`pod${pos}`]}`}>
+                <span className={styles.podRank} style={{ color: RANK_COLORS[pos] }}>#{pos + 1}</span>
+                <span className={styles.podName}>{e.name}</span>
+                <span className={styles.podSub}>{sub}</span>
+              </div>
+            )
+          })}
+        </div>
+      )}
       <div className={styles.body}>
         {tab === 'topPlayers' ? (
           <table className={styles.table}>

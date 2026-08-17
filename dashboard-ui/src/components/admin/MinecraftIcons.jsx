@@ -1015,3 +1015,141 @@ export function IconWolf({ size = 20 }) {
     </svg>
   )
 }
+
+// ── Distinct nav icons (replace reused shields/clocks/signs) ────────────────────
+
+// Chat Moderation — a judge's gavel over its sound block.
+export function IconGavel({ size = 20 }) {
+  return (
+    <svg viewBox="0 0 16 16" width={size} height={size} shapeRendering="crispEdges">
+      {/* mallet head */}
+      {px(2, 2, 8, 4, '#A9762F')}
+      {px(2, 2, 8, 1, '#C89446')}
+      {px(3, 2, 1, 4, '#6B4410')}
+      {px(8, 2, 1, 4, '#6B4410')}
+      {/* handle */}
+      {px(6, 6, 2, 6, '#8A5C22')}
+      {px(6, 6, 1, 6, '#A9762F')}
+      {/* sound block */}
+      {px(8, 12, 6, 2, '#5A3A10')}
+      {px(8, 12, 6, 1, '#7A5320')}
+    </svg>
+  )
+}
+
+// Hardcore — the dark maroon hardcore heart.
+export function IconHardcoreHeart({ size = 20 }) {
+  return (
+    <svg viewBox="0 0 16 16" width={size} height={size} shapeRendering="crispEdges">
+      {px(3, 3, 3, 2, '#7A1414')}
+      {px(9, 3, 3, 2, '#7A1414')}
+      {px(2, 5, 12, 3, '#8B1A1A')}
+      {px(3, 8, 10, 1, '#8B1A1A')}
+      {px(4, 9, 8, 1, '#7A1414')}
+      {px(5, 10, 6, 1, '#6A1010')}
+      {px(6, 11, 4, 1, '#5A0C0C')}
+      {px(7, 12, 2, 1, '#4A0808')}
+      {/* highlight + hardcore vein */}
+      {px(4, 5, 2, 1, '#C24040')}
+      {px(4, 6, 1, 1, '#C24040')}
+      {px(8, 6, 1, 2, '#4A0808')}
+    </svg>
+  )
+}
+
+// Danger Zone — a stick of TNT.
+export function IconTNT({ size = 20 }) {
+  return (
+    <svg viewBox="0 0 16 16" width={size} height={size} shapeRendering="crispEdges">
+      {px(0, 0, 16, 5, '#B4362B')}
+      {px(0, 0, 16, 1, '#D45142')}
+      {px(0, 5, 16, 6, '#E7E1CF')}
+      {px(0, 11, 16, 5, '#B4362B')}
+      {px(0, 15, 16, 1, '#7C1F18')}
+      {/* T N T */}
+      {px(1, 6, 3, 1, '#8B2A20')}{px(2, 6, 1, 4, '#8B2A20')}
+      {px(6, 6, 1, 4, '#8B2A20')}{px(9, 6, 1, 4, '#8B2A20')}{px(7, 7, 1, 1, '#8B2A20')}{px(8, 8, 1, 1, '#8B2A20')}
+      {px(11, 6, 3, 1, '#8B2A20')}{px(12, 6, 1, 4, '#8B2A20')}
+    </svg>
+  )
+}
+
+// Kit Settings — an anvil.
+export function IconAnvil({ size = 20 }) {
+  return (
+    <svg viewBox="0 0 16 16" width={size} height={size} shapeRendering="crispEdges">
+      {px(2, 3, 12, 3, '#4A4A55')}
+      {px(2, 3, 12, 1, '#6C6C79')}
+      {px(1, 4, 1, 2, '#3A3A44')}
+      {px(5, 6, 6, 2, '#3A3A44')}
+      {px(4, 8, 8, 2, '#4A4A55')}
+      {px(4, 8, 8, 1, '#5E5E6B')}
+      {px(2, 11, 12, 3, '#33333C')}
+      {px(2, 11, 12, 1, '#4A4A55')}
+    </svg>
+  )
+}
+
+// Color Reference — a four-swatch dye palette.
+export function IconDyes({ size = 20 }) {
+  return (
+    <svg viewBox="0 0 16 16" width={size} height={size} shapeRendering="crispEdges">
+      {px(2, 2, 5, 5, '#E2413A')}{px(2, 2, 5, 1, '#F26A63')}
+      {px(9, 2, 5, 5, '#3A78E2')}{px(9, 2, 5, 1, '#63A0F2')}
+      {px(2, 9, 5, 5, '#F2C23A')}{px(2, 9, 5, 1, '#FFD86A')}
+      {px(9, 9, 5, 5, '#7A3AE2')}{px(9, 9, 5, 1, '#A063F2')}
+    </svg>
+  )
+}
+
+// Welcome Sidebar — a scoreboard with a coloured title bar and score rows.
+export function IconScoreboard({ size = 20 }) {
+  return (
+    <svg viewBox="0 0 16 16" width={size} height={size} shapeRendering="crispEdges">
+      {px(1, 1, 14, 14, '#2A2A34')}
+      {px(1, 1, 14, 3, '#C8A83A')}
+      {px(3, 6, 7, 1, '#C8C8D2')}
+      {px(3, 8, 9, 1, '#C8C8D2')}
+      {px(3, 10, 6, 1, '#C8C8D2')}
+      {px(3, 12, 8, 1, '#C8C8D2')}
+      {px(12, 6, 2, 1, '#E24A4A')}
+      {px(12, 8, 2, 1, '#E24A4A')}
+      {px(12, 10, 2, 1, '#E24A4A')}
+    </svg>
+  )
+}
+
+// Config — a settings gear.
+export function IconGear({ size = 20 }) {
+  return (
+    <svg viewBox="0 0 16 16" width={size} height={size} shapeRendering="crispEdges">
+      {px(6, 1, 4, 2, '#8A8A95')}
+      {px(6, 13, 4, 2, '#8A8A95')}
+      {px(1, 6, 2, 4, '#8A8A95')}
+      {px(13, 6, 2, 4, '#8A8A95')}
+      {px(3, 3, 2, 2, '#8A8A95')}
+      {px(11, 3, 2, 2, '#8A8A95')}
+      {px(3, 11, 2, 2, '#8A8A95')}
+      {px(11, 11, 2, 2, '#8A8A95')}
+      {px(4, 4, 8, 8, '#9A9AA5')}
+      {px(4, 4, 8, 1, '#B4B4BF')}
+      {px(6, 6, 4, 4, '#2A2A34')}
+    </svg>
+  )
+}
+
+// Timelapse — a camera.
+export function IconCamera({ size = 20 }) {
+  return (
+    <svg viewBox="0 0 16 16" width={size} height={size} shapeRendering="crispEdges">
+      {px(4, 3, 4, 2, '#3A3A44')}
+      {px(1, 5, 14, 9, '#3A3A44')}
+      {px(1, 5, 14, 1, '#54545F')}
+      {px(11, 3, 3, 2, '#F2E23A')}
+      {px(6, 7, 5, 5, '#5A8AC8')}
+      {px(7, 8, 3, 3, '#2A4A78')}
+      {px(6, 7, 2, 1, '#A8C8F0')}
+      {px(2, 6, 2, 1, '#C87A2A')}
+    </svg>
+  )
+}

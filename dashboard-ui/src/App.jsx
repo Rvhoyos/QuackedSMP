@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
+import Hero from './components/Hero'
 import MetricsPanel from './components/MetricsPanel'
 import LiveFeed from './components/LiveFeed'
 import AdminPanel from './components/admin/AdminPanel'
@@ -6,7 +7,6 @@ import SkillsLeaderboard from './components/SkillsLeaderboard'
 import HardcoreLeaderboard from './components/HardcoreLeaderboard'
 import DownloadProgress from './components/DownloadProgress'
 import RestoreInfo from './components/RestoreInfo'
-import { IconDuck } from './components/admin/MinecraftIcons'
 import { streamingDownload, hasFileSystemAccess } from './lib/streamingDownload'
 import styles from './App.module.css'
 
@@ -163,39 +163,6 @@ export default function App() {
 
   return (
     <div className={styles.layout}>
-      <header className={styles.header}>
-        <a href="https://quackedmod.wiki" className={styles.brandLink} target="_blank" rel="noopener noreferrer">
-          <div className={styles.brand}>
-            <span className={styles.brandIcon}><IconDuck size={36} /></span>
-            <div className={styles.brandText}>
-              <span className={styles.brandName}>QuackedSMP</span>
-              <span className={styles.brandSub}>made by quackedmod</span>
-            </div>
-          </div>
-        </a>
-        <div className={styles.headerCenter} />
-        <div className={styles.headerRight}>
-          {health?.backupPublicEnabled && view !== 'admin' && (
-            <button
-              className={styles.navTab}
-              onClick={() => { setDlError(null); setDlProgress(null); setDlPrompt(true) }}
-              disabled={dlProgress != null}
-            >
-              {dlProgress != null ? 'Downloading…' : 'Download World'}
-            </button>
-          )}
-          {health?.adminEnabled && (
-            <button
-              className={`${styles.navTab} ${view === 'admin' ? styles.navTabActive : ''}`}
-              onClick={() => setView(v => v === 'admin' ? 'dashboard' : 'admin')}
-            >
-              {view === 'admin' ? '← Back' : 'Admin'}
-            </button>
-          )}
-          <StatusPill status={wsStatus} />
-        </div>
-      </header>
-
       {update && (
         <div className={styles.updateBanner}>
           <span>
@@ -237,7 +204,7 @@ export default function App() {
                 for large downloads.
               </p>
             )}
-            {health?.seed != null && <RestoreInfo info={health} title="Restore info" />}
+            {(health?.seed != null || health?.mcVersion) && <RestoreInfo info={health} title="Restore info" />}
             <div className={styles.dlBtns}>
               <button className={styles.btnGhost} onClick={() => setDlPrompt(false)}>
                 Cancel
@@ -251,54 +218,30 @@ export default function App() {
       )}
 
       {view === 'admin' ? (
-        <main className={styles.main}>
-          <AdminPanel health={health} />
+        <main className={styles.mainAdmin}>
+          <AdminPanel health={health} wsStatus={wsStatus} onBack={() => setView('dashboard')} />
         </main>
       ) : (
         <main className={styles.main}>
-          <StatusHero health={health} wsStatus={wsStatus} sys={sysMetrics} />
-          <MetricsPanel tps={tps} cpu={cpu} mspt={mspt} online={health?.online ?? null} sys={sysMetrics} tpsHist={tpsHist} msptHist={msptHist} />
-          <LiveFeed events={events} />
-          <SkillsLeaderboard data={leaderboard} />
-          <HardcoreLeaderboard data={hardcore} />
+          <Hero
+            health={health}
+            wsStatus={wsStatus}
+            sys={sysMetrics}
+            downloading={dlProgress != null}
+            onDownload={health?.backupPublicEnabled ? () => { setDlError(null); setDlProgress(null); setDlPrompt(true) } : null}
+            onAdmin={health?.adminEnabled ? () => setView('admin') : null}
+          />
+          <div className={styles.grid}>
+            <MetricsPanel tps={tps} cpu={cpu} mspt={mspt} online={health?.online ?? null} sys={sysMetrics} tpsHist={tpsHist} msptHist={msptHist} />
+            <LiveFeed events={events} />
+            <div className={styles.boards}>
+              <SkillsLeaderboard data={leaderboard} />
+              <HardcoreLeaderboard data={hardcore} />
+            </div>
+          </div>
         </main>
       )}
     </div>
   )
 }
 
-function fmtUptime(ms) {
-  if (ms == null) return null
-  const s = Math.floor(ms / 1000), h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60)
-  return h > 0 ? `${h}h ${m}m` : `${m}m`
-}
-
-function StatusHero({ health, wsStatus, sys }) {
-  const live = wsStatus === 'open'
-  const uptime = fmtUptime(sys?.uptimeMs)
-  return (
-    <div className={styles.hero}>
-      <div className={styles.heroMain}>
-        <span className={`${styles.heroDot} ${live ? styles.heroDotLive : styles.heroDotDown}`} />
-        <span className={styles.heroName}>{health?.serverName || 'QuackedSMP Server'}</span>
-        <span className={`${styles.heroState} ${live ? styles.heroStateLive : styles.heroStateDown}`}>
-          {live ? 'Online' : 'Reconnecting'}
-        </span>
-      </div>
-      <div className={styles.heroStats}>
-        <span className={styles.heroStat}><b>{health?.online ?? '—'}</b> online</span>
-        {uptime && <span className={styles.heroStat}>up <b>{uptime}</b></span>}
-        {health?.version && <span className={styles.heroStat}>v{health.version}</span>}
-      </div>
-    </div>
-  )
-}
-
-function StatusPill({ status }) {
-  const labels = { connecting: 'Connecting', open: 'Live', closed: 'Reconnecting' }
-  return (
-    <span className={`${styles.wsDot} ${styles[status]}`}>
-      {labels[status]}
-    </span>
-  )
-}
