@@ -1165,20 +1165,19 @@ export function IconPulse({ size = 20 }) {
   return (
     <svg viewBox="0 0 16 16" width={size} height={size} shapeRendering="crispEdges">
       {/* flat baseline, left */}
-      {px(1, 8, 4, 2, d)}
-      {px(1, 8, 4, 1, g)}
-      {/* rise to peak */}
-      {px(5, 5, 1, 4, g)}
-      {px(6, 1, 2, 4, g)}
-      {px(6, 1, 2, 1, hi)}
-      {/* fall through baseline into the dip */}
-      {px(8, 5, 1, 5, g)}
-      {px(9, 9, 1, 4, g)}
-      {px(9, 12, 1, 1, d)}
-      {/* rise back to baseline, flat right */}
-      {px(10, 8, 1, 4, g)}
-      {px(11, 8, 4, 2, d)}
-      {px(11, 8, 4, 1, g)}
+      {px(0, 9, 5, 2, g)}
+      {/* sharp rise to the peak */}
+      {px(5, 7, 2, 2, g)}
+      {px(6, 5, 1, 2, g)}
+      {px(7, 2, 2, 3, g)}
+      {px(7, 1, 2, 1, hi)}
+      {/* sharp fall, then a small dip below the baseline */}
+      {px(9, 4, 1, 3, g)}
+      {px(9, 7, 2, 2, g)}
+      {px(11, 9, 1, 2, g)}
+      {px(11, 11, 2, 2, d)}
+      {/* flat baseline, right */}
+      {px(13, 9, 3, 2, g)}
     </svg>
   )
 }
