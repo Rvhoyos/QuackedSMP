@@ -1,11 +1,12 @@
 package mc.smpessentials.hardcore;
 
+import java.util.Optional;
 import mc.smpessentials.config.SmpConfig;
-import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.scores.PlayerTeam;
 import net.minecraft.world.scores.Scoreboard;
+import net.minecraft.world.scores.TeamColor;
 
 // Owns the scoreboard team used to mark hardcore session members (nametag/tab identity).
 // The team is seeded once with sensible defaults; admins then edit its color/prefix in the
@@ -21,7 +22,7 @@ public final class HardcoreTeam {
         if (team != null) return team;
 
         team = scoreboard.addPlayerTeam(name);
-        team.setColor(ChatFormatting.RED);
+        team.setColor(Optional.of(TeamColor.RED));
         team.setPlayerPrefix(Component.literal("☠ "));
         return team;
     }

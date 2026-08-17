@@ -13,6 +13,7 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ChestMenu;
 
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.component.ItemLore;
 
@@ -107,7 +108,7 @@ public class ConfigGui {
 
     private static void populate(ConfigMenuContainer container) {
         // Background / Filler (Gray Stained Glass Pane)
-        ItemStack filler = new ItemStack(Items.GRAY_STAINED_GLASS_PANE);
+        ItemStack filler = new ItemStack(Items.STAINED_GLASS_PANE.pick(DyeColor.GRAY));
         filler.set(DataComponents.CUSTOM_NAME, Component.empty());
         for (int i = 0; i < container.getContainerSize(); i++) {
             container.setItem(i, filler);
@@ -119,10 +120,10 @@ public class ConfigGui {
         container.setItem(SLOT_TOGGLE_FIRE,
                 createBooleanItem("Allow Fire Wilderness", SmpConfig.ALLOW_FIRE_WILDERNESS));
 
-        container.setItem(SLOT_MAX_CLAIMS_MINUS, createActionItem(Items.RED_CONCRETE, "\u00a7c-5 Claims"));
+        container.setItem(SLOT_MAX_CLAIMS_MINUS, createActionItem(Items.CONCRETE.pick(DyeColor.RED), "\u00a7c-5 Claims"));
         container.setItem(SLOT_MAX_CLAIMS_DISPLAY,
                 createInfoItem(Items.PAPER, "Max Claims", String.valueOf(SmpConfig.MAX_CLAIMS)));
-        container.setItem(SLOT_MAX_CLAIMS_PLUS, createActionItem(Items.GREEN_CONCRETE, "\u00a7a+5 Claims"));
+        container.setItem(SLOT_MAX_CLAIMS_PLUS, createActionItem(Items.CONCRETE.pick(DyeColor.GREEN), "\u00a7a+5 Claims"));
 
         container.setItem(SLOT_TOGGLE_EXPLOSIONS,
                 createBooleanItem("Protect: Explosions", SmpConfig.PROTECT_EXPLOSIONS));
@@ -134,17 +135,17 @@ public class ConfigGui {
                 createBooleanItem("Protect: Farmland Trample", SmpConfig.PROTECT_FARMLAND));
 
         // --- Row 1: Chat & Teleport ---
-        container.setItem(SLOT_WARMUP_MINUS, createActionItem(Items.RED_CONCRETE, "\u00a7c-1s Warmup"));
+        container.setItem(SLOT_WARMUP_MINUS, createActionItem(Items.CONCRETE.pick(DyeColor.RED), "\u00a7c-1s Warmup"));
         container.setItem(SLOT_WARMUP_DISPLAY, createInfoItem(Items.CLOCK, "TP Warmup", SmpConfig.TP_WARMUP + "s"));
-        container.setItem(SLOT_WARMUP_PLUS, createActionItem(Items.GREEN_CONCRETE, "\u00a7a+1s Warmup"));
+        container.setItem(SLOT_WARMUP_PLUS, createActionItem(Items.CONCRETE.pick(DyeColor.GREEN), "\u00a7a+1s Warmup"));
 
-        container.setItem(SLOT_MSG_INTERVAL_MINUS, createActionItem(Items.RED_CONCRETE, "\u00a7c-60s Interval"));
+        container.setItem(SLOT_MSG_INTERVAL_MINUS, createActionItem(Items.CONCRETE.pick(DyeColor.RED), "\u00a7c-60s Interval"));
         container.setItem(SLOT_MSG_INTERVAL_DISPLAY,
                 createInfoItem(Items.OAK_SIGN, "Msg Interval", SmpConfig.MESSAGE_INTERVAL + "s"));
-        container.setItem(SLOT_MSG_INTERVAL_PLUS, createActionItem(Items.GREEN_CONCRETE, "\u00a7a+60s Interval"));
+        container.setItem(SLOT_MSG_INTERVAL_PLUS, createActionItem(Items.CONCRETE.pick(DyeColor.GREEN), "\u00a7a+60s Interval"));
 
         // --- Row 2: Global Skill Settings ---
-        container.setItem(SLOT_CAP_SAFE_LANDING_MINUS, createActionItem(Items.RED_STAINED_GLASS, "\u00a7c-0.1 Absorption"));
+        container.setItem(SLOT_CAP_SAFE_LANDING_MINUS, createActionItem(Items.STAINED_GLASS.pick(DyeColor.RED), "\u00a7c-0.1 Absorption"));
 
         List<String> safeLandingLore = new ArrayList<>();
         safeLandingLore.add("\u00a77Applies to: \u00a7fAgility");
@@ -155,9 +156,9 @@ public class ConfigGui {
         container.setItem(SLOT_CAP_SAFE_LANDING_DISPLAY, createInfoItem(Items.FEATHER, "Cap: Safe Landing",
                 String.format("%.1f", SmpConfig.CAP_SAFE_LANDING), safeLandingLore));
 
-        container.setItem(SLOT_CAP_SAFE_LANDING_PLUS, createActionItem(Items.GREEN_STAINED_GLASS, "\u00a7a+0.1 Absorption"));
+        container.setItem(SLOT_CAP_SAFE_LANDING_PLUS, createActionItem(Items.STAINED_GLASS.pick(DyeColor.GREEN), "\u00a7a+0.1 Absorption"));
 
-        container.setItem(SLOT_XP_EXPONENT_MINUS, createActionItem(Items.RED_CONCRETE, "\u00a7c-0.1 Exponent"));
+        container.setItem(SLOT_XP_EXPONENT_MINUS, createActionItem(Items.CONCRETE.pick(DyeColor.RED), "\u00a7c-0.1 Exponent"));
 
         List<String> expLore = new ArrayList<>();
         expLore.add("\u00a77Controls leveling difficulty curve.");
@@ -167,10 +168,10 @@ public class ConfigGui {
         container.setItem(SLOT_XP_EXPONENT_DISPLAY, createInfoItem(Items.EXPERIENCE_BOTTLE, "Global: Leveling Curve",
                 String.format("%.2f", SmpConfig.SKILL_XP_EXPONENT), expLore));
 
-        container.setItem(SLOT_XP_EXPONENT_PLUS, createActionItem(Items.GREEN_CONCRETE, "\u00a7a+0.1 Exponent"));
+        container.setItem(SLOT_XP_EXPONENT_PLUS, createActionItem(Items.CONCRETE.pick(DyeColor.GREEN), "\u00a7a+0.1 Exponent"));
 
         // --- Row 3: Skill Caps I ---
-        container.setItem(SLOT_CAP_SPEED_MINUS, createActionItem(Items.RED_STAINED_GLASS, "\u00a7c-0.1 Speed"));
+        container.setItem(SLOT_CAP_SPEED_MINUS, createActionItem(Items.STAINED_GLASS.pick(DyeColor.RED), "\u00a7c-0.1 Speed"));
 
         List<String> speedLore = new ArrayList<>();
         speedLore.add("\u00a77Applies to: \u00a7fMining, Excavation, Woodcutting");
@@ -180,9 +181,9 @@ public class ConfigGui {
         container.setItem(SLOT_CAP_SPEED_DISPLAY, createInfoItem(Items.GOLDEN_PICKAXE, "Cap: Industrial Speed",
                 String.format("%.1f", SmpConfig.CAP_INDUSTRIAL_SPEED), speedLore));
 
-        container.setItem(SLOT_CAP_SPEED_PLUS, createActionItem(Items.GREEN_STAINED_GLASS, "\u00a7a+0.1 Speed"));
+        container.setItem(SLOT_CAP_SPEED_PLUS, createActionItem(Items.STAINED_GLASS.pick(DyeColor.GREEN), "\u00a7a+0.1 Speed"));
 
-        container.setItem(SLOT_CAP_DOUBLE_DROP_MINUS, createActionItem(Items.RED_STAINED_GLASS, "\u00a7c-0.05 Double Drop"));
+        container.setItem(SLOT_CAP_DOUBLE_DROP_MINUS, createActionItem(Items.STAINED_GLASS.pick(DyeColor.RED), "\u00a7c-0.05 Double Drop"));
 
         List<String> doubleDropLore = new ArrayList<>();
         doubleDropLore.add("\u00a77Applies to: \u00a7fMining, Woodcutting");
@@ -192,9 +193,9 @@ public class ConfigGui {
         container.setItem(SLOT_CAP_DOUBLE_DROP_DISPLAY, createInfoItem(Items.DIAMOND, "Cap: Double Drop",
                 String.format("%.2f", SmpConfig.CAP_DOUBLE_DROP), doubleDropLore));
 
-        container.setItem(SLOT_CAP_DOUBLE_DROP_PLUS, createActionItem(Items.GREEN_STAINED_GLASS, "\u00a7a+0.05 Double Drop"));
+        container.setItem(SLOT_CAP_DOUBLE_DROP_PLUS, createActionItem(Items.STAINED_GLASS.pick(DyeColor.GREEN), "\u00a7a+0.05 Double Drop"));
 
-        container.setItem(SLOT_CAP_HEALTH_MINUS, createActionItem(Items.RED_STAINED_GLASS, "\u00a7c-1.0 Health"));
+        container.setItem(SLOT_CAP_HEALTH_MINUS, createActionItem(Items.STAINED_GLASS.pick(DyeColor.RED), "\u00a7c-1.0 Health"));
 
         List<String> healthLore = new ArrayList<>();
         healthLore.add("\u00a77Applies to: \u00a7fFarming, Fishing, Agility");
@@ -204,10 +205,10 @@ public class ConfigGui {
         container.setItem(SLOT_CAP_HEALTH_DISPLAY, createInfoItem(Items.GOLDEN_APPLE, "Cap: Nature Health",
                 String.format("%.1f", SmpConfig.CAP_NATURE_HEALTH), healthLore));
 
-        container.setItem(SLOT_CAP_HEALTH_PLUS, createActionItem(Items.GREEN_STAINED_GLASS, "\u00a7a+1.0 Health"));
+        container.setItem(SLOT_CAP_HEALTH_PLUS, createActionItem(Items.STAINED_GLASS.pick(DyeColor.GREEN), "\u00a7a+1.0 Health"));
 
         // --- Row 4: Skill Caps II ---
-        container.setItem(SLOT_CAP_DAMAGE_MINUS, createActionItem(Items.RED_STAINED_GLASS, "\u00a7c-0.1 Damage"));
+        container.setItem(SLOT_CAP_DAMAGE_MINUS, createActionItem(Items.STAINED_GLASS.pick(DyeColor.RED), "\u00a7c-0.1 Damage"));
 
         List<String> damageLore = new ArrayList<>();
         damageLore.add("\u00a77Applies to: \u00a7fMelee, Archery, Defense");
@@ -217,9 +218,9 @@ public class ConfigGui {
         container.setItem(SLOT_CAP_DAMAGE_DISPLAY, createInfoItem(Items.IRON_SWORD, "Cap: Combat Damage",
                 String.format("%.1f", SmpConfig.CAP_COMBAT_DAMAGE), damageLore));
 
-        container.setItem(SLOT_CAP_DAMAGE_PLUS, createActionItem(Items.GREEN_STAINED_GLASS, "\u00a7a+0.1 Damage"));
+        container.setItem(SLOT_CAP_DAMAGE_PLUS, createActionItem(Items.STAINED_GLASS.pick(DyeColor.GREEN), "\u00a7a+0.1 Damage"));
 
-        container.setItem(SLOT_CAP_DEFENSE_ARMOR_MINUS, createActionItem(Items.RED_STAINED_GLASS, "\u00a7c-1.0 Armor"));
+        container.setItem(SLOT_CAP_DEFENSE_ARMOR_MINUS, createActionItem(Items.STAINED_GLASS.pick(DyeColor.RED), "\u00a7c-1.0 Armor"));
 
         List<String> defArmorLore = new ArrayList<>();
         defArmorLore.add("\u00a77Applies to: \u00a7fDefense");
@@ -229,9 +230,9 @@ public class ConfigGui {
         container.setItem(SLOT_CAP_DEFENSE_ARMOR_DISPLAY, createInfoItem(Items.IRON_CHESTPLATE, "Cap: Defense Armor",
                 String.format("%.1f", SmpConfig.CAP_DEFENSE_ARMOR), defArmorLore));
 
-        container.setItem(SLOT_CAP_DEFENSE_ARMOR_PLUS, createActionItem(Items.GREEN_STAINED_GLASS, "\u00a7a+1.0 Armor"));
+        container.setItem(SLOT_CAP_DEFENSE_ARMOR_PLUS, createActionItem(Items.STAINED_GLASS.pick(DyeColor.GREEN), "\u00a7a+1.0 Armor"));
 
-        container.setItem(SLOT_CAP_XP_MINUS, createActionItem(Items.RED_STAINED_GLASS, "\u00a7c-0.1 XP Mult"));
+        container.setItem(SLOT_CAP_XP_MINUS, createActionItem(Items.STAINED_GLASS.pick(DyeColor.RED), "\u00a7c-0.1 XP Mult"));
 
         List<String> xpLore = new ArrayList<>();
         xpLore.add("\u00a77Applies to: \u00a7fEnchanting, Alchemy, Trading");
@@ -241,22 +242,22 @@ public class ConfigGui {
         container.setItem(SLOT_CAP_XP_DISPLAY, createInfoItem(Items.EXPERIENCE_BOTTLE, "Cap: XP Multiplier",
                 String.format("%.1f", SmpConfig.CAP_KNOWLEDGE_XP), xpLore));
 
-        container.setItem(SLOT_CAP_XP_PLUS, createActionItem(Items.GREEN_STAINED_GLASS, "\u00a7a+0.1 XP Mult"));
+        container.setItem(SLOT_CAP_XP_PLUS, createActionItem(Items.STAINED_GLASS.pick(DyeColor.GREEN), "\u00a7a+0.1 XP Mult"));
 
         // --- Row 5: Controls ---
         // Reload
-        ItemStack reload = new ItemStack(Items.YELLOW_TERRACOTTA);
+        ItemStack reload = new ItemStack(Items.DYED_TERRACOTTA.pick(DyeColor.YELLOW));
         reload.set(DataComponents.CUSTOM_NAME,
                 Component.literal("Discard Changes (Reload)").withStyle(ChatFormatting.RED));
         container.setItem(SLOT_RELOAD, reload);
 
         // Save
-        ItemStack save = new ItemStack(Items.LIME_TERRACOTTA);
+        ItemStack save = new ItemStack(Items.DYED_TERRACOTTA.pick(DyeColor.LIME));
         save.set(DataComponents.CUSTOM_NAME, Component.literal("Save to Disk").withStyle(ChatFormatting.GREEN));
         container.setItem(SLOT_SAVE, save);
 
         // Factory Reset (Slot 49)
-        ItemStack reset = new ItemStack(Items.RED_CONCRETE_POWDER);
+        ItemStack reset = new ItemStack(Items.CONCRETE_POWDER.pick(DyeColor.RED));
         reset.set(DataComponents.CUSTOM_NAME, Component.literal("Factory Reset").withStyle(ChatFormatting.RED));
         List<Component> resetLore = new ArrayList<>();
         resetLore.add(Component.literal("Restores all settings to defaults.").withStyle(ChatFormatting.GRAY));
@@ -408,7 +409,7 @@ public class ConfigGui {
     }
 
     private static ItemStack createBooleanItem(String name, boolean value) {
-        ItemStack stack = new ItemStack(value ? Items.LIME_WOOL : Items.RED_WOOL);
+        ItemStack stack = new ItemStack(value ? Items.WOOL.pick(DyeColor.LIME) : Items.WOOL.pick(DyeColor.RED));
         stack.set(DataComponents.CUSTOM_NAME, Component.literal(name).withStyle(ChatFormatting.GOLD));
 
         List<Component> lore = new ArrayList<>();

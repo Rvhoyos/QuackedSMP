@@ -24,7 +24,7 @@ import net.minecraft.nbt.CompoundTag;
 
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.world.item.component.TypedEntityData;
-import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.block.entity.BlockEntityTypes;
 
 import net.minecraft.world.entity.player.Inventory;
 
@@ -607,7 +607,7 @@ public final class ActiveAbilities {
         CompoundTag tag = be.saveWithFullMetadata(sp.registryAccess());
 
         // Use DataComponents for 1.21+
-        spawnerItem.set(DataComponents.BLOCK_ENTITY_DATA, TypedEntityData.of(BlockEntityType.MOB_SPAWNER, tag));
+        spawnerItem.set(DataComponents.BLOCK_ENTITY_DATA, TypedEntityData.of(BlockEntityTypes.MOB_SPAWNER, tag));
 
         // Drop item
         net.minecraft.world.entity.item.ItemEntity it = new net.minecraft.world.entity.item.ItemEntity(

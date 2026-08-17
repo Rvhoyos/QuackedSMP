@@ -13,20 +13,20 @@ Server-side mod with a built-in browser admin panel. Every feature is modular, e
 '''
 issueTrackerURL = "https://github.com/Rvhoyos/QuackedSMP/issues"
 displayURL = "https://www.curseforge.com/minecraft/mc-mods/quackedsmp"
-logoFile = "assets/quacksmp/icon.png"
-#logoFile = ""
+iconFile = "assets/quacksmp/icon.png"
+#iconFile = ""
 
 [[dependencies.quacksmp]]
 modId = "neoforge"
 type = "required"
-versionRange = "[26.1.2,)"
+versionRange = "[26.2,)"
 ordering = "NONE"
 side = "BOTH"
 
 [[dependencies.quacksmp]]
 modId = "minecraft"
 type = "required"
-versionRange = "[26.1.2,)"
+versionRange = "[26.2,)"
 ordering = "NONE"
 side = "BOTH"
 

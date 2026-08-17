@@ -1486,7 +1486,8 @@ public final class AdminHandler {
                     sb.append('{');
                     sb.append("\"name\":\"").append(jsonEscape(team.getName())).append('"');
                     sb.append(",\"displayName\":\"").append(jsonEscape(team.getDisplayName().getString())).append('"');
-                    sb.append(",\"color\":\"").append(jsonEscape(team.getColor().getName())).append('"');
+                    sb.append(",\"color\":\"").append(jsonEscape(team.getColor()
+                            .map(net.minecraft.world.scores.TeamColor::getSerializedName).orElse("reset"))).append('"');
                     sb.append(",\"friendlyFire\":").append(team.isAllowFriendlyFire());
                     sb.append(",\"seeFriendlyInvisibles\":").append(team.canSeeFriendlyInvisibles());
                     sb.append(",\"nameTagVisibility\":\"").append(jsonEscape(team.getNameTagVisibility().name)).append('"');
@@ -1577,8 +1578,8 @@ public final class AdminHandler {
                         team.setDisplayName(net.minecraft.network.chat.Component.literal(
                                 req.get("displayName").getAsString()));
                     if (req.has("color")) {
-                        var cf = net.minecraft.ChatFormatting.getByName(req.get("color").getAsString());
-                        if (cf != null) team.setColor(cf);
+                        var tc = net.minecraft.world.scores.TeamColor.byName(req.get("color").getAsString());
+                        if (tc != null) team.setColor(java.util.Optional.of(tc));
                     }
                     if (req.has("friendlyFire"))
                         team.setAllowFriendlyFire(req.get("friendlyFire").getAsBoolean());
@@ -1602,8 +1603,8 @@ public final class AdminHandler {
                                 : team.getPlayerPrefix().getString();
                         var pComp = net.minecraft.network.chat.Component.literal(pText);
                         if (req.has("prefixColor")) {
-                            var pcf = net.minecraft.ChatFormatting.getByName(req.get("prefixColor").getAsString());
-                            if (pcf != null && pcf.isColor()) pComp = pComp.withStyle(pcf);
+                            var pcf = net.minecraft.world.scores.TeamColor.byName(req.get("prefixColor").getAsString());
+                            if (pcf != null) pComp = pComp.withColor(pcf.textColor());
                         } else {
                             var existing = team.getPlayerPrefix().getStyle().getColor();
                             if (existing != null)
@@ -1618,8 +1619,8 @@ public final class AdminHandler {
                                 : team.getPlayerSuffix().getString();
                         var sComp = net.minecraft.network.chat.Component.literal(sText);
                         if (req.has("suffixColor")) {
-                            var scf = net.minecraft.ChatFormatting.getByName(req.get("suffixColor").getAsString());
-                            if (scf != null && scf.isColor()) sComp = sComp.withStyle(scf);
+                            var scf = net.minecraft.world.scores.TeamColor.byName(req.get("suffixColor").getAsString());
+                            if (scf != null) sComp = sComp.withColor(scf.textColor());
                         } else {
                             var existing = team.getPlayerSuffix().getStyle().getColor();
                             if (existing != null)
@@ -1832,10 +1833,9 @@ public final class AdminHandler {
     private static String extractChatFormatting(net.minecraft.network.chat.Component comp) {
         var textColor = comp.getStyle().getColor();
         if (textColor == null) return "reset";
-        for (var cf : net.minecraft.ChatFormatting.values()) {
-            if (cf.isColor() && java.util.Objects.equals(
-                    net.minecraft.network.chat.TextColor.fromLegacyFormat(cf), textColor)) {
-                return cf.getName();
+        for (var tc : net.minecraft.world.scores.TeamColor.VALUES) {
+            if (java.util.Objects.equals(tc.textColor(), textColor)) {
+                return tc.getSerializedName();
             }
         }
         return "reset";
