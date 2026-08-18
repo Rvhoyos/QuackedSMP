@@ -7,6 +7,7 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.storage.LevelResource;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -38,7 +39,7 @@ public final class BlueMapIntegration {
     // Called by DimManager when a new custom dim is created at runtime.
     public static void onDimCreated(MinecraftServer s, ResourceKey<Level> dimKey) {
         if (!isLoaded) return;
-        if (writeMapConfig(dimKey)) {
+        if (writeMapConfig(s, dimKey)) {
             scheduleBlueMapReload(s);
         }
     }
@@ -116,7 +117,7 @@ public final class BlueMapIntegration {
         for (ServerLevel level : s.getAllLevels()) {
             ResourceKey<Level> dim = level.dimension();
             if (dim.equals(Level.OVERWORLD) || dim.equals(Level.NETHER) || dim.equals(Level.END)) continue;
-            if (writeMapConfig(dim)) wrote = true;
+            if (writeMapConfig(s, dim)) wrote = true;
         }
         if (wrote) {
             scheduleBlueMapReload(s);
@@ -125,7 +126,7 @@ public final class BlueMapIntegration {
 
     // Writes a BlueMap map config file for the given dimension if one does not already exist.
     // Returns true if a new file was written.
-    private static boolean writeMapConfig(ResourceKey<Level> dimKey) {
+    private static boolean writeMapConfig(MinecraftServer s, ResourceKey<Level> dimKey) {
         try {
             String dimId = dimKey.identifier().toString(); // e.g. "quacksmp:myworld"
             String mapId = dimId.replace(":", "_");        // e.g. "quacksmp_myworld"
@@ -139,7 +140,7 @@ public final class BlueMapIntegration {
             Path configFile = mapsDir.resolve(mapId + ".conf");
             if (Files.exists(configFile)) return false;
 
-            String worldFolder = readWorldFolderName(mapsDir);
+            String worldFolder = readWorldFolderName(mapsDir, s);
             String content = "world: \"" + worldFolder + "\"\n"
                     + "dimension: \"" + dimId + "\"\n"
                     + "name: \"" + dimName + "\"\n";
@@ -152,9 +153,10 @@ public final class BlueMapIntegration {
         }
     }
 
-    // Reads the world folder name from an existing BlueMap map config (e.g. world.conf).
-    // Falls back to "world" if no config is found or parseable.
-    private static String readWorldFolderName(Path mapsDir) {
+    // Reads the world save path from an existing BlueMap map config (e.g. world.conf), so an admin's
+    // own setup wins. Falls back to the live save folder when no config is readable, which happens on
+    // a fresh install because BlueMap writes its default configs on a later background thread.
+    private static String readWorldFolderName(Path mapsDir, MinecraftServer s) {
         try (var stream = Files.list(mapsDir)) {
             for (Path p : (Iterable<Path>) stream::iterator) {
                 if (!p.toString().endsWith(".conf")) continue;
@@ -167,7 +169,18 @@ public final class BlueMapIntegration {
                 }
             }
         } catch (IOException ignored) {}
-        return "world";
+        return worldSavePath(s);
+    }
+
+    // BlueMap's "world" setting is a path to the save folder, not just its name. The folder is named
+    // by the level-name server property, so it must never be assumed to be "world". Emitted relative
+    // to the server working directory to match BlueMap's own generated configs, with forward slashes
+    // so the value stays valid on Windows.
+    private static String worldSavePath(MinecraftServer s) {
+        Path saveDir = s.getWorldPath(LevelResource.ROOT).toAbsolutePath().normalize();
+        Path serverDir = Path.of("").toAbsolutePath().normalize();
+        Path result = saveDir.startsWith(serverDir) ? serverDir.relativize(saveDir) : saveDir;
+        return result.toString().replace('\\', '/');
     }
 
     private static void scheduleBlueMapReload(MinecraftServer s) {

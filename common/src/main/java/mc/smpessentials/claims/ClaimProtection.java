@@ -10,7 +10,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.entity.decoration.ArmorStand;
 import net.minecraft.world.entity.decoration.HangingEntity;
 import net.minecraft.world.entity.monster.Monster;
@@ -67,15 +67,15 @@ public final class ClaimProtection {
         } else {
             if (level instanceof ServerLevel sl && ClaimedSavedData.get(sl).isClaimed(sl, ChunkPos.containing(pos))) {
                 if (placer != null) {
-                    if (placer.getType() == EntityType.SHEEP)
+                    if (placer.getType() == EntityTypes.SHEEP)
                         return true;
                     if (placer instanceof Villager)
                         return true;
-                    if (placer.getType() == EntityType.FOX)
+                    if (placer.getType() == EntityTypes.FOX)
                         return true;
-                    if (placer.getType() == EntityType.BEE)
+                    if (placer.getType() == EntityTypes.BEE)
                         return true;
-                    if (placer.getType() == EntityType.TURTLE)
+                    if (placer.getType() == EntityTypes.TURTLE)
                         return true;
                     if (placer instanceof ArmorStand)
                         return true;

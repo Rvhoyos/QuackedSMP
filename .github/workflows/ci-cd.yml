@@ -4,14 +4,12 @@ on:
   push:
     branches: [ "main" ]
     tags: [ "v*" ]
-  release:
-    types: [ "published" ]
-
-
+  pull_request:
+    branches: [ "main" ]
 
 jobs:
   build:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event_name == 'pull_request' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
     runs-on: ubuntu-latest
 
     steps:
@@ -25,40 +23,21 @@ jobs:
       - name: Make gradlew executable
         run: chmod +x ./gradlew
 
-      - name: Build NeoForge with Gradle
-        run: ./gradlew :neoforge:build
+      - name: Build both loaders with Gradle
+        run: ./gradlew :fabric:build :neoforge:build
 
       - name: Upload Build Artifact
         uses: actions/upload-artifact@v5
         with:
-          name: mod-jar
-          # Upload only the main jar (exclude dev/sources/shadow)
+          name: mod-jars
+          # Upload only the main jars (exclude dev/sources/shadow)
           path: |
+            fabric/build/libs/*.jar
             neoforge/build/libs/*.jar
-            !neoforge/build/libs/*-dev.jar
-            !neoforge/build/libs/*-shadow.jar
-            !neoforge/build/libs/*-sources.jar
+            !**/*-dev.jar
+            !**/*-shadow.jar
+            !**/*-sources.jar
           retention-days: 1
-
-  deploy-staging:
-    needs: build
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    # Use specific labels to ensure we hit the right VPS runner
-    runs-on: [self-hosted, linux, X64]
-
-    steps:
-      - uses: actions/checkout@v5
-      
-      - name: Download Build Artifact
-        uses: actions/download-artifact@v5
-        with:
-          name: mod-jar
-          path: build/libs/
-
-      - name: Deploy to Staging
-        run: |
-          chmod +x ./scripts/deploy-staging.sh
-          ./scripts/deploy-staging.sh "build/libs"
 
   release:
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
@@ -124,7 +103,7 @@ jobs:
           echo "----- generated release notes -----"
           cat release-notes.md
 
-      # Created with a PAT (not GITHUB_TOKEN) so the published release triggers deploy-prod.
+      # Uses RELEASE_PAT (Contents + Workflows write) to create the release and attach the jars.
       - name: Create release and attach jars
         uses: softprops/action-gh-release@v2
         with:
@@ -132,17 +111,4 @@ jobs:
           files: release-jars/*.jar
           fail_on_unmatched_files: true
           body_path: release-notes.md
-
-  deploy-prod:
-    if: github.event_name == 'release'
-    runs-on: [self-hosted, linux, X64]
-
-    steps:
-      - name: Promote to Production (Run Script)
-        run: |
-           sudo /usr/local/sbin/promote-to-prod.sh
-
-
-
-
 

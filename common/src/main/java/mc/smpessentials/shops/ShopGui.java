@@ -17,6 +17,7 @@ import net.minecraft.world.inventory.ChestMenu;
 import net.minecraft.world.inventory.ContainerInput;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.component.ItemLore;
 import net.minecraft.world.level.Level;
@@ -63,7 +64,7 @@ public final class ShopGui {
         String currencyName = ShopService.getCurrencyName(shop.currencyItemId());
 
         // Fill with glass panes
-        ItemStack filler = new ItemStack(Items.GRAY_STAINED_GLASS_PANE);
+        ItemStack filler = new ItemStack(Items.STAINED_GLASS_PANE.pick(DyeColor.GRAY));
         filler.set(DataComponents.CUSTOM_NAME, Component.empty());
         for (int i = 0; i < container.getContainerSize(); i++) {
             container.setItem(i, filler.copy());
@@ -94,14 +95,14 @@ public final class ShopGui {
         // Quantity controls — bulk shops (unit > 1) get only +1/-1 since each unit is already a batch
         if (shop.unit() > 1) {
             container.setItem(SLOT_MINUS_10, filler.copy());
-            container.setItem(SLOT_MINUS_1, createButton(Items.RED_STAINED_GLASS_PANE, "\u00a7c-1"));
-            container.setItem(SLOT_PLUS_1, createButton(Items.GREEN_STAINED_GLASS_PANE, "\u00a7a+1"));
+            container.setItem(SLOT_MINUS_1, createButton(Items.STAINED_GLASS_PANE.pick(DyeColor.RED), "\u00a7c-1"));
+            container.setItem(SLOT_PLUS_1, createButton(Items.STAINED_GLASS_PANE.pick(DyeColor.GREEN), "\u00a7a+1"));
             container.setItem(SLOT_PLUS_10, filler.copy());
         } else {
-            container.setItem(SLOT_MINUS_10, createButton(Items.RED_CONCRETE, "\u00a7c-10"));
-            container.setItem(SLOT_MINUS_1, createButton(Items.RED_STAINED_GLASS_PANE, "\u00a7c-1"));
-            container.setItem(SLOT_PLUS_1, createButton(Items.GREEN_STAINED_GLASS_PANE, "\u00a7a+1"));
-            container.setItem(SLOT_PLUS_10, createButton(Items.GREEN_CONCRETE, "\u00a7a+10"));
+            container.setItem(SLOT_MINUS_10, createButton(Items.CONCRETE.pick(DyeColor.RED), "\u00a7c-10"));
+            container.setItem(SLOT_MINUS_1, createButton(Items.STAINED_GLASS_PANE.pick(DyeColor.RED), "\u00a7c-1"));
+            container.setItem(SLOT_PLUS_1, createButton(Items.STAINED_GLASS_PANE.pick(DyeColor.GREEN), "\u00a7a+1"));
+            container.setItem(SLOT_PLUS_10, createButton(Items.CONCRETE.pick(DyeColor.GREEN), "\u00a7a+10"));
         }
 
         // Quantity + cost display (slot 13)
@@ -119,7 +120,7 @@ public final class ShopGui {
         container.setItem(SLOT_QTY_DISPLAY, qtyItem);
 
         // Confirm button
-        ItemStack confirm = new ItemStack(Items.LIME_WOOL);
+        ItemStack confirm = new ItemStack(Items.WOOL.pick(DyeColor.LIME));
         if (shop.unit() > 1) {
             confirm.set(DataComponents.CUSTOM_NAME,
                     Component.literal("\u00a7aBuy " + totalItems + " items for " + totalCost + " " + currencyName));
@@ -130,7 +131,7 @@ public final class ShopGui {
         container.setItem(SLOT_CONFIRM, confirm);
 
         // Cancel button
-        ItemStack cancel = new ItemStack(Items.RED_WOOL);
+        ItemStack cancel = new ItemStack(Items.WOOL.pick(DyeColor.RED));
         cancel.set(DataComponents.CUSTOM_NAME, Component.literal("\u00a7cCancel"));
         container.setItem(SLOT_CANCEL, cancel);
     }

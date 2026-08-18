@@ -7,7 +7,9 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.tags.BlockTags;
+import net.minecraft.tags.TagKey;
 import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.effect.MobEffectInstance;
@@ -583,23 +585,30 @@ public final class SkillEvents {
 
     // ========== BLOCK CLASSIFICATION ==========
 
+    // 26.2 dropped the non-metal ore BlockTags constants; the datapack tags still exist, so rebuild the keys.
+    private static final TagKey<Block> COAL_ORES = TagKey.create(Registries.BLOCK, Identifier.withDefaultNamespace("coal_ores"));
+    private static final TagKey<Block> DIAMOND_ORES = TagKey.create(Registries.BLOCK, Identifier.withDefaultNamespace("diamond_ores"));
+    private static final TagKey<Block> EMERALD_ORES = TagKey.create(Registries.BLOCK, Identifier.withDefaultNamespace("emerald_ores"));
+    private static final TagKey<Block> LAPIS_ORES = TagKey.create(Registries.BLOCK, Identifier.withDefaultNamespace("lapis_ores"));
+    private static final TagKey<Block> REDSTONE_ORES = TagKey.create(Registries.BLOCK, Identifier.withDefaultNamespace("redstone_ores"));
+
     private static boolean isOre(BlockState state) {
-        return state.is(BlockTags.COAL_ORES) || state.is(BlockTags.IRON_ORES)
-                || state.is(BlockTags.GOLD_ORES) || state.is(BlockTags.DIAMOND_ORES)
-                || state.is(BlockTags.EMERALD_ORES) || state.is(BlockTags.LAPIS_ORES)
-                || state.is(BlockTags.REDSTONE_ORES) || state.is(BlockTags.COPPER_ORES);
+        return state.is(COAL_ORES) || state.is(BlockTags.IRON_ORES)
+                || state.is(BlockTags.GOLD_ORES) || state.is(DIAMOND_ORES)
+                || state.is(EMERALD_ORES) || state.is(LAPIS_ORES)
+                || state.is(REDSTONE_ORES) || state.is(BlockTags.COPPER_ORES);
     }
 
     private static double oreXp(BlockState state) {
-        if (state.is(BlockTags.DIAMOND_ORES) || state.is(BlockTags.EMERALD_ORES))
+        if (state.is(DIAMOND_ORES) || state.is(EMERALD_ORES))
             return 50;
-        if (state.is(BlockTags.GOLD_ORES) || state.is(BlockTags.LAPIS_ORES))
+        if (state.is(BlockTags.GOLD_ORES) || state.is(LAPIS_ORES))
             return 20;
-        if (state.is(BlockTags.IRON_ORES) || state.is(BlockTags.REDSTONE_ORES))
+        if (state.is(BlockTags.IRON_ORES) || state.is(REDSTONE_ORES))
             return 10;
         if (state.is(BlockTags.COPPER_ORES))
             return 8;
-        if (state.is(BlockTags.COAL_ORES))
+        if (state.is(COAL_ORES))
             return 5;
         return 5;
     }
@@ -632,24 +641,24 @@ public final class SkillEvents {
 
     private static double mobXp(LivingEntity mob) {
         // Boss mobs
-        if (mob.getType() == net.minecraft.world.entity.EntityType.ENDER_DRAGON)
+        if (mob.getType() == net.minecraft.world.entity.EntityTypes.ENDER_DRAGON)
             return 500;
-        if (mob.getType() == net.minecraft.world.entity.EntityType.WITHER)
+        if (mob.getType() == net.minecraft.world.entity.EntityTypes.WITHER)
             return 500;
-        if (mob.getType() == net.minecraft.world.entity.EntityType.ELDER_GUARDIAN)
+        if (mob.getType() == net.minecraft.world.entity.EntityTypes.ELDER_GUARDIAN)
             return 100;
-        if (mob.getType() == net.minecraft.world.entity.EntityType.WARDEN)
+        if (mob.getType() == net.minecraft.world.entity.EntityTypes.WARDEN)
             return 200;
         // Standard hostiles
-        if (mob.getType() == net.minecraft.world.entity.EntityType.CREEPER)
+        if (mob.getType() == net.minecraft.world.entity.EntityTypes.CREEPER)
             return 15;
-        if (mob.getType() == net.minecraft.world.entity.EntityType.ENDERMAN)
+        if (mob.getType() == net.minecraft.world.entity.EntityTypes.ENDERMAN)
             return 20;
-        if (mob.getType() == net.minecraft.world.entity.EntityType.BLAZE)
+        if (mob.getType() == net.minecraft.world.entity.EntityTypes.BLAZE)
             return 20;
-        if (mob.getType() == net.minecraft.world.entity.EntityType.GHAST)
+        if (mob.getType() == net.minecraft.world.entity.EntityTypes.GHAST)
             return 25;
-        if (mob.getType() == net.minecraft.world.entity.EntityType.WITCH)
+        if (mob.getType() == net.minecraft.world.entity.EntityTypes.WITCH)
             return 20;
         return 10; // Default for zombie, skeleton, spider, etc.
     }

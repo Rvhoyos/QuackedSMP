@@ -30,9 +30,10 @@
 .duck {
   display: flex; align-items: center; justify-content: center;
   padding: 7px;
-  background: rgba(0,0,0,0.5);
+  /* frame toggled off: bare duck over the scene */
+  /* background: rgba(0,0,0,0.5);
   border-top: 2px solid var(--mc-stone-light); border-left: 2px solid var(--mc-stone-light);
-  border-bottom: 2px solid var(--mc-stone-dark); border-right: 2px solid var(--mc-stone-dark);
+  border-bottom: 2px solid var(--mc-stone-dark); border-right: 2px solid var(--mc-stone-dark); */
   image-rendering: pixelated;
   filter: drop-shadow(2px 3px 0 rgba(0,0,0,0.6));
   transition: transform var(--t-fast);
