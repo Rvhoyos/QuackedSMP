@@ -1578,8 +1578,15 @@ public final class AdminHandler {
                         team.setDisplayName(net.minecraft.network.chat.Component.literal(
                                 req.get("displayName").getAsString()));
                     if (req.has("color")) {
-                        var tc = net.minecraft.world.scores.TeamColor.byName(req.get("color").getAsString());
-                        if (tc != null) team.setColor(java.util.Optional.of(tc));
+                        // "reset" is the panel's "None" option and is not a TeamColor name, so it has
+                        // to clear the colour explicitly. Unknown names are ignored, not cleared.
+                        String colorName = req.get("color").getAsString();
+                        if ("reset".equals(colorName)) {
+                            team.setColor(java.util.Optional.empty());
+                        } else {
+                            var tc = net.minecraft.world.scores.TeamColor.byName(colorName);
+                            if (tc != null) team.setColor(java.util.Optional.of(tc));
+                        }
                     }
                     if (req.has("friendlyFire"))
                         team.setAllowFriendlyFire(req.get("friendlyFire").getAsBoolean());

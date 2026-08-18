@@ -56,7 +56,9 @@ public final class WorldMapRenderer {
 
     private void paint(MinecraftServer server, ServerLevel level, ResourceKey<Level> dimension,
                        Path regionDir, ChunkBounds bounds, MapCanvas canvas, CaptureProgress progress) throws Exception {
-        String levelName = server.getWorldPath(LevelResource.ROOT).getFileName().toString();
+        // getWorldPath(ROOT) ends in "." so it must be normalised before the folder name is readable.
+        String levelName = server.getWorldPath(LevelResource.ROOT)
+                .toAbsolutePath().normalize().getFileName().toString();
         ChunkColumnSampler sampler = new ChunkColumnSampler(
                 server.registryAccess(), level, level.dimensionType().hasCeiling());
 
