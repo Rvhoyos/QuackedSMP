@@ -187,9 +187,13 @@ jobs:
           gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json body -q .body > release-notes.md
           ls -l release-jars
 
-      # github-token is deliberately omitted: the release already exists, mc-publish
-      # only needs to touch Modrinth and CurseForge.
-      - name: Publish to Modrinth and CurseForge
+      # One upload per loader, so each jar is its own version carrying only its own
+      # loader tag. Both keep the plain version number, matching every hand-made
+      # release: Modrinth allows two versions to share a version number.
+      #
+      # github-token is deliberately omitted in both steps: the release already exists,
+      # mc-publish only needs to touch Modrinth and CurseForge.
+      - name: Publish Fabric
         uses: Kira-NT/mc-publish@v3
         with:
           modrinth-id: SiezABuM
@@ -199,25 +203,43 @@ jobs:
           curseforge-id: 1360431
           curseforge-token: ${{ secrets.CURSEFORGE_TOKEN }}
 
-          files: release-jars/*.jar
+          files: release-jars/quackedsmp-fabric-*.jar
           name: "Quacked SMP - Server Management Panel ${{ steps.rel.outputs.version }}"
           version: ${{ steps.rel.outputs.version }}
           version-type: release
           changelog-file: release-notes.md
 
-          # One version carrying both jars, matching how 2.2.x was published by hand.
-          loaders: |
-            fabric
-            neoforge
+          loaders: fabric
           game-versions: ${{ steps.mc.outputs.version }}
 
-          # Pinned by hand. Auto-detection reads fabric.mod.json and would publish
-          # fabric-api as required, which is wrong for the NeoForge jar sharing this
-          # version, and would drop the three optional integrations.
-          #
-          # CurseForge relations are keyed by SLUG. mc-publish passes a non-numeric id
-          # through untouched, but resolves a numeric one via the Eternal API and then
-          # silently drops the relation if that lookup fails, so slugs are used here.
+          # Pinned by hand: auto-detection would also pull in the placeholder entries
+          # sitting in fabric.mod.json. CurseForge relations are keyed by SLUG, and a
+          # numeric id gets resolved via the Eternal API and silently dropped if that
+          # lookup fails, so slugs are used here.
+          dependencies: |
+            spark(optional){modrinth:l6YH9Als}{curseforge:spark}
+            simple-voice-chat(optional){modrinth:9eGKb6K1}{curseforge:simple-voice-chat}
+            bluemap(optional){modrinth:swbUV1cr}{curseforge:bluemap}
+
+      - name: Publish NeoForge
+        uses: Kira-NT/mc-publish@v3
+        with:
+          modrinth-id: SiezABuM
+          modrinth-token: ${{ secrets.MODRINTH_TOKEN }}
+          modrinth-featured: false
+
+          curseforge-id: 1360431
+          curseforge-token: ${{ secrets.CURSEFORGE_TOKEN }}
+
+          files: release-jars/quackedsmp-neoforge-*.jar
+          name: "Quacked SMP - Server Management Panel ${{ steps.rel.outputs.version }}"
+          version: ${{ steps.rel.outputs.version }}
+          version-type: release
+          changelog-file: release-notes.md
+
+          loaders: neoforge
+          game-versions: ${{ steps.mc.outputs.version }}
+
           dependencies: |
             spark(optional){modrinth:l6YH9Als}{curseforge:spark}
             simple-voice-chat(optional){modrinth:9eGKb6K1}{curseforge:simple-voice-chat}
