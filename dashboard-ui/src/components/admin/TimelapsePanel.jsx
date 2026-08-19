@@ -271,7 +271,7 @@ export default function TimelapsePanel({ token, onExpired }) {
       <div className={styles.body}>
         <SectionCard title="Capture Settings" subtitle="One pixel per block, per selected dimension. Runs when idle; forced after the skip limit.">
           <div className={styles.toggleRow}>
-            <span className={styles.tLabel}>Automatically capture on a schedule{enabled ? ` — every ${interval} min` : ''}</span>
+            <span className={styles.tLabel}>Automatically capture on a schedule{enabled ? `, every ${interval} min` : ''}</span>
             <Toggle checked={enabled} onChange={toggleEnabled} aria-label="Auto capture" />
           </div>
 
@@ -316,9 +316,7 @@ export default function TimelapsePanel({ token, onExpired }) {
               </label>
             }
           >
-            <div className={styles.stage}>
-              {srcUrl ? <img className={styles.frame} src={srcUrl} alt={`Frame ${idx + 1}`} /> : <div className={styles.frameLoading}>Loading frame…</div>}
-            </div>
+            <FrameViewer key={viewDim} src={srcUrl} alt={`Frame ${idx + 1}`} />
 
             <div className={styles.timestamp}>
               {current && (
@@ -349,6 +347,156 @@ export default function TimelapsePanel({ token, onExpired }) {
   )
 }
 
+const MIN_ZOOM = 1
+const MAX_ZOOM = 16
+
+// Pan and zoom viewport for one frame. The transform sits on a wrapper with
+// transform-origin 0 0, so a content point maps to screen as t + z * p, and
+// holding the point under the cursor while zooming is t' = c - (c - t) * z'/z.
+// The image itself is never rescaled, so the framing survives frame changes:
+// zoom into one base and playback runs through the frames right there.
+function FrameViewer({ src, alt }) {
+  const [view, setView]         = useState({ z: MIN_ZOOM, x: 0, y: 0 })
+  const [dragging, setDragging] = useState(false)
+  // Scale the fitted image sits at before zoom, so the pixels can be kept crisp
+  // when magnified and smoothed when shrunk.
+  const [fitScale, setFitScale] = useState(1)
+  const stageRef = useRef(null)
+  const imgRef   = useRef(null)
+  const dragRef  = useRef(null)
+
+  // Keep the image covering the viewport while it is bigger than it, and
+  // centred once it is not, so panning never reveals dead space.
+  const clamp = useCallback(v => {
+    const st = stageRef.current, im = imgRef.current
+    const z = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, v.z))
+    if (!st || !im || !im.naturalWidth) return { z, x: 0, y: 0 }
+    const W = st.clientWidth, H = st.clientHeight
+    const fit = Math.min(W / im.naturalWidth, H / im.naturalHeight)
+    // Size and letterbox offset of the fitted image at zoom 1.
+    const dw = im.naturalWidth * fit, dh = im.naturalHeight * fit
+    const axis = (t, off, size, extent) => {
+      const scaled = size * z
+      if (scaled <= extent) return (extent - scaled) / 2 - off * z
+      return Math.min(-off * z, Math.max(extent - (off + size) * z, t))
+    }
+    return { z, x: axis(v.x, (W - dw) / 2, dw, W), y: axis(v.y, (H - dh) / 2, dh, H) }
+  }, [])
+
+  const measure = useCallback(() => {
+    const st = stageRef.current, im = imgRef.current
+    if (!st || !im || !im.naturalWidth) return
+    setFitScale(Math.min(st.clientWidth / im.naturalWidth, st.clientHeight / im.naturalHeight))
+  }, [])
+
+  // Zoom to z, keeping the point (cx, cy) measured from the stage top-left fixed.
+  const zoomTo = useCallback((nextZ, cx, cy) => {
+    setView(v => {
+      const z = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, nextZ))
+      const k = z / v.z
+      return clamp({ z, x: cx - (cx - v.x) * k, y: cy - (cy - v.y) * k })
+    })
+  }, [clamp])
+
+  // Buttons zoom about the middle of the viewport.
+  function atCentre(factor) {
+    const st = stageRef.current
+    if (!st) return
+    zoomTo(view.z * factor, st.clientWidth / 2, st.clientHeight / 2)
+  }
+
+  // React registers wheel listeners passively, so preventDefault needs a native
+  // one, otherwise the panel scrolls away while zooming.
+  useEffect(() => {
+    const st = stageRef.current
+    if (!st) return
+    const onWheel = e => {
+      e.preventDefault()
+      const r = st.getBoundingClientRect()
+      // deltaMode 1 is lines, not pixels (Firefox, some mice).
+      const dy = e.deltaMode === 1 ? e.deltaY * 16 : e.deltaY
+      setView(v => {
+        const z = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, v.z * Math.exp(-dy * 0.0015)))
+        const k = z / v.z
+        const cx = e.clientX - r.left, cy = e.clientY - r.top
+        return clamp({ z, x: cx - (cx - v.x) * k, y: cy - (cy - v.y) * k })
+      })
+    }
+    st.addEventListener('wheel', onWheel, { passive: false })
+    return () => st.removeEventListener('wheel', onWheel)
+  }, [clamp])
+
+  // A narrower stage allows less pan, so re-clamp when it resizes.
+  useEffect(() => {
+    const onResize = () => { measure(); setView(v => clamp(v)) }
+    window.addEventListener('resize', onResize)
+    return () => window.removeEventListener('resize', onResize)
+  }, [clamp, measure])
+
+  function onPointerDown(e) {
+    if (e.button !== 0 || view.z <= MIN_ZOOM) return
+    dragRef.current = { id: e.pointerId, x: e.clientX, y: e.clientY }
+    setDragging(true)
+    e.currentTarget.setPointerCapture(e.pointerId)
+  }
+  function onPointerMove(e) {
+    const d = dragRef.current
+    if (!d || d.id !== e.pointerId) return
+    const dx = e.clientX - d.x, dy = e.clientY - d.y
+    d.x = e.clientX; d.y = e.clientY
+    setView(v => clamp({ ...v, x: v.x + dx, y: v.y + dy }))
+  }
+  function endDrag(e) {
+    if (dragRef.current?.id !== e.pointerId) return
+    dragRef.current = null
+    setDragging(false)
+    if (e.currentTarget.hasPointerCapture(e.pointerId)) e.currentTarget.releasePointerCapture(e.pointerId)
+  }
+  function onDoubleClick(e) {
+    if (view.z > MIN_ZOOM) { setView({ z: MIN_ZOOM, x: 0, y: 0 }); return }
+    const r = stageRef.current.getBoundingClientRect()
+    zoomTo(4, e.clientX - r.left, e.clientY - r.top)
+  }
+
+  const zoomed = view.z > MIN_ZOOM
+  return (
+    <div
+      ref={stageRef}
+      className={`${styles.stage} ${zoomed ? (dragging ? styles.grabbing : styles.grabbable) : ''}`}
+      onPointerDown={onPointerDown}
+      onPointerMove={onPointerMove}
+      onPointerUp={endDrag}
+      onPointerCancel={endDrag}
+      onDoubleClick={onDoubleClick}
+    >
+      <div className={styles.panLayer} style={{ transform: `translate(${view.x}px, ${view.y}px) scale(${view.z})` }}>
+        {src
+          ? <img
+              ref={imgRef}
+              className={styles.frame}
+              src={src}
+              alt={alt}
+              draggable={false}
+              // Nearest-neighbour drops rows when the map is shown smaller than
+              // life size, which reads as lost detail on a 1:1 render.
+              style={{ imageRendering: fitScale * view.z >= 1 ? 'pixelated' : 'auto' }}
+              onLoad={() => { measure(); setView(v => clamp(v)) }}
+            />
+          : <div className={styles.frameLoading}>Loading frame…</div>}
+      </div>
+
+      <div className={styles.zoomBar} onPointerDown={e => e.stopPropagation()} onDoubleClick={e => e.stopPropagation()}>
+        <button type="button" className={styles.zoomBtn} onClick={() => atCentre(1 / 1.5)} disabled={!zoomed} title="Zoom out">−</button>
+        <span className={styles.zoomLevel}>{view.z < 10 ? view.z.toFixed(1) : Math.round(view.z)}×</span>
+        <button type="button" className={styles.zoomBtn} onClick={() => atCentre(1.5)} disabled={view.z >= MAX_ZOOM} title="Zoom in">+</button>
+        <button type="button" className={styles.zoomBtn} onClick={() => setView({ z: MIN_ZOOM, x: 0, y: 0 })} disabled={!zoomed} title="Fit to view">⤢</button>
+      </div>
+
+      {!zoomed && <div className={styles.zoomHint}>scroll to zoom · drag to pan</div>}
+    </div>
+  )
+}
+
 // Resolution badge for a stored frame. bpp 1 is full 1:1; higher downsampled,
 // keeping 1/bpp² of the pixels (2x = 25%, 3x = 11%, 4x = 6% of full detail).
 function resBadge(bpp) {
@@ -367,8 +515,8 @@ const PHASE_LABEL = {
 }
 
 // Live "map appearing chunk by chunk" view of a running capture. Mirrors the
-// renderer's cx-major sweep: each poll upgrades scanned cells, so columns of the
-// world light up left to right with the active scan column glowing.
+// renderer's west-to-east order: each poll lights up the chunks painted since
+// the last one, so the world fills in left to right behind a glowing edge.
 function CaptureMap({ progress }) {
   const p = progress || {}
   const phase = p.phase || 'idle'
@@ -385,7 +533,7 @@ function CaptureMap({ progress }) {
     : ''
   const label = dimPrefix + base
 
-  // The frontmost scanned column, for the glowing scan edge.
+  // The frontmost painted column, for the glowing scan edge.
   let leadCol = -1
   for (let i = 0; i < cells.length; i++) {
     if (cells[i] !== '0') { const dx = i % w; if (dx > leadCol) leadCol = dx }
@@ -411,8 +559,7 @@ function CaptureMap({ progress }) {
             {Array.from(cells).map((ch, i) => {
               if (ch === '0') return null
               const dx = i % w, dz = Math.floor(i / w)
-              const fill = ch === '2' ? '#a6e3a1' : '#20202a'
-              return <rect key={i} x={dx + 0.08} y={dz + 0.08} width={0.84} height={0.84} fill={fill} />
+              return <rect key={i} x={dx + 0.08} y={dz + 0.08} width={0.84} height={0.84} fill="#a6e3a1" />
             })}
             {leadCol >= 0 && (
               <rect className={styles.mapScanEdge} x={leadCol} y={0} width={1} height={h} />

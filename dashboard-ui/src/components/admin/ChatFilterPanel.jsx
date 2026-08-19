@@ -163,7 +163,7 @@ export default function ChatFilterPanel({ token, onExpired }) {
           )}
 
           <div className={styles.addCard}>
-            <div className={styles.addLabel}>Add to {tab === 'whitelist' ? 'whitelist' : 'filter'} — comma or newline separated</div>
+            <div className={styles.addLabel}>Add to {tab === 'whitelist' ? 'whitelist' : 'filter'}, comma or newline separated</div>
             <Textarea placeholder={'word1, word2\nword3'} value={addText} onChange={e => setAddText(e.target.value)} rows={3} />
             <div className={styles.addFoot}><Btn variant="primary" disabled={!addText.trim()} onClick={addWords}>Add to {tab === 'whitelist' ? 'Whitelist' : 'Filter'}</Btn></div>
           </div>

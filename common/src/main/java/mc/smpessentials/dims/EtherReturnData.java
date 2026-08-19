@@ -43,7 +43,7 @@ public final class EtherReturnData extends SavedData {
         this.positions = new HashMap<>(positions);
     }
 
-    /** Primary entry point — lazily creates the instance from the overworld data storage. */
+    /** Primary entry point, lazily creates the instance from the overworld data storage. */
     public static EtherReturnData get(MinecraftServer server) {
         return server.overworld().getDataStorage().computeIfAbsent(TYPE);
     }

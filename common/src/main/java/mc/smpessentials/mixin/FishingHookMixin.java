@@ -30,7 +30,7 @@ public abstract class FishingHookMixin {
         if (player instanceof ServerPlayer sp) {
             ServerLevel sl = (ServerLevel) sp.level();
             SkillData data = SkillData.get(sl);
-            // 15 base XP per catch — scales well with the exponential curve
+            // 15 base XP per catch, scales well with the exponential curve
             SkillEvents.awardXp(sp, data, SkillType.FISHING, 15);
         }
     }

@@ -116,7 +116,7 @@ export default function App() {
       if (latest && isNewer(latest, currentVersion)) {
         setUpdate({ latest, current: currentVersion, url: rel.html_url })
       }
-    } catch { /* GitHub unreachable — silent */ }
+    } catch { /* GitHub unreachable, silent */ }
   }, [])
 
   // eslint-disable-next-line react-hooks/exhaustive-deps

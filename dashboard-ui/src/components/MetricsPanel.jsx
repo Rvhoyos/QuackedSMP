@@ -9,16 +9,16 @@ function pctColor(p)  { if (p == null) return 'var(--overlay0)'; return p <= 0.6
 function diskColorP(p){ if (p == null) return 'var(--overlay0)'; return p <= 0.7 ? 'var(--green)' : p <= 0.9 ? 'var(--yellow)' : 'var(--red)' }
 
 // ── Formatters ─────────────────────────────────────────────────────────────────
-const fmt = (v, d = 1) => (v != null ? v.toFixed(d) : '—')
-const pctStr = (v) => (v != null ? `${(v * 100).toFixed(1)}%` : '—')
+const fmt = (v, d = 1) => (v != null ? v.toFixed(d) : ', ')
+const pctStr = (v) => (v != null ? `${(v * 100).toFixed(1)}%` : ', ')
 function fmtBytes(b) {
-  if (b == null) return '—'
+  if (b == null) return ', '
   if (b >= 1e9) return `${(b / 1e9).toFixed(1)} GB`
   if (b >= 1e6) return `${(b / 1e6).toFixed(0)} MB`
   return `${(b / 1e3).toFixed(0)} KB`
 }
 function fmtUptime(ms) {
-  if (ms == null) return '—'
+  if (ms == null) return ', '
   const s = Math.floor(ms / 1000), h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60)
   return h > 0 ? `${h}h ${m}m` : `${m}m`
 }
@@ -136,7 +136,7 @@ export default function MetricsPanel({ tps, cpu, mspt, online, sys, tpsHist = []
       <div className={styles.card}>
         <div className={styles.head}><span className={styles.icon}><IconPlayerHead size={18} /></span><span className={styles.label}>Players</span></div>
         <Gauge frac={online != null && sys?.maxPlayers ? online / sys.maxPlayers : (online ? 0.5 : 0)} color="var(--blue)">
-          <span className={styles.big} style={{ color: 'var(--blue)' }}>{online ?? '—'}</span>
+          <span className={styles.big} style={{ color: 'var(--blue)' }}>{online ?? ', '}</span>
           {sys?.maxPlayers ? <span className={styles.unit}>/{sys.maxPlayers}</span> : <span className={styles.unit}>online</span>}
         </Gauge>
         <div className={styles.sparkEmpty} />

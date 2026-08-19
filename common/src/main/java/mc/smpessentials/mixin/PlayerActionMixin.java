@@ -65,7 +65,7 @@ public abstract class PlayerActionMixin {
         if (!mc.smpessentials.skills.ActiveAbilities.isZoomActive(player.getUUID())) return;
 
         if (packet.containerId() == InventoryMenu.CONTAINER_ID) {
-            // Player's own inventory — block the offhand slot only.
+            // Player's own inventory, block the offhand slot only.
             if (packet.slotNum() == InventoryMenu.SHIELD_SLOT) {
                 player.inventoryMenu.sendAllDataToRemote(); // revert any client-side cursor desync
                 ci.cancel();

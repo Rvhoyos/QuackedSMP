@@ -12,7 +12,7 @@ import net.minecraft.world.level.saveddata.SavedDataType;
 import java.util.*;
 
 // Virtual emerald bank. Players deposit/withdraw physical emeralds and transfer between accounts.
-// NOT used for shop purchases — shops require physical currency items in player inventory.
+// NOT used for shop purchases, shops require physical currency items in player inventory.
 public final class EconomyData extends SavedData {
 
     private final Map<UUID, Long> balances = new HashMap<>();

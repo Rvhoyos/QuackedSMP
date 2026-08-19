@@ -273,7 +273,7 @@ export default function TeamsPanel({ token, onExpired }) {
                               )}
                               {isAlreadyOn && <span className={styles.warn}>Already on this team</span>}
                               {inputVal && playersLoaded && !isValid && !isAlreadyOn && <span className={styles.warn}>Unknown player</span>}
-                              {otherTeam && <span className={styles.move}>On "{otherTeam.name}" — will be moved</span>}
+                              {otherTeam && <span className={styles.move}>On "{otherTeam.name}", will be moved</span>}
                             </div>
                             <Btn onClick={() => { handleAddPlayer(team.name); setAddDropdown(null) }} disabled={!isValid}>Add</Btn>
                           </div>

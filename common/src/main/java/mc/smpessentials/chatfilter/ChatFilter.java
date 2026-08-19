@@ -111,11 +111,11 @@ public final class ChatFilter {
                         }
                     }
                 } else {
-                    // Standard warning — show strike count
+                    // Standard warning, show strike count
                     ChatFilterSavedData.ViolationData vd = data.getViolation(player.getUUID());
                     int strikeCount = vd != null ? vd.count() : 1;
                     player.sendSystemMessage(Component.literal(
-                            "\u00a7c[Chat Filter] \u00a7eWatch your language! \u00a77(Strike " + strikeCount + "/3 — 3 strikes = mute)"));
+                            "\u00a7c[Chat Filter] \u00a7eWatch your language! \u00a77(Strike " + strikeCount + "/3: 3 strikes = mute)"));
 
                     // Notify OPs with the actual message
                     String alert = "\u00a7c[Filter] \u00a7e" + player.getName().getString()
@@ -155,7 +155,7 @@ public final class ChatFilter {
             String token = message.substring(srcStart, srcEnd);
             String norm = normalize(token);
 
-            // Check whitelist first — skip if whitelisted
+            // Check whitelist first, skip if whitelisted
             if (data.isWhitelisted(norm)) {
                 continue;
             }

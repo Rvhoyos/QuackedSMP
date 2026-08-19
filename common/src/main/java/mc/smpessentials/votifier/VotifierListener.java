@@ -42,7 +42,7 @@ public final class VotifierListener {
             SmpConfig.VOTIFIER_TOKEN = generated;
             mc.smpessentials.config.ConfigIO.save();
             SmpUtilsMod.LOGGER.info("[Votifier] ============================================================");
-            SmpUtilsMod.LOGGER.info("[Votifier] No token found — generated a new token and saved to config.");
+            SmpUtilsMod.LOGGER.info("[Votifier] No token found, generated a new token and saved to config.");
             SmpUtilsMod.LOGGER.info("[Votifier] Token: {}", generated);
             SmpUtilsMod.LOGGER.info("[Votifier] Use this token when registering on voting sites.");
             SmpUtilsMod.LOGGER.info("[Votifier] ============================================================");
@@ -109,12 +109,12 @@ public final class VotifierListener {
             out.write(("VOTIFIER 2 " + challenge + "\n").getBytes(StandardCharsets.UTF_8));
             out.flush();
 
-            // 2. Read first 2 bytes — magic detection
+            // 2. Read first 2 bytes, magic detection
             int b0 = in.read(), b1 = in.read();
             if (b0 < 0 || b1 < 0) return;
 
             if (b0 != 0x73 || b1 != 0x3A) {
-                SmpUtilsMod.LOGGER.warn("[Votifier] Received v1 packet — only v2 is supported");
+                SmpUtilsMod.LOGGER.warn("[Votifier] Received v1 packet, only v2 is supported");
                 sendError(out, "UnsupportedProtocol", "Only Votifier v2 is supported");
                 return;
             }
@@ -144,7 +144,7 @@ public final class VotifierListener {
             byte[] expected = mac.doFinal(payloadStr.getBytes(StandardCharsets.UTF_8));
             byte[] actual   = Base64.getDecoder().decode(signatureB64);
             if (!MessageDigest.isEqual(expected, actual)) {
-                SmpUtilsMod.LOGGER.warn("[Votifier] HMAC mismatch — check your token");
+                SmpUtilsMod.LOGGER.warn("[Votifier] HMAC mismatch, check your token");
                 sendError(out, "SignatureException", "Invalid signature");
                 return;
             }

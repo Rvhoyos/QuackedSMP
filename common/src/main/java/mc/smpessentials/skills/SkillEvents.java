@@ -197,7 +197,7 @@ public final class SkillEvents {
                 }
 
                 // Combat parent damage buff is applied as a persistent attribute modifier
-                // in updateParentBuffs() — no need to modify the event amount here.
+                // in updateParentBuffs(), no need to modify the event amount here.
             }
         }
     }
@@ -371,7 +371,7 @@ public final class SkillEvents {
 
     // ========== FISHING ==========
 
-    // Fishing XP is handled by FishingHookMixin — no listener needed here.
+    // Fishing XP is handled by FishingHookMixin, no listener needed here.
     // The mixin injects into FishingHook.retrieve() and awards 15 XP on catch.
 
     /**
@@ -723,7 +723,7 @@ public final class SkillEvents {
         }
     }
 
-    /** Celebratory unlock announcement — gold star + challenge-complete sound. */
+    /** Celebratory unlock announcement, gold star + challenge-complete sound. */
     private static void announceAbilityUnlock(ServerPlayer player, String name, String trigger, boolean isPassive) {
         String prefix = isPassive
                 ? "\u00a7a\u00a7l\u2605 Passive Unlocked! \u00a7r"

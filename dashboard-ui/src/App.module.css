@@ -4,7 +4,7 @@
   height: 100%;
   min-height: 100vh;
   /* "Depth of the world": a warm horizon glow at the top, descending through
-     dirt → stone → deepslate. No grid — clean material strata. */
+     dirt → stone → deepslate. No grid, clean material strata. */
   background-color: var(--deepslate);
   background-image:
     url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='48'%20height='48'%3E%3Cg%20fill='%23ffffff'%20fill-opacity='0.035'%3E%3Crect%20x='4'%20y='6'%20width='2'%20height='2'/%3E%3Crect%20x='18'%20y='2'%20width='2'%20height='2'/%3E%3Crect%20x='30'%20y='10'%20width='2'%20height='2'/%3E%3Crect%20x='42'%20y='4'%20width='2'%20height='2'/%3E%3Crect%20x='10'%20y='20'%20width='2'%20height='2'/%3E%3Crect%20x='24'%20y='26'%20width='2'%20height='2'/%3E%3Crect%20x='38'%20y='22'%20width='2'%20height='2'/%3E%3Crect%20x='6'%20y='36'%20width='2'%20height='2'/%3E%3Crect%20x='20'%20y='40'%20width='2'%20height='2'/%3E%3Crect%20x='34'%20y='44'%20width='2'%20height='2'/%3E%3Crect%20x='44'%20y='34'%20width='2'%20height='2'/%3E%3C/g%3E%3Cg%20fill='%23000000'%20fill-opacity='0.14'%3E%3Crect%20x='12'%20y='12'%20width='2'%20height='2'/%3E%3Crect%20x='26'%20y='6'%20width='2'%20height='2'/%3E%3Crect%20x='2'%20y='28'%20width='2'%20height='2'/%3E%3Crect%20x='16'%20y='32'%20width='2'%20height='2'/%3E%3Crect%20x='36'%20y='14'%20width='2'%20height='2'/%3E%3Crect%20x='40'%20y='40'%20width='2'%20height='2'/%3E%3Crect%20x='8'%20y='44'%20width='2'%20height='2'/%3E%3Crect%20x='30'%20y='34'%20width='2'%20height='2'/%3E%3Crect%20x='22'%20y='16'%20width='2'%20height='2'/%3E%3C/g%3E%3C/svg%3E"),

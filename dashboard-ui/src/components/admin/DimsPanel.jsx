@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { Toolbar, IconButton, Btn, Badge, SectionCard, Loading, EmptyState, ErrorBanner, ConfirmDialog, Field, Input, Select, Menu, MenuItem, useToast } from '../../ui'
+import { Toolbar, IconButton, Btn, Badge, SectionCard, Loading, EmptyState, ErrorBanner, ConfirmDialog, Field, Input, Select, Slider, Toggle, Menu, MenuItem, useToast } from '../../ui'
 import { IconPortal } from './MinecraftIcons'
 import styles from './DimsPanel.module.css'
 
@@ -9,25 +9,45 @@ const TYPE_OPTIONS = [
   { value: 'overworld', label: 'Overworld (default biomes)' },
   { value: 'overworld-biomes', label: 'Overworld (custom biomes)' },
   { value: 'overworld-flat', label: 'Overworld Flat' },
-  { value: 'ether', label: 'Ether — floating islands (default biomes)' },
-  { value: 'ether-biomes', label: 'Ether — floating islands (custom biomes)' },
+  { value: 'ether', label: 'Ether: floating islands (default biomes)' },
+  { value: 'ether-biomes', label: 'Ether: floating islands (custom biomes)' },
   { value: 'nether', label: 'Nether' },
   { value: 'end', label: 'End' },
 ]
 const BIOME_TYPES = new Set(['overworld-biomes', 'ether-biomes'])
+const ETHER_TYPES = new Set(['ether', 'ether-biomes'])
 
-function buildApiPayload(uiType, flatConfig, selectedBiomes) {
+const biomeClause = list => `biomes ${list.map(b => `${b.id}:${b.weight}`).join(' ')}`
+
+// Same keyword grammar the /dim create command uses; the server re-parses and stores it canonically.
+function etherClause(p) {
+  if (!p) return ''
+  return [
+    `threshold ${p.threshold}`,
+    `radius ${p.minRadius} ${p.maxRadius}`,
+    `spacing ${p.spacing}`,
+    `thickness ${p.minThickness} ${p.maxThickness}`,
+    `height ${p.minCenterY} ${p.maxCenterY}`,
+    `structures ${p.structures}`,
+  ].join(' ')
+}
+
+function buildApiPayload(uiType, flatConfig, selectedBiomes, etherParams) {
   switch (uiType) {
     case 'overworld': return { type: 'overworld' }
     case 'overworld-biomes':
-      return selectedBiomes.length ? { type: 'overworld', config: `biomes ${selectedBiomes.map(b => `${b.id}:${b.weight}`).join(' ')}` } : { type: 'overworld' }
+      return selectedBiomes.length ? { type: 'overworld', config: biomeClause(selectedBiomes) } : { type: 'overworld' }
     case 'overworld-flat': {
       const raw = flatConfig.trim()
       return { type: 'overworld', config: raw ? `flat ${raw}` : 'flat minecraft:bedrock:1 minecraft:stone:6 minecraft:dirt:2 minecraft:grass_block:1' }
     }
-    case 'ether': return { type: 'ether' }
-    case 'ether-biomes':
-      return selectedBiomes.length ? { type: 'ether', config: `biomes ${selectedBiomes.map(b => `${b.id}:${b.weight}`).join(' ')}` } : { type: 'ether' }
+    case 'ether':
+    case 'ether-biomes': {
+      const parts = [etherClause(etherParams)]
+      if (uiType === 'ether-biomes' && selectedBiomes.length) parts.push(biomeClause(selectedBiomes))
+      const config = parts.filter(Boolean).join(' ')
+      return config ? { type: 'ether', config } : { type: 'ether' }
+    }
     case 'nether': return { type: 'nether' }
     case 'end': return { type: 'end' }
     default: return { type: uiType }
@@ -46,6 +66,12 @@ export default function DimsPanel({ token, onExpired }) {
   const [createUiType, setCreateUiType] = useState('overworld')
   const [flatConfig, setFlatConfig] = useState('')
   const [selectedBiomes, setSelectedBiomes] = useState([])
+  const [etherMeta, setEtherMeta] = useState(null)
+  const [etherParams, setEtherParams] = useState(null)
+  const [players, setPlayers] = useState([])
+  const [tpEditing, setTpEditing] = useState(null)
+  const [tpPlayer, setTpPlayer] = useState('')
+  const [tpSending, setTpSending] = useState(false)
   const [biomeSearch, setBiomeSearch] = useState('')
   const [biomeWeight, setBiomeWeight] = useState('1')
   const [biomeOpen, setBiomeOpen] = useState(false)
@@ -94,15 +120,37 @@ export default function DimsPanel({ token, onExpired }) {
     } catch {}
   }, [biomesLoaded, token, onExpired])
 
+  // Defaults and ranges come from EtherIslandParams on the server, never from a copy kept here.
+  const fetchEtherMeta = useCallback(async () => {
+    if (etherMeta) return
+    try {
+      const res = await fetch('/api/admin/dims/etherparams', { headers: authHeaders(token) })
+      if (res.status === 401 || res.status === 403) { onExpired(); return }
+      const data = await res.json()
+      if (data.defaults) { setEtherMeta(data); setEtherParams(data.defaults) }
+    } catch {}
+  }, [etherMeta, token, onExpired])
+
+  const fetchPlayers = useCallback(async () => {
+    try {
+      const res = await fetch('/api/admin/players', { headers: authHeaders(token) })
+      if (res.status === 401 || res.status === 403) { onExpired(); return }
+      const data = await res.json()
+      if (Array.isArray(data)) setPlayers(data)
+    } catch {}
+  }, [token, onExpired])
+
   useEffect(() => { fetchDims() }, [fetchDims])
   useEffect(() => { if (BIOME_TYPES.has(createUiType)) fetchBiomes() }, [createUiType]) // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (ETHER_TYPES.has(createUiType)) fetchEtherMeta() }, [createUiType]) // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (tpEditing != null) fetchPlayers() }, [tpEditing]) // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { if (portalEditing != null) fetchBlocks() }, [portalEditing]) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function handleCreate(e) {
     e.preventDefault()
     setCreating(true); setError(null)
     try {
-      const { type, config } = buildApiPayload(createUiType, flatConfig, selectedBiomes)
+      const { type, config } = buildApiPayload(createUiType, flatConfig, selectedBiomes, etherParams)
       const body = { id: createId.trim(), type }
       if (config) body.config = config
       const res = await fetch('/api/admin/dims/create', { method: 'POST', headers: { 'Content-Type': 'application/json', ...authHeaders(token) }, body: JSON.stringify(body) })
@@ -110,7 +158,7 @@ export default function DimsPanel({ token, onExpired }) {
       const data = await res.json()
       if (data.error) { setError(data.error); return }
       setCreateId(''); setFlatConfig(''); setSelectedBiomes([])
-      toast('Dimension created — restart required for block editing')
+      toast('Dimension created. Restart required for block editing')
       await fetchDims()
     } catch { setError('Create failed') } finally { setCreating(false) }
   }
@@ -139,6 +187,20 @@ export default function DimsPanel({ token, onExpired }) {
     } catch { setError('Set portal failed') } finally { setPortalSaving(false) }
   }
 
+  async function handleTeleport(dimId) {
+    if (!tpPlayer) return
+    setTpSending(true); setError(null)
+    try {
+      const res = await fetch('/api/admin/dims/tp', { method: 'POST', headers: { 'Content-Type': 'application/json', ...authHeaders(token) }, body: JSON.stringify({ dimId, player: tpPlayer }) })
+      if (res.status === 401 || res.status === 403) { onExpired(); return }
+      const data = await res.json()
+      if (data.error) { setError(data.error); return }
+      setTpEditing(null); toast(`Teleported ${tpPlayer}`)
+    } catch { setError('Teleport failed') } finally { setTpSending(false) }
+  }
+
+  const setParam = (key, value) => setEtherParams(p => ({ ...p, [key]: value }))
+
   function selectBiome(id) {
     const w = Math.max(1, parseInt(biomeWeight, 10) || 1)
     setSelectedBiomes(prev => [...prev, { id, weight: w }]); setBiomeSearch(''); setBiomeOpen(false)
@@ -148,6 +210,7 @@ export default function DimsPanel({ token, onExpired }) {
   const blockSuggestions = (() => { const q = portalInput.trim(); if (!q) return allBlocks.slice(0, 60); return allBlocks.filter(id => id.startsWith(q) || (q.length >= 2 && id.includes(q))).slice(0, 60) })()
   const filteredBiomes = (() => { const q = biomeSearch.trim().toLowerCase(); if (!q) return allBiomes; return allBiomes.filter(id => id.includes(q)) })()
   const isBiomeType = BIOME_TYPES.has(createUiType)
+  const isEtherType = ETHER_TYPES.has(createUiType)
   const isFlatType = createUiType === 'overworld-flat'
 
   if (loading && dims.length === 0) return <Loading label="Loading dimensions…" />
@@ -173,6 +236,55 @@ export default function DimsPanel({ token, onExpired }) {
               </Field>
             )}
 
+            {isEtherType && etherParams && etherMeta && (
+              <div className={styles.paramGrid}>
+                <Field label="Island frequency" hint="Lower spawns fewer islands.">
+                  <Slider value={etherParams.threshold} min={etherMeta.ranges.threshold[0]} max={etherMeta.ranges.threshold[1]}
+                    step={0.01} onChange={v => setParam('threshold', v)} />
+                </Field>
+                <Field label="Grid spacing" hint="Larger spreads islands further apart.">
+                  <Slider value={etherParams.spacing} min={etherMeta.ranges.spacing[0]} max={etherMeta.ranges.spacing[1]}
+                    step={1} onChange={v => setParam('spacing', v)} />
+                </Field>
+                <Field label="Radius (blocks)" hint="How wide each island is. Rolled per island.">
+                  <div className={styles.pairRow}>
+                    <Input type="number" aria-label="Minimum radius" value={etherParams.minRadius}
+                      min={etherMeta.ranges.radius[0]} max={etherMeta.ranges.radius[1]}
+                      onChange={e => setParam('minRadius', Number(e.target.value))} />
+                    <Input type="number" aria-label="Maximum radius" value={etherParams.maxRadius}
+                      min={etherMeta.ranges.radius[0]} max={etherMeta.ranges.radius[1]}
+                      onChange={e => setParam('maxRadius', Number(e.target.value))} />
+                  </div>
+                </Field>
+                <Field label="Thickness (blocks)" hint="How tall each island is. Independent of radius.">
+                  <div className={styles.pairRow}>
+                    <Input type="number" aria-label="Minimum thickness" value={etherParams.minThickness}
+                      min={etherMeta.ranges.thickness[0]} max={etherMeta.ranges.thickness[1]}
+                      onChange={e => setParam('minThickness', Number(e.target.value))} />
+                    <Input type="number" aria-label="Maximum thickness" value={etherParams.maxThickness}
+                      min={etherMeta.ranges.thickness[0]} max={etherMeta.ranges.thickness[1]}
+                      onChange={e => setParam('maxThickness', Number(e.target.value))} />
+                  </div>
+                </Field>
+                <Field label="Height band" hint="Y range island centres spawn in.">
+                  <div className={styles.pairRow}>
+                    <Input type="number" aria-label="Lowest island centre" value={etherParams.minCenterY}
+                      min={etherMeta.ranges.height[0]} max={etherMeta.ranges.height[1]}
+                      onChange={e => setParam('minCenterY', Number(e.target.value))} />
+                    <Input type="number" aria-label="Highest island centre" value={etherParams.maxCenterY}
+                      min={etherMeta.ranges.height[0]} max={etherMeta.ranges.height[1]}
+                      onChange={e => setParam('maxCenterY', Number(e.target.value))} />
+                  </div>
+                </Field>
+                <Field label="Structures" hint="Off generates none at all. On, they only appear inside terrain.">
+                  <div className={styles.pairRow}>
+                    <Toggle checked={etherParams.structures} onChange={v => setParam('structures', v)} aria-label="Generate structures" />
+                    <span className={styles.hint}>{etherParams.structures ? 'Generated' : 'None'}</span>
+                  </div>
+                </Field>
+              </div>
+            )}
+
             {isBiomeType && (
               <div className={styles.biomeBuilder}>
                 {selectedBiomes.length > 0 && (
@@ -195,7 +307,7 @@ export default function DimsPanel({ token, onExpired }) {
                   </div>
                   <input className={styles.weightInput} type="number" min="1" max="999" value={biomeWeight} onChange={e => setBiomeWeight(e.target.value)} title="Relative weight" />
                 </div>
-                {selectedBiomes.length === 0 && <div className={styles.hint}>No biomes selected — uses all default biomes for this type.</div>}
+                {selectedBiomes.length === 0 && <div className={styles.hint}>No biomes selected. Uses all default biomes for this type.</div>}
               </div>
             )}
           </form>
@@ -212,6 +324,7 @@ export default function DimsPanel({ token, onExpired }) {
                 <div className={styles.cardTop}>
                   <span className={styles.dimId}>{dim.id}</span>
                   <Menu trigger={<Btn size="sm" aria-label="Actions">⋯</Btn>}>
+                    <MenuItem onSelect={() => { setTpEditing(dim.id); setTpPlayer('') }}>Teleport Player</MenuItem>
                     <MenuItem onSelect={() => { setPortalEditing(dim.id); setPortalInput(dim.portalBlock ?? '') }}>Set Portal Block</MenuItem>
                     <MenuItem tone="danger" onSelect={() => setConfirmDel(dim.id)}>Delete</MenuItem>
                   </Menu>
@@ -221,6 +334,17 @@ export default function DimsPanel({ token, onExpired }) {
                   {dim.portalBlock ? <Badge variant="ok">portal: {dim.portalBlock.split(':').pop()}</Badge> : <Badge>no portal</Badge>}
                 </div>
                 {dim.generatorConfig && <span className={styles.config} title={dim.generatorConfig}>{dim.generatorConfig.length > 60 ? dim.generatorConfig.slice(0, 58) + '…' : dim.generatorConfig}</span>}
+
+                {tpEditing === dim.id && (
+                  <div className={styles.portalEdit}>
+                    <Select value={tpPlayer} onChange={e => setTpPlayer(e.target.value)} aria-label="Player to teleport">
+                      <option value="">{players.length ? 'Select player…' : 'Nobody online'}</option>
+                      {players.map(p => <option key={p.uuid} value={p.name}>{p.name}</option>)}
+                    </Select>
+                    <Btn size="sm" variant="ok" onClick={() => handleTeleport(dim.id)} disabled={tpSending || !tpPlayer}>{tpSending ? '…' : 'Go'}</Btn>
+                    <Btn size="sm" variant="ghost" onClick={() => setTpEditing(null)}>Cancel</Btn>
+                  </div>
+                )}
 
                 {portalEditing === dim.id && (
                   <div className={styles.portalEdit}>

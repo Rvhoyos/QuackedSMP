@@ -22,7 +22,7 @@ public final class ClaimCommands {
 
     /** Registers all claim-related commands with the given dispatcher. */
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
-        // /claim — build as a variable so trust subcommands can be appended
+        // /claim, build as a variable so trust subcommands can be appended
         var claim = Commands.literal("claim")
                 .requires(src -> mc.smpessentials.config.SmpConfig.CLAIMS_ENABLED && src.getEntity() instanceof ServerPlayer)
                 .executes(ctx -> {
@@ -241,7 +241,7 @@ public final class ClaimCommands {
                             return 1;
                         })));
 
-        // /claim trust|untrust|trustlist — aliases for discoverability; root /trust etc. still work
+        // /claim trust|untrust|trustlist, aliases for discoverability; root /trust etc. still work
         claim.then(TrustCommands.trustNode());
         claim.then(TrustCommands.untrustNode());
         claim.then(TrustCommands.trustlistNode());

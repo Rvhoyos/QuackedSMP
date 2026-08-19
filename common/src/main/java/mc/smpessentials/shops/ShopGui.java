@@ -92,7 +92,7 @@ public final class ShopGui {
             container.setItem(SLOT_ITEM_DISPLAY, display);
         }
 
-        // Quantity controls — bulk shops (unit > 1) get only +1/-1 since each unit is already a batch
+        // Quantity controls, bulk shops (unit > 1) get only +1/-1 since each unit is already a batch
         if (shop.unit() > 1) {
             container.setItem(SLOT_MINUS_10, filler.copy());
             container.setItem(SLOT_MINUS_1, createButton(Items.STAINED_GLASS_PANE.pick(DyeColor.RED), "\u00a7c-1"));

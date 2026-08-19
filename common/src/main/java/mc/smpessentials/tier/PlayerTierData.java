@@ -13,7 +13,7 @@ import net.minecraft.world.level.saveddata.SavedDataType;
 import java.util.*;
 
 // Stores the effective tier per player, keyed by UUID.
-// A player's tier is the single source of truth — earned tiers bump it up on login;
+// A player's tier is the single source of truth, earned tiers bump it up on login;
 // admin assignments set it directly. Both write the same field.
 // Also holds a pending migration map (name-keyed) for entries imported from the old JSON config.
 public final class PlayerTierData extends SavedData {
@@ -124,7 +124,7 @@ public final class PlayerTierData extends SavedData {
     }
 
     // Called on player login. Promotes any pending entry for this player to UUID-keyed storage.
-    // Does NOT bump earned tier — that is handled by TierService.onPlayerJoin.
+    // Does NOT bump earned tier, that is handled by TierService.onPlayerJoin.
     public void promotePendingMigration(ServerPlayer player) {
         String key = player.getName().getString().toLowerCase(Locale.ROOT);
         Integer tier = pending.remove(key);

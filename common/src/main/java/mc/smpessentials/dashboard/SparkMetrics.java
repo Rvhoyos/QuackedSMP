@@ -9,7 +9,7 @@ import me.lucko.spark.api.statistic.types.GenericStatistic;
 import java.util.Locale;
 
 /**
- * Wraps Spark API calls safely — every method is guarded by try/catch because
+ * Wraps Spark API calls safely, every method is guarded by try/catch because
  * Spark may be on the classpath but not yet fully initialised.
  */
 public final class SparkMetrics {

@@ -1018,7 +1018,7 @@ export function IconWolf({ size = 20 }) {
 
 // ── Distinct nav icons (replace reused shields/clocks/signs) ────────────────────
 
-// Chat Moderation — a judge's gavel over its sound block.
+// Chat Moderation, a judge's gavel over its sound block.
 export function IconGavel({ size = 20 }) {
   return (
     <svg viewBox="0 0 16 16" width={size} height={size} shapeRendering="crispEdges">
@@ -1041,7 +1041,7 @@ export function IconGavel({ size = 20 }) {
   )
 }
 
-// Hardcore — the dark maroon hardcore heart.
+// Hardcore, the dark maroon hardcore heart.
 export function IconHardcoreHeart({ size = 20 }) {
   return (
     <svg viewBox="0 0 16 16" width={size} height={size} shapeRendering="crispEdges">
@@ -1061,7 +1061,7 @@ export function IconHardcoreHeart({ size = 20 }) {
   )
 }
 
-// Danger Zone — a stick of TNT.
+// Danger Zone, a stick of TNT.
 export function IconTNT({ size = 20 }) {
   return (
     <svg viewBox="0 0 16 16" width={size} height={size} shapeRendering="crispEdges">
@@ -1078,7 +1078,7 @@ export function IconTNT({ size = 20 }) {
   )
 }
 
-// Kit Settings — an anvil.
+// Kit Settings, an anvil.
 export function IconAnvil({ size = 20 }) {
   return (
     <svg viewBox="0 0 16 16" width={size} height={size} shapeRendering="crispEdges">
@@ -1094,7 +1094,7 @@ export function IconAnvil({ size = 20 }) {
   )
 }
 
-// Color Reference — a four-swatch dye palette.
+// Color Reference, a four-swatch dye palette.
 export function IconDyes({ size = 20 }) {
   return (
     <svg viewBox="0 0 16 16" width={size} height={size} shapeRendering="crispEdges">
@@ -1106,7 +1106,7 @@ export function IconDyes({ size = 20 }) {
   )
 }
 
-// Welcome Sidebar — a scoreboard with a coloured title bar and score rows.
+// Welcome Sidebar, a scoreboard with a coloured title bar and score rows.
 export function IconScoreboard({ size = 20 }) {
   return (
     <svg viewBox="0 0 16 16" width={size} height={size} shapeRendering="crispEdges">
@@ -1123,7 +1123,7 @@ export function IconScoreboard({ size = 20 }) {
   )
 }
 
-// Config — a settings gear.
+// Config, a settings gear.
 export function IconGear({ size = 20 }) {
   return (
     <svg viewBox="0 0 16 16" width={size} height={size} shapeRendering="crispEdges">
@@ -1142,7 +1142,7 @@ export function IconGear({ size = 20 }) {
   )
 }
 
-// Timelapse — a camera.
+// Timelapse, a camera.
 export function IconCamera({ size = 20 }) {
   return (
     <svg viewBox="0 0 16 16" width={size} height={size} shapeRendering="crispEdges">

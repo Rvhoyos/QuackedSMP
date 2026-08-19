@@ -78,7 +78,7 @@ public abstract class NetherPortalBlockMixin {
             DimManager.saveReturnPos(entity, entryPos, level.getServer());
             final int entryX = entryPos.getX(), entryZ = entryPos.getZ();
             origin = DimManager.findSpawnOrigin(level.getServer(), dest, entryX, entryZ);
-            // Ensure spawn structure on next tick — re-query origin inside execute() so that
+            // Ensure spawn structure on next tick, re-query origin inside execute() so that
             // spawn chunks are loaded and the portal lands at the actual terrain surface,
             // not at the Y=80 fallback that findSpawnOrigin returns for unloaded chunks.
             final MinecraftServer fServer = level.getServer();
@@ -93,7 +93,7 @@ public abstract class NetherPortalBlockMixin {
                     }));
         }
 
-        // Custom dim portals use 1:1 coordinate mapping — no vanilla 8x nether scaling applied.
+        // Custom dim portals use 1:1 coordinate mapping, no vanilla 8x nether scaling applied.
         BlockPos scaledOrigin = dest.getWorldBorder().clampToBounds(
                 origin.getX(), origin.getY(), origin.getZ());
 

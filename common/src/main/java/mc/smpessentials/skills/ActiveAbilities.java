@@ -408,7 +408,7 @@ public final class ActiveAbilities {
 
         ItemStack current = sp.getOffhandItem();
         if (current.getItem() == Items.SPYGLASS && current.getCount() == 1) {
-            // Normal case: spyglass still in offhand — clear it and restore saved item.
+            // Normal case: spyglass still in offhand, clear it and restore saved item.
             sp.setItemSlot(net.minecraft.world.entity.EquipmentSlot.OFFHAND, state.savedOffhand());
             sp.inventoryMenu.sendAllDataToRemote();
         } else {
@@ -448,7 +448,7 @@ public final class ActiveAbilities {
             return;
         }
 
-        // Apply Glowing to mobs in look cone — range scales with Archery level
+        // Apply Glowing to mobs in look cone, range scales with Archery level
         int archLevel = data.getLevel(uuid, SkillType.ARCHERY);
         double range = archLevel <= 33 ? 30 : archLevel <= 66 ? 60 : 100;
 

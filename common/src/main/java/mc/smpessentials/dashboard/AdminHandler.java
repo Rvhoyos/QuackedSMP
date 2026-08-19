@@ -14,6 +14,8 @@ import mc.smpessentials.bluemap.BlueMapIntegration;
 import mc.smpessentials.chatfilter.ChatFilter;
 import mc.smpessentials.claims.storage.ClaimedSavedData;
 import mc.smpessentials.dims.DimManager;
+import mc.smpessentials.dims.EtherIslandParams;
+import mc.smpessentials.dims.GeneratorConfig;
 import mc.smpessentials.dims.DimSavedData;
 import mc.smpessentials.skills.SkillData;
 import mc.smpessentials.skills.SkillManager;
@@ -62,7 +64,7 @@ public final class AdminHandler {
     public static String handleSetup(String method, Map<String, String> headers, String body) {
         if (!"POST".equals(method)) return err(405, "Method not allowed");
         if (!SmpConfig.ADMIN_ENABLED)               return err(403, "Admin panel disabled");
-        if (!AdminAuth.noPasswordSet())             return err(403, "Password already set — use login");
+        if (!AdminAuth.noPasswordSet())             return err(403, "Password already set. Use login");
         try {
             JsonObject req = JsonParser.parseString(body).getAsJsonObject();
             String password = req.get("password").getAsString();
@@ -89,9 +91,9 @@ public final class AdminHandler {
     public static String handleLogin(String method, Map<String, String> headers, String body) {
         if (!"POST".equals(method))     return err(405, "Method not allowed");
         if (!SmpConfig.ADMIN_ENABLED)   return err(403, "Admin panel disabled");
-        if (AdminAuth.noPasswordSet())  return err(400, "No password set — use /api/admin/setup");
+        if (AdminAuth.noPasswordSet())  return err(400, "No password set. Use /api/admin/setup");
         String ip = headers.getOrDefault("x-forwarded-for", "direct").split(",")[0].trim();
-        if (AdminAuth.isRateLimited(ip)) return err(429, "Too many failed attempts — try again later");
+        if (AdminAuth.isRateLimited(ip)) return err(429, "Too many failed attempts. Try again later");
         try {
             JsonObject req = JsonParser.parseString(body).getAsJsonObject();
             String password = req.get("password").getAsString();
@@ -278,7 +280,7 @@ public final class AdminHandler {
         for (SkillType sk : SkillType.values()) {
             sb.append(String.format("\"skill_unlock_%s\":%d,", sk.name().toLowerCase(), SmpConfig.getAbilityUnlockLevel(sk)));
         }
-        // Caps (last entry — no trailing comma)
+        // Caps (last entry, no trailing comma)
         sb.append(String.format("\"cap_industrial_speed\":%.2f,", SmpConfig.CAP_INDUSTRIAL_SPEED));
         sb.append(String.format("\"cap_nature_health\":%.2f,", SmpConfig.CAP_NATURE_HEALTH));
         sb.append(String.format("\"cap_combat_damage\":%.2f,", SmpConfig.CAP_COMBAT_DAMAGE));
@@ -641,6 +643,30 @@ public final class AdminHandler {
         }
     }
 
+    // GET /api/admin/dims/etherparams. Island param defaults and valid ranges, straight from
+    // EtherIslandParams, so the panel never carries its own copy of either.
+    public static String handleEtherParams(String method, Map<String, String> headers, String body,
+                                           MinecraftServer server) {
+        if (!SmpConfig.ADMIN_ENABLED)         return err(403, "Admin panel disabled");
+        if (!AdminAuth.isAuthorized(headers)) return err(403, "Unauthorized");
+
+        EtherIslandParams d = EtherIslandParams.DEFAULTS;
+        return String.format(Locale.US,
+                "{\"defaults\":{\"threshold\":%s,\"minRadius\":%s,\"maxRadius\":%s,\"spacing\":%d,"
+                + "\"minThickness\":%s,\"maxThickness\":%s,\"minCenterY\":%d,\"maxCenterY\":%d,"
+                + "\"structures\":%b},"
+                + "\"ranges\":{\"threshold\":[%s,%s],\"radius\":[%s,%s],\"spacing\":[%d,%d],"
+                + "\"thickness\":[%s,%s],\"height\":[%d,%d]}}",
+                d.threshold(), d.minRadius(), d.maxRadius(), d.spacing(),
+                d.minThickness(), d.maxThickness(), d.minCenterY(), d.maxCenterY(),
+                GeneratorConfig.DEFAULT_STRUCTURES,
+                EtherIslandParams.THRESHOLD_MIN, EtherIslandParams.THRESHOLD_MAX,
+                EtherIslandParams.RADIUS_MIN, EtherIslandParams.RADIUS_MAX,
+                EtherIslandParams.SPACING_MIN, EtherIslandParams.SPACING_MAX,
+                EtherIslandParams.THICKNESS_MIN, EtherIslandParams.THICKNESS_MAX,
+                EtherIslandParams.CENTER_Y_MIN, EtherIslandParams.CENTER_Y_MAX);
+    }
+
     // POST /api/admin/dims/create. Creates a custom dimension. Body: {id, type, config (optional)}.
     public static String handleDimCreate(String method, Map<String, String> headers, String body,
                                          MinecraftServer server) {
@@ -656,6 +682,17 @@ public final class AdminHandler {
             if (req.has("config") && !req.get("config").isJsonNull()) {
                 String raw = req.get("config").getAsString().strip();
                 if (!raw.isEmpty()) config = Optional.of(raw);
+            }
+
+            // Normalise ether configs through the one grammar, so a dim created here stores the
+            // same canonical string /dim create would have stored, and a bad value is rejected
+            // instead of silently clamped.
+            if ("ether".equalsIgnoreCase(type)) {
+                GeneratorConfig.Ether ether = GeneratorConfig.parseEther(config.orElse(""));
+                if (!ether.problems().isEmpty()) {
+                    return err(400, jsonEscape(String.join("; ", ether.problems())));
+                }
+                config = Optional.of(ether.toConfigString());
             }
             final Optional<String> finalConfig = config;
 
@@ -692,6 +729,47 @@ public final class AdminHandler {
                     String err = DimManager.destroy(server, id);
                     if (err != null) future.complete(err(400, jsonEscape(err)));
                     else future.complete("{\"ok\":true}");
+                } catch (Exception ex) {
+                    future.complete(err(500, jsonEscape(ex.getMessage())));
+                }
+            });
+            return future.get(5, TimeUnit.SECONDS);
+        } catch (Exception e) {
+            return err(400, "Invalid request: " + jsonEscape(e.getMessage()));
+        }
+    }
+
+    // POST /api/admin/dims/tp. Teleports an online player to a dimension. Body: {dimId, player}.
+    public static String handleDimTp(String method, Map<String, String> headers, String body,
+                                     MinecraftServer server) {
+        if (!"POST".equals(method))             return err(405, "Method not allowed");
+        if (!SmpConfig.ADMIN_ENABLED)           return err(403, "Admin panel disabled");
+        if (!AdminAuth.isAuthorized(headers))   return err(403, "Unauthorized");
+        if (server == null)                     return err(503, "Server not ready");
+        try {
+            JsonObject req  = JsonParser.parseString(body).getAsJsonObject();
+            String dimId    = req.get("dimId").getAsString().strip();
+            String playerNm = req.get("player").getAsString().strip();
+
+            CompletableFuture<String> future = new CompletableFuture<>();
+            server.execute(() -> {
+                try {
+                    ServerPlayer player = server.getPlayerList().getPlayerByName(playerNm);
+                    if (player == null) {
+                        future.complete(err(404, "Player not online: " + jsonEscape(playerNm)));
+                        return;
+                    }
+                    ServerLevel dest = server.getLevel(
+                            ResourceKey.create(Registries.DIMENSION, Identifier.parse(dimId)));
+                    if (dest == null) {
+                        future.complete(err(404, "Dimension not found: " + jsonEscape(dimId)));
+                        return;
+                    }
+                    if (!DimManager.teleportToDim(server, player, dest)) {
+                        future.complete(err(400, "Teleport was rejected"));
+                        return;
+                    }
+                    future.complete("{\"ok\":true}");
                 } catch (Exception ex) {
                     future.complete(err(500, jsonEscape(ex.getMessage())));
                 }
@@ -1369,7 +1447,7 @@ public final class AdminHandler {
             } catch (java.nio.file.AtomicMoveNotSupportedException e) {
                 Files.move(temp, target, StandardCopyOption.REPLACE_EXISTING);
             }
-            temp = null; // successfully moved — skip deletion in finally
+            temp = null; // successfully moved, skip deletion in finally
             SmpUtilsMod.LOGGER.info("[ModManager] Uploaded mod: {} ({} bytes)", filename, actual);
             return String.format(Locale.US, "{\"ok\":true,\"filename\":\"%s\",\"size\":%d}",
                     jsonEscape(filename), actual);
@@ -1430,9 +1508,9 @@ public final class AdminHandler {
         }
     }
 
-    // GET /api/admin/regen — check pending status.
-    // POST /api/admin/regen — queue wilderness regen.
-    // DELETE /api/admin/regen — cancel pending regen.
+    // GET /api/admin/regen, check pending status.
+    // POST /api/admin/regen, queue wilderness regen.
+    // DELETE /api/admin/regen, cancel pending regen.
     public static String handleRegen(String method, Map<String, String> headers, String body,
                                      MinecraftServer server) {
         if (!SmpConfig.ADMIN_ENABLED)         return err(403, "Admin panel disabled");

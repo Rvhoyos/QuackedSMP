@@ -249,7 +249,7 @@ public final class AntiXrayEngine {
                     worldY + dir.getStepY(), worldZ + dir.getStepZ());
             if (!level.isLoaded(neighbor)) return false;
             // Check the neighbor's face pointing TOWARDS our block. Unlike canOcclude() which
-            // is just a property flag, isFaceSturdy checks the actual block shape — fences,
+            // is just a property flag, isFaceSturdy checks the actual block shape, fences,
             // carpets, slabs, stairs etc. correctly count as not covering.
             if (!level.getBlockState(neighbor).isFaceSturdy(level, neighbor, dir.getOpposite())) return false;
         }
