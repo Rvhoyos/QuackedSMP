@@ -33,7 +33,12 @@ public final class SkillManager {
         }
     }
 
-    /** XP required to go from (level-1) to level. */
+    /**
+     * XP required to go from (level-1) to level.
+     * SKILL_XP_EXPONENT only affects levels 11 and up. It must stay at or below 7.9: past that the
+     * cumulative table in {@link #ensureCache()} overflows long. Values below 1 flatten the curve,
+     * and a negative exponent floors every cost to 0, which hands out level 100 immediately.
+     */
     public static long xpForLevel(int level) {
         if (level <= 0)
             return 0;

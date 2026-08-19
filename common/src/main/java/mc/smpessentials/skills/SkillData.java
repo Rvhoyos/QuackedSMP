@@ -148,6 +148,8 @@ public final class SkillData extends SavedData {
     /**
      * Core cooldown check by raw string key (e.g. "archery", "archery_zoom").
      * baseCd is in seconds. level is the skill level used for scaling.
+     * A baseCd of 0 means no cooldown, and negative values behave the same because the remainder
+     * is floored at 0.
      */
     public long getCooldownRemaining(UUID uuid, String abilityKey, long baseCd, int level) {
         PlayerProfile p = getOrCreate(uuid);

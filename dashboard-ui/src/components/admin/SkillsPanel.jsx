@@ -23,14 +23,21 @@ const CFG_KEYS = [
   'cap_industrial_speed', 'cap_nature_health', 'cap_combat_damage', 'cap_knowledge_xp',
   'cap_double_drop', 'cap_defense_armor', 'cap_safe_landing',
 ]
+// Every max below is the point where the value stops working, not a taste call:
+// speed   34   - above ~35x sprint the server's "moved too quickly" check kicks the player
+// health  502  - MAX_HEALTH attribute clamps at 1024 HP, and the config value is in hearts (x2)
+// damage  2047 - ATTACK_DAMAGE clamps at 2048 and a bare-fisted player's base is 1.0
+// xp      2.1e9 - the action-bar readout casts the awarded amount to int
+// armor   30   - ARMOR attribute clamp, shared with worn gear
+// drop/landing 1 - a probability and a damage fraction; both saturate at 1
 const STAT_CAPS = [
-  { key: 'cap_industrial_speed', label: 'Industrial Speed',   hint: 'Max move-speed bonus at lvl 100 (0.5 = +50%)',        step: 0.05 },
-  { key: 'cap_nature_health',    label: 'Nature Health',      hint: 'Max bonus hearts at lvl 100 (10 = +10 hearts)',        step: 0.5 },
-  { key: 'cap_combat_damage',    label: 'Combat Damage',      hint: 'Max bonus damage multiplier at lvl 100 (1 = +100%)',   step: 0.05 },
-  { key: 'cap_knowledge_xp',     label: 'Knowledge XP',       hint: 'Max XP-orb multiplier at lvl 100 (1 = +100%)',         step: 0.05 },
-  { key: 'cap_double_drop',      label: 'Double Drop Chance', hint: 'Max double-drop chance at Industrial 100 (0.5 = 50%)', step: 0.05 },
-  { key: 'cap_defense_armor',    label: 'Defense Armor',      hint: 'Max bonus armor at Defense 100 (10 = +10)',            step: 0.5 },
-  { key: 'cap_safe_landing',     label: 'Safe Landing',       hint: 'Max fall damage absorbed at Agility 100 (1 = 100%)',   step: 0.05 },
+  { key: 'cap_industrial_speed', label: 'Industrial Speed',   hint: 'Move speed at Industrial 100. 0.5 = +50% faster. Past 34 the server kicks the player for moving too quickly.', max: 34, step: 0.05 },
+  { key: 'cap_nature_health',    label: 'Nature Health',      hint: 'Bonus hearts at Nature 100. Vanilla clamps total health at 502 hearts, and rows overlap the hotbar past ~81.', max: 502, step: 0.5 },
+  { key: 'cap_combat_damage',    label: 'Combat Damage',      hint: 'Attack damage at Combat 100. 1 = +100%. Vanilla clamps attack damage at 2048, so a bare fist saturates at 2047.', max: 2047, step: 0.05, control: 'input' },
+  { key: 'cap_knowledge_xp',     label: 'Knowledge XP',       hint: 'Skill XP gain at Knowledge 100, for every non-Knowledge skill. 1 = double XP. One action already maxes a skill around 4,000,000.', max: 2147483647, step: 0.05, control: 'input' },
+  { key: 'cap_double_drop',      label: 'Double Drop Chance', hint: 'Chance at Industrial 100. 0.5 = 50%, 1 = every block.',      max: 1,  step: 0.05 },
+  { key: 'cap_defense_armor',    label: 'Defense Armor',      hint: 'Armor points at Defense 100. Worn armor + this is clamped to 30 by vanilla, and only the first 20 reduce normal-sized hits.', max: 30, step: 0.5 },
+  { key: 'cap_safe_landing',     label: 'Safe Landing',       hint: 'Fall damage absorbed at Agility 100. 1 = no fall damage.',   max: 1,  step: 0.05 },
 ]
 
 export default function SkillsPanel({ token, onExpired }) {
@@ -162,6 +169,7 @@ function PlayersTab({ token, onExpired }) {
 function SettingsTab({ token, onExpired }) {
   const [cfg, setCfg] = useState(null)
   const [draft, setDraft] = useState({})
+  const [cat0, setCat0] = useState(CATEGORIES[0].name)
   const [saving, setSaving] = useState(false)
   const [msg, setMsg] = useState('')
   const [loadErr, setLoadErr] = useState('')
@@ -194,41 +202,57 @@ function SettingsTab({ token, onExpired }) {
   if (!cfg) return loadErr ? <ErrorBanner>{loadErr}</ErrorBanner> : <Loading label="Loading settings…" />
 
   const expo = draft.skill_xp_exponent ?? 1.5
+  const cat = CATEGORIES.find(c => c.name === cat0) ?? CATEGORIES[0]
 
   return (
     <div className={styles.settingsWrap}>
       <div className={styles.settingsScroll}>
-        <SectionCard title="XP Scaling">
-          <Field label="XP Exponent" hint="Higher = slower leveling. Default 1.5.">
-            <Slider value={expo} min={1} max={Math.max(3, expo)} step={0.05} onChange={v => patch('skill_xp_exponent', v)} />
-          </Field>
-        </SectionCard>
-
-        {CATEGORIES.map(cat => (
-          <SectionCard key={cat.name} title={`${cat.name} Skills`}>
-            <div className={styles.skillTableHead}><span /><span>Cooldown (s)</span><span>Unlock Lvl</span></div>
-            {cat.skills.map(skill => {
-              const s = skill.toLowerCase()
-              const unlock = draft[`skill_unlock_${s}`] ?? 0
+        <SectionCard title="Progression">
+          <p className={styles.note}>
+            Every cap is the value reached at skill level 100, scaling linearly from 0 below that.
+            Set a cap to <b>0</b> to switch that perk off.
+          </p>
+          <div className={styles.capGrid}>
+            <Field label="XP Exponent" hint="Higher = slower leveling past lvl 10. Default 1.5. Levels 1-10 are a flat 50 XP and ignore this. Above 7.9 the XP table overflows.">
+              <Slider value={expo} min={1} max={Math.max(7.9, expo)} step={0.05} onChange={v => patch('skill_xp_exponent', v)} />
+            </Field>
+            {STAT_CAPS.map(({ key, label, hint, max, step, control }) => {
+              const v = draft[key] ?? 0
               return (
-                <div key={skill} className={styles.skillTableRow}>
-                  <span className={styles.rowLabel}>{SKILL_LABELS[skill]}</span>
-                  <Input type="number" step="1" value={draft[`skill_cooldown_${s}`] ?? ''} onChange={e => patch(`skill_cooldown_${s}`, parseInt(e.target.value))} />
-                  <Slider value={unlock} min={0} max={100} step={1} onChange={v => patch(`skill_unlock_${s}`, v)} />
-                </div>
+                <Field key={key} label={label} hint={hint}>
+                  {control === 'input'
+                    ? <Input type="number" min="0" max={max} step={step} value={draft[key] ?? ''} onChange={e => patch(key, parseFloat(e.target.value))} />
+                    : <Slider value={v} min={0} max={Math.max(max, v)} step={step} onChange={n => patch(key, n)} />}
+                </Field>
               )
             })}
-          </SectionCard>
-        ))}
+          </div>
+        </SectionCard>
 
-        <SectionCard title="Passive Stat Caps">
-          <div className={styles.capGrid}>
-            {STAT_CAPS.map(({ key, label, hint, step }) => (
-              <Field key={key} label={label} hint={hint}>
-                <Input type="number" step={step} value={draft[key] ?? ''} onChange={e => patch(key, parseFloat(e.target.value))} />
-              </Field>
+        <SectionCard title="Abilities" actions={
+          <div className={styles.catTabs}>
+            {CATEGORIES.map(c => (
+              <button key={c.name} className={`${styles.catTab} ${c.name === cat.name ? styles.catTabOn : ''}`}
+                onClick={() => setCat0(c.name)}>{c.name}</button>
             ))}
           </div>
+        }>
+          <p className={styles.note}>
+            Cooldown is the base at level 0 and shortens as the skill levels (75% at lvl 10, 25% at lvl 100).
+            <b>0</b> = no cooldown. Unlock Lvl <b>0</b> = usable from the start.
+          </p>
+          <div className={styles.skillTableHead}><span /><span>Cooldown (s)</span><span>Unlock Lvl</span></div>
+          {cat.skills.map(skill => {
+            const s = skill.toLowerCase()
+            const unlock = draft[`skill_unlock_${s}`] ?? 0
+            return (
+              <div key={skill} className={styles.skillTableRow}>
+                <span className={styles.rowLabel}>{SKILL_LABELS[skill]}</span>
+                <Input type="number" min="0" max="3600" step="1" value={draft[`skill_cooldown_${s}`] ?? ''} onChange={e => patch(`skill_cooldown_${s}`, parseInt(e.target.value))} />
+                <Slider value={unlock} min={0} max={100} step={1} onChange={v => patch(`skill_unlock_${s}`, v)} />
+              </div>
+            )
+          })}
         </SectionCard>
       </div>
 
