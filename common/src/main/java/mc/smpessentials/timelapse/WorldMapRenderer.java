@@ -1,5 +1,6 @@
 package mc.smpessentials.timelapse;
 
+import mc.smpessentials.SmpUtilsMod;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
@@ -11,13 +12,17 @@ import net.minecraft.world.level.storage.LevelResource;
 
 import java.awt.image.BufferedImage;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 import java.util.Optional;
 
 /**
- * Renders a dimension into a top-down image sized dynamically to the extent of
- * its generated chunks, so a snapshot always frames exactly what exists. Reads
- * region files directly and only reads: callers must flush and pause world
- * autosave first so the files on disk are current and stable.
+ * Renders a dimension into a top-down image sized to the chunks it frames, so a
+ * snapshot always fills its pixels with real terrain. {@link ChunkClusterFinder}
+ * chooses what is framed and {@link RegionPresenceScanner} says which chunks
+ * exist. Reads region files directly and only reads: callers must flush and
+ * pause world autosave first so the files on disk are current and stable.
  */
 public final class WorldMapRenderer {
 
@@ -25,9 +30,9 @@ public final class WorldMapRenderer {
     public record RenderResult(BufferedImage image, int blocksPerPixel) {}
 
     /**
-     * Renders the full generated extent at 1 block = 1 pixel, downsampling only
-     * as far as {@code budgetBytes} of heap requires. Returns null if nothing is
-     * generated.
+     * Renders the main body of generated chunks at 1 block = 1 pixel, downsampling
+     * only as far as {@code budgetBytes} of heap requires. Returns null if nothing
+     * is generated.
      */
     public RenderResult render(MinecraftServer server, ResourceKey<Level> dimension, long budgetBytes,
                                CaptureProgress progress) throws Exception {
@@ -39,36 +44,50 @@ public final class WorldMapRenderer {
                 .resolve("region");
 
         progress.phase("scanning");
-        Optional<ChunkBounds> bounds = new RegionExtentScanner(regionDir).scan();
-        if (bounds.isEmpty()) return null;
-        ChunkBounds extent = bounds.get();
+        ChunkClusterFinder.Cluster cluster = ChunkClusterFinder.largest(new RegionPresenceScanner(regionDir).scan());
+        if (cluster == null) return null;
+        if (cluster.excludedChunks() > 0) {
+            SmpUtilsMod.LOGGER.info("[Timelapse] {}: framing {} chunks, leaving out {} that sit far from them",
+                    dimension.identifier(), cluster.chunkCount(), cluster.excludedChunks());
+        }
 
         ColorMaps.ensureLoaded();
         BlockColorPalette.ensureLoaded();
 
-        MapCanvas canvas = MapCanvas.covering(extent, budgetBytes);
-        progress.begin(extent);
+        MapCanvas canvas = MapCanvas.covering(cluster.bounds(), budgetBytes);
+        progress.begin(cluster.bounds(), cluster.chunkCount());
         progress.phase("painting");
-        paint(server, level, dimension, regionDir, extent, canvas, progress);
+        paint(server, level, dimension, regionDir, cluster, canvas, progress);
         progress.phase("shading");
         return new RenderResult(canvas.toImage(), canvas.blocksPerPixel());
     }
 
+    // Visits only chunks the region headers report as stored: reading a chunk that
+    // was never generated would make vanilla create an empty region file for it.
     private void paint(MinecraftServer server, ServerLevel level, ResourceKey<Level> dimension,
-                       Path regionDir, ChunkBounds bounds, MapCanvas canvas, CaptureProgress progress) throws Exception {
+                       Path regionDir, ChunkClusterFinder.Cluster cluster, MapCanvas canvas,
+                       CaptureProgress progress) throws Exception {
         // getWorldPath(ROOT) ends in "." so it must be normalised before the folder name is readable.
         String levelName = server.getWorldPath(LevelResource.ROOT)
                 .toAbsolutePath().normalize().getFileName().toString();
         ChunkColumnSampler sampler = new ChunkColumnSampler(
                 server.registryAccess(), level, level.dimensionType().hasCeiling());
 
+        // West to east, so the dashboard's live map fills in as a left-to-right sweep.
+        List<RegionPresence> regions = new ArrayList<>(cluster.regions());
+        regions.sort(Comparator.comparingInt(RegionPresence::regionX).thenComparingInt(RegionPresence::regionZ));
+
         try (RegionChunkReader reader = RegionChunkReader.open(dimension, regionDir, levelName)) {
-            for (int cx = bounds.minChunkX(); cx <= bounds.maxChunkX(); cx++) {
-                for (int cz = bounds.minChunkZ(); cz <= bounds.maxChunkZ(); cz++) {
-                    Optional<CompoundTag> tag = reader.read(new ChunkPos(cx, cz));
-                    progress.markChunk(cx, cz, tag.isPresent());
-                    if (tag.isPresent()) {
-                        paintChunk(sampler.sample(tag.get()), cx, cz, canvas);
+            for (RegionPresence region : regions) {
+                for (int lx = 0; lx < RegionPresence.SIDE; lx++) {
+                    for (int lz = 0; lz < RegionPresence.SIDE; lz++) {
+                        if (!region.present(lx, lz)) continue;
+                        int chunkX = region.chunkX(lx), chunkZ = region.chunkZ(lz);
+                        Optional<CompoundTag> tag = reader.read(new ChunkPos(chunkX, chunkZ));
+                        progress.markChunk(chunkX, chunkZ);
+                        if (tag.isPresent()) {
+                            paintChunk(sampler.sample(tag.get()), chunkX, chunkZ, canvas);
+                        }
                     }
                 }
             }

@@ -15,6 +15,9 @@ final class CaptureProgress {
     // number of SVG cells the dashboard draws, regardless of world size.
     private static final int MAX_CELLS = 64;
 
+    // Value the dashboard's cell palette draws as land.
+    private static final byte CELL_LAND = 2;
+
     private volatile String phase = "idle";
     // Which dimension is rendering now and its position in the sequential batch,
     // so the dashboard can label a multi-dimension capture ("overworld · 1/3").
@@ -25,14 +28,19 @@ final class CaptureProgress {
     private volatile int    chunksTotal;
     private volatile int    displayW;
     private volatile int    displayH;
-    // One byte per display cell: 0 unscanned, 1 scanned-empty, 2 scanned-land.
+    // One byte per display cell: 0 not yet painted, CELL_LAND once painted.
     private volatile byte[] cells = new byte[0];
 
     // Source chunk extent, used to map a chunk to its display cell.
     private int minChunkX, minChunkZ, widthChunks, heightChunks;
 
-    /** Begins a capture over {@code bounds}: sizes the grid and clears counts. */
-    void begin(ChunkBounds bounds) {
+    /**
+     * Begins a capture over {@code bounds}: sizes the grid and clears counts.
+     *
+     * @param totalChunks chunks the render will actually visit, which is far
+     *                    fewer than the box holds on a world with distant chunks
+     */
+    void begin(ChunkBounds bounds, int totalChunks) {
         minChunkX    = bounds.minChunkX();
         minChunkZ    = bounds.minChunkZ();
         widthChunks  = bounds.widthChunks();
@@ -49,7 +57,7 @@ final class CaptureProgress {
         }
         cells        = new byte[displayW * displayH];
         chunksDone   = 0;
-        chunksTotal  = widthChunks * heightChunks;
+        chunksTotal  = totalChunks;
     }
 
     void phase(String phase) { this.phase = phase; }
@@ -71,20 +79,17 @@ final class CaptureProgress {
     }
 
     /**
-     * Records one scanned chunk, upgrading its display cell. Called in the same
-     * cx-major order the paint loop uses, once per chunk whether or not it held
-     * data, so the reported sweep stays smooth.
+     * Records one painted chunk, lighting up its display cell. Called in the
+     * paint loop's own order, once per chunk that exists.
      */
-    void markChunk(int chunkX, int chunkZ, boolean present) {
+    void markChunk(int chunkX, int chunkZ) {
         chunksDone++;
         byte[] c = cells;
         if (c.length == 0) return;
         int dx = (int) ((long) (chunkX - minChunkX) * displayW / Math.max(1, widthChunks));
         int dz = (int) ((long) (chunkZ - minChunkZ) * displayH / Math.max(1, heightChunks));
         if (dx < 0 || dx >= displayW || dz < 0 || dz >= displayH) return;
-        int idx = dz * displayW + dx;
-        byte want = (byte) (present ? 2 : 1);
-        if (want > c[idx]) c[idx] = want;
+        c[dz * displayW + dx] = CELL_LAND;
     }
 
     /** Compact JSON snapshot for the dashboard poll; cells is a run of '0'/'1'/'2'. */
