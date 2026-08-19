@@ -57,8 +57,12 @@ public final class SidebarManager {
         return null;
     }
 
-    // Player just connected: offer the welcome board (self-suppresses if they are a hardcore member).
+    // Player just connected. A member of a live hardcore session gets the run board (a plain
+    // reconnect fires none of the session-entry triggers); everyone else gets the welcome board.
+    // When the hardcore board is disabled the welcome board still self-suppresses for members, so
+    // they stay boardless either way.
     public void onJoin(ServerPlayer player) {
+        if (hardcore.offerOnJoin(player)) return;
         welcome.openFor(player);
     }
 

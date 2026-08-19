@@ -74,6 +74,18 @@ public final class HardcoreSidebarProvider implements SidebarProvider {
         openWindowForMembers(server, seconds(SmpConfig.HARDCORE_SIDEBAR_ON_ENTRY_SECONDS));
     }
 
+    // Offers the board to a player who just connected while already in a session, which fires none
+    // of the entry triggers. Returns true if this provider claimed the join board, so the caller
+    // knows not to offer the welcome board instead.
+    public boolean offerOnJoin(ServerPlayer player) {
+        if (!SmpConfig.HARDCORE_SIDEBAR_ENABLED) return false;
+        MinecraftServer server = ((ServerLevel) player.level()).getServer();
+        if (HardcoreSavedData.get(server).getPlayerSessionName(player.getUUID()) == null) return false;
+        showUntilTick.put(player.getUUID(),
+                server.getTickCount() + seconds(SmpConfig.HARDCORE_SIDEBAR_ON_ENTRY_SECONDS));
+        return true;
+    }
+
     @Override
     public void onDisconnect(ServerPlayer player) {
         showUntilTick.remove(player.getUUID());
