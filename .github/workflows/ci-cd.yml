@@ -6,6 +6,16 @@ on:
     tags: [ "v*" ]
   pull_request:
     branches: [ "main" ]
+  # Fired by the release the `release` job below cuts (RELEASE_PAT-created releases do
+  # trigger workflows, unlike GITHUB_TOKEN-created ones).
+  release:
+    types: [ published ]
+  # Manual re-run / backfill: publish an existing tag's jars without cutting a new release.
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing release tag to publish (e.g. v2.2.9)"
+        required: true
 
 jobs:
   build:
@@ -111,4 +121,105 @@ jobs:
           files: release-jars/*.jar
           fail_on_unmatched_files: true
           body_path: release-notes.md
+
+  # Mirrors a published GitHub Release to Modrinth and CurseForge.
+  # Requires repo secrets MODRINTH_TOKEN and CURSEFORGE_TOKEN.
+  publish-platforms:
+    if: github.event_name == 'release' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Resolve tag and version
+        id: rel
+        run: |
+          TAG="${{ github.event_name == 'release' && github.event.release.tag_name || github.event.inputs.tag }}"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "version=${TAG#v}" >> "$GITHUB_OUTPUT"
+          echo "Publishing $TAG"
+
+      # Checked out at the tag, not at main, so the game version below is the one this
+      # release was actually built against even when main has already moved on.
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ steps.rel.outputs.tag }}
+
+      - name: Read Minecraft version from gradle.properties
+        id: mc
+        run: |
+          MC="$(grep -E '^minecraft_version' gradle.properties | sed -E 's/.*=[[:space:]]*//')"
+          echo "version=$MC" >> "$GITHUB_OUTPUT"
+          echo "Game version: $MC"
+
+      # `release: published` fires when the release is created, which is BEFORE
+      # action-gh-release finishes uploading the jars to it, so poll until both are
+      # actually attached instead of racing the upload.
+      - name: Wait for release jars
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ steps.rel.outputs.tag }}
+          VERSION: ${{ steps.rel.outputs.version }}
+        run: |
+          FABRIC="quackedsmp-fabric-${VERSION}.jar"
+          NEOFORGE="quackedsmp-neoforge-${VERSION}.jar"
+          for i in $(seq 1 30); do
+            NAMES="$(gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json assets -q '.assets[].name')"
+            if printf '%s\n' "$NAMES" | grep -qx "$FABRIC" && printf '%s\n' "$NAMES" | grep -qx "$NEOFORGE"; then
+              echo "Both jars attached."
+              exit 0
+            fi
+            echo "Waiting for release assets ($i/30)..."
+            sleep 10
+          done
+          echo "::error::$FABRIC and/or $NEOFORGE never appeared on release $TAG."
+          exit 1
+
+      # Take the jars already attached to the release rather than rebuilding, so all
+      # three platforms hand out byte-identical files. Also reuses the release body
+      # as the changelog, so the notes match everywhere.
+      - name: Download release jars and notes
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ steps.rel.outputs.tag }}
+        run: |
+          gh release download "$TAG" --repo "$GITHUB_REPOSITORY" --pattern '*.jar' --dir release-jars
+          gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json body -q .body > release-notes.md
+          ls -l release-jars
+
+      # github-token is deliberately omitted: the release already exists, mc-publish
+      # only needs to touch Modrinth and CurseForge.
+      - name: Publish to Modrinth and CurseForge
+        uses: Kira-NT/mc-publish@v3
+        with:
+          modrinth-id: SiezABuM
+          modrinth-token: ${{ secrets.MODRINTH_TOKEN }}
+          modrinth-featured: false
+
+          curseforge-id: 1360431
+          curseforge-token: ${{ secrets.CURSEFORGE_TOKEN }}
+
+          files: release-jars/*.jar
+          name: "Quacked SMP - Server Management Panel ${{ steps.rel.outputs.version }}"
+          version: ${{ steps.rel.outputs.version }}
+          version-type: release
+          changelog-file: release-notes.md
+
+          # One version carrying both jars, matching how 2.2.x was published by hand.
+          loaders: |
+            fabric
+            neoforge
+          game-versions: ${{ steps.mc.outputs.version }}
+
+          # Pinned by hand. Auto-detection reads fabric.mod.json and would publish
+          # fabric-api as required, which is wrong for the NeoForge jar sharing this
+          # version, and would drop the three optional integrations.
+          #
+          # CurseForge relations are keyed by SLUG. mc-publish passes a non-numeric id
+          # through untouched, but resolves a numeric one via the Eternal API and then
+          # silently drops the relation if that lookup fails, so slugs are used here.
+          dependencies: |
+            spark(optional){modrinth:l6YH9Als}{curseforge:spark}
+            simple-voice-chat(optional){modrinth:9eGKb6K1}{curseforge:simple-voice-chat}
+            bluemap(optional){modrinth:swbUV1cr}{curseforge:bluemap}
 
