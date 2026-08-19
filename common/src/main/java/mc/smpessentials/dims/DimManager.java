@@ -19,7 +19,6 @@ import net.minecraft.world.level.biome.BiomeSource;
 import net.minecraft.world.level.biome.Climate;
 import net.minecraft.world.level.biome.FixedBiomeSource;
 import net.minecraft.world.level.biome.MultiNoiseBiomeSource;
-import net.minecraft.world.level.biome.MultiNoiseBiomeSourceParameterList;
 import net.minecraft.world.level.biome.MultiNoiseBiomeSourceParameterLists;
 import net.minecraft.core.Direction;
 import net.minecraft.world.entity.Entity;
@@ -54,12 +53,12 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.UUID;
 import java.util.concurrent.Executor;
 
 /*
@@ -67,7 +66,7 @@ import java.util.concurrent.Executor;
  * Dimensions are injected into MinecraftServer.levels via a Mixin accessor so they are live
  * immediately without a restart. Supports generator types: overworld, nether, end, ether.
  * Ether uses a custom island density function (EtherIslandDensityFunction) with configurable
- * threshold, radius, and spacing params. Stored in generatorConfig alongside biomes.
+ * island shape params. The generatorConfig grammar those params ride in lives in GeneratorConfig.
  * Each custom dim gets a portal frame block (default glowstone); right-click with water bucket
  * to activate. The generatorConfig string is persisted in DimSavedData for restart recovery.
  */
@@ -75,13 +74,19 @@ public final class DimManager {
 
     private static final Logger LOGGER = LogManager.getLogger("DimManager");
 
-    // Tracks which loaded dims are ether-type to avoid SavedData lookups on every tick
-    private static final Set<String> etherDimIds =
-            Collections.synchronizedSet(new HashSet<>());
+    // Loaded ether dims mapped to whether they generate structures, so the per-tick void check and
+    // the structure mixin never touch SavedData. Updated on create/destroy/restore.
+    private static final Map<String, Boolean> etherDims =
+            Collections.synchronizedMap(new HashMap<>());
 
-    // True if the dim is currently loaded as ether-type; backed by an in-memory set updated on create/destroy/restore.
+    // True if the dim is currently loaded as ether-type.
     public static boolean isEtherDim(String dimId) {
-        return etherDimIds.contains(dimId);
+        return etherDims.containsKey(dimId);
+    }
+
+    // True if that ether dim was created with structures enabled. See EtherStructureFilter.
+    public static boolean etherStructuresEnabled(String dimId) {
+        return Boolean.TRUE.equals(etherDims.get(dimId));
     }
 
     // Records where the entity entered the custom dim so the return trip lands in the right spot.
@@ -154,7 +159,7 @@ public final class DimManager {
         }
 
         levels.remove(dimKey);
-        etherDimIds.remove(loc.toString());
+        etherDims.remove(loc.toString());
         DimSavedData.get(server).remove(id);
         // Force-write to disk immediately so the deletion survives a crash or fast restart
         server.overworld().getDataStorage().saveAndJoin();
@@ -447,12 +452,11 @@ public final class DimManager {
         server.getPlayerList().addWorldborderListener(newLevel);
 
         if ("ether".equals(generatorType)) {
-            etherDimIds.add(dimKey.identifier().toString());
-        }
+            etherDims.put(dimKey.identifier().toString(),
+                    GeneratorConfig.parseEther(generatorConfig.orElse("")).structures());
 
-        // Pre-generate the spawn island for ether dims on the next tick, by which time the
-        // chunk generator will have had a chance to initialise the spawn chunk.
-        if ("ether".equals(generatorType)) {
+            // Pre-generate the spawn island on the next tick, by which time the chunk generator
+            // will have had a chance to initialise the spawn chunk.
             final ServerLevel ethLevel = newLevel;
             server.execute(() -> {
                 BlockPos spawnPos = findSpawnOrigin(server, ethLevel);
@@ -513,60 +517,23 @@ public final class DimManager {
                 if (config.startsWith("flat ")) {
                     yield buildFlatStem(server, config.substring(5), ow);
                 }
-                if (config.startsWith("biomes ")) {
-                    String biomeListStr = config.substring(7).trim();
-                    yield new LevelStem(ow.type(), new NoiseBasedChunkGenerator(
-                            parseBiomeSource(server, biomeListStr.isEmpty() ? null : biomeListStr), owNoise));
-                }
-                // Default: fresh overworld generator — never reuse the live overworld's LevelStem
+                // Always a fresh overworld generator, never the live overworld's LevelStem
                 // instance, as sharing a ChunkGenerator between two ServerLevels corrupts terrain.
+                String biomeListStr = GeneratorConfig.splitBiomes(config).biomes().orElse(null);
                 yield new LevelStem(ow.type(), new NoiseBasedChunkGenerator(
-                        parseBiomeSource(server, null), owNoise));
+                        parseBiomeSource(server, biomeListStr), owNoise));
             }
 
             // Ether: custom island density function + overworld DimensionType + configurable biomes
             case "ether" -> {
                 LevelStem ow = stemReg.getValue(LevelStem.OVERWORLD);
                 if (ow == null) yield null;
-                String config = generatorConfig.orElse("");
 
-                // Extract biomes (must be last in config string) -- backward compatible
-                String biomeListStr = null;
-                int biomesIdx = config.indexOf("biomes ");
-                if (biomesIdx >= 0) {
-                    String biomes = config.substring(biomesIdx + 7).trim();
-                    biomeListStr = biomes.isEmpty() ? null : biomes;
-                    config = config.substring(0, biomesIdx).trim();
-                }
-
-                // Parse ether-specific island params from remaining config
-                float threshold = EtherIslandDensityFunction.DEFAULT_THRESHOLD;
-                float minRadius = EtherIslandDensityFunction.DEFAULT_MIN_RADIUS;
-                float maxRadius = EtherIslandDensityFunction.DEFAULT_MAX_RADIUS;
-                int spacing = EtherIslandDensityFunction.DEFAULT_SPACING;
-                if (!config.isBlank()) {
-                    String[] tokens = config.split("\\s+");
-                    for (int ti = 0; ti < tokens.length; ti++) {
-                        try {
-                            switch (tokens[ti]) {
-                                case "threshold" -> {
-                                    if (ti + 1 < tokens.length) threshold = Float.parseFloat(tokens[++ti]);
-                                }
-                                case "radius" -> {
-                                    if (ti + 2 < tokens.length) {
-                                        minRadius = Float.parseFloat(tokens[++ti]);
-                                        maxRadius = Float.parseFloat(tokens[++ti]);
-                                    }
-                                }
-                                case "spacing" -> {
-                                    if (ti + 1 < tokens.length) spacing = Integer.parseInt(tokens[++ti]);
-                                }
-                            }
-                        } catch (NumberFormatException ignored) {}
-                    }
-                }
-
-                yield buildEtherStem(server, ow, threshold, minRadius, maxRadius, spacing, biomeListStr);
+                GeneratorConfig.Ether ether = GeneratorConfig.parseEther(generatorConfig.orElse(""));
+                // Restore must not fail on a bad stored config: the params are already clamped,
+                // so report and carry on.
+                ether.problems().forEach(problem -> LOGGER.warn("Ether config: {}", problem));
+                yield buildEtherStem(server, ow, ether.params(), ether.biomes().orElse(null));
             }
 
             default -> null;
@@ -685,8 +652,7 @@ public final class DimManager {
 
     // Builds an ether LevelStem with our custom island density function wired into the noise router.
     private static LevelStem buildEtherStem(MinecraftServer server, LevelStem overworldStem,
-                                             float threshold, float minRadius, float maxRadius,
-                                             int spacing, String biomeListStr) {
+                                             EtherIslandParams params, String biomeListStr) {
         // Copy base settings from the registered FLOATING_ISLANDS preset
         NoiseGeneratorSettings floatingSettings = server.registryAccess()
                 .lookupOrThrow(Registries.NOISE_SETTINGS)
@@ -702,20 +668,17 @@ public final class DimManager {
 
         // Build the custom island density function
         long seed = server.getWorldGenSettings().options().seed();
-        EtherIslandDensityFunction islands = new EtherIslandDensityFunction(
-                seed, threshold, minRadius, maxRadius, spacing);
+        EtherIslandDensityFunction islands = new EtherIslandDensityFunction(seed, params);
 
         // Island shaping + 3D noise for natural terrain detail
         DensityFunction combined = DensityFunctions.add(islands, base3d);
 
-        // slideEndLike: slide(input, minY=0, height=256, 72, -184, -23.4375, 4, 32, -0.234375)
-        DensityFunction topGrad = DensityFunctions.yClampedGradient(256 - 72, 256 + 184, 1.0, 0.0);
-        DensityFunction afterTop = DensityFunctions.lerp(topGrad, -23.4375, combined);
-        DensityFunction botGrad = DensityFunctions.yClampedGradient(4, 32, 0.0, 1.0);
-        DensityFunction slid = DensityFunctions.lerp(botGrad, -0.234375, afterTop);
+        // No End-style top or bottom slide. Those fade terrain out below y32 and above y184, which
+        // would silently forbid the low and high ends of the configured island height band.
+        // Islands are bounded by their own thickness, so nothing else needs the slide.
 
         // postProcess: blend, interpolate, scale, squeeze
-        DensityFunction blended = DensityFunctions.blendDensity(slid);
+        DensityFunction blended = DensityFunctions.blendDensity(combined);
         DensityFunction finalDensity = DensityFunctions.mul(
                 DensityFunctions.interpolated(blended),
                 DensityFunctions.constant(0.64)).squeeze();

@@ -33,7 +33,8 @@
     "ServerLevelMixin",
     "ServerLevelAddEntityMixin",
     "WitherSkullBlockMixin",
-    "EndCrystalItemMixin"
+    "EndCrystalItemMixin",
+    "ChunkGeneratorStructureMixin"
   ],
   "injectors": {
     "defaultRequire": 1

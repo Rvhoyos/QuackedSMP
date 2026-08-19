@@ -249,11 +249,11 @@ Runtime dimensions without datapacks.
 | `nether` | Vanilla nether |
 | `end` | Vanilla end |
 
-Optional: weighted biomes; flat layers (`overworld` only); ether threshold / radii / spacing. Examples:
+Optional: weighted biomes; flat layers (`overworld` only); ether island shape. Ether params are keywords, all optional and in any order: `threshold <f>`, `radius <min> <max>`, `spacing <i>`, `thickness <min> <max>`, `height <minY> <maxY>`, `structures <true|false>`, and `biomes` last. Islands are blobs, so `radius` sets how wide they are, `thickness` how tall, and `height` the band their centres spawn in. Examples:
 
 ```
 /dim create quacksmp:flatworld overworld flat minecraft:bedrock:1 minecraft:dirt:2 minecraft:grass_block:1
-/dim create quacksmp:sky_jungle ether -0.7 10 80 20 biomes minecraft:jungle
+/dim create quacksmp:sky_jungle ether threshold -0.9 radius 20 50 thickness 8 24 height 60 200 biomes minecraft:jungle
 ```
 
 **Portals:** new custom dims default to a **glowstone** frame block (`/dim setportal` to change). Build a nether-portal-shaped frame (2-21 wide, 3-21 tall) in a vanilla dimension, activate with a **water bucket**. Travel is bidirectional; return portals are placed on first entry.

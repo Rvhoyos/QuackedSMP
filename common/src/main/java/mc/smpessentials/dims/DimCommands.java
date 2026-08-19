@@ -1,10 +1,7 @@
 package mc.smpessentials.dims;
 
 import com.mojang.brigadier.CommandDispatcher;
-import com.mojang.brigadier.arguments.FloatArgumentType;
-import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
-import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
@@ -27,7 +24,9 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -37,8 +36,9 @@ import java.util.concurrent.CompletableFuture;
  * Supports create (overworld/nether/end/ether), delete, list, setportal, and tp subcommands.
  * Biome list format: "namespace:path[:weight] ..." (weights are ratios, single biome pins the dim).
  * Flat layer format: "blockId:height ..." listed bottom to top.
- * Ether accepts positional island params: threshold (-1..0), minRadius, maxRadius (5..500),
- * spacing (1..32). Each is optional -- stop at any valid point. Biomes via literal at any stop.
+ * Ether takes keyword island params in any order, all optional, parsed by GeneratorConfig:
+ * threshold, radius min max, spacing, thickness min max, height minY maxY, structures true|false,
+ * then biomes last.
  *
  * Each custom dim is automatically assigned {@code minecraft:glowstone} as its portal frame block
  * when first created. {@code /dim setportal} overrides this. One frame block per dim; one dim per
@@ -94,39 +94,15 @@ public final class DimCommands {
                             )
                         )
 
-                        // ether [<threshold> [<minRadius> <maxRadius> [<spacing>]]] [biomes <list>]
+                        // ether [key value ...] -- see GeneratorConfig for the grammar
                         .then(Commands.literal("ether")
-                            .executes(ctx -> executeEtherCreate(ctx, Optional.empty(),
-                                    Optional.empty(), Optional.empty(), Optional.empty()))
-                            .then(etherBiomes())
-                            .then(Commands.argument("threshold", FloatArgumentType.floatArg(-1.0f, 0.0f))
-                                .suggests((ctx, b) -> suggestValues(b, "threshold", "-0.95", "-0.9", "-0.85", "-0.8", "-0.7"))
+                            .executes(ctx -> executeCreate(ctx.getSource(),
+                                    ctx.getArgument("id", Identifier.class),
+                                    "ether", Optional.empty()))
+                            .then(Commands.argument("params", StringArgumentType.greedyString())
+                                .suggests(DimCommands::suggestEtherParams)
                                 .executes(ctx -> executeEtherCreate(ctx,
-                                        Optional.of(FloatArgumentType.getFloat(ctx, "threshold")),
-                                        Optional.empty(), Optional.empty(), Optional.empty()))
-                                .then(etherBiomes())
-                                .then(Commands.argument("minRadius", FloatArgumentType.floatArg(5.0f, 500.0f))
-                                    .suggests((ctx, b) -> suggestValues(b, "minRadius", "20", "40", "60", "80", "100"))
-                                    .then(Commands.argument("maxRadius", FloatArgumentType.floatArg(5.0f, 500.0f))
-                                        .suggests((ctx, b) -> suggestValues(b, "maxRadius", "60", "90", "120", "150"))
-                                        .executes(ctx -> executeEtherCreate(ctx,
-                                                Optional.of(FloatArgumentType.getFloat(ctx, "threshold")),
-                                                Optional.of(FloatArgumentType.getFloat(ctx, "minRadius")),
-                                                Optional.of(FloatArgumentType.getFloat(ctx, "maxRadius")),
-                                                Optional.empty()))
-                                        .then(etherBiomes())
-                                        .then(Commands.argument("spacing", IntegerArgumentType.integer(1, 32))
-                                            .suggests((ctx, b) -> suggestValues(b, "spacing", "4", "6", "8", "10", "12"))
-                                            .executes(ctx -> executeEtherCreate(ctx,
-                                                    Optional.of(FloatArgumentType.getFloat(ctx, "threshold")),
-                                                    Optional.of(FloatArgumentType.getFloat(ctx, "minRadius")),
-                                                    Optional.of(FloatArgumentType.getFloat(ctx, "maxRadius")),
-                                                    Optional.of(IntegerArgumentType.getInteger(ctx, "spacing"))))
-                                            .then(etherBiomes())
-                                        )
-                                    )
-                                )
-                            )
+                                        StringArgumentType.getString(ctx, "params"))))
                         )
 
                         // nether
@@ -251,64 +227,79 @@ public final class DimCommands {
         );
     }
 
-    // Builds the "biomes <list>" subtree reused at every ether stopping point.
-    private static LiteralArgumentBuilder<CommandSourceStack> etherBiomes() {
-        return Commands.literal("biomes")
-                .then(Commands.argument("biome_list", StringArgumentType.greedyString())
-                    .suggests(DimCommands::suggestBiomes)
-                    .executes(ctx -> {
-                        // Grab whichever ether args were provided before "biomes"
-                        Optional<Float> threshold = getOptionalFloat(ctx, "threshold");
-                        Optional<Float> minRadius = getOptionalFloat(ctx, "minRadius");
-                        Optional<Float> maxRadius = getOptionalFloat(ctx, "maxRadius");
-                        Optional<Integer> spacing = getOptionalInt(ctx, "spacing");
-                        String biomes = StringArgumentType.getString(ctx, "biome_list");
-                        return executeEtherCreate(ctx, threshold, minRadius, maxRadius, spacing, biomes);
-                    }));
-    }
-
-    // Builds the generatorConfig string from typed ether args and delegates to executeCreate.
-    private static int executeEtherCreate(CommandContext<CommandSourceStack> ctx,
-                                           Optional<Float> threshold, Optional<Float> minRadius,
-                                           Optional<Float> maxRadius, Optional<Integer> spacing) {
-        return executeEtherCreate(ctx, threshold, minRadius, maxRadius, spacing, null);
-    }
-
-    private static int executeEtherCreate(CommandContext<CommandSourceStack> ctx,
-                                           Optional<Float> threshold, Optional<Float> minRadius,
-                                           Optional<Float> maxRadius, Optional<Integer> spacing,
-                                           String biomes) {
-        StringBuilder config = new StringBuilder();
-        threshold.ifPresent(v -> config.append("threshold ").append(v).append(' '));
-        if (minRadius.isPresent() && maxRadius.isPresent()) {
-            config.append("radius ").append(minRadius.get()).append(' ').append(maxRadius.get()).append(' ');
+    // Parses the keyword island params and rejects the command if anything is wrong, so a typo
+    // never quietly generates a different world. Stores the canonical form so a restart rebuilds
+    // exactly this dimension.
+    private static int executeEtherCreate(CommandContext<CommandSourceStack> ctx, String rawParams) {
+        GeneratorConfig.Ether ether = GeneratorConfig.parseEther(rawParams);
+        if (!ether.problems().isEmpty()) {
+            ctx.getSource().sendFailure(Component.literal(String.join("\n", ether.problems())));
+            return 0;
         }
-        spacing.ifPresent(v -> config.append("spacing ").append(v).append(' '));
-        if (biomes != null && !biomes.isBlank()) {
-            config.append("biomes ").append(biomes);
-        }
-        String configStr = config.toString().trim();
         return executeCreate(ctx.getSource(), ctx.getArgument("id", Identifier.class),
-                "ether", configStr.isEmpty() ? Optional.empty() : Optional.of(configStr));
+                "ether", Optional.of(ether.toConfigString()));
     }
 
-    private static Optional<Float> getOptionalFloat(CommandContext<CommandSourceStack> ctx, String name) {
-        try { return Optional.of(FloatArgumentType.getFloat(ctx, name)); }
-        catch (IllegalArgumentException e) { return Optional.empty(); }
-    }
+    // Completes the ether params: the option keys not yet used, or sample values for the key
+    // currently being filled in. Inside a biomes clause it hands over to the biome registry.
+    private static CompletableFuture<Suggestions> suggestEtherParams(
+            CommandContext<CommandSourceStack> ctx, SuggestionsBuilder builder) {
+        String remaining = builder.getRemaining();
+        String[] tokens = remaining.isBlank() ? new String[0] : remaining.strip().split("\\s+");
+        boolean typing = !remaining.isEmpty() && !Character.isWhitespace(remaining.charAt(remaining.length() - 1));
+        int complete = tokens.length - (typing ? 1 : 0);
 
-    private static Optional<Integer> getOptionalInt(CommandContext<CommandSourceStack> ctx, String name) {
-        try { return Optional.of(IntegerArgumentType.getInteger(ctx, name)); }
-        catch (IllegalArgumentException e) { return Optional.empty(); }
-    }
+        // Walk the finished tokens to find whether a key is still waiting for values.
+        Set<String> used = new HashSet<>();
+        String pendingKey = null;
+        int valuesLeft = 0;
+        for (int i = 0; i < complete; i++) {
+            String token = tokens[i].toLowerCase(Locale.ROOT);
+            if (valuesLeft > 0) {
+                valuesLeft--;
+                continue;
+            }
+            int arity = GeneratorConfig.etherKeyArity(token);
+            if (arity < 0) return suggestBiomes(ctx, builder);
+            if (arity == 0) return builder.buildFuture();
+            pendingKey = token;
+            valuesLeft = arity;
+            used.add(token);
+        }
 
-    private static CompletableFuture<Suggestions> suggestValues(SuggestionsBuilder builder,
-                                                                String label, String... values) {
+        List<String> candidates;
+        String label;
+        if (valuesLeft > 0) {
+            int arity = GeneratorConfig.etherKeyArity(pendingKey);
+            int slot = arity - valuesLeft;
+            candidates = sampleValues(pendingKey, slot);
+            label = arity == 2 ? pendingKey + (slot == 0 ? " min" : " max") : pendingKey;
+        } else {
+            candidates = GeneratorConfig.ETHER_KEYS.stream().filter(key -> !used.contains(key)).toList();
+            label = "option";
+        }
+
+        int lastSpace = remaining.lastIndexOf(' ');
+        String prefix  = lastSpace >= 0 ? remaining.substring(0, lastSpace + 1) : "";
+        String current = typing ? tokens[tokens.length - 1] : "";
         com.mojang.brigadier.Message tooltip = () -> label;
-        for (String v : values) {
-            if (v.startsWith(builder.getRemaining())) builder.suggest(v, tooltip);
+        for (String candidate : candidates) {
+            if (candidate.startsWith(current)) builder.suggest(prefix + candidate, tooltip);
         }
         return builder.buildFuture();
+    }
+
+    // Starting points offered in tab completion. Not limits: GeneratorConfig owns the valid ranges.
+    private static List<String> sampleValues(String key, int slot) {
+        return switch (key) {
+            case "threshold"  -> List.of("-0.95", "-0.9", "-0.85", "-0.8", "-0.7");
+            case "spacing"    -> List.of("4", "6", "8", "12", "16");
+            case "structures" -> List.of("true", "false");
+            case "radius"     -> slot == 0 ? List.of("20", "40", "60", "80") : List.of("60", "90", "120", "150");
+            case "thickness"  -> slot == 0 ? List.of("8", "12", "20", "30") : List.of("20", "40", "60", "90");
+            case "height"     -> slot == 0 ? List.of("0", "16", "32", "64") : List.of("128", "192", "256");
+            default           -> List.of();
+        };
     }
 
     // Shared handler for all /dim create subcommands. Returns 1 on success, 0 on failure (Brigadier convention).
