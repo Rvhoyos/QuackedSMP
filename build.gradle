@@ -11,7 +11,7 @@ apply from: 'scripts/gen_block_colors.gradle'
 // Run: ./gradlew npmBuild
 // Requires Node.js + npm. Builds the React UI and copies it into the common
 // module's resources so it gets bundled into the mod JAR.
-// Built assets are committed to git — CI does NOT need Node.js.
+// Built assets are committed to git, CI does NOT need Node.js.
 
 def dashboardUiDir  = rootProject.file('dashboard-ui')
 def dashboardOutDir = rootProject.file('common/src/main/resources/dashboard')
@@ -36,7 +36,7 @@ tasks.register('npmBuild', Exec) {
     workingDir  dashboardUiDir
     commandLine(*npmCmd, 'run', 'build')
 
-    // Never cache — dist/ is outside build/ so clean doesn't wipe it,
+    // Never cache, dist/ is outside build/ so clean doesn't wipe it,
     // and Gradle's fingerprinting would silently skip the task on source changes.
     outputs.upToDateWhen { false }
 

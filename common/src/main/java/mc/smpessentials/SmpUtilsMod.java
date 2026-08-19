@@ -29,7 +29,7 @@ public final class SmpUtilsMod {
     public static void scheduleExitGuard() {
         Thread exitGuard = new Thread(() -> {
             try { Thread.sleep(5000); } catch (InterruptedException ignored) {}
-            LOGGER.warn("[QuackedSMP] JVM still alive 5s after shutdown — forcing exit");
+            LOGGER.warn("[QuackedSMP] JVM still alive 5s after shutdown, forcing exit");
             System.exit(0);
         }, "QuackSMP-ExitGuard");
         exitGuard.setDaemon(true);
@@ -56,7 +56,7 @@ public final class SmpUtilsMod {
                     .forEach(old -> {
                         try {
                             Files.delete(old);
-                            LOGGER.info("[QuackedSMP] Removed old version {} — {} is now the active JAR",
+                            LOGGER.info("[QuackedSMP] Removed old version {}, {} is now the active JAR",
                                     old.getFileName(), activeJar.getFileName());
                         } catch (Exception e) {
                             LOGGER.warn("[QuackedSMP] Could not remove old JAR {}: {}", old.getFileName(), e.getMessage());

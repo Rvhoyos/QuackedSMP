@@ -1,5 +1,5 @@
 /* ============================================================================
-   Shared UI primitives — Minecraft-themed, used by public + admin dashboards.
+   Shared UI primitives, Minecraft-themed, used by public + admin dashboards.
    Bevelled stone/wood controls, inventory-slot inputs, pixel labels.
    ========================================================================== */
 
@@ -38,7 +38,7 @@
 .btn.lg { font-size: 9px; padding: 10px 16px; }
 .btn.block { display: flex; width: 100%; }
 
-/* Tinted variants — coloured face + matching bevel */
+/* Tinted variants, coloured face + matching bevel */
 .primary {
   background: var(--mc-wood); color: #FFF8E1;
   border-top-color: var(--mc-wood-light); border-left-color: var(--mc-wood-light);

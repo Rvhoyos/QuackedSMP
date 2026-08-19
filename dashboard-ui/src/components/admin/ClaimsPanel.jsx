@@ -31,7 +31,7 @@ export default function ClaimsPanel({ token, onExpired }) {
       </Toolbar>
 
       <div className={styles.stats}>
-        <StatCard label="Total Claims" value={data?.total ?? '—'} tone="info" />
+        <StatCard label="Total Claims" value={data?.total ?? ', '} tone="info" />
         <StatCard label="Claimers" value={players.length} />
       </div>
 

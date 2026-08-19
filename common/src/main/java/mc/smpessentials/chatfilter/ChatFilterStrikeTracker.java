@@ -6,7 +6,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * In-memory strike tracker for chat filter violations.
- * Resets on server restart — no persistence needed.
+ * Resets on server restart, no persistence needed.
  */
 public final class ChatFilterStrikeTracker {
     private static final Map<UUID, Integer> strikes = new ConcurrentHashMap<>();

@@ -36,7 +36,7 @@ public final class AgeVerifyData extends SavedData {
     private AgeVerifyData() {
     }
 
-    /** Codec deserialisation constructor — called by {@link #CODEC} when loading saved data. */
+    /** Codec deserialisation constructor, called by {@link #CODEC} when loading saved data. */
     private static AgeVerifyData fromLists(List<UUID> verifiedList, List<UUID> deniedList) {
         AgeVerifyData d = new AgeVerifyData();
         d.verified.addAll(verifiedList);

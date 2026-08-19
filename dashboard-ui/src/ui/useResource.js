@@ -39,7 +39,7 @@ export async function apiJson(url, opts = {}) {
 /*
  * Polling resource loader.
  *
- * refresh({ silent }) — a silent refresh does NOT toggle the loading flag, so a
+ * refresh({ silent }), a silent refresh does NOT toggle the loading flag, so a
  * background poll never flickers toolbars/buttons. Manual refreshes (silent
  * omitted) show the loading state. This is the flicker-free behavior that used
  * to be hand-rolled per panel; here it is the default for every panel.

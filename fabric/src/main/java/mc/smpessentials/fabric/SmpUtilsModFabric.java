@@ -85,7 +85,7 @@ public final class SmpUtilsModFabric implements ModInitializer {
             mc.smpessentials.dashboard.DashboardManager.broadcastPlayerLeave(player.getGameProfile().name());
         });
 
-        // 9. Keep Inventory — drop items on death for opted-out players
+        // 9. Keep Inventory, drop items on death for opted-out players
         // Order matters: hardcore must run first. On session-ending deaths it removes the
         // player from playerSessions, so KeepInv sees them as non-hardcore and skips the drop.
         net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents.AFTER_DEATH.register((entity, source) -> {
@@ -98,7 +98,7 @@ public final class SmpUtilsModFabric implements ModInitializer {
             }
         });
 
-        // 10. Hardcore — set spectator on respawn
+        // 10. Hardcore, set spectator on respawn
         net.fabricmc.fabric.api.entity.event.v1.ServerPlayerEvents.AFTER_RESPAWN.register((oldPlayer, newPlayer, alive) -> {
             mc.smpessentials.hardcore.HardcoreSavedData.get(((net.minecraft.server.level.ServerLevel) newPlayer.level()).getServer()).onPlayerRespawn(newPlayer);
         });

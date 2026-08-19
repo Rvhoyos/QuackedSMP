@@ -214,7 +214,7 @@ public final class DimManager {
         Path playerDataDir = server.getWorldPath(LevelResource.PLAYER_DATA_DIR);
         if (!java.nio.file.Files.isDirectory(playerDataDir)) return;
 
-        // Collect UUIDs of currently online players — their data is managed in memory.
+        // Collect UUIDs of currently online players, their data is managed in memory.
         Set<String> onlineUuids = new HashSet<>();
         for (ServerPlayer p : server.getPlayerList().getPlayers()) {
             onlineUuids.add(p.getStringUUID());
@@ -293,11 +293,11 @@ public final class DimManager {
                             Identifier.parse(savedDim));
                     if (levels.containsKey(dimKey)) continue;
 
-                    // Dimension doesn't exist — relocate to overworld
+                    // Dimension doesn't exist, relocate to overworld
                     root.putString("Dimension", "minecraft:overworld");
                     NbtIo.writeCompressed(root, datFile);
                     String uuid = fileName.replace(".dat", "");
-                    LOGGER.warn("Repaired orphaned player {} — was in non-existent dim {}, "
+                    LOGGER.warn("Repaired orphaned player {}, was in non-existent dim {}, "
                             + "relocated to overworld", uuid, savedDim);
                 } catch (Exception e) {
                     LOGGER.warn("Failed to check/repair player data {}: {}",
@@ -325,7 +325,7 @@ public final class DimManager {
         if (dest.dimensionTypeRegistration().value().hasCeiling()) {
             return new BlockPos(hintX, 64, hintZ);
         }
-        // Flat dims: compute spawn height directly from the generator — it doesn't require
+        // Flat dims: compute spawn height directly from the generator, it doesn't require
         // loaded chunks, and flat terrain can sit at negative Y where the > 0 heightmap
         // check would incorrectly treat it as an unloaded chunk.
         if (dest.getChunkSource().getGenerator() instanceof FlatLevelSource flat) {
@@ -336,11 +336,34 @@ public final class DimManager {
         return new BlockPos(hintX, surfaceY > 0 ? surfaceY : 80, hintZ);
     }
 
+    // Teleports a player to the dim's spawn origin, scheduling the spawn island or return portal for
+    // the next tick so it lands on terrain that has actually generated. Shared by /dim tp and the
+    // admin panel. Returns false if the teleport was rejected.
+    public static boolean teleportToDim(MinecraftServer server, ServerPlayer player, ServerLevel dest) {
+        BlockPos origin = findSpawnOrigin(server, dest);
+
+        DimSavedData.get(server)
+                .getEntry(dest.dimension().identifier().toString())
+                .ifPresent(entry -> server.execute(() -> {
+                    BlockPos freshOrigin = findSpawnOrigin(server, dest);
+                    if ("ether".equals(entry.generatorType())) {
+                        ensureSpawnPlatform(dest, freshOrigin);
+                    } else {
+                        ensureReturnPortal(dest, freshOrigin);
+                    }
+                }));
+
+        BlockPos safe = player.adjustSpawnLocation(dest, origin);
+        return player.teleportTo(dest,
+                safe.getX() + 0.5, safe.getY(), safe.getZ() + 0.5,
+                Set.of(), player.getYRot(), player.getXRot(), false);
+    }
+
     // Generates a small floating island at spawnPos if terrain is missing, then ensures a return portal.
     public static void ensureSpawnPlatform(ServerLevel dest, BlockPos spawnPos) {
         BlockPos surface = spawnPos.below();
         if (!dest.getBlockState(surface).isAir()) {
-            // Terrain already exists at this position — no custom island needed, but still
+            // Terrain already exists at this position, no custom island needed, but still
             // ensure the return portal is placed on top of whatever terrain is here.
             ensureReturnPortal(dest, spawnPos);
             return;
@@ -377,7 +400,7 @@ public final class DimManager {
         int px = x - 1; // left edge of the 4-wide frame
         // Scan the interior column (px+1) for NETHER_PORTAL blocks rather than the frame block.
         // NETHER_PORTAL only exists where we explicitly placed it, so this has no false positives
-        // from terrain — unlike scanning for the frame block, which can appear in natural terrain
+        // from terrain, unlike scanning for the frame block, which can appear in natural terrain
         // (e.g. dirt in a flat dim) and would cause every call to exit early with no portal placed.
         for (int scanY = dest.getMinY(); scanY <= dest.getMaxY(); scanY++) {
             if (dest.getBlockState(new BlockPos(px + 1, scanY, z)).is(Blocks.NETHER_PORTAL)) return;
@@ -385,7 +408,7 @@ public final class DimManager {
 
         // Frame: bottom at y, pillars y→y+4, top at y+4
         // Force-place frame blocks (not placeIfAir) so the frame is always complete even if
-        // existing structure blocks are in the way — an incomplete frame breaks portal routing.
+        // existing structure blocks are in the way, an incomplete frame breaks portal routing.
         for (int i = 0; i < 4; i++) dest.setBlock(new BlockPos(px+i, y,   z), frameBlock.defaultBlockState(), 3);
         for (int dy = 0; dy <= 4; dy++) {
             dest.setBlock(new BlockPos(px,   y+dy, z), frameBlock.defaultBlockState(), 3);
@@ -429,10 +452,19 @@ public final class DimManager {
             return "Dimension already exists: " + id;
         }
 
-        LevelStem stem = resolveStem(server, generatorType, generatorConfig);
+        // Anything wrong with the config is collected rather than logged and skipped, so a bad
+        // value fails the request instead of quietly generating a different world.
+        List<String> problems = new ArrayList<>();
+        LevelStem stem = resolveStem(server, generatorType, generatorConfig, problems);
         if (stem == null) {
             return "Unknown generator type: " + generatorType
                     + ". Use: overworld, nether, end, ether";
+        }
+        if (!problems.isEmpty()) {
+            if (persist) return String.join("; ", problems);
+            // Restoring a dim that was valid when it was created: report and carry on rather than
+            // dropping the dimension on startup.
+            problems.forEach(problem -> LOGGER.warn("Restoring {}: {}", id, problem));
         }
 
         ServerLevelData overworldData = server.getWorldData().overworldData();
@@ -483,7 +515,7 @@ public final class DimManager {
     // Returns null if generatorType is unrecognised.
     @SuppressWarnings("unchecked")
     private static LevelStem resolveStem(MinecraftServer server, String generatorType,
-                                          Optional<String> generatorConfig) {
+                                          Optional<String> generatorConfig, List<String> problems) {
         var stemReg = (net.minecraft.core.Registry<LevelStem>)
                 server.registryAccess().lookupOrThrow(Registries.LEVEL_STEM);
 
@@ -515,13 +547,13 @@ public final class DimManager {
                         .lookupOrThrow(Registries.NOISE_SETTINGS)
                         .getOrThrow(NoiseGeneratorSettings.OVERWORLD);
                 if (config.startsWith("flat ")) {
-                    yield buildFlatStem(server, config.substring(5), ow);
+                    yield buildFlatStem(server, config.substring(5), ow, problems);
                 }
                 // Always a fresh overworld generator, never the live overworld's LevelStem
                 // instance, as sharing a ChunkGenerator between two ServerLevels corrupts terrain.
                 String biomeListStr = GeneratorConfig.splitBiomes(config).biomes().orElse(null);
                 yield new LevelStem(ow.type(), new NoiseBasedChunkGenerator(
-                        parseBiomeSource(server, biomeListStr), owNoise));
+                        parseBiomeSource(server, biomeListStr, problems), owNoise));
             }
 
             // Ether: custom island density function + overworld DimensionType + configurable biomes
@@ -530,10 +562,8 @@ public final class DimManager {
                 if (ow == null) yield null;
 
                 GeneratorConfig.Ether ether = GeneratorConfig.parseEther(generatorConfig.orElse(""));
-                // Restore must not fail on a bad stored config: the params are already clamped,
-                // so report and carry on.
-                ether.problems().forEach(problem -> LOGGER.warn("Ether config: {}", problem));
-                yield buildEtherStem(server, ow, ether.params(), ether.biomes().orElse(null));
+                problems.addAll(ether.problems());
+                yield buildEtherStem(server, ow, ether.params(), ether.biomes().orElse(null), problems);
             }
 
             default -> null;
@@ -541,8 +571,10 @@ public final class DimManager {
     }
 
     // Parses "biomeId[:weight] ..." tokens. Single biome = FixedBiomeSource; multiple = MultiNoise
-    // partitioned by weight along the temperature axis. Falls back to vanilla overworld on null/blank.
-    private static BiomeSource parseBiomeSource(MinecraftServer server, String biomeListStr) {
+    // partitioned by weight along the temperature axis. Falls back to vanilla overworld on
+    // null/blank. Unknown ids and bad weights are recorded in problems, never quietly dropped.
+    private static BiomeSource parseBiomeSource(MinecraftServer server, String biomeListStr,
+                                                 List<String> problems) {
         if (biomeListStr == null || biomeListStr.isBlank()) {
             var reg = server.registryAccess()
                     .lookupOrThrow(Registries.MULTI_NOISE_BIOME_SOURCE_PARAMETER_LIST);
@@ -550,42 +582,51 @@ public final class DimManager {
                     reg.getOrThrow(MultiNoiseBiomeSourceParameterLists.OVERWORLD));
         }
 
-        // Parse "namespace:path" and "namespace:path:weight" tokens
-        String[] tokens = biomeListStr.trim().split("\\s+");
-        List<String>  biomeIds = new ArrayList<>();
-        List<Integer> weights  = new ArrayList<>();
-        for (String token : tokens) {
+        var biomeReg = server.registryAccess().lookupOrThrow(Registries.BIOME);
+        List<String>  validIds     = new ArrayList<>();
+        List<Integer> validWeights = new ArrayList<>();
+
+        // Tokens are "namespace:path" or "namespace:path:weight".
+        for (String token : biomeListStr.trim().split("\\s+")) {
+            String biomeId = token;
+            int weight = 1;
+
             int firstColon = token.indexOf(':');
             int lastColon  = token.lastIndexOf(':');
             if (firstColon >= 0 && lastColon > firstColon) {
                 String tail = token.substring(lastColon + 1);
                 try {
-                    weights.add(Integer.parseInt(tail));
-                    biomeIds.add(token.substring(0, lastColon));
+                    weight  = Integer.parseInt(tail);
+                    biomeId = token.substring(0, lastColon);
+                } catch (NumberFormatException e) {
+                    problems.add("Biome weight must be a whole number, got '" + tail + "'");
                     continue;
-                } catch (NumberFormatException ignored) {}
+                }
+                if (weight < 1) {
+                    problems.add("Biome weight must be 1 or more, got " + weight + " for " + biomeId);
+                    continue;
+                }
             }
-            biomeIds.add(token);
-            weights.add(1);
-        }
 
-        // Validate — skip unknown biomes
-        var biomeReg     = server.registryAccess().lookupOrThrow(Registries.BIOME);
-        List<String>  validIds     = new ArrayList<>();
-        List<Integer> validWeights = new ArrayList<>();
-        for (int i = 0; i < biomeIds.size(); i++) {
-            var key = ResourceKey.create(Registries.BIOME, Identifier.parse(biomeIds.get(i)));
-            if (biomeReg.get(key).isPresent()) {
-                validIds.add(biomeIds.get(i));
-                validWeights.add(weights.get(i));
-            } else {
-                LOGGER.warn("Unknown biome '{}' — skipped", biomeIds.get(i));
+            Identifier parsed;
+            try {
+                parsed = Identifier.parse(biomeId);
+            } catch (Exception e) {
+                problems.add("Not a valid biome id: '" + biomeId + "'");
+                continue;
             }
+            if (biomeReg.get(ResourceKey.create(Registries.BIOME, parsed)).isEmpty()) {
+                problems.add("Unknown biome: " + biomeId);
+                continue;
+            }
+
+            validIds.add(biomeId);
+            validWeights.add(weight);
         }
 
         if (validIds.isEmpty()) {
-            LOGGER.warn("No valid biomes in list — using overworld default");
-            return parseBiomeSource(server, null);
+            problems.add("No usable biomes in the list");
+            return parseBiomeSource(server, null, problems);
         }
 
         if (validIds.size() == 1) {
@@ -616,9 +657,11 @@ public final class DimManager {
         return MultiNoiseBiomeSource.createFromList(new Climate.ParameterList<>(paramList));
     }
 
-    // Builds a flat terrain stem from "blockId:height ..." tokens (bottom to top). Defaults biome to plains.
+    // Builds a flat terrain stem from "blockId:height ..." tokens (bottom to top). Defaults biome to
+    // plains. Bad tokens are recorded in problems so creation fails loudly instead of quietly
+    // producing a world with layers missing.
     private static LevelStem buildFlatStem(MinecraftServer server, String layersStr,
-                                            LevelStem overworldStem) {
+                                            LevelStem overworldStem, List<String> problems) {
         var biomeReg  = server.registryAccess().lookupOrThrow(Registries.BIOME);
         var plainsKey = ResourceKey.create(Registries.BIOME, Identifier.parse("minecraft:plains"));
         Holder<Biome> defaultBiome = biomeReg.getOrThrow(plainsKey);
@@ -626,24 +669,54 @@ public final class DimManager {
         FlatLevelGeneratorSettings settings = new FlatLevelGeneratorSettings(
                 Optional.empty(), defaultBiome, List.of());
 
+        int maxHeight = overworldStem.type().value().height();
+        int total = 0;
         for (String token : layersStr.trim().split("\\s+")) {
-            int firstColon = token.indexOf(':');
-            int lastColon  = token.lastIndexOf(':');
+            if (token.isEmpty()) continue;
+
             String blockId = token;
             int height = 1;
+            int firstColon = token.indexOf(':');
+            int lastColon  = token.lastIndexOf(':');
             if (firstColon >= 0 && lastColon > firstColon) {
                 String tail = token.substring(lastColon + 1);
                 try {
                     height  = Integer.parseInt(tail);
                     blockId = token.substring(0, lastColon);
-                } catch (NumberFormatException ignored) {}
+                } catch (NumberFormatException e) {
+                    problems.add("Layer height must be a whole number, got '" + tail + "'");
+                    continue;
+                }
             }
-            Block block = BuiltInRegistries.BLOCK.getValue(Identifier.parse(blockId));
-            if (block == Blocks.AIR) {
-                LOGGER.warn("Unknown or air block '{}' in flat layers — skipped", blockId);
+            if (height < 1) {
+                problems.add("Layer height must be 1 or more, got " + height + " for " + blockId);
                 continue;
             }
+
+            Identifier parsed;
+            try {
+                parsed = Identifier.parse(blockId);
+            } catch (Exception e) {
+                problems.add("Not a valid block id: '" + blockId + "'");
+                continue;
+            }
+            Block block = BuiltInRegistries.BLOCK.getValue(parsed);
+            if (block == Blocks.AIR) {
+                problems.add("Unknown or air block in flat layers: " + blockId);
+                continue;
+            }
+
+            total += height;
+            if (total > maxHeight) {
+                problems.add("Flat layers total " + total + " blocks, more than the "
+                        + maxHeight + " this dimension can hold");
+                break;
+            }
             settings.getLayersInfo().add(new FlatLayerInfo(height, block));
+        }
+
+        if (settings.getLayersInfo().isEmpty()) {
+            problems.add("Flat needs at least one usable layer");
         }
 
         settings.updateLayers();
@@ -652,7 +725,8 @@ public final class DimManager {
 
     // Builds an ether LevelStem with our custom island density function wired into the noise router.
     private static LevelStem buildEtherStem(MinecraftServer server, LevelStem overworldStem,
-                                             EtherIslandParams params, String biomeListStr) {
+                                             EtherIslandParams params, String biomeListStr,
+                                             List<String> problems) {
         // Copy base settings from the registered FLOATING_ISLANDS preset
         NoiseGeneratorSettings floatingSettings = server.registryAccess()
                 .lookupOrThrow(Registries.NOISE_SETTINGS)
@@ -715,6 +789,6 @@ public final class DimManager {
                 floatingSettings.useLegacyRandomSource());
 
         return new LevelStem(overworldStem.type(), new NoiseBasedChunkGenerator(
-                parseBiomeSource(server, biomeListStr), Holder.direct(customSettings)));
+                parseBiomeSource(server, biomeListStr, problems), Holder.direct(customSettings)));
     }
 }

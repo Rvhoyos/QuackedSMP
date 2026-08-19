@@ -42,7 +42,7 @@ export default function FeatureShowcase({ token, onExpired }) {
     if (!key) return true
     if (overrides[key] !== undefined) return overrides[key]
     if (cfg && key in cfg) return cfg[key] !== false
-    // Config not loaded yet — show Active so cards don't flicker grey
+    // Config not loaded yet, show Active so cards don't flicker grey
     return true
   }
 

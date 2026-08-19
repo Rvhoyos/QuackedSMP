@@ -35,7 +35,7 @@ public final class CustomPortalActivator {
         ServerLevel serverLevel = (ServerLevel) sp.level();
         DimSavedData data = DimSavedData.get(serverLevel.getServer());
 
-        // Block portal creation inside all custom dims — return portals are placed automatically
+        // Block portal creation inside all custom dims, return portals are placed automatically
         // by the mod on first portal entry (ether: on the spawn island; others: at entry XZ).
         // Allowing activation here would trigger vanilla's cross-dim portal search and pollute
         // the overworld with auto-generated obsidian portal structures.

@@ -11,13 +11,11 @@ import net.minecraft.commands.Commands;
 import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.commands.arguments.DimensionArgument;
 import net.minecraft.commands.arguments.EntityArgument;
-import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
@@ -57,7 +55,7 @@ public final class DimCommands {
                 .then(Commands.literal("create")
                     .requires(CommandRegistrar::isOp)
                     .then(Commands.argument("id", DimensionArgument.dimension())
-                        // Suppress suggestions on <id> — user is naming a NEW dimension
+                        // Suppress suggestions on <id>, user is naming a NEW dimension
                         .suggests((ctx, builder) -> builder.buildFuture())
 
                         // overworld [biomes [...] | flat ...]
@@ -66,7 +64,7 @@ public final class DimCommands {
                                     ctx.getArgument("id", Identifier.class),
                                     "overworld", Optional.empty()))
                             .then(Commands.literal("biomes")
-                                // /dim create <id> overworld biomes  — default biomes
+                                // /dim create <id> overworld biomes , default biomes
                                 .executes(ctx -> executeCreate(ctx.getSource(),
                                         ctx.getArgument("id", Identifier.class),
                                         "overworld", Optional.empty()))
@@ -79,7 +77,7 @@ public final class DimCommands {
                                             Optional.of("biomes " + StringArgumentType.getString(ctx, "biome_list")))))
                             )
                             .then(Commands.literal("flat")
-                                // /dim create <id> overworld flat  — default layers
+                                // /dim create <id> overworld flat , default layers
                                 .executes(ctx -> executeCreate(ctx.getSource(),
                                         ctx.getArgument("id", Identifier.class),
                                         "overworld",
@@ -167,7 +165,7 @@ public final class DimCommands {
                                     if (!existing.equals(dimId)) {
                                         ctx.getSource().sendSystemMessage(Component.literal(
                                                 "Warning: " + blockId + " was wired to " + existing
-                                                + " — reassigning to " + dimId));
+                                                + ", reassigning to " + dimId));
                                         data.clearPortalBlock(existing);
                                     }
                                 });
@@ -317,42 +315,17 @@ public final class DimCommands {
         return 1;
     }
 
-    // Teleports player to the dim's spawn origin. Schedules spawn island/portal generation on the next tick.
-    // Returns 1 on success, 0 if teleport was rejected.
+    // Reports the outcome of DimManager.teleportToDim as a command result.
     private static int tpPlayerToDim(CommandSourceStack source, ServerPlayer player, ServerLevel dest) {
-        BlockPos origin = DimManager.findSpawnOrigin(source.getServer(), dest);
-
-        // Ensure spawn structure on next tick — re-query origin so chunks are loaded
-        // and the portal lands at the actual terrain surface.
-        final MinecraftServer server = source.getServer();
-        DimSavedData.get(server)
-                .getEntry(dest.dimension().identifier().toString())
-                .ifPresent(e -> server.execute(() -> {
-                    BlockPos freshOrigin = DimManager.findSpawnOrigin(server, dest);
-                    if ("ether".equals(e.generatorType())) {
-                        DimManager.ensureSpawnPlatform(dest, freshOrigin);
-                    } else {
-                        DimManager.ensureReturnPortal(dest, freshOrigin);
-                    }
-                }));
-
-        BlockPos safe   = player.adjustSpawnLocation(dest, origin);
-
-        boolean ok = player.teleportTo(
-                dest,
-                safe.getX() + 0.5, safe.getY(), safe.getZ() + 0.5,
-                Set.of(), player.getYRot(), player.getXRot(), false);
-
-        if (ok) {
+        if (DimManager.teleportToDim(source.getServer(), player, dest)) {
             source.sendSystemMessage(Component.literal(
                     "Teleported " + player.getName().getString()
                     + " to " + dest.dimension().identifier()));
             return 1;
-        } else {
-            source.sendFailure(Component.literal(
-                    "Teleport failed for " + player.getName().getString()));
-            return 0;
         }
+        source.sendFailure(Component.literal(
+                "Teleport failed for " + player.getName().getString()));
+        return 0;
     }
 
     // Tab-completes the current (last) token against the biome registry for a greedy biome-list argument.

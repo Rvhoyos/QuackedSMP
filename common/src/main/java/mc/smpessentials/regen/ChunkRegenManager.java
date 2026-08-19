@@ -262,7 +262,7 @@ public final class ChunkRegenManager {
                     files++;
                     cleared += result[0];
                 }
-                // No live chunks remain — delete the entire file to reclaim disk space
+                // No live chunks remain, delete the entire file to reclaim disk space
                 if (result[1] == 0) {
                     Files.deleteIfExists(mca);
                     deleted++;

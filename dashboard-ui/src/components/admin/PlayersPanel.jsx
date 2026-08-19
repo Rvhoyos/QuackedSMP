@@ -102,7 +102,7 @@ export default function PlayersPanel({ token, onExpired }) {
               <div className={styles.cardActions}>
                 <div className={styles.tier}>
                   <button className={styles.tierStep} disabled={(p.tier ?? 0) <= (p.earned_tier ?? 0)} onClick={() => bumpTier(p, -1)} aria-label="Lower tier">−</button>
-                  <span className={`${styles.tierVal} ${p.tier > 0 ? styles.tierOn : ''}`}>{p.tier > 0 ? `T${p.tier}` : '—'}</span>
+                  <span className={`${styles.tierVal} ${p.tier > 0 ? styles.tierOn : ''}`}>{p.tier > 0 ? `T${p.tier}` : ', '}</span>
                   <button className={styles.tierStep} onClick={() => bumpTier(p, +1)} aria-label="Raise tier">+</button>
                 </div>
                 <Menu trigger={<Btn size="sm" aria-label="Actions">⋯</Btn>}>

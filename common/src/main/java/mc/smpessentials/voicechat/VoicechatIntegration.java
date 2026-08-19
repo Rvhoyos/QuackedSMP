@@ -29,7 +29,7 @@ public final class VoicechatIntegration {
         try {
             Class.forName("de.maxhenkel.voicechat.api.VoicechatPlugin");
             available = true;
-            SmpUtilsMod.LOGGER.info("Simple Voice Chat API found — age-gating voice chat.");
+            SmpUtilsMod.LOGGER.info("Simple Voice Chat API found, age-gating voice chat.");
         } catch (ClassNotFoundException e) {
             SmpUtilsMod.LOGGER.info("Simple Voice Chat not found, skipping voice chat integration.");
         }

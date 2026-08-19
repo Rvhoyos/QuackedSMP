@@ -25,7 +25,7 @@ public final class DashboardServer extends Thread {
     private final int port;
     private volatile ServerSocket serverSocket;
 
-    // WebSocket clients — added on upgrade, removed on disconnect
+    // WebSocket clients, added on upgrade, removed on disconnect
     private final Set<Socket> wsClients = ConcurrentHashMap.newKeySet();
 
     @FunctionalInterface
@@ -162,7 +162,7 @@ public final class DashboardServer extends Thread {
                 return;
             }
 
-            // Check for upload route BEFORE reading body — upload handlers receive the
+            // Check for upload route BEFORE reading body, upload handlers receive the
             // raw InputStream directly so they are not limited by the 64 KB cap.
             UploadRouteHandler uploadHandler = uploadRoutes.get(path);
             if (uploadHandler != null) {
@@ -303,7 +303,7 @@ public final class DashboardServer extends Thread {
         InputStream resource = DashboardServer.class.getResourceAsStream("/dashboard" + path);
         if (resource == null) { writeResponse(out, 404, "text/plain", "no-store", "Not found".getBytes()); return; }
 
-        // index.html must never be cached — it references hashed asset filenames that change each build.
+        // index.html must never be cached, it references hashed asset filenames that change each build.
         // Hashed assets (JS/CSS) are immutable for a given filename, so they can be cached forever.
         String cacheControl = path.equals("/index.html")
                 ? "no-store, no-cache, must-revalidate"

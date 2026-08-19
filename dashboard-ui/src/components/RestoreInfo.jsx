@@ -4,7 +4,7 @@ import styles from './RestoreInfo.module.css'
 const DEFAULT_NOTE =
   'Restoring on another machine needs the same seed, loader, and mod set for terrain to match at unloaded chunks.'
 
-// Presentational only — parents fetch the data and pass it in. `info` carries
+// Presentational only, parents fetch the data and pass it in. `info` carries
 // mcVersion, loader, loaderVersion, modVersion and (optionally) seed.
 // The seed row and copy button are omitted when no seed is present.
 export default function RestoreInfo({ info, title = 'Restore info', note = DEFAULT_NOTE }) {
@@ -17,7 +17,7 @@ export default function RestoreInfo({ info, title = 'Restore info', note = DEFAU
       await navigator.clipboard.writeText(String(info.seed))
       setCopied(true)
       setTimeout(() => setCopied(false), 1500)
-    } catch { /* clipboard blocked — no-op */ }
+    } catch { /* clipboard blocked, no-op */ }
   }
 
   return (
@@ -46,7 +46,7 @@ export default function RestoreInfo({ info, title = 'Restore info', note = DEFAU
 }
 
 function joinLoader(loader, version) {
-  if (!loader) return version || '—'
+  if (!loader) return version || ', '
   return version ? `${loader} ${version}` : loader
 }
 
@@ -54,7 +54,7 @@ function Field({ label, value }) {
   return (
     <div className={styles.field}>
       <span className={styles.label}>{label}</span>
-      <span className={styles.value}>{value || '—'}</span>
+      <span className={styles.value}>{value || ', '}</span>
     </div>
   )
 }

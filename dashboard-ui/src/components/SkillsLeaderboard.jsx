@@ -84,10 +84,10 @@ export default function SkillsLeaderboard({ data }) {
                   <td className={styles.playerName}>{entry.name}</td>
                   <td className={styles.level}>{entry.level}</td>
                   <td className={styles.playtime}>
-                    {entry.playtime_ticks != null ? `${Math.floor(entry.playtime_ticks / 72000)}h` : '—'}
+                    {entry.playtime_ticks != null ? `${Math.floor(entry.playtime_ticks / 72000)}h` : ', '}
                   </td>
                   <td className={styles.tier}>
-                    {entry.tier > 0 ? <span className={styles.tierBadge}>T{entry.tier}</span> : '—'}
+                    {entry.tier > 0 ? <span className={styles.tierBadge}>T{entry.tier}</span> : ', '}
                   </td>
                 </tr>
               ))}

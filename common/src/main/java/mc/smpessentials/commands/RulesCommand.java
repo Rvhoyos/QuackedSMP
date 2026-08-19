@@ -27,7 +27,7 @@ public final class RulesCommand {
 
     private static void sendRules(ServerPlayer player) {
         // Header
-        player.sendSystemMessage(Component.literal("— Server Rules —")
+        player.sendSystemMessage(Component.literal("=== Server Rules ===")
                 .withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD));
 
         // Bulleted, short vanilla-friendly rules

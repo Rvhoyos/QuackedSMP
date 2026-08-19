@@ -44,7 +44,7 @@ public enum SkillType {
         private final String displayName;
         private final String color; // §-code
         private final String symbol;
-        // Lazily populated on first call — SkillType enum constants are not yet
+        // Lazily populated on first call, SkillType enum constants are not yet
         // initialised when Category constants are constructed, so we cannot
         // populate this in the constructor.
         private SkillType[] skills;

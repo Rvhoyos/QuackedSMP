@@ -271,7 +271,7 @@ export default function TimelapsePanel({ token, onExpired }) {
       <div className={styles.body}>
         <SectionCard title="Capture Settings" subtitle="One pixel per block, per selected dimension. Runs when idle; forced after the skip limit.">
           <div className={styles.toggleRow}>
-            <span className={styles.tLabel}>Automatically capture on a schedule{enabled ? ` — every ${interval} min` : ''}</span>
+            <span className={styles.tLabel}>Automatically capture on a schedule{enabled ? `, every ${interval} min` : ''}</span>
             <Toggle checked={enabled} onChange={toggleEnabled} aria-label="Auto capture" />
           </div>
 

@@ -414,9 +414,9 @@ public final class ShopService {
                 remaining -= batch;
             }
         }
-        // Should never happen — capacity is checked before purchase
+        // Should never happen, capacity is checked before purchase
         if (remaining > 0) {
-            mc.smpessentials.SmpUtilsMod.LOGGER.warn("[Shops] Currency overflow of {} at {} — this shouldn't happen", remaining, pos);
+            mc.smpessentials.SmpUtilsMod.LOGGER.warn("[Shops] Currency overflow of {} at {}, this shouldn't happen", remaining, pos);
         }
     }
 

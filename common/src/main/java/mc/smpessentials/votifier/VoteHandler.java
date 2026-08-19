@@ -25,7 +25,7 @@ public final class VoteHandler {
     }
 
     public static void onVote(VoteData vote) {
-        MinecraftServer srv = server; // capture volatile once — safe for cross-thread handoff
+        MinecraftServer srv = server; // capture volatile once, safe for cross-thread handoff
         if (srv == null) return;
         srv.execute(() -> {
             ServerPlayer player = srv.getPlayerList().getPlayerByName(vote.username());
@@ -63,7 +63,7 @@ public final class VoteHandler {
             srv.getCommands().performPrefixedCommand(srv.createCommandSourceStack(), cmd);
         }
 
-        // Stacked VIP bonus rewards — isolated so a tier lookup failure can't block base rewards
+        // Stacked VIP bonus rewards, isolated so a tier lookup failure can't block base rewards
         try {
             Map<Integer, List<String>> vipRewards = SmpConfig.VOTE_VIP_REWARDS;
             if (vipRewards.isEmpty()) return;

@@ -204,7 +204,7 @@ export default function BackupsPanel({ token, onExpired }) {
         if (r.status === 409) flash('A snapshot is already running')
         else setError(d.error)
       } else {
-        flash('Snapshot started — saving world…')
+        flash('Snapshot started, saving world…')
         setRunning(true)
       }
     } catch { setError('Failed to start snapshot') }

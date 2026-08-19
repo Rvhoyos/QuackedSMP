@@ -18,12 +18,12 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * /skills                          — concise overview of all your skills
- * /skills view <player>            — view another player's skills
- * /skills top [page]               — overall leaderboard
- * /skills top <skillname> [page]   — per-skill leaderboard
- * /skills <skillname>              — detailed info for one skill
- * /skills admin givexp/setlevel    — OP debug commands
+ * /skills                         , concise overview of all your skills
+ * /skills view <player>           , view another player's skills
+ * /skills top [page]              , overall leaderboard
+ * /skills top <skillname> [page]  , per-skill leaderboard
+ * /skills <skillname>             , detailed info for one skill
+ * /skills admin givexp/setlevel   , OP debug commands
  */
 public final class SkillCommands {
 
@@ -34,15 +34,15 @@ public final class SkillCommands {
         dispatcher.register(Commands.literal("skills")
                 .requires(src -> mc.smpessentials.config.SmpConfig.SKILLS_ENABLED && src.getEntity() instanceof ServerPlayer)
 
-                // /skills — concise overview
+                // /skills, concise overview
                 .executes(ctx -> showAllSkills(ctx, (ServerPlayer) ctx.getSource().getEntity()))
 
-                // /skills view <player> — view another player's overview
+                // /skills view <player>, view another player's overview
                 .then(Commands.literal("view")
                         .then(Commands.argument("player", EntityArgument.player())
                                 .executes(ctx -> showAllSkills(ctx, EntityArgument.getPlayer(ctx, "player")))))
 
-                // /skills top — leaderboard
+                // /skills top, leaderboard
                 .then(Commands.literal("top")
                         .executes(ctx -> showLeaderboard(ctx, null, 1))
                         // /skills top <page>
@@ -88,7 +88,7 @@ public final class SkillCommands {
                                                         IntegerArgumentType.integer(0, 100))
                                                         .executes(SkillCommands::adminSetLevel))))))
 
-                // /skills <skillname> — detail for one skill (fallback string arg, tried last)
+                // /skills <skillname>, detail for one skill (fallback string arg, tried last)
                 .then(Commands.argument("skillname", StringArgumentType.word())
                         .suggests((ctx, builder) -> {
                             for (SkillType st : SkillType.values())

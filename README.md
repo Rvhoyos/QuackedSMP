@@ -245,7 +245,7 @@ Runtime dimensions without datapacks.
 | Type | Terrain |
 | :--- | :--- |
 | `overworld` | Standard overworld noise |
-| `ether` | Floating islands; void fall returns; shared central spawn island for portals |
+| `ether` | Floating islands; falling out the bottom drops you (and anything player-made) into the overworld at the same coordinates; shared central spawn island for portals |
 | `nether` | Vanilla nether |
 | `end` | Vanilla end |
 

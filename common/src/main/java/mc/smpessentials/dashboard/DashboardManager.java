@@ -36,7 +36,7 @@ public final class DashboardManager {
             sparkLoaded = true;
             SmpUtilsMod.LOGGER.info("[Dashboard] Spark API detected.");
         } catch (ClassNotFoundException e) {
-            SmpUtilsMod.LOGGER.info("[Dashboard] Spark not found — /api/spark/* will return unavailable.");
+            SmpUtilsMod.LOGGER.info("[Dashboard] Spark not found. /api/spark/* will return unavailable.");
         }
     }
 
@@ -185,10 +185,14 @@ public final class DashboardManager {
                 (m, h, b) -> AdminHandler.handleSetTier(m, h, b, mcServer));
         s.addRoute("/api/admin/dims",
                 (m, h, b) -> AdminHandler.handleDimsGet(m, h, b, mcServer));
+        s.addRoute("/api/admin/dims/etherparams",
+                (m, h, b) -> AdminHandler.handleEtherParams(m, h, b, mcServer));
         s.addRoute("/api/admin/dims/create",
                 (m, h, b) -> AdminHandler.handleDimCreate(m, h, b, mcServer));
         s.addRoute("/api/admin/dims/delete",
                 (m, h, b) -> AdminHandler.handleDimDelete(m, h, b, mcServer));
+        s.addRoute("/api/admin/dims/tp",
+                (m, h, b) -> AdminHandler.handleDimTp(m, h, b, mcServer));
         s.addRoute("/api/admin/dims/setportal",
                 (m, h, b) -> AdminHandler.handleDimSetPortal(m, h, b, mcServer));
         s.addRoute("/api/admin/blocks",

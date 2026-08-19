@@ -103,7 +103,7 @@ export function Toggle({ checked, onChange, disabled, 'aria-label': label }) {
   )
 }
 
-// ── Dialog (Radix — focus trap, ESC, focus restore, ARIA built in) ────────────
+// ── Dialog (Radix, focus trap, ESC, focus restore, ARIA built in) ────────────
 export function Dialog({ open, onOpenChange, title, description, children }) {
   return (
     <Dlg.Root open={open} onOpenChange={onOpenChange}>
@@ -202,7 +202,7 @@ export function Slider({ value, min = 0, max = 100, step = 1, onChange, suffix }
     <div className={s.slider}>
       <input type="range" className={s.sliderInput} value={value ?? min} min={min} max={max} step={step}
         onChange={e => onChange?.(parseFloat(e.target.value))} />
-      <span className={s.sliderVal}>{value ?? '—'}{suffix}</span>
+      <span className={s.sliderVal}>{value ?? ', '}{suffix}</span>
     </div>
   )
 }

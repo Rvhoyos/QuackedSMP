@@ -4,6 +4,10 @@
 .createForm { display: flex; flex-direction: column; gap: 12px; }
 .createRow { display: grid; grid-template-columns: 1fr 1fr auto; gap: 10px; align-items: end; }
 
+.paramGrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 10px 12px; }
+.pairRow { display: flex; align-items: center; gap: 8px; }
+.pairRow > * { min-width: 0; }
+
 .biomeBuilder { display: flex; flex-direction: column; gap: 8px; }
 .biomeRow { display: flex; gap: 8px; }
 .weightInput { width: 70px; font-family: var(--font-mono); font-size: 12px; color: var(--txt-primary); background: var(--surf-slot); border-top: 2px solid #0a0a0a; border-left: 2px solid #0a0a0a; border-bottom: 2px solid #3a3a3a; border-right: 2px solid #3a3a3a; padding: 8px; outline: none; }
