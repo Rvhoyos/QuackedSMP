@@ -35,7 +35,7 @@ Panel is optional. Game features work without it. Panel stays off until you set 
 - Chat filter and auto-mutes
 - VIP tiers and kits (`/vip set`)
 - Anti-xray (on by default)
-- Wilderness regen, player shops, hardcore sessions, world backups
+- Wilderness regen, player shops, hardcore sessions, world backups, world timelapse
 - Optional: Discord, BlueMap, Votifier, Spark, Simple Voice Chat
 
 Most systems can be toggled in the panel Config tab or `config/quackedsmp.json`.
@@ -58,6 +58,7 @@ Most systems can be toggled in the panel Config tab or `config/quackedsmp.json`.
 | **Cmd Blocks** | List, edit, and delete command blocks in loaded chunks (requires command blocks enabled on the server). |
 | **Mods** | Upload, replace, or remove JARs in `mods/`. |
 | **Backups** | Create / list / download / delete world snapshots. Toggle public download and panel URL messaging. |
+| **Timelapse** | Capture and play back top-down world snapshots. Pick which dimensions to capture, pan/zoom a frame, export the set as a zip. |
 | **Config** | Edit configurable values live. Most settings need no restart. |
 | **Features** | In-panel feature overview. |
 
@@ -350,6 +351,12 @@ Optional NuVotifier v2 TCP listener (`votifier.enabled` default false, port **81
 
 Admin panel: create / list / download / delete zips under `backup_dir` (default `backups`), retention `backup_max_count` (default 5). Optional public download and `panel_url` + periodic / `/smp download` messaging when public download is on and a URL is set.
 
+### World Timelapse
+
+Off by default (`timelapse_enabled`). Renders a top-down PNG of each opted-in dimension (`timelapse_dimensions`) straight from its region files every `timelapse_interval_minutes`, stored under `timelapse_dir` (default `timelapse`). Frames are 1 block = 1 pixel and only downsample when a render would not fit free heap; `timelapse_max_render_mb` caps that only for captures forced while players are online, after `timelapse_max_skips` idle waits. `timelapse_max_frames` (0 = keep all) bounds how many frames are kept per dimension.
+
+Worlds with chunks generated far from everything else are framed on the largest cluster of chunks; the excluded chunk count is logged. Capture on demand with `/timelapse capture` or the panel's Capture Now.
+
 </details>
 
 ---
@@ -366,6 +373,7 @@ Admin panel: create / list / download / delete zips under `backup_dir` (default 
 | `/smp config reset` | Factory reset config | OP |
 | `/smp admin setpassword <password>` | Set panel password and enable dashboard (min 8 chars) | OP |
 | `/smp download` | Send panel / world download link (only if public download + `panel_url` set) | Everyone |
+| `/timelapse capture` | Capture a timelapse frame now | OP |
 | `/smp end reset dragon` | Reset Ender Dragon fight | OP |
 | `/smp end reset world` | Queue End dimension reset | OP |
 | `/smp regen` | Wilderness regen warning + click confirm | OP |
