@@ -150,6 +150,27 @@ public final class ConfigData {
     // How long the welcome sidebar stays on screen.
     public int     welcomeSidebarShowSeconds = 12;
 
+    // World hints. Two ambient cues that make invisible world state readable without a client mod.
+
+    // Slime chunk hint: slime particles at the feet (and a rare quiet squish) while standing in a
+    // slime chunk below Y 40. The chunk test and the depth gate are vanilla's own spawn rule, so
+    // the cue appears exactly where slimes can spawn. Density and sound rarity are taste, not a
+    // derived limit, so they are here to tune.
+    public boolean slimeHintEnabled        = true;
+    public int     slimeHintIntervalTicks  = 20;
+    public int     slimeHintParticleCount  = 2;
+    public double  slimeHintSoundChance    = 0.02;
+
+    // End finder: while an eye of ender is held in the overworld, mark the nearest stronghold on
+    // the vanilla Locator Bar and show the distance on the action bar. The search is cached per
+    // player and only re-run once they have travelled recheckDistance blocks AND the cooldown has
+    // passed, since the nearest of the 128 ring-placed strongholds changes as you travel.
+    public boolean endFinderEnabled                = true;
+    public int     endFinderSearchRadius           = 100;
+    public int     endFinderRecheckDistance        = 512;
+    public int     endFinderRecheckCooldownSeconds = 30;
+    public boolean endFinderActionBar              = true;
+
     public VotifierConfig votifier = new VotifierConfig();
     public DashboardConfig dashboard = new DashboardConfig();
     public DiscordConfig discord = new DiscordConfig();

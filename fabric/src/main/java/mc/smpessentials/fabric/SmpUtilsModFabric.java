@@ -81,6 +81,8 @@ public final class SmpUtilsModFabric implements ModInitializer {
             mc.smpessentials.skills.SkillEvents.onPlayerLoggedOut(player);
             mc.smpessentials.teleport.TeleportService.clearForPlayer(player.getUUID());
             mc.smpessentials.antixray.AntiXrayEngine.onPlayerDisconnect(player.getUUID());
+            mc.smpessentials.slimechunk.SlimeChunkHint.onDisconnect(player.getUUID());
+            mc.smpessentials.endfinder.EndFinder.onDisconnect(player.getUUID());
             mc.smpessentials.sidebar.SidebarManager.INSTANCE.onDisconnect(player);
             mc.smpessentials.dashboard.DashboardManager.broadcastPlayerLeave(player.getGameProfile().name());
         });
@@ -112,6 +114,8 @@ public final class SmpUtilsModFabric implements ModInitializer {
                 mc.smpessentials.skills.SkillEvents.onPlayerTick(player);
                 mc.smpessentials.dims.EtherFallthrough.tick(player);
                 mc.smpessentials.antixray.AntiXrayEngine.tickPlayer(player);
+                mc.smpessentials.slimechunk.SlimeChunkHint.tick(player);
+                mc.smpessentials.endfinder.EndFinder.tick(player);
                 mc.smpessentials.teams.TeamAutoAssign.tick(player);
                 mc.smpessentials.hardcore.HardcoreSavedData hc =
                         mc.smpessentials.hardcore.HardcoreSavedData.get(server);

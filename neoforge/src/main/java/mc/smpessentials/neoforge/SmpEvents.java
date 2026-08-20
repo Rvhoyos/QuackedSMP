@@ -100,6 +100,8 @@ public class SmpEvents {
         SkillEvents.onPlayerLoggedOut(event.getEntity());
         mc.smpessentials.teleport.TeleportService.clearForPlayer(event.getEntity().getUUID());
         mc.smpessentials.antixray.AntiXrayEngine.onPlayerDisconnect(event.getEntity().getUUID());
+        mc.smpessentials.slimechunk.SlimeChunkHint.onDisconnect(event.getEntity().getUUID());
+        mc.smpessentials.endfinder.EndFinder.onDisconnect(event.getEntity().getUUID());
         if (event.getEntity() instanceof ServerPlayer sp) {
             mc.smpessentials.sidebar.SidebarManager.INSTANCE.onDisconnect(sp);
         }
@@ -134,6 +136,8 @@ public class SmpEvents {
             SkillEvents.onPlayerTick(player);
             mc.smpessentials.dims.EtherFallthrough.tick(player);
             mc.smpessentials.antixray.AntiXrayEngine.tickPlayer(player);
+            mc.smpessentials.slimechunk.SlimeChunkHint.tick(player);
+            mc.smpessentials.endfinder.EndFinder.tick(player);
             mc.smpessentials.teams.TeamAutoAssign.tick(player);
             mc.smpessentials.hardcore.HardcoreSavedData hc =
                     mc.smpessentials.hardcore.HardcoreSavedData.get(event.getServer());

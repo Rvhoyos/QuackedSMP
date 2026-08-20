@@ -43,7 +43,20 @@
 .skillTableHead { display: grid; grid-template-columns: 130px 1fr 1fr; gap: 12px; padding: 0 0 6px; font-family: var(--font-pixel); font-size: 6px; letter-spacing: 0.3px; color: var(--txt-faint); }
 .skillTableRow { display: grid; grid-template-columns: 130px 1fr 1fr; gap: 12px; align-items: center; padding: 6px 0; }
 .rowLabel { font-family: var(--font-sans); font-size: 13px; color: var(--txt-secondary); }
-.capGrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
+.capGrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px 18px; }
+
+.note { font-family: var(--font-sans); font-size: 11px; line-height: 1.5; color: var(--txt-muted); margin: 0 0 12px; }
+.note b { color: var(--txt-secondary); }
+
+/* Category tabs inside the Abilities card header */
+.catTabs { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 2px; }
+.catTab {
+  font-family: var(--font-pixel); font-size: 6px; letter-spacing: 0.3px; padding: 6px 10px;
+  color: var(--txt-faint); background: var(--surf-slot); border: 1px solid #0d0d0d; cursor: pointer;
+  transition: color var(--t-fast), background var(--t-fast); text-shadow: 1px 1px 0 rgba(0,0,0,0.5);
+}
+.catTab:hover { color: var(--txt-secondary); }
+.catTabOn { color: #fff; background: var(--mc-wood); border-color: var(--mc-wood-dark); }
 
 .saveBar {
   display: flex; align-items: center; justify-content: flex-end; gap: 14px;

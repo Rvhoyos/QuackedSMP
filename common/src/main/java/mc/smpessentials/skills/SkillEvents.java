@@ -214,6 +214,8 @@ public final class SkillEvents {
      * Intercepts fall damage and absorbs a fraction proportional to Agility level.
      * At Agility 100, absorbs up to {@code CAP_SAFE_LANDING} (default 1.0 = full negation).
      * Scales linearly: at level 50 with default cap, absorbs 50%.
+     * The cap saturates at 1.0. It is a damage fraction, so a higher value still leaves 0 damage,
+     * and a value of 0 or less disables the perk.
      *
      * When partially absorbed, re-applies the reduced amount via {@code entity.hurt()}
      * guarded by {@link #SAFE_LANDING_GUARD} to prevent infinite recursion.
@@ -424,6 +426,11 @@ public final class SkillEvents {
      * for non-Knowledge skills. Sends action bar notification and level-up
      * announcement. Updates parent buff attribute modifiers on level change.
      * Public so that mixin classes (different package) can call it.
+     *
+     * CAP_KNOWLEDGE_XP multiplies our own skill XP here, not vanilla experience orbs. Nothing
+     * clamps it: one action already maxes a skill around 4,000,000 with the default curve, and the
+     * action bar readout casts the awarded amount to int, so it stops rendering correctly past
+     * Integer.MAX_VALUE.
      */
     public static void awardXp(ServerPlayer player, SkillData data, SkillType skill, double amount) {
         if (!SmpConfig.SKILLS_ENABLED) return;
@@ -468,6 +475,17 @@ public final class SkillEvents {
      * Apply persistent attribute modifiers based on parent category levels.
      * Called on level-up and player join. Industrial grants movement speed, Nature grants max
      * health, Combat grants attack damage, Knowledge XP multiplier is applied in awardXp.
+     *
+     * Useful ranges for the configured caps, all imposed by vanilla and verified against 26.2:
+     * CAP_INDUSTRIAL_SPEED stops being safe past 34. The player base speed is 0.1 and the server
+     * kicks for "moved too quickly" above 10 blocks per tick.
+     * CAP_NATURE_HEALTH saturates at 502 hearts, since MAX_HEALTH clamps at 1024 HP and the config
+     * value is in hearts. Heart rows overlap the hotbar well before that, from roughly 81 hearts.
+     * CAP_COMBAT_DAMAGE saturates at 2047. ATTACK_DAMAGE clamps at 2048 and a bare-fisted player
+     * has a base of 1.0, so the multiplier cannot lift anyone past the clamp beyond that.
+     * CAP_DEFENSE_ARMOR saturates at 30, the ARMOR clamp, and that budget is shared with worn
+     * armor. Only the first 20 points reduce normal-sized hits, see CombatRules.
+     * A cap of 0 removes the modifier entirely rather than applying a zero one.
      */
     private static void updateParentBuffs(ServerPlayer player, SkillData data) {
         Map<SkillType, Double> xpMap = data.getTypedXpMap(player.getUUID());
@@ -522,7 +540,11 @@ public final class SkillEvents {
 
     // ========== PASSIVE HELPERS ==========
 
-    /** Double drop chance based on Industrial parent level, scaled to CAP_DOUBLE_DROP. */
+    /**
+     * Double drop chance based on Industrial parent level, scaled to CAP_DOUBLE_DROP.
+     * The cap saturates at 1.0 (every block drops twice) and 0 disables it, since the scaled
+     * value is compared against a 0.0-1.0 roll.
+     */
     private static void applyDoubleDrop(ServerPlayer sp, SkillData data, BlockState state, BlockPos pos,
             ServerLevel level) {
         int parentLevel = SkillManager.parentLevel(SkillType.Category.INDUSTRIAL, data.getTypedXpMap(sp.getUUID()));
