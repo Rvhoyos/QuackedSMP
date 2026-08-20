@@ -16,7 +16,7 @@ import CommandBlocksPanel from './CommandBlocksPanel'
 import BackupsPanel from './BackupsPanel'
 import TimelapsePanel from './TimelapsePanel'
 import { TooltipProvider, ToastHost } from '../../ui'
-import { IconPlayerHead, IconCommandBlock, IconBookshelf, IconPortal, IconSkills, IconFlag, IconChatFilter, IconMod, IconSword, IconEmerald, IconRepeatCmdBlock, IconShulkerBox, IconHardcoreHeart, IconGear, IconCamera } from './MinecraftIcons'
+import { IconPlayerHead, IconCommandBlock, IconBookshelf, IconGlowstonePortal, IconSkills, IconFlag, IconChatFilter, IconMod, IconSword, IconEmerald, IconRepeatCmdBlock, IconShulkerBox, IconHardcoreHeart, IconGear, IconCamera } from './MinecraftIcons'
 import styles from './AdminPanel.module.css'
 
 // Sidebar groups. Each item optionally gates on a config flag (hidden when the
@@ -27,7 +27,7 @@ const GROUPS = [
     { id: 'teams',   label: 'Teams',   Icon: IconSword },
   ]},
   { label: 'World', items: [
-    { id: 'dims',   label: 'Dimensions', Icon: IconPortal },
+    { id: 'dims',   label: 'Dimensions', Icon: IconGlowstonePortal },
     { id: 'claims', label: 'Claims',     Icon: IconFlag,    configKey: 'claims_enabled' },
     { id: 'shops',  label: 'Shops',      Icon: IconEmerald, configKey: 'shops_enabled' },
   ]},

@@ -1016,7 +1016,10 @@ export function IconWolf({ size = 20 }) {
   )
 }
 
-// ── Distinct nav icons (replace reused shields/clocks/signs) ────────────────────
+// ── Distinct nav icons ─────────────────────────────────────────────────────────
+// Added in two passes to keep every nav collision-free: first to replace reused
+// shields/clocks/signs, then to split the shared portals, chests and ender pearls so each
+// concept owns one icon across the sidebar, the settings nav and the Features cards.
 
 // Chat Moderation, a judge's gavel over its sound block.
 export function IconGavel({ size = 20 }) {
@@ -1201,6 +1204,135 @@ export function IconBloodDrop({ size = 20 }) {
       {px(6, 7, 3, 4, mid)}
       {px(6, 6, 1, 5, hi)}
       {px(9, 9, 2, 2, hi)}
+    </svg>
+  )
+}
+
+// Custom Dimensions, a portal in a glowstone frame. Our custom dims are real nether-portal
+// blocks in a non-obsidian frame, so the frame material is what tells them apart.
+export function IconGlowstonePortal({ size = 20 }) {
+  const lit = '#F2C879', stone = '#C49A4E', dark = '#8E6B2E', spark = '#FFE9A8'
+  const swirl = '#A24BE0', inner = '#7A34B8', deep = '#4B1E72'
+  return (
+    <svg viewBox="0 0 16 16" width={size} height={size} shapeRendering="crispEdges">
+      {/* portal interior */}
+      {px(5, 3, 6, 10, inner)}
+      {px(6, 5, 2, 3, swirl)}
+      {px(9, 8, 2, 3, swirl)}
+      {px(5, 11, 3, 2, deep)}
+      {px(8, 3, 3, 2, deep)}
+      {/* glowstone frame */}
+      {px(3, 1, 10, 2, stone)}
+      {px(3, 13, 10, 2, stone)}
+      {px(3, 1, 2, 14, stone)}
+      {px(11, 1, 2, 14, stone)}
+      {/* lit speckles and shadow, so the frame reads as glowstone not sandstone */}
+      {px(3, 1, 10, 1, lit)}
+      {px(3, 3, 1, 4, lit)}
+      {px(12, 8, 1, 4, lit)}
+      {px(4, 2, 1, 1, spark)}
+      {px(11, 13, 1, 1, spark)}
+      {px(3, 14, 10, 1, dark)}
+    </svg>
+  )
+}
+
+// Teleport, a bed from the side. /home sends you to your bed or respawn anchor.
+export function IconBed({ size = 20 }) {
+  return (
+    <svg viewBox="0 0 16 16" width={size} height={size} shapeRendering="crispEdges">
+      {/* pillow at the head end */}
+      {px(2, 5, 4, 2, '#EDEDED')}
+      {px(2, 6, 4, 1, '#CBCBCB')}
+      {/* mattress */}
+      {px(1, 7, 14, 4, '#B02E26')}
+      {px(1, 7, 14, 1, '#C7473C')}
+      {px(1, 10, 14, 1, '#8A2420')}
+      {/* wooden frame and legs */}
+      {px(1, 11, 14, 1, '#8A6234')}
+      {px(1, 12, 2, 2, '#6B4A26')}
+      {px(13, 12, 2, 2, '#6B4A26')}
+    </svg>
+  )
+}
+
+// End Finder, an eye of ender. The item that triggers the feature.
+export function IconEyeOfEnder({ size = 20 }) {
+  const body = '#3B2352', sheen = '#5A3480', edge = '#241134'
+  const iris = '#6EE7A8', irisDark = '#3BAF77', pupil = '#10281C'
+  return (
+    <svg viewBox="0 0 16 16" width={size} height={size} shapeRendering="crispEdges">
+      {/* rounded purple body */}
+      {px(5, 1, 6, 1, edge)}
+      {px(3, 2, 10, 1, body)}
+      {px(2, 3, 12, 10, body)}
+      {px(3, 13, 10, 1, body)}
+      {px(5, 14, 6, 1, edge)}
+      {px(3, 3, 6, 2, sheen)}
+      {px(2, 12, 12, 1, edge)}
+      {/* green iris with a dark pupil */}
+      {px(5, 6, 6, 4, irisDark)}
+      {px(5, 6, 6, 3, iris)}
+      {px(7, 7, 2, 2, pupil)}
+    </svg>
+  )
+}
+
+// Slime Chunk Hint, a slime cube.
+export function IconSlimeBall({ size = 20 }) {
+  const body = '#7CD65C', top = '#9BEF7B', core = '#5BA843', hi = '#DFFFD0'
+  return (
+    <svg viewBox="0 0 16 16" width={size} height={size} shapeRendering="crispEdges">
+      {/* rounded blob */}
+      {px(5, 3, 6, 1, top)}
+      {px(4, 4, 8, 1, top)}
+      {px(3, 5, 10, 7, body)}
+      {px(4, 12, 8, 1, core)}
+      {px(5, 13, 6, 1, core)}
+      {/* inner cube and highlight */}
+      {px(6, 7, 4, 3, core)}
+      {px(4, 5, 2, 2, hi)}
+    </svg>
+  )
+}
+
+// Kits, the vanilla bundle item.
+export function IconBundle({ size = 20 }) {
+  const leather = '#B07A46', shade = '#8A5A2F', lip = '#C68F55', cord = '#6B4A26'
+  return (
+    <svg viewBox="0 0 16 16" width={size} height={size} shapeRendering="crispEdges">
+      {/* drawstring knot */}
+      {px(7, 1, 2, 2, cord)}
+      {/* rolled top */}
+      {px(3, 3, 10, 2, lip)}
+      {px(4, 4, 8, 1, cord)}
+      {/* pouch body, shaded at both sides and the base */}
+      {px(3, 5, 10, 9, leather)}
+      {px(3, 5, 1, 9, shade)}
+      {px(12, 5, 1, 9, shade)}
+      {px(3, 12, 10, 2, shade)}
+      {px(5, 6, 2, 4, lip)}
+    </svg>
+  )
+}
+
+// Dashboard, a lit screen with a rising bar chart.
+export function IconLiveMonitor({ size = 20 }) {
+  const bezel = '#3A4250', rim = '#4E586A', glass = '#123A3C', bar = '#4ADE9E'
+  return (
+    <svg viewBox="0 0 16 16" width={size} height={size} shapeRendering="crispEdges">
+      {/* bezel */}
+      {px(1, 2, 14, 10, bezel)}
+      {px(1, 2, 14, 1, rim)}
+      {/* screen */}
+      {px(3, 4, 10, 6, glass)}
+      {/* rising bars */}
+      {px(4, 7, 2, 2, bar)}
+      {px(7, 6, 2, 3, bar)}
+      {px(10, 5, 2, 4, bar)}
+      {/* stand */}
+      {px(7, 12, 2, 2, bezel)}
+      {px(5, 14, 6, 1, rim)}
     </svg>
   )
 }

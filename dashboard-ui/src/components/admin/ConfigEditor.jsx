@@ -1,6 +1,6 @@
 import { useState, useEffect, createContext, useContext } from 'react'
 import {
-  IconGrassBlock, IconEnderPearl, IconBookQuill,
+  IconGrassBlock, IconBed, IconBookQuill,
   IconBallot, IconDiscord, IconMapScroll,
   IconPlayerHead, IconChest, IconSign, IconClock,
   IconVoiceChat, IconCrown, IconLoot, IconTierStar,
@@ -19,7 +19,7 @@ const ActiveSectionCtx = createContext(null)
 const SECTIONS = [
   { group: 'general', items: [
     { id: 'gen-claims',   label: 'Claims & Protection', Icon: IconGrassBlock },
-    { id: 'gen-teleport', label: 'Teleport',            Icon: IconEnderPearl },
+    { id: 'gen-teleport', label: 'Teleport',            Icon: IconBed },
     { id: 'gen-chatmod',  label: 'Chat Moderation',     Icon: IconGavel },
     { id: 'gen-hardcore', label: 'Hardcore',            Icon: IconHardcoreHeart },
     { id: 'gen-worldhints', label: 'World Hints',      Icon: IconPulse },
@@ -296,7 +296,7 @@ function GeneralTab({ draft, patch, onDisable, disabling, disableMsg }) {
         </Row>
       </Group>
 
-      <Group id="gen-teleport" icon={<IconEnderPearl />} title="Teleport" accent="teal">
+      <Group id="gen-teleport" icon={<IconBed />} title="Teleport" accent="teal">
         <Row label="Warmup Duration" hint="Seconds before teleport fires. Moving cancels it.">
           <NumInput value={draft.tp_warmup} onChange={v => patch('tp_warmup', v)} suffix="s" />
         </Row>
