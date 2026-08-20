@@ -104,6 +104,18 @@ public final class SmpConfig {
     public static java.util.List<String> WELCOME_SIDEBAR_LINES = new java.util.ArrayList<>();
     public static int     WELCOME_SIDEBAR_SHOW_SECONDS;
 
+    // ---- World hints (slime chunks, End finder) ----
+    public static boolean SLIME_HINT_ENABLED;
+    public static int     SLIME_HINT_INTERVAL_TICKS;
+    public static int     SLIME_HINT_PARTICLE_COUNT;
+    public static double  SLIME_HINT_SOUND_CHANCE;
+
+    public static boolean END_FINDER_ENABLED;
+    public static int     END_FINDER_SEARCH_RADIUS;
+    public static int     END_FINDER_RECHECK_DISTANCE;
+    public static int     END_FINDER_RECHECK_COOLDOWN_SECONDS;
+    public static boolean END_FINDER_ACTION_BAR;
+
     // ---- Anti-XRay ----
     public static boolean ANTIXRAY_ENABLED;
 
@@ -288,6 +300,17 @@ public final class SmpConfig {
         WELCOME_SIDEBAR_TITLE = d.welcomeSidebarTitle;
         WELCOME_SIDEBAR_LINES = d.welcomeSidebarLines;
         WELCOME_SIDEBAR_SHOW_SECONDS = d.welcomeSidebarShowSeconds;
+
+        SLIME_HINT_ENABLED = d.slimeHintEnabled;
+        SLIME_HINT_INTERVAL_TICKS = d.slimeHintIntervalTicks;
+        SLIME_HINT_PARTICLE_COUNT = d.slimeHintParticleCount;
+        SLIME_HINT_SOUND_CHANCE = d.slimeHintSoundChance;
+
+        END_FINDER_ENABLED = d.endFinderEnabled;
+        END_FINDER_SEARCH_RADIUS = d.endFinderSearchRadius;
+        END_FINDER_RECHECK_DISTANCE = d.endFinderRecheckDistance;
+        END_FINDER_RECHECK_COOLDOWN_SECONDS = d.endFinderRecheckCooldownSeconds;
+        END_FINDER_ACTION_BAR = d.endFinderActionBar;
 
         TEAM_AUTO_ASSIGN = new java.util.HashMap<>();
         for (var entry : d.teamAutoAssign.entrySet()) {

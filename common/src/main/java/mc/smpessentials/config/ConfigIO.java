@@ -128,6 +128,17 @@ public final class ConfigIO {
         data.welcomeSidebarLines = new java.util.ArrayList<>(SmpConfig.WELCOME_SIDEBAR_LINES);
         data.welcomeSidebarShowSeconds = SmpConfig.WELCOME_SIDEBAR_SHOW_SECONDS;
 
+        data.slimeHintEnabled = SmpConfig.SLIME_HINT_ENABLED;
+        data.slimeHintIntervalTicks = SmpConfig.SLIME_HINT_INTERVAL_TICKS;
+        data.slimeHintParticleCount = SmpConfig.SLIME_HINT_PARTICLE_COUNT;
+        data.slimeHintSoundChance = SmpConfig.SLIME_HINT_SOUND_CHANCE;
+
+        data.endFinderEnabled = SmpConfig.END_FINDER_ENABLED;
+        data.endFinderSearchRadius = SmpConfig.END_FINDER_SEARCH_RADIUS;
+        data.endFinderRecheckDistance = SmpConfig.END_FINDER_RECHECK_DISTANCE;
+        data.endFinderRecheckCooldownSeconds = SmpConfig.END_FINDER_RECHECK_COOLDOWN_SECONDS;
+        data.endFinderActionBar = SmpConfig.END_FINDER_ACTION_BAR;
+
         data.votifier.enabled = SmpConfig.VOTIFIER_ENABLED;
         data.votifier.port = SmpConfig.VOTIFIER_PORT;
         data.votifier.token = SmpConfig.VOTIFIER_TOKEN;

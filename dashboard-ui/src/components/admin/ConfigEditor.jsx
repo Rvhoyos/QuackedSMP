@@ -6,6 +6,7 @@ import {
   IconVoiceChat, IconCrown, IconLoot, IconTierStar,
   IconHelmetGhost, IconChestplateGhost, IconLeggingsGhost, IconBootsGhost,
   IconGavel, IconHardcoreHeart, IconTNT, IconAnvil, IconDyes, IconScoreboard,
+  IconPulse,
 } from './MinecraftIcons'
 import styles from './ConfigEditor.module.css'
 
@@ -21,6 +22,7 @@ const SECTIONS = [
     { id: 'gen-teleport', label: 'Teleport',            Icon: IconEnderPearl },
     { id: 'gen-chatmod',  label: 'Chat Moderation',     Icon: IconGavel },
     { id: 'gen-hardcore', label: 'Hardcore',            Icon: IconHardcoreHeart },
+    { id: 'gen-worldhints', label: 'World Hints',      Icon: IconPulse },
     { id: 'gen-admin',    label: 'Admin Panel',         Icon: IconChest },
     { id: 'gen-danger',   label: 'Danger Zone',         Icon: IconTNT },
   ]},
@@ -75,6 +77,10 @@ const TABS = [
       'hardcore_enabled', 'hardcore_death_percent', 'hardcore_team_visibility',
       'hardcore_sidebar_enabled', 'hardcore_sidebar_interval_seconds',
       'hardcore_sidebar_show_seconds', 'hardcore_sidebar_on_entry_seconds',
+      'slime_hint_enabled', 'slime_hint_interval_ticks', 'slime_hint_particle_count',
+      'slime_hint_sound_chance',
+      'end_finder_enabled', 'end_finder_search_radius', 'end_finder_recheck_distance',
+      'end_finder_recheck_cooldown_seconds', 'end_finder_action_bar',
       'admin_enabled', 'dashboard_port', 'server_name',
     ],
   },
@@ -323,6 +329,36 @@ function GeneralTab({ draft, patch, onDisable, disabling, disableMsg }) {
         </Row>
         <Row label="Sidebar On-Join" hint="Seconds the sidebar flashes when a member joins or creates a session">
           <NumInput value={draft.hardcore_sidebar_on_entry_seconds} onChange={v => patch('hardcore_sidebar_on_entry_seconds', v)} suffix="s" />
+        </Row>
+      </Group>
+
+      <Group id="gen-worldhints" icon={<IconPulse />} title="World Hints" accent="green">
+        <Row label="Slime Chunk Hint" hint="Slime particles at a player's feet while they stand in a slime chunk below Y40">
+          <Toggle value={draft.slime_hint_enabled} onChange={v => patch('slime_hint_enabled', v)} />
+        </Row>
+        <Row label="Hint Interval" hint="Ticks between particle emissions. Higher is subtler.">
+          <NumInput value={draft.slime_hint_interval_ticks} onChange={v => patch('slime_hint_interval_ticks', v)} suffix="t" />
+        </Row>
+        <Row label="Particle Count" hint="Particles per emission">
+          <NumInput value={draft.slime_hint_particle_count} onChange={v => patch('slime_hint_particle_count', v)} />
+        </Row>
+        <Row label="Squish Chance" hint="Chance per emission of a quiet squish sound. Keep it low so it never nags.">
+          <NumInput value={draft.slime_hint_sound_chance} step={0.01} onChange={v => patch('slime_hint_sound_chance', v)} />
+        </Row>
+        <Row label="End Finder" hint="Mark the nearest stronghold on the Locator Bar while a player holds an eye of ender">
+          <Toggle value={draft.end_finder_enabled} onChange={v => patch('end_finder_enabled', v)} />
+        </Row>
+        <Row label="Distance Readout" hint="Also show the distance to the stronghold on the action bar">
+          <Toggle value={draft.end_finder_action_bar} onChange={v => patch('end_finder_action_bar', v)} />
+        </Row>
+        <Row label="Search Radius" hint="Chunks searched for a stronghold. 100 matches vanilla /locate.">
+          <NumInput value={draft.end_finder_search_radius} onChange={v => patch('end_finder_search_radius', v)} />
+        </Row>
+        <Row label="Recheck Distance" hint="Blocks a player must travel before the nearest stronghold is looked up again">
+          <NumInput value={draft.end_finder_recheck_distance} onChange={v => patch('end_finder_recheck_distance', v)} suffix="b" />
+        </Row>
+        <Row label="Recheck Cooldown" hint="Minimum seconds between stronghold lookups for one player">
+          <NumInput value={draft.end_finder_recheck_cooldown_seconds} onChange={v => patch('end_finder_recheck_cooldown_seconds', v)} suffix="s" />
         </Row>
       </Group>
 

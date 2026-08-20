@@ -223,6 +223,16 @@ public final class AdminHandler {
         sb.append(String.format("\"welcome_sidebar_title\":\"%s\",", jsonEscape(SmpConfig.WELCOME_SIDEBAR_TITLE)));
         sb.append("\"welcome_sidebar_lines\":").append(jsonStrArr(SmpConfig.WELCOME_SIDEBAR_LINES)).append(",");
         sb.append(String.format("\"welcome_sidebar_show_seconds\":%d,", SmpConfig.WELCOME_SIDEBAR_SHOW_SECONDS));
+        // World hints
+        sb.append(String.format("\"slime_hint_enabled\":%b,", SmpConfig.SLIME_HINT_ENABLED));
+        sb.append(String.format("\"slime_hint_interval_ticks\":%d,", SmpConfig.SLIME_HINT_INTERVAL_TICKS));
+        sb.append(String.format("\"slime_hint_particle_count\":%d,", SmpConfig.SLIME_HINT_PARTICLE_COUNT));
+        sb.append(String.format(Locale.US, "\"slime_hint_sound_chance\":%.3f,", SmpConfig.SLIME_HINT_SOUND_CHANCE));
+        sb.append(String.format("\"end_finder_enabled\":%b,", SmpConfig.END_FINDER_ENABLED));
+        sb.append(String.format("\"end_finder_search_radius\":%d,", SmpConfig.END_FINDER_SEARCH_RADIUS));
+        sb.append(String.format("\"end_finder_recheck_distance\":%d,", SmpConfig.END_FINDER_RECHECK_DISTANCE));
+        sb.append(String.format("\"end_finder_recheck_cooldown_seconds\":%d,", SmpConfig.END_FINDER_RECHECK_COOLDOWN_SECONDS));
+        sb.append(String.format("\"end_finder_action_bar\":%b,", SmpConfig.END_FINDER_ACTION_BAR));
         // Admin
         sb.append(String.format("\"admin_enabled\":%b,", SmpConfig.ADMIN_ENABLED));
         sb.append(String.format("\"dashboard_port\":%d,", SmpConfig.DASHBOARD_PORT));
@@ -389,6 +399,16 @@ public final class AdminHandler {
             if (patch.has("welcome_sidebar_title"))   { SmpConfig.WELCOME_SIDEBAR_TITLE   = patch.get("welcome_sidebar_title").getAsString(); changed++; }
             if (patch.has("welcome_sidebar_lines") && patch.get("welcome_sidebar_lines").isJsonArray()) { loadStrArr(patch.getAsJsonArray("welcome_sidebar_lines"), SmpConfig.WELCOME_SIDEBAR_LINES); changed++; }
             if (patch.has("welcome_sidebar_show_seconds")) { SmpConfig.WELCOME_SIDEBAR_SHOW_SECONDS = Math.max(1, patch.get("welcome_sidebar_show_seconds").getAsInt()); changed++; }
+            // World hints
+            if (patch.has("slime_hint_enabled"))        { SmpConfig.SLIME_HINT_ENABLED        = patch.get("slime_hint_enabled").getAsBoolean(); changed++; }
+            if (patch.has("slime_hint_interval_ticks")) { SmpConfig.SLIME_HINT_INTERVAL_TICKS = Math.max(1, patch.get("slime_hint_interval_ticks").getAsInt()); changed++; }
+            if (patch.has("slime_hint_particle_count")) { SmpConfig.SLIME_HINT_PARTICLE_COUNT = Math.max(1, patch.get("slime_hint_particle_count").getAsInt()); changed++; }
+            if (patch.has("slime_hint_sound_chance"))   { SmpConfig.SLIME_HINT_SOUND_CHANCE   = Math.min(1.0, Math.max(0.0, patch.get("slime_hint_sound_chance").getAsDouble())); changed++; }
+            if (patch.has("end_finder_enabled"))                { SmpConfig.END_FINDER_ENABLED                = patch.get("end_finder_enabled").getAsBoolean(); changed++; }
+            if (patch.has("end_finder_search_radius"))          { SmpConfig.END_FINDER_SEARCH_RADIUS          = Math.max(1, patch.get("end_finder_search_radius").getAsInt()); changed++; }
+            if (patch.has("end_finder_recheck_distance"))       { SmpConfig.END_FINDER_RECHECK_DISTANCE       = Math.max(0, patch.get("end_finder_recheck_distance").getAsInt()); changed++; }
+            if (patch.has("end_finder_recheck_cooldown_seconds")) { SmpConfig.END_FINDER_RECHECK_COOLDOWN_SECONDS = Math.max(0, patch.get("end_finder_recheck_cooldown_seconds").getAsInt()); changed++; }
+            if (patch.has("end_finder_action_bar"))             { SmpConfig.END_FINDER_ACTION_BAR             = patch.get("end_finder_action_bar").getAsBoolean(); changed++; }
             // Admin
             if (patch.has("admin_enabled"))         { SmpConfig.ADMIN_ENABLED         = patch.get("admin_enabled").getAsBoolean();        changed++; }
             if (patch.has("dashboard_port"))        { SmpConfig.DASHBOARD_PORT        = patch.get("dashboard_port").getAsInt();           changed++; }
