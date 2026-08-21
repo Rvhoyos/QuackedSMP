@@ -58,27 +58,43 @@ public final class AntiXrayEngine {
      */
     private static LevelChunkSection[] maskHiddenBlocks(LevelChunk chunk, LevelChunkSection[] sections) {
         boolean nether = chunk.getLevel().dimension() == Level.NETHER;
-        ChunkNeighborhood neighborhood = ChunkNeighborhood.around(chunk);
         int minSectionY = chunk.getMinSectionY();
         int baseX = chunk.getPos().x() << 4;
         int baseZ = chunk.getPos().z() << 4;
         LevelChunkSection[] masked = null;
+        // Built on first use: with the section test below, plenty of chunks never need it.
+        ChunkNeighborhood neighborhood = null;
 
         for (int i = 0; i < sections.length; i++) {
             LevelChunkSection section = sections[i];
-            // The palette test skips whole sections holding none of our target blocks, which is
-            // most of the sky and surface, without visiting any of their 4096 blocks.
-            if (section.hasOnlyAir() || !section.maybeHas(ObfuscatedBlocks.PREDICATE)) continue;
+            if (section.hasOnlyAir()) continue;
 
+            // Sections are 16 aligned and maskFor only branches on the sign of worldY, so one
+            // section always paints one mask.
             int baseY = (minSectionY + i) << 4;
+            BlockState mask = ObfuscatedBlocks.maskFor(baseY, nether);
+
+            // The palette test skips whole sections that cannot change: no target block, or only
+            // the base material this section would paint anyway. Neither visits any of the 4096
+            // blocks. That covers the sky, the surface, and plain stone or netherrack at depth.
+            if (!section.maybeHas(ObfuscatedBlocks.predicateExcluding(mask))) continue;
+
             LevelChunkSection copy = null;
 
-            for (int x = 0; x < 16; x++) {
-                for (int y = 0; y < 16; y++) {
-                    for (int z = 0; z < 16; z++) {
-                        if (!ObfuscatedBlocks.matches(section.getBlockState(x, y, z))) continue;
+            // Nested in storage order: Strategy.getIndex is (y << 4 | z) << 4 | x, so x varies
+            // fastest and this walks the bit storage sequentially.
+            for (int y = 0; y < 16; y++) {
+                int worldY = baseY + y;
+                for (int z = 0; z < 16; z++) {
+                    for (int x = 0; x < 16; x++) {
+                        BlockState state = section.getBlockState(x, y, z);
+                        // Already the mask, so masking it would write the state over itself.
+                        // Stone, deepslate and netherrack have no properties, so each has exactly
+                        // one state and reference equality is the whole test.
+                        if (state == mask) continue;
+                        if (!ObfuscatedBlocks.matches(state)) continue;
 
-                        int worldY = baseY + y;
+                        if (neighborhood == null) neighborhood = ChunkNeighborhood.around(chunk);
                         if (!neighborhood.isEnclosed(baseX + x, worldY, baseZ + z)) continue;
 
                         if (copy == null) {
@@ -86,7 +102,7 @@ public final class AntiXrayEngine {
                             if (masked == null) masked = new LevelChunkSection[sections.length];
                             masked[i] = copy;
                         }
-                        copy.setBlockState(x, y, z, ObfuscatedBlocks.maskFor(worldY, nether), false);
+                        copy.setBlockState(x, y, z, mask, false);
                     }
                 }
             }

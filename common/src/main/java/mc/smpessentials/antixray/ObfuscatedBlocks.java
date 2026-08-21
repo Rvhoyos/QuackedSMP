@@ -41,14 +41,28 @@ final class ObfuscatedBlocks {
             Blocks.ANCIENT_DEBRIS
     );
 
-    /**
-     * Same test as {@link #matches}, as a predicate, for palette-level checks such as
-     * {@code LevelChunkSection.maybeHas}. Hoisted to a constant so the hot path allocates nothing.
-     */
-    static final Predicate<BlockState> PREDICATE = ObfuscatedBlocks::matches;
-
     static boolean matches(BlockState state) {
         return TARGETS.contains(state.getBlock());
+    }
+
+    // One constant per base material, so the palette check below allocates nothing.
+    private static final Predicate<BlockState> NOT_STONE =
+            state -> matches(state) && !state.is(Blocks.STONE);
+    private static final Predicate<BlockState> NOT_DEEPSLATE =
+            state -> matches(state) && !state.is(Blocks.DEEPSLATE);
+    private static final Predicate<BlockState> NOT_NETHERRACK =
+            state -> matches(state) && !state.is(Blocks.NETHERRACK);
+
+    /**
+     * Palette-level test for {@code LevelChunkSection.maybeHas}: is there a target block here that
+     * is not already the mask this section would paint? Masking a block with its own state changes
+     * nothing, so a section that holds only its own base material can be skipped whole, without
+     * reading any of its 4096 blocks.
+     */
+    static Predicate<BlockState> predicateExcluding(BlockState mask) {
+        if (mask.is(Blocks.DEEPSLATE)) return NOT_DEEPSLATE;
+        if (mask.is(Blocks.NETHERRACK)) return NOT_NETHERRACK;
+        return NOT_STONE;
     }
 
     /**
