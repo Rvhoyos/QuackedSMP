@@ -191,6 +191,7 @@ public final class AdminHandler {
         sb.append(String.format("\"chatfilter_enabled\":%b,", SmpConfig.CHATFILTER_ENABLED));
         sb.append(String.format("\"shops_enabled\":%b,", SmpConfig.SHOPS_ENABLED));
         sb.append(String.format("\"economy_enabled\":%b,", SmpConfig.ECONOMY_ENABLED));
+        sb.append(String.format("\"rtp_enabled\":%b,", SmpConfig.RTP_ENABLED));
         sb.append(String.format("\"commandblocks_enabled\":%b,", cmdBlocksEnabled));
         sb.append(String.format("\"backup_public_download\":%b,", SmpConfig.BACKUP_PUBLIC_DOWNLOAD));
         sb.append(String.format("\"backup_public_seed_disclosure\":%b,", SmpConfig.BACKUP_PUBLIC_SEED_DISCLOSURE));
@@ -351,6 +352,7 @@ public final class AdminHandler {
             if (patch.has("chatfilter_enabled")) { SmpConfig.CHATFILTER_ENABLED = patch.get("chatfilter_enabled").getAsBoolean(); changed++; }
             if (patch.has("shops_enabled"))     { SmpConfig.SHOPS_ENABLED     = patch.get("shops_enabled").getAsBoolean();     changed++; }
             if (patch.has("economy_enabled"))   { SmpConfig.ECONOMY_ENABLED   = patch.get("economy_enabled").getAsBoolean();   changed++; }
+            if (patch.has("rtp_enabled"))       { SmpConfig.RTP_ENABLED       = patch.get("rtp_enabled").getAsBoolean();       changed++; }
             if (patch.has("backup_public_download")) { SmpConfig.BACKUP_PUBLIC_DOWNLOAD = patch.get("backup_public_download").getAsBoolean(); changed++; }
             if (patch.has("backup_public_seed_disclosure")) { SmpConfig.BACKUP_PUBLIC_SEED_DISCLOSURE = patch.get("backup_public_seed_disclosure").getAsBoolean(); changed++; }
             if (patch.has("backup_public_max_concurrent")) { SmpConfig.BACKUP_PUBLIC_MAX_CONCURRENT = patch.get("backup_public_max_concurrent").getAsInt(); changed++; }

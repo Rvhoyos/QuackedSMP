@@ -323,6 +323,17 @@ public final class DashboardManager {
                 TimelapseHandler::handleFrame);
         s.addDownloadRoute("/api/admin/timelapse/export",
                 TimelapseHandler::handleExport);
+
+        s.addRoute("/api/admin/rtp",
+                (m, h, b) -> RtpHandler.handleGet(m, h, b, mcServer));
+        s.addRoute("/api/admin/rtp/save",
+                (m, h, b) -> RtpHandler.handleSave(m, h, b, mcServer));
+
+        // Shared by every editor that stores an item or an effect, not just RTP.
+        s.addRoute("/api/admin/registry",
+                (m, h, b) -> ItemHandler.handleRegistry(m, h, b, mcServer));
+        s.addRoute("/api/admin/items/import",
+                (m, h, b) -> ItemHandler.handleImport(m, h, b, mcServer));
     }
 
     // ── Scheduled ─────────────────────────────────────────────────────────────

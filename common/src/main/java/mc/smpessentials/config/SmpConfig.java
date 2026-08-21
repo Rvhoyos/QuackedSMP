@@ -166,6 +166,12 @@ public final class SmpConfig {
     public static long KIT_COOLDOWN_SECONDS;
     public static java.util.List<ConfigData.KitDef> KIT_DEFINITIONS = new java.util.ArrayList<>();
 
+    // ---- Random teleport ----
+    public static boolean RTP_ENABLED;
+    public static int RTP_WARMUP_SECONDS;
+    public static int RTP_COOLDOWN_SECONDS;
+    public static java.util.List<ConfigData.RtpProfile> RTP_PROFILES = new java.util.ArrayList<>();
+
     // ---- Team Auto-Assign ----
     public static java.util.Map<String, java.util.List<String>> TEAM_AUTO_ASSIGN = new java.util.HashMap<>();
 
@@ -343,6 +349,11 @@ public final class SmpConfig {
         KITS_ENABLED = d.kitsEnabled;
         KIT_COOLDOWN_SECONDS = d.kits.cooldownSeconds;
         KIT_DEFINITIONS = d.kits.kits;
+
+        RTP_ENABLED = d.rtpEnabled;
+        RTP_WARMUP_SECONDS = d.rtp.warmupSeconds;
+        RTP_COOLDOWN_SECONDS = d.rtp.cooldownSeconds;
+        RTP_PROFILES = d.rtp.profiles;
 
         SKILL_XP_EXPONENT = d.skills.xpExponent;
         SKILL_COOLDOWNS = d.skills.cooldowns;

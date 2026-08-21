@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Badge, Toggle } from '../../ui'
-import { IconFlag, IconSkills, IconChatFilter, IconDiscord, IconVoiceChat, IconBallot, IconMapScroll, IconChest, IconEmerald, IconHardcoreHeart, IconGlowstonePortal, IconBed, IconEyeOfEnder, IconSlimeBall, IconBundle, IconLiveMonitor } from './MinecraftIcons'
+import { IconFlag, IconSkills, IconChatFilter, IconDiscord, IconVoiceChat, IconBallot, IconMapScroll, IconChest, IconEmerald, IconHardcoreHeart, IconGlowstonePortal, IconBed, IconEyeOfEnder, IconSlimeBall, IconBundle, IconLiveMonitor, IconChorusFruit } from './MinecraftIcons'
 import styles from './FeatureShowcase.module.css'
 
 const FEATURES = [
@@ -9,6 +9,7 @@ const FEATURES = [
   { name: 'Teleport', group: 'Gameplay', Icon: IconBed, desc: 'Homes, /spawn, and /tpa with configurable warmup timers. Movement cancels the warp.', tag: 'teleport' },
   { name: 'Custom Dimensions', group: 'Gameplay', Icon: IconGlowstonePortal, desc: 'Create and manage custom dimensions in-game, including the Ether sky-islands world.', tag: 'dims' },
   { name: 'Hardcore Mode', group: 'Gameplay', Icon: IconHardcoreHeart, desc: 'Player-run hardcore sessions with shared start, inventory stash, and death threshold.', tag: 'hardcore', configKey: 'hardcore_enabled', toggleable: true },
+  { name: 'Random Teleport', group: 'Gameplay', Icon: IconChorusFruit, desc: 'On-demand /rtp with a per-dimension profile: distance band, spawn bias, arrival effects and a one-time item package.', tag: 'rtp', configKey: 'rtp_enabled', toggleable: true },
   { name: 'Kits', group: 'Gameplay', Icon: IconBundle, desc: 'Daily kit claims on a cooldown. Tier-gated VIP kits.', tag: 'kits', configKey: 'kits_enabled', toggleable: true },
   { name: 'Shops', group: 'Gameplay', Icon: IconEmerald, desc: 'Chest-based player shops with per-shop currency. Spawn shops have unlimited stock.', tag: 'shops', configKey: 'shops_enabled', toggleable: true },
   { name: 'Slime Chunk Hint', group: 'Gameplay', Icon: IconSlimeBall, desc: 'Slime particles at a player\u2019s feet while they stand in a slime chunk below Y40, plus a rare quiet squish.', tag: 'slimehint', configKey: 'slime_hint_enabled', toggleable: true },
@@ -32,7 +33,8 @@ export default function FeatureShowcase({ token, onExpired }) {
   const [toggling, setToggling] = useState({})
 
   useEffect(() => {
-    if (!token) return
+    // No token guard: when no admin password is set the routes serve unauthenticated calls, and
+    // skipping the fetch here left every card falling back to "Active" with no toggle.
     fetch('/api/admin/config', { headers: authHeaders(token) })
       .then(r => (r.status === 401 || r.status === 403) ? (onExpired?.(), null) : r.json())
       .then(d => { if (d) setCfg(d) })
@@ -79,7 +81,7 @@ export default function FeatureShowcase({ token, onExpired }) {
               <div className={styles.grid}>
                 {items.map(f => {
                   const active = resolve(f)
-                  const canToggle = !!token && !!f.toggleable && (active || !f.disableOnly)
+                  const canToggle = !!f.toggleable && (active || !f.disableOnly)
                   return (
                     <div key={f.tag} className={`${styles.card} ${active ? styles.cardOn : styles.cardOff}`}>
                       <div className={styles.cardTop}>

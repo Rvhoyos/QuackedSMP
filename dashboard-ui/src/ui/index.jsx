@@ -79,9 +79,9 @@ export function ErrorBanner({ children }) {
 }
 
 // ── Form controls ─────────────────────────────────────────────────────────────
-export function Field({ label, hint, children }) {
+export function Field({ label, hint, children, className }) {
   return (
-    <label className={s.field}>
+    <label className={clsx(s.field, className)}>
       {label && <span className={s.label}>{label}</span>}
       {children}
       {hint && <span className={s.hint}>{hint}</span>}

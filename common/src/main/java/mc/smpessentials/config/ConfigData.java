@@ -1,5 +1,8 @@
 package mc.smpessentials.config;
 
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParser;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -205,6 +208,11 @@ public final class ConfigData {
     public boolean economyEnabled = false;
     public KitsConfig kits = new KitsConfig();
 
+    // Random teleport. One profile per dimension, so /rtp can behave differently in each.
+    // Off by default (opt-in feature).
+    public boolean rtpEnabled = false;
+    public RtpConfig rtp = new RtpConfig();
+
     // World-map timelapse: periodically snapshots a top-down render of the world,
     // auto-sized to the generated chunk extent (read from region files, no BlueMap
     // dependency), to build a timelapse over time. Off by default (opt-in feature).
@@ -374,6 +382,56 @@ public final class ConfigData {
         public KitItem(String item, int count) {
             this.item = item;
             this.count = count;
+        }
+    }
+
+    /**
+     * Random teleport. Global timings plus one profile per dimension.
+     */
+    public static final class RtpConfig {
+        public int warmupSeconds = 5;
+        public int cooldownSeconds = 300;
+        public List<RtpProfile> profiles = new ArrayList<>(List.of(new RtpProfile()));
+    }
+
+    /** How /rtp behaves in one dimension. Distance is measured from that level's spawn. */
+    public static final class RtpProfile {
+        public String dimension = "minecraft:overworld";
+        public boolean enabled = true;
+        // Added on top of the spawn protection radius from server.properties.
+        public int minDistance = 0;
+        // 0 means the world border is the only limit. A number caps it tighter than the border.
+        public int maxDistance = 3000;
+        // 1 draws uniformly; higher values pull landings toward the minimum.
+        public double spawnBias = 1.0;
+        public boolean allowWater = false;
+        public int maxAttempts = 24;
+        public String message = "&aWhoosh! You landed &e{distance}&a blocks from spawn.";
+        // 0 means the arrival reward is granted once and never again.
+        public long rewardCooldownSeconds = 0;
+        public List<RtpEffect> effects = new ArrayList<>();
+        public List<RtpItem> items = new ArrayList<>(List.of(new RtpItem("{\"id\":\"minecraft:red_bed\",\"count\":1}")));
+    }
+
+    public static final class RtpEffect {
+        public String effect = "minecraft:resistance";
+        public int seconds = 30;
+        public int amplifier = 0;
+        public boolean showParticles = true;
+    }
+
+    /**
+     * One arrival item, held as ItemStack.CODEC JSON ({id, count, components}). Components are
+     * what let a stack carry a written book, which the kit format's plain item id cannot. Typed
+     * as JsonElement so it nests inline in quackedsmp.json rather than becoming an escaped blob.
+     */
+    public static final class RtpItem {
+        public JsonElement stack;
+
+        public RtpItem() {}
+
+        public RtpItem(String stackJson) {
+            this.stack = JsonParser.parseString(stackJson);
         }
     }
 }

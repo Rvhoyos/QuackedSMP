@@ -23,6 +23,13 @@ public final class ConfigIO {
     private ConfigIO() {
     }
 
+    // The one Gson configured for this mod's config shapes. Anything that serialises a piece of
+    // ConfigData outside this class (the dashboard's RTP editor) uses it so field naming matches
+    // quackedsmp.json exactly.
+    public static Gson gson() {
+        return GSON;
+    }
+
     public static Path path() {
         return SmpServices.PLATFORM.getConfigDir().resolve(FILE_NAME);
     }
@@ -190,6 +197,11 @@ public final class ConfigIO {
         data.kitsEnabled = SmpConfig.KITS_ENABLED;
         data.kits.cooldownSeconds = SmpConfig.KIT_COOLDOWN_SECONDS;
         data.kits.kits = new java.util.ArrayList<>(SmpConfig.KIT_DEFINITIONS);
+
+        data.rtpEnabled = SmpConfig.RTP_ENABLED;
+        data.rtp.warmupSeconds = SmpConfig.RTP_WARMUP_SECONDS;
+        data.rtp.cooldownSeconds = SmpConfig.RTP_COOLDOWN_SECONDS;
+        data.rtp.profiles = new java.util.ArrayList<>(SmpConfig.RTP_PROFILES);
 
         data.skills.xpExponent = SmpConfig.SKILL_XP_EXPONENT;
         data.skills.cooldowns = new java.util.HashMap<>(SmpConfig.SKILL_COOLDOWNS);

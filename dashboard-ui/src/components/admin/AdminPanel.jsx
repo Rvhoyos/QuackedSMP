@@ -15,9 +15,10 @@ import ShopsPanel from './ShopsPanel'
 import CommandBlocksPanel from './CommandBlocksPanel'
 import BackupsPanel from './BackupsPanel'
 import TimelapsePanel from './TimelapsePanel'
+import RtpPanel from './RtpPanel'
 import UpdateBanner from './UpdateBanner'
 import { TooltipProvider, ToastHost } from '../../ui'
-import { IconPlayerHead, IconCommandBlock, IconBookshelf, IconGlowstonePortal, IconSkills, IconFlag, IconChatFilter, IconMod, IconSword, IconEmerald, IconRepeatCmdBlock, IconShulkerBox, IconHardcoreHeart, IconGear, IconCamera } from './MinecraftIcons'
+import { IconPlayerHead, IconCommandBlock, IconBookshelf, IconGlowstonePortal, IconSkills, IconFlag, IconChatFilter, IconMod, IconSword, IconEmerald, IconRepeatCmdBlock, IconShulkerBox, IconHardcoreHeart, IconGear, IconCamera, IconChorusFruit } from './MinecraftIcons'
 import styles from './AdminPanel.module.css'
 
 // Sidebar groups. Each item optionally gates on a config flag (hidden when the
@@ -35,6 +36,7 @@ const GROUPS = [
   { label: 'Gameplay', items: [
     { id: 'skills',   label: 'Skills',   Icon: IconSkills, configKey: 'skills_enabled' },
     { id: 'hardcore', label: 'Hardcore', Icon: IconHardcoreHeart, configKey: 'hardcore_enabled' },
+    { id: 'rtp',      label: 'RTP',      Icon: IconChorusFruit,   configKey: 'rtp_enabled' },
   ]},
   { label: 'Moderation', items: [
     { id: 'chatfilter', label: 'Chat Filter', Icon: IconChatFilter, configKey: 'chatfilter_enabled' },
@@ -151,6 +153,7 @@ export default function AdminPanel({ health, wsStatus, onBack }) {
             {resolvedTab === 'claims'     && <ClaimsPanel {...panelProps} />}
             {resolvedTab === 'chatfilter' && <ChatFilterPanel {...panelProps} />}
             {resolvedTab === 'hardcore'   && <HardcorePanel {...panelProps} />}
+            {resolvedTab === 'rtp'        && <RtpPanel {...panelProps} />}
             {resolvedTab === 'teams'      && <TeamsPanel {...panelProps} />}
             {resolvedTab === 'shops'      && <ShopsPanel {...panelProps} />}
             {resolvedTab === 'cmdblocks'  && <CommandBlocksPanel {...panelProps} />}

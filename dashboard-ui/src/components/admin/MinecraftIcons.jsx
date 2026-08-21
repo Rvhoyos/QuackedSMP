@@ -1622,3 +1622,41 @@ export function IconUpgradeArrow({ size = 20 }) {
     </svg>
   )
 }
+
+// Chorus fruit: vanilla's own random-teleport item, so it reads as /rtp without
+// colliding with the clock, portal, or ender pearl silhouettes already in this file.
+export function IconChorusFruit({ size = 18 }) {
+  return (
+    <svg viewBox="0 0 16 16" width={size} height={size} shapeRendering="crispEdges">
+      {/* Stem */}
+      {px(7, 0, 2, 2, '#6B4A2E')}
+      {/* Body, built row by row so the outline stays lumpy rather than round */}
+      {px(6, 2, 4, 1, '#9B5FB5')}
+      {px(4, 3, 8, 1, '#9B5FB5')}
+      {px(3, 4, 10, 1, '#9B5FB5')}
+      {px(2, 5, 12, 2, '#9B5FB5')}
+      {px(1, 7, 14, 2, '#9B5FB5')}
+      {px(2, 9, 12, 2, '#9B5FB5')}
+      {px(3, 11, 10, 1, '#9B5FB5')}
+      {px(4, 12, 8, 1, '#9B5FB5')}
+      {px(6, 13, 4, 1, '#9B5FB5')}
+      {/* Side lumps */}
+      {px(0, 7, 1, 2, '#8A4FA4')}
+      {px(15, 7, 1, 2, '#8A4FA4')}
+      {px(5, 14, 2, 1, '#8A4FA4')}
+      {px(9, 14, 2, 1, '#8A4FA4')}
+      {/* Lit edge */}
+      {px(4, 4, 3, 1, '#C08FD6')}
+      {px(3, 5, 2, 2, '#C08FD6')}
+      {px(2, 7, 1, 2, '#C08FD6')}
+      {/* Shaded edge */}
+      {px(11, 9, 3, 1, '#6E3F86')}
+      {px(10, 11, 3, 1, '#6E3F86')}
+      {px(13, 7, 2, 2, '#6E3F86')}
+      {/* Blotches */}
+      {px(6, 6, 2, 2, '#7A4694')}
+      {px(9, 4, 2, 2, '#7A4694')}
+      {px(7, 10, 2, 1, '#7A4694')}
+    </svg>
+  )
+}

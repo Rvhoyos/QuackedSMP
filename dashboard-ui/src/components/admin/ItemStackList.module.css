@@ -1,0 +1,196 @@
+/* Styles for the reusable item and effect list editors. Kept out of any one feature's stylesheet
+   so kits or vote rewards can drop these components in without inheriting RTP's CSS. */
+
+.subHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 14px;
+  padding-top: 10px;
+  border-top: 1px solid var(--mc-stone-dark);
+}
+
+.subTitle {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--txt-muted);
+}
+
+.hint {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  color: var(--txt-faint);
+  line-height: 1.45;
+}
+
+/* ── Rows ────────────────────────────────────────────────────────────────── */
+
+.effectRow,
+.itemRow {
+  display: flex;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 8px;
+  background: var(--surf-slot);
+  border: 1px solid var(--mc-stone-dark);
+}
+
+.itemName {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  flex: 1 1 180px;
+  min-width: 0;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--txt-primary);
+}
+
+.itemId {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--txt-faint);
+  overflow-wrap: anywhere;
+}
+
+.itemTag {
+  align-self: center;
+  padding: 2px 7px;
+  font-family: var(--font-sans);
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--mc-wood-light);
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid var(--mc-wood-dark);
+}
+
+.inlineField {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  width: 84px;
+  flex: 0 0 auto;
+}
+
+.inlineField > span {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  color: var(--txt-muted);
+}
+
+.inlineCheck {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding-bottom: 6px;
+  font-family: var(--font-sans);
+  font-size: 12px;
+  color: var(--txt-muted);
+  cursor: pointer;
+}
+
+.importError {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  color: var(--red, #F38BA8);
+}
+
+/* ── Effect picker ───────────────────────────────────────────────────────── */
+
+.effectPick {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex: 1 1 190px;
+  min-width: 0;
+}
+
+.effectPick > select { flex: 1; min-width: 0; }
+
+.effectDot {
+  width: 10px;
+  height: 10px;
+  flex: 0 0 auto;
+  border: 1px solid #0a0a0a;
+}
+
+.rowNote {
+  flex: 1 0 100%;
+  font-family: var(--font-sans);
+  font-size: 11px;
+  color: var(--txt-faint);
+}
+
+/* ── Add-item dialog ─────────────────────────────────────────────────────── */
+
+.tabs {
+  display: flex;
+  gap: 2px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid var(--mc-stone-dark);
+}
+
+.tab {
+  padding: 7px 12px;
+  font-family: var(--font-sans);
+  font-size: 12px;
+  color: var(--txt-muted);
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+}
+
+.tab:hover { color: var(--txt-secondary); }
+
+.tabOn {
+  color: var(--mc-wood-light);
+  border-bottom-color: var(--mc-wood-light);
+}
+
+.pickList {
+  display: flex;
+  flex-direction: column;
+  max-height: 240px;
+  overflow-y: auto;
+  background: var(--surf-slot);
+  border: 1px solid var(--mc-stone-dark);
+}
+
+.pickRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 6px 10px;
+  text-align: left;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+}
+
+.pickRow:hover { background: var(--panel-card-hover); }
+
+.pickRowOn {
+  background: var(--panel-card-hover);
+  box-shadow: inset 3px 0 0 var(--mc-wood-light);
+}
+
+.pickName {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--txt-primary);
+}
+
+.pickId {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--txt-faint);
+  overflow-wrap: anywhere;
+}
