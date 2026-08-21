@@ -3,6 +3,7 @@ package mc.smpessentials.dashboard;
 import mc.smpessentials.SmpUtilsMod;
 import mc.smpessentials.commandblocks.CommandBlockHandler;
 import mc.smpessentials.config.SmpConfig;
+import mc.smpessentials.serverlog.ServerLogService;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.level.storage.LevelResource;
 
@@ -78,6 +79,7 @@ public final class DashboardManager {
     // ── Start / stop ───────────────────────────────────────────────────────────
 
     private static void start(int port) {
+        ServerLogService.get().start();
         DashboardServer s = new DashboardServer(port);
         registerRoutes(s);
         s.start();
@@ -99,6 +101,7 @@ public final class DashboardManager {
 
     private static void stop() {
         running = false;
+        ServerLogService.get().stop();
         ScheduledExecutorService sc = scheduler;
         if (sc != null) { sc.shutdown(); scheduler = null; }
         DashboardServer s = server;
@@ -175,6 +178,7 @@ public final class DashboardManager {
                 (m, h, b) -> AdminHandler.handlePlayers(m, h, b, mcServer));
         s.addRoute("/api/admin/exec",
                 (m, h, b) -> AdminHandler.handleExec(m, h, b, mcServer));
+        s.addRoute("/api/admin/logs",   LogHandler::handleLogs);
         s.addRoute("/api/admin/config",
                 (m, h, b) -> "GET".equals(m)
                         ? AdminHandler.handleConfigGet(m, h, b, mcServer)

@@ -1,56 +1,40 @@
 .wrap { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-height: 0; background: var(--panel-surface); }
-.scroll { flex: 1; overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 16px; }
+/* Column of cards with the log terminal last, taking whatever height is left.
+   Every ancestor needs min-height: 0 or the terminal collapses instead of scrolling. */
+.body { flex: 1; min-height: 0; overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 12px; }
 
-.group { display: flex; flex-direction: column; gap: 8px; }
-.groupLabel { font-family: var(--font-pixel); font-size: 7px; letter-spacing: 0.5px; color: var(--txt-faint); text-shadow: 1px 1px 0 rgba(0,0,0,0.5); }
-.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 8px; }
 
-.quickBtn {
-  display: flex; align-items: center; gap: 8px; padding: 10px 12px;
-  font-family: var(--font-pixel); font-size: 7px; letter-spacing: 0.2px;
-  color: var(--txt-secondary); background: var(--surf-3);
-  border-top: 2px solid #5c5c5c; border-left: 2px solid #5c5c5c; border-bottom: 2px solid #101010; border-right: 2px solid #101010;
-  cursor: pointer; transition: background var(--t-fast), color var(--t-fast); text-align: left; text-shadow: 1px 1px 0 rgba(0,0,0,0.5);
+.action {
+  display: flex; align-items: center; gap: 9px; padding: 10px 12px;
+  font-family: var(--font-pixel); font-size: 7px; letter-spacing: 0.2px; text-align: left;
+  color: var(--txt-secondary); background: var(--btn-face);
+  border-top: 2px solid #56546a; border-left: 2px solid #56546a;
+  border-bottom: 2px solid #0d0d0d; border-right: 2px solid #0d0d0d;
+  cursor: pointer; text-shadow: 1px 1px 0 rgba(0,0,0,0.5);
+  transition: background var(--t-fast), color var(--t-fast);
 }
-.quickBtn:hover { background: #3d3d3d; color: var(--txt-primary); }
-.quickBtn:active { transform: translate(1px,1px); }
-.quickIcon { font-size: 14px; line-height: 1; }
+.action:hover { background: var(--btn-face-hover); color: var(--txt-primary); }
+.action:active { transform: translate(1px, 1px); }
 
-.dangerZone { display: flex; flex-direction: column; gap: 8px; padding: 12px; background: rgba(243,139,168,0.05); border: 1px solid rgba(243,139,168,0.25); }
-.dangerLabel { font-family: var(--font-pixel); font-size: 7px; letter-spacing: 0.5px; color: var(--red); text-shadow: 1px 1px 0 rgba(0,0,0,0.5); }
-.dangerBtn {
-  display: flex; align-items: center; gap: 8px; padding: 10px 12px;
-  font-family: var(--font-pixel); font-size: 7px; letter-spacing: 0.2px;
-  color: #f6c2cd; background: #4a1f28;
-  border-top: 2px solid #7a3341; border-left: 2px solid #7a3341; border-bottom: 2px solid #200a0e; border-right: 2px solid #200a0e;
-  cursor: pointer; transition: background var(--t-fast); text-align: left; text-shadow: 1px 1px 0 rgba(0,0,0,0.5);
+/* Doubled selector on purpose: this has to outrank ui.module.css .section,
+   whose borders it replaces, and stylesheet order between the two modules is
+   decided by the bundler rather than by us. */
+.danger.danger {
+  border-top-color: rgba(243,139,168,0.45); border-left-color: rgba(243,139,168,0.45);
 }
-.dangerBtn:hover { background: #5e2731; }
-.dangerBtn:active { transform: translate(1px,1px); }
-.stopBtn { background: #5a1520; }
-.stopBtn:hover { background: #6e1a28; }
+.dangerTitle { display: flex; align-items: center; gap: 7px; color: var(--red); }
 
-/* Terminal */
-.terminal { display: flex; flex-direction: column; background: var(--surf-0); border: 2px solid #0d0d0d; }
-.termHeader { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; background: var(--surf-slot); border-bottom: 1px solid #0d0d0d; }
-.termTitle { font-family: var(--font-pixel); font-size: 8px; color: var(--txt-secondary); letter-spacing: 0.4px; text-shadow: 1px 1px 0 rgba(0,0,0,0.5); }
-.termHint { font-family: var(--font-sans); font-size: 11px; color: var(--txt-faint); }
-.termLog { max-height: 260px; min-height: 90px; overflow-y: auto; padding: 8px 12px; display: flex; flex-direction: column; gap: 3px; }
-.termEmpty { font-family: var(--font-mono); font-size: 12px; color: var(--txt-faint); }
-.termLine { display: flex; gap: 8px; font-family: var(--font-mono); font-size: 12px; }
-.termOk { color: var(--txt-secondary); }
-.termFail { color: var(--red); }
-.termArrow { flex-shrink: 0; }
-.termOk .termArrow { color: var(--green); }
-.termCmd { word-break: break-all; }
-.termInput { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-top: 1px solid #0d0d0d; background: var(--surf-slot); }
-.termPrompt { font-family: var(--font-mono); font-size: 13px; color: var(--green); }
-.termField { flex: 1; font-family: var(--font-mono); font-size: 13px; color: var(--txt-primary); background: transparent; border: none; outline: none; }
-.termField::placeholder { color: var(--txt-faint); }
-.termRun {
-  font-size: 12px; padding: 4px 12px; color: var(--txt-secondary); background: var(--surf-3);
-  border-top: 1px solid #5c5c5c; border-left: 1px solid #5c5c5c; border-bottom: 1px solid #101010; border-right: 1px solid #101010;
-  cursor: pointer;
+.dangerAction {
+  display: flex; align-items: center; gap: 9px; padding: 10px 12px;
+  font-family: var(--font-pixel); font-size: 7px; letter-spacing: 0.2px; text-align: left;
+  color: #f6c2cd; background: linear-gradient(180deg, rgba(243,139,168,0.20) 0%, rgba(243,139,168,0.09) 100%);
+  border-top: 2px solid rgba(243,139,168,0.42); border-left: 2px solid rgba(243,139,168,0.42);
+  border-bottom: 2px solid #0d0d0d; border-right: 2px solid #0d0d0d;
+  cursor: pointer; text-shadow: 1px 1px 0 rgba(0,0,0,0.5);
+  transition: background var(--t-fast), color var(--t-fast);
 }
-.termRun:hover:not(:disabled) { color: var(--txt-primary); }
-.termRun:disabled { opacity: 0.4; cursor: default; }
+.dangerAction:hover { background: linear-gradient(180deg, rgba(243,139,168,0.30) 0%, rgba(243,139,168,0.14) 100%); color: #fff; }
+.dangerAction:active { transform: translate(1px, 1px); }
+.stop { background: linear-gradient(180deg, rgba(243,139,168,0.34) 0%, rgba(180,54,43,0.28) 100%); }
+.stop:hover { background: linear-gradient(180deg, rgba(243,139,168,0.44) 0%, rgba(180,54,43,0.36) 100%); }

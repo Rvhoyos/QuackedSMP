@@ -1336,3 +1336,254 @@ export function IconLiveMonitor({ size = 20 }) {
     </svg>
   )
 }
+
+// ── Commands tab ──────────────────────────────────────────────────────────────
+// One icon per quick action. All drawn fresh rather than borrowing an existing
+// glyph: every obvious candidate (gear, dragon head, sign, eye of ender, grass
+// block, skull, TNT, live monitor) is already on screen somewhere else, and
+// reusing one would make two different things look like the same thing.
+
+// Set Day, a sun with four rays.
+export function IconSun({ size = 20 }) {
+  const body = '#F2C23A', hot = '#FFE07A', ray = '#FFD86A'
+  return (
+    <svg viewBox="0 0 16 16" width={size} height={size} shapeRendering="crispEdges">
+      {px(6, 4, 4, 1, body)}
+      {px(5, 5, 6, 1, body)}
+      {px(4, 6, 8, 4, body)}
+      {px(5, 10, 6, 1, body)}
+      {px(6, 11, 4, 1, body)}
+      {px(6, 6, 4, 3, hot)}
+      {px(7, 1, 2, 2, ray)}
+      {px(7, 13, 2, 2, ray)}
+      {px(1, 7, 2, 2, ray)}
+      {px(13, 7, 2, 2, ray)}
+    </svg>
+  )
+}
+
+// Set Night, a crescent moon with a star.
+export function IconMoonStar({ size = 20 }) {
+  const body = '#CBD5F0', edge = '#EEF2FF', star = '#FFF2B0'
+  return (
+    <svg viewBox="0 0 16 16" width={size} height={size} shapeRendering="crispEdges">
+      {px(6, 3, 4, 1, body)}
+      {px(5, 4, 4, 1, body)}
+      {px(4, 5, 4, 1, body)}
+      {px(3, 6, 4, 3, body)}
+      {px(3, 9, 5, 1, body)}
+      {px(4, 10, 5, 1, body)}
+      {px(5, 11, 6, 1, body)}
+      {px(6, 12, 4, 1, body)}
+      {px(3, 6, 1, 3, edge)}
+      {px(12, 2, 1, 3, star)}
+      {px(11, 3, 3, 1, star)}
+    </svg>
+  )
+}
+
+// Clear Weather, sun behind a cloud.
+export function IconSunCloud({ size = 20 }) {
+  const sun = '#F2C23A', hot = '#FFE07A'
+  const cloud = '#E8EDF5', lit = '#FFFFFF', shade = '#B9C3D4'
+  return (
+    <svg viewBox="0 0 16 16" width={size} height={size} shapeRendering="crispEdges">
+      {px(4, 2, 4, 1, sun)}
+      {px(3, 3, 6, 2, sun)}
+      {px(4, 5, 4, 1, sun)}
+      {px(5, 3, 2, 1, hot)}
+      {px(8, 7, 4, 1, cloud)}
+      {px(6, 8, 8, 1, cloud)}
+      {px(5, 9, 9, 2, cloud)}
+      {px(6, 11, 8, 1, shade)}
+      {px(8, 7, 4, 1, lit)}
+    </svg>
+  )
+}
+
+// Set Thunder, a storm cloud with a bolt.
+export function IconLightning({ size = 20 }) {
+  const body = '#59627A', top = '#727C96', under = '#3E4557'
+  const bolt = '#FFD23A', hot = '#FFF0A0'
+  return (
+    <svg viewBox="0 0 16 16" width={size} height={size} shapeRendering="crispEdges">
+      {px(5, 1, 5, 1, top)}
+      {px(3, 2, 10, 1, top)}
+      {px(2, 3, 12, 2, body)}
+      {px(3, 5, 10, 1, under)}
+      {px(9, 6, 3, 2, bolt)}
+      {px(7, 8, 4, 2, hot)}
+      {px(5, 10, 4, 2, bolt)}
+      {px(6, 12, 2, 2, bolt)}
+    </svg>
+  )
+}
+
+// Reset Dragon, a dragon egg on its base.
+export function IconDragonEgg({ size = 20 }) {
+  const shell = '#1A0E22', sheen = '#2E1A3A', fleck = '#B36BE0'
+  const base = '#2A2A34', foot = '#1E1E26'
+  return (
+    <svg viewBox="0 0 16 16" width={size} height={size} shapeRendering="crispEdges">
+      {px(7, 2, 2, 1, shell)}
+      {px(6, 3, 4, 1, shell)}
+      {px(5, 4, 6, 2, shell)}
+      {px(4, 6, 8, 4, shell)}
+      {px(5, 10, 6, 2, shell)}
+      {px(5, 5, 1, 4, sheen)}
+      {px(8, 4, 1, 1, fleck)}
+      {px(6, 7, 1, 1, fleck)}
+      {px(9, 8, 1, 1, fleck)}
+      {px(7, 10, 1, 1, fleck)}
+      {px(4, 12, 8, 1, base)}
+      {px(3, 13, 10, 1, foot)}
+    </svg>
+  )
+}
+
+// Reload Config, an open refresh loop. The arc deliberately breaks on the right
+// under the arrowhead: a closed ring at 16px just reads as a filled circle.
+export function IconRefreshDust({ size = 20 }) {
+  const ring = '#C2352B', lit = '#E2554A', head = '#F86C58'
+  return (
+    <svg viewBox="0 0 16 16" width={size} height={size} shapeRendering="crispEdges">
+      {/* arc, running counter-clockwise from the top round to the right */}
+      {px(5, 2, 4, 2, lit)}
+      {px(3, 3, 3, 2, ring)}
+      {px(2, 5, 3, 6, ring)}
+      {px(3, 11, 3, 2, ring)}
+      {px(5, 12, 6, 2, ring)}
+      {px(10, 11, 3, 2, ring)}
+      {px(12, 7, 3, 4, ring)}
+      {/* arrowhead closing the loop at the top right */}
+      {px(9, 0, 2, 1, head)}
+      {px(9, 1, 3, 1, head)}
+      {px(9, 2, 4, 1, head)}
+      {px(9, 3, 5, 1, head)}
+      {px(9, 4, 4, 1, head)}
+      {px(9, 5, 3, 1, head)}
+      {px(9, 6, 2, 1, head)}
+    </svg>
+  )
+}
+
+// Broadcast, a megaphone with sound waves. Not a speech bubble: IconChatFilter
+// already owns that silhouette.
+export function IconMegaphone({ size = 20 }) {
+  const body = '#C8C8D2', lit = '#F0F0F8', shade = '#9EA0AE'
+  const cap = '#8E8E9C', grip = '#4A4A55', gripLit = '#5E5E6B', wave = '#F2C23A'
+  return (
+    <svg viewBox="0 0 16 16" width={size} height={size} shapeRendering="crispEdges">
+      {/* grip and back cap */}
+      {px(3, 10, 3, 3, grip)}
+      {px(3, 10, 3, 1, gripLit)}
+      {px(4, 7, 2, 3, cap)}
+      {/* cone, opening to the right */}
+      {px(6, 6, 2, 5, body)}
+      {px(8, 5, 2, 7, body)}
+      {px(10, 4, 2, 9, body)}
+      {px(10, 4, 2, 1, lit)}
+      {px(6, 9, 2, 2, shade)}
+      {px(8, 10, 2, 2, shade)}
+      {px(10, 11, 2, 2, shade)}
+      {/* sound waves */}
+      {px(13, 6, 1, 4, wave)}
+      {px(15, 4, 1, 8, wave)}
+      {px(14, 5, 1, 1, wave)}
+      {px(14, 10, 1, 1, wave)}
+    </svg>
+  )
+}
+
+// Queue End Reset, an end portal: the starfield void inside its stone rim.
+export function IconEndPortal({ size = 20 }) {
+  const rim = '#4A4458', rimLit = '#635C74'
+  const void_ = '#0A0518', hazeTop = '#2A1250', hazeLow = '#180A30'
+  const star = '#FFFFFF', spark = '#C9A0FF'
+  return (
+    <svg viewBox="0 0 16 16" width={size} height={size} shapeRendering="crispEdges">
+      {px(1, 2, 14, 12, rim)}
+      {px(1, 2, 14, 1, rimLit)}
+      {px(3, 4, 10, 8, void_)}
+      {px(3, 4, 10, 2, hazeTop)}
+      {px(3, 10, 10, 2, hazeLow)}
+      {px(4, 5, 1, 1, star)}
+      {px(8, 4, 1, 1, star)}
+      {px(11, 6, 1, 1, star)}
+      {px(6, 8, 1, 1, star)}
+      {px(10, 10, 1, 1, star)}
+      {px(4, 10, 1, 1, spark)}
+      {px(7, 6, 1, 1, spark)}
+      {px(11, 9, 1, 1, spark)}
+      {px(9, 7, 1, 1, star)}
+    </svg>
+  )
+}
+
+// Regen Wilderness, a sapling breaking out of tilled soil.
+export function IconSapling({ size = 20 }) {
+  const leaf = '#4FA33A', lit = '#5FBF46', dark = '#3E8A2E'
+  const stem = '#6B4A2B', soil = '#6B4A2B', tilled = '#7E5A34'
+  return (
+    <svg viewBox="0 0 16 16" width={size} height={size} shapeRendering="crispEdges">
+      {px(5, 2, 6, 2, lit)}
+      {px(3, 4, 10, 3, leaf)}
+      {px(4, 7, 8, 2, dark)}
+      {px(7, 9, 2, 3, stem)}
+      {px(2, 12, 12, 3, soil)}
+      {px(2, 12, 12, 1, tilled)}
+    </svg>
+  )
+}
+
+// Stop Server, the stop glyph on a stone button plate. Not a ring: IconRefreshDust
+// on this same tab is already a red ring, and two of those read as one thing.
+export function IconStopButton({ size = 20 }) {
+  const plate = '#4A4A55', plateLit = '#6C6C79', plateDark = '#2F2F38', recess = '#3B3B45'
+  const stop = '#E2413A', stopLit = '#F26A63', stopDark = '#A62B25'
+  return (
+    <svg viewBox="0 0 16 16" width={size} height={size} shapeRendering="crispEdges">
+      {px(1, 2, 14, 12, plate)}
+      {px(1, 2, 14, 1, plateLit)}
+      {px(1, 13, 14, 1, plateDark)}
+      {px(2, 3, 12, 10, recess)}
+      {px(5, 6, 6, 6, stop)}
+      {px(5, 6, 6, 1, stopLit)}
+      {px(5, 11, 6, 1, stopDark)}
+    </svg>
+  )
+}
+
+// Danger zone heading, hazard stripes. The staircase runs past the viewBox on
+// both sides on purpose; the SVG viewport clips it, which is what keeps the
+// diagonal looking like pixels instead of an anti-aliased line.
+export function IconHazardStripes({ size = 20 }) {
+  const warn = '#F2C23A', dark = '#22222A'
+  return (
+    <svg viewBox="0 0 16 16" width={size} height={size} shapeRendering="crispEdges">
+      {px(0, 0, 16, 16, warn)}
+      {[0, 1, 2, 3].map(band =>
+        [0, 2, 4, 6, 8, 10, 12, 14].map(row => px(band * 8 - row + 2, row, 4, 2, dark)))}
+    </svg>
+  )
+}
+
+// Live terminal heading, a shell prompt caret. Bare glyph, no bezel, so it does
+// not read as a second monitor next to IconLiveMonitor.
+export function IconTerminalCaret({ size = 20 }) {
+  const g = '#4ADE9E', hot = '#B7FFD8'
+  return (
+    <svg viewBox="0 0 16 16" width={size} height={size} shapeRendering="crispEdges">
+      {px(3, 3, 2, 1, g)}
+      {px(4, 4, 2, 1, g)}
+      {px(5, 5, 2, 1, g)}
+      {px(6, 6, 2, 1, g)}
+      {px(7, 7, 2, 1, hot)}
+      {px(6, 8, 2, 1, g)}
+      {px(5, 9, 2, 1, g)}
+      {px(4, 10, 2, 1, g)}
+      {px(3, 11, 2, 1, g)}
+      {px(9, 11, 5, 2, g)}
+    </svg>
+  )
+}
