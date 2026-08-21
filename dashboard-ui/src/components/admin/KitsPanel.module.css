@@ -1,0 +1,137 @@
+.wrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
+  background: var(--panel-surface);
+}
+
+.body {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--pad-panel);
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-block);
+}
+
+/* One line of fields: growing text inputs plus fixed-width numbers. */
+.row {
+  display: flex;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: var(--gap-row) var(--gap-col);
+}
+
+.grow { flex: 1 1 200px; min-width: 0; }
+
+/* Sizes to its own content so a long label stays on one line and its input stays level with
+   its neighbour's, rather than dropping a row. */
+.numAuto { flex: 0 0 auto; }
+.numAuto > span { white-space: nowrap; }
+.numAuto input  { width: 96px; }
+
+.settingsRow {
+  display: flex;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: var(--gap-row) var(--gap-col);
+}
+
+.toggleCell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 0 0 auto;
+  padding-bottom: 7px;
+}
+
+.toggleLabel {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--txt-secondary);
+}
+
+.numCell {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+
+.numField { flex: 0 0 auto; width: 82px; }
+
+.unit {
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  color: var(--txt-muted);
+  white-space: nowrap;
+  padding-bottom: 9px;
+}
+
+/* Sits on the same line as the text fields above, nudged down so the switch lines up with the
+   inputs rather than with their labels. */
+.guideWrap {
+  flex: 0 0 auto;
+  padding-top: 20px;
+}
+
+.hint {
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  color: var(--txt-muted);
+  line-height: 1.45;
+}
+
+.subHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 14px;
+  padding-top: 10px;
+  border-top: 1px solid var(--mc-stone-dark);
+}
+
+.subTitle {
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--txt-muted);
+}
+
+/* Four worn slots. Wraps to two columns when the panel is narrow rather than squashing. */
+.armorGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--gap-row) var(--gap-col);
+}
+
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 32px 16px;
+  text-align: center;
+  background: var(--panel-card);
+  border: 1px solid var(--mc-stone-dark);
+}
+
+.emptyLabel {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--txt-secondary);
+}
+
+/* Pushes a control to the right end of a row it shares, vertically centred against the inputs
+   rather than their labels. No new row, so the card does not grow. */
+.rowEnd {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  flex: 0 0 auto;
+  padding-bottom: 4px;
+}

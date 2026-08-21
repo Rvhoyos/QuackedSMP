@@ -192,6 +192,7 @@ public final class AdminHandler {
         sb.append(String.format("\"shops_enabled\":%b,", SmpConfig.SHOPS_ENABLED));
         sb.append(String.format("\"economy_enabled\":%b,", SmpConfig.ECONOMY_ENABLED));
         sb.append(String.format("\"rtp_enabled\":%b,", SmpConfig.RTP_ENABLED));
+        sb.append(String.format("\"welcome_book_enabled\":%b,", SmpConfig.WELCOME_BOOK_ENABLED));
         sb.append(String.format("\"commandblocks_enabled\":%b,", cmdBlocksEnabled));
         sb.append(String.format("\"backup_public_download\":%b,", SmpConfig.BACKUP_PUBLIC_DOWNLOAD));
         sb.append(String.format("\"backup_public_seed_disclosure\":%b,", SmpConfig.BACKUP_PUBLIC_SEED_DISCLOSURE));
@@ -301,25 +302,9 @@ public final class AdminHandler {
         sb.append(String.format("\"cap_safe_landing\":%.2f,", SmpConfig.CAP_SAFE_LANDING));
         // Kits
         sb.append(String.format("\"kits_enabled\":%b,", SmpConfig.KITS_ENABLED));
-        sb.append(String.format("\"kit_cooldown_seconds\":%d,", SmpConfig.KIT_COOLDOWN_SECONDS));
-        sb.append("\"kit_definitions\":[");
-        for (int i = 0; i < SmpConfig.KIT_DEFINITIONS.size(); i++) {
-            if (i > 0) sb.append(',');
-            var kit = SmpConfig.KIT_DEFINITIONS.get(i);
-            sb.append(String.format("{\"name\":\"%s\",\"displayName\":\"%s\",\"minTier\":%d,",
-                    jsonEscape(kit.name), jsonEscape(kit.displayName), kit.minTier));
-            sb.append(String.format("\"armor\":{\"head\":\"%s\",\"chest\":\"%s\",\"legs\":\"%s\",\"feet\":\"%s\"},",
-                    jsonEscape(kit.armor.head), jsonEscape(kit.armor.chest),
-                    jsonEscape(kit.armor.legs), jsonEscape(kit.armor.feet)));
-            sb.append("\"items\":[");
-            for (int j = 0; j < kit.items.size(); j++) {
-                if (j > 0) sb.append(',');
-                var item = kit.items.get(j);
-                sb.append(String.format("{\"item\":\"%s\",\"count\":%d}", jsonEscape(item.item), item.count));
-            }
-            sb.append("]}");
-        }
-        sb.append("]");
+        sb.append(String.format("\"kit_cooldown_seconds\":%d", SmpConfig.KIT_COOLDOWN_SECONDS));
+        // Kit definitions carry ItemStack JSON, which this hand-rolled writer cannot express.
+        // They have their own route, KitHandler, which round-trips them through Gson.
         sb.append("}");
         return sb.toString();
     }
@@ -353,6 +338,7 @@ public final class AdminHandler {
             if (patch.has("shops_enabled"))     { SmpConfig.SHOPS_ENABLED     = patch.get("shops_enabled").getAsBoolean();     changed++; }
             if (patch.has("economy_enabled"))   { SmpConfig.ECONOMY_ENABLED   = patch.get("economy_enabled").getAsBoolean();   changed++; }
             if (patch.has("rtp_enabled"))       { SmpConfig.RTP_ENABLED       = patch.get("rtp_enabled").getAsBoolean();       changed++; }
+            if (patch.has("welcome_book_enabled")) { SmpConfig.WELCOME_BOOK_ENABLED = patch.get("welcome_book_enabled").getAsBoolean(); changed++; }
             if (patch.has("backup_public_download")) { SmpConfig.BACKUP_PUBLIC_DOWNLOAD = patch.get("backup_public_download").getAsBoolean(); changed++; }
             if (patch.has("backup_public_seed_disclosure")) { SmpConfig.BACKUP_PUBLIC_SEED_DISCLOSURE = patch.get("backup_public_seed_disclosure").getAsBoolean(); changed++; }
             if (patch.has("backup_public_max_concurrent")) { SmpConfig.BACKUP_PUBLIC_MAX_CONCURRENT = patch.get("backup_public_max_concurrent").getAsInt(); changed++; }
@@ -488,36 +474,6 @@ public final class AdminHandler {
             // Kits
             if (patch.has("kits_enabled"))         { SmpConfig.KITS_ENABLED         = patch.get("kits_enabled").getAsBoolean();       changed++; }
             if (patch.has("kit_cooldown_seconds"))  { SmpConfig.KIT_COOLDOWN_SECONDS  = patch.get("kit_cooldown_seconds").getAsLong();  changed++; }
-            if (patch.has("kit_definitions") && patch.get("kit_definitions").isJsonArray()) {
-                SmpConfig.KIT_DEFINITIONS.clear();
-                for (var el : patch.getAsJsonArray("kit_definitions")) {
-                    if (!el.isJsonObject()) continue;
-                    JsonObject ko = el.getAsJsonObject();
-                    var kit = new mc.smpessentials.config.ConfigData.KitDef();
-                    kit.name        = ko.has("name")        ? ko.get("name").getAsString()        : "";
-                    kit.displayName = ko.has("displayName") ? ko.get("displayName").getAsString() : "";
-                    kit.minTier     = ko.has("minTier")     ? ko.get("minTier").getAsInt()        : 0;
-                    if (ko.has("armor") && ko.get("armor").isJsonObject()) {
-                        JsonObject ao = ko.getAsJsonObject("armor");
-                        kit.armor.head  = ao.has("head")  ? ao.get("head").getAsString()  : "";
-                        kit.armor.chest = ao.has("chest") ? ao.get("chest").getAsString() : "";
-                        kit.armor.legs  = ao.has("legs")  ? ao.get("legs").getAsString()  : "";
-                        kit.armor.feet  = ao.has("feet")  ? ao.get("feet").getAsString()  : "";
-                    }
-                    if (ko.has("items") && ko.get("items").isJsonArray()) {
-                        kit.items.clear();
-                        for (var ie : ko.getAsJsonArray("items")) {
-                            if (!ie.isJsonObject()) continue;
-                            JsonObject itemObj = ie.getAsJsonObject();
-                            String itemId = itemObj.has("item")  ? itemObj.get("item").getAsString() : "";
-                            int count     = itemObj.has("count") ? itemObj.get("count").getAsInt()   : 1;
-                            kit.items.add(new mc.smpessentials.config.ConfigData.KitItem(itemId, count));
-                        }
-                    }
-                    if (!kit.name.isBlank()) SmpConfig.KIT_DEFINITIONS.add(kit);
-                }
-                changed++;
-            }
 
             if (changed > 0) {
                 ConfigIO.save();

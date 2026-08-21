@@ -79,10 +79,15 @@ export function ErrorBanner({ children }) {
 }
 
 // ── Form controls ─────────────────────────────────────────────────────────────
-export function Field({ label, hint, children, className }) {
+export function Field({ label, hint, aside, children, className }) {
   return (
     <label className={clsx(s.field, className)}>
-      {label && <span className={s.label}>{label}</span>}
+      {label && (aside != null
+        ? <span className={s.labelRow}>
+            <span className={s.label}>{label}</span>
+            <span className={s.labelAside}>{aside}</span>
+          </span>
+        : <span className={s.label}>{label}</span>)}
       {children}
       {hint && <span className={s.hint}>{hint}</span>}
     </label>
@@ -93,6 +98,21 @@ export function Textarea(p) { return <textarea className={s.textarea} {...p} /> 
 export function Select({ className, children, ...p }) {
   return <select className={clsx(s.select, className)} {...p}>{children}</select>
 }
+/**
+ * A labelled switch with its explanation on the same line: label, switch, then hint. Keeps a
+ * boolean to one row instead of the three a Field would use, which is what lets several of them
+ * share a line without the card growing.
+ */
+export function SwitchField({ label, hint, checked, onChange, disabled, className }) {
+  return (
+    <label className={clsx(s.switchField, className)}>
+      <span className={s.switchLabel}>{label}</span>
+      <Toggle checked={checked} onChange={onChange} disabled={disabled} aria-label={label} />
+      {hint && <span className={s.switchHint}>{hint}</span>}
+    </label>
+  )
+}
+
 export function Toggle({ checked, onChange, disabled, 'aria-label': label }) {
   return (
     <button
@@ -179,7 +199,11 @@ export function StatCard({ label, value, tone }) {
 }
 
 // ── Titled section container ──────────────────────────────────────────────────
-export function SectionCard({ title, subtitle, actions, children, className }) {
+/**
+ * A titled card. Pass `collapsed` to hide the body; the control that flips it belongs in
+ * `actions`, beside the card's other buttons, rather than as chrome on the title.
+ */
+export function SectionCard({ title, subtitle, actions, children, className, collapsed }) {
   return (
     <section className={clsx(s.section, className)}>
       {(title || actions) && (
@@ -191,18 +215,17 @@ export function SectionCard({ title, subtitle, actions, children, className }) {
           {actions && <div className={s.sectionActions}>{actions}</div>}
         </div>
       )}
-      <div className={s.sectionBody}>{children}</div>
+      {!collapsed && <div className={s.sectionBody}>{children}</div>}
     </section>
   )
 }
 
-// ── Slider (range + numeric readout) ──────────────────────────────────────────
-export function Slider({ value, min = 0, max = 100, step = 1, onChange, suffix }) {
+export function Slider({ value, min = 0, max = 100, step = 1, onChange, suffix, hideValue }) {
   return (
     <div className={s.slider}>
       <input type="range" className={s.sliderInput} value={value ?? min} min={min} max={max} step={step}
         onChange={e => onChange?.(parseFloat(e.target.value))} />
-      <span className={s.sliderVal}>{value ?? ', '}{suffix}</span>
+      {!hideValue && <span className={s.sliderVal}>{value ?? ', '}{suffix}</span>}
     </div>
   )
 }

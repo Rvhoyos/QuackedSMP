@@ -2,20 +2,20 @@
 
 .subtabs { display: flex; gap: 3px; padding: 10px 14px 0; }
 .subtab {
-  font-family: var(--font-pixel); font-size: 7px; letter-spacing: 0.3px; padding: 7px 12px;
-  color: var(--txt-faint); background: var(--panel-card); border: 1px solid #0d0d0d; border-bottom: none; cursor: pointer;
+  font-family: var(--font-pixel); font-size: 8px; letter-spacing: 0.3px; padding: 7px 12px;
+  color: var(--txt-muted); background: var(--panel-card); border: 1px solid #0d0d0d; border-bottom: none; cursor: pointer;
   transition: color var(--t-fast), background var(--t-fast); text-shadow: 1px 1px 0 rgba(0,0,0,0.5);
 }
 .subtab:hover { color: var(--txt-secondary); }
 .subtabOn { color: #fff; background: var(--mc-wood); border-color: var(--mc-wood-dark); }
 
-.body { flex: 1; overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 12px; }
+.body { flex: 1; overflow-y: auto; padding: var(--pad-panel); display: flex; flex-direction: column; gap: var(--gap-block); }
 
 .controls { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .searchInput { flex: 1; min-width: 160px; font-family: var(--font-sans); font-size: 13px; color: var(--txt-primary); background: var(--surf-slot); border-top: 2px solid #0a0a0a; border-left: 2px solid #0a0a0a; border-bottom: 2px solid #3a3a3a; border-right: 2px solid #3a3a3a; padding: 8px 10px; outline: none; }
 .searchInput:focus { border-color: var(--mc-wood-light); }
 .searchInput::placeholder { color: var(--txt-faint); }
-.selectAll { display: flex; align-items: center; gap: 6px; font-family: var(--font-sans); font-size: 12px; color: var(--txt-muted); cursor: pointer; white-space: nowrap; }
+.selectAll { display: flex; align-items: center; gap: 6px; font-family: var(--font-sans); font-size: 12.5px; color: var(--txt-muted); cursor: pointer; white-space: nowrap; }
 
 .words { display: flex; flex-wrap: wrap; gap: 6px; }
 .word {
@@ -30,15 +30,15 @@
 .wordOn .checkbox { border-color: var(--red); }
 
 .pagination { display: flex; align-items: center; gap: 8px; justify-content: center; }
-.pageInfo { font-family: var(--font-sans); font-size: 12px; color: var(--txt-muted); }
+.pageInfo { font-family: var(--font-sans); font-size: 12.5px; color: var(--txt-muted); }
 
 .addCard { display: flex; flex-direction: column; gap: 8px; padding: 12px; background: var(--panel-card); border: 1px solid #0d0d0d; }
-.addLabel { font-family: var(--font-sans); font-size: 12px; color: var(--txt-muted); }
+.addLabel { font-family: var(--font-sans); font-size: 12.5px; color: var(--txt-muted); }
 .addFoot { display: flex; justify-content: flex-end; }
 
-.muteGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 10px; }
+.muteGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: var(--gap-row) var(--gap-col); }
 .muteCard { display: flex; flex-direction: column; gap: 5px; padding: 12px; background: var(--panel-card); border-top: 2px solid #56546a; border-left: 2px solid #56546a; border-bottom: 2px solid #0d0d0d; border-right: 2px solid #0d0d0d; }
 .muteTop { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .muteName { font-family: var(--font-pixel); font-size: 8px; color: var(--txt-primary); text-shadow: 1px 1px 0 rgba(0,0,0,0.5); }
-.muteUuid { font-family: var(--font-mono); font-size: 10px; color: var(--txt-faint); }
-.muteRemaining { font-family: var(--font-sans); font-size: 11px; color: var(--yellow); }
+.muteUuid { font-family: var(--font-mono); font-size: 11.5px; color: var(--txt-muted); }
+.muteRemaining { font-family: var(--font-sans); font-size: 12.5px; color: var(--yellow); }

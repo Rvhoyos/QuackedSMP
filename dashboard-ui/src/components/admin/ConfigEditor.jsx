@@ -3,9 +3,8 @@ import {
   IconGrassBlock, IconBed, IconBookQuill,
   IconBallot, IconDiscord, IconMapScroll,
   IconPlayerHead, IconChest, IconSign, IconClock,
-  IconVoiceChat, IconCrown, IconLoot, IconTierStar,
-  IconHelmetGhost, IconChestplateGhost, IconLeggingsGhost, IconBootsGhost,
-  IconGavel, IconHardcoreHeart, IconTNT, IconAnvil, IconDyes, IconScoreboard,
+  IconVoiceChat, IconCrown, IconTierStar,
+  IconGavel, IconHardcoreHeart, IconTNT, IconDyes, IconScoreboard,
   IconPulse,
 } from './MinecraftIcons'
 import styles from './ConfigEditor.module.css'
@@ -28,8 +27,6 @@ const SECTIONS = [
   ]},
   { group: 'vip', items: [
     { id: 'vip-tiers',    label: 'Tiers',        Icon: IconCrown },
-    { id: 'vip-kitset',   label: 'Kit Settings', Icon: IconAnvil },
-    { id: 'vip-kits',     label: 'Kit Definitions', Icon: IconLoot },
   ]},
   { group: 'chat', items: [
     { id: 'chat-colors',   label: 'Color Reference', Icon: IconDyes },
@@ -86,7 +83,7 @@ const TABS = [
   },
   {
     id: 'vip', label: 'VIP',
-    keys: ['tiers', 'kit_cooldown_seconds', 'kit_definitions'],
+    keys: ['tiers'],
   },
   {
     id: 'chat', label: 'Chat',
@@ -297,7 +294,7 @@ function GeneralTab({ draft, patch, onDisable, disabling, disableMsg }) {
       </Group>
 
       <Group id="gen-teleport" icon={<IconBed />} title="Teleport" accent="teal">
-        <Row label="Warmup Duration" hint="Seconds before teleport fires. Moving cancels it.">
+        <Row label="Warmup Duration" hint="Seconds before teleport fires, cancelled by moving">
           <NumInput value={draft.tp_warmup} onChange={v => patch('tp_warmup', v)} suffix="s" />
         </Row>
       </Group>
@@ -315,7 +312,7 @@ function GeneralTab({ draft, patch, onDisable, disabling, disableMsg }) {
         <Row label="Death Threshold" hint="Percent of peak players that must die to end a session">
           <NumInput value={draft.hardcore_death_percent} onChange={v => patch('hardcore_death_percent', v)} suffix="%" />
         </Row>
-        <Row label="Team Identity" hint="Give session members a team name tag (nametag + tab). Edit color/prefix in Teams.">
+        <Row label="Team Identity" hint="Team name tag for session members, styled in Teams">
           <Toggle value={draft.hardcore_team_visibility} onChange={v => patch('hardcore_team_visibility', v)} />
         </Row>
         <Row label="Run Sidebar" hint="Show session members a run-time sidebar (periodic + on join)">
@@ -336,13 +333,13 @@ function GeneralTab({ draft, patch, onDisable, disabling, disableMsg }) {
         <Row label="Slime Chunk Hint" hint="Slime particles at a player's feet while they stand in a slime chunk below Y40">
           <Toggle value={draft.slime_hint_enabled} onChange={v => patch('slime_hint_enabled', v)} />
         </Row>
-        <Row label="Hint Interval" hint="Ticks between particle emissions. Higher is subtler.">
+        <Row label="Hint Interval" hint="Ticks between particle emissions, higher is subtler">
           <NumInput value={draft.slime_hint_interval_ticks} onChange={v => patch('slime_hint_interval_ticks', v)} suffix="t" />
         </Row>
         <Row label="Particle Count" hint="Particles per emission">
           <NumInput value={draft.slime_hint_particle_count} onChange={v => patch('slime_hint_particle_count', v)} />
         </Row>
-        <Row label="Squish Chance" hint="Chance per emission of a quiet squish sound. Keep it low so it never nags.">
+        <Row label="Squish Chance" hint="Chance per emission of a quiet squish sound">
           <NumInput value={draft.slime_hint_sound_chance} step={0.01} onChange={v => patch('slime_hint_sound_chance', v)} />
         </Row>
         <Row label="End Finder" hint="Mark the nearest stronghold on the Locator Bar while a player holds an eye of ender">
@@ -351,7 +348,7 @@ function GeneralTab({ draft, patch, onDisable, disabling, disableMsg }) {
         <Row label="Distance Readout" hint="Also show the distance to the stronghold on the action bar">
           <Toggle value={draft.end_finder_action_bar} onChange={v => patch('end_finder_action_bar', v)} />
         </Row>
-        <Row label="Search Radius" hint="Chunks searched for a stronghold. 100 matches vanilla /locate.">
+        <Row label="Search Radius" hint="Chunks searched for a stronghold, 100 matches vanilla">
           <NumInput value={draft.end_finder_search_radius} onChange={v => patch('end_finder_search_radius', v)} />
         </Row>
         <Row label="Recheck Distance" hint="Blocks a player must travel before the nearest stronghold is looked up again">
@@ -363,13 +360,13 @@ function GeneralTab({ draft, patch, onDisable, disabling, disableMsg }) {
       </Group>
 
       <Group id="gen-admin" icon={<IconChest />} title="Admin Panel" accent="red">
-        <Row label="Server Name" hint="Shown in the dashboard header. Leave blank to hide.">
+        <Row label="Server Name" hint="Shown in the dashboard header, blank hides it">
           <TextInput value={draft.server_name} onChange={v => patch('server_name', v)} placeholder="My SMP" />
         </Row>
-        <Row label="Panel Enabled" hint="Disabling locks you out. Re-enable with /smp admin setpassword in-game.">
+        <Row label="Panel Enabled" hint="Disabling locks you out until /smp admin setpassword">
           <Toggle value={draft.admin_enabled} onChange={v => patch('admin_enabled', v)} />
         </Row>
-        <Row label="Dashboard Port" hint="Port the dashboard listens on. Requires restart to change.">
+        <Row label="Dashboard Port" hint="Port the dashboard listens on, needs a restart">
           <NumInput value={draft.dashboard_port} onChange={v => patch('dashboard_port', v)} />
         </Row>
         <div className={styles.note}>Password changes: <code>/smp admin setpassword</code> in-game</div>
@@ -527,7 +524,7 @@ function ChatTab({ draft, patch }) {
       </Group>
 
       <Group id="chat-tips" icon={<IconClock />} title="Periodic Tips" accent="yellow">
-        <StackedRow label="Tip Messages" hint="Broadcast in rotation. Supports & color codes.">
+        <StackedRow label="Tip Messages" hint="Broadcast in rotation, supports & color codes">
           <ListEditor
             value={draft.periodic_messages}
             onChange={v => patch('periodic_messages', v)}
@@ -537,7 +534,7 @@ function ChatTab({ draft, patch }) {
       </Group>
 
       <Group id="chat-rules" icon={<IconBookQuill />} title="Server Rules" accent="peach">
-        <StackedRow label="Rules" hint="Shown with /rules. Supports & color codes.">
+        <StackedRow label="Rules" hint="Shown with /rules, supports & color codes">
           <ListEditor
             value={draft.rules}
             onChange={v => patch('rules', v)}
@@ -550,10 +547,10 @@ function ChatTab({ draft, patch }) {
         <Row label="Enabled" hint="Second MOTD shown on join (unless in a hardcore session) and when returning to survival from one">
           <Toggle value={draft.welcome_sidebar_enabled} onChange={v => patch('welcome_sidebar_enabled', v)} />
         </Row>
-        <StackedRow label="Title" hint="Sidebar heading. Supports & color codes and {player}/{server}.">
+        <StackedRow label="Title" hint="Sidebar heading, supports & codes and {player}">
           <TextInput value={draft.welcome_sidebar_title} onChange={v => patch('welcome_sidebar_title', v)} />
         </StackedRow>
-        <StackedRow label="Lines" hint="Top line first. Supports & color codes and {player}/{server}.">
+        <StackedRow label="Lines" hint="Top line first, supports & codes and {player}">
           <ListEditor
             value={draft.welcome_sidebar_lines}
             onChange={v => patch('welcome_sidebar_lines', v)}
@@ -599,20 +596,20 @@ function IntegrationsTab({ draft, patch }) {
         <Row label="Enabled" hint="Receives votes from listing sites via NuVotifier v2.">
           <Toggle value={draft.votifier_enabled} onChange={v => patch('votifier_enabled', v)} />
         </Row>
-        <Row label="Port" hint="Votifier listen port. Restarts automatically on save.">
+        <Row label="Port" hint="Votifier listen port, restarts on save">
           <NumInput value={draft.votifier_port} onChange={v => patch('votifier_port', v)} />
         </Row>
-        <StackedRow label="Token" hint="Auto-generated on first start. Copy into your voting site when registering.">
+        <StackedRow label="Token" hint="Auto-generated, copy into your voting site">
           <TextInput
             value={draft.votifier_token}
             onChange={v => patch('votifier_token', v)}
             placeholder="auto-generated on first start"
           />
         </StackedRow>
-        <StackedRow label="Vote Broadcast" hint="Sent on vote. {player} = voter name. Supports & color codes.">
+        <StackedRow label="Vote Broadcast" hint="Sent on vote, {player} is the voter name">
           <TextInput value={draft.vote_broadcast} onChange={v => patch('vote_broadcast', v)} />
         </StackedRow>
-        <StackedRow label="Vote Reward Commands" hint="Run on every vote. {player} = voter name. One random command per vote.">
+        <StackedRow label="Vote Reward Commands" hint="One random command per vote, {player} is the voter">
           <ListEditor
             value={draft.vote_rewards}
             onChange={v => patch('vote_rewards', v)}
@@ -893,7 +890,7 @@ function MuteLevels({ value = [], onChange }) {
   )
 }
 
-// ── Tab: Kits ────────────────────────────────────────────────────────────────
+// ── Tab: VIP ─────────────────────────────────────────────────────────────────
 
 function VipTab({ draft, patch }) {
   return (
@@ -903,240 +900,7 @@ function VipTab({ draft, patch }) {
           <TierDefsEditor value={draft.tiers} onChange={v => patch('tiers', v)} />
         </StackedRow>
       </Group>
-
-      <Group id="vip-kitset" icon={<IconAnvil />} title="Kit Settings" accent="teal">
-        <Row label="Cooldown Duration" hint="Hours between kit claims. Default 24 hours.">
-          <NumInput value={draft.kit_cooldown_seconds != null ? draft.kit_cooldown_seconds / 3600 : ''} onChange={v => patch('kit_cooldown_seconds', Math.round(v * 3600))} suffix="h" />
-        </Row>
-      </Group>
-
-      <Group id="vip-kits" icon={<IconLoot />} title="Kit Definitions" accent="peach">
-        <StackedRow label="Kits" hint="Each kit: name (used in /smp kit command), display name (& color codes), min tier, armor, and items.">
-          <KitDefsEditor value={draft.kit_definitions} onChange={v => patch('kit_definitions', v)} />
-        </StackedRow>
-      </Group>
     </>
   )
 }
 
-// ── Kit Definitions Editor ───────────────────────────────────────────────────
-
-const MATERIALS = ['leather', 'chainmail', 'iron', 'golden', 'diamond', 'netherite']
-
-const ARMOR_SUGGESTIONS = {
-  head:  MATERIALS.map(m => `minecraft:${m}_helmet`),
-  chest: MATERIALS.map(m => `minecraft:${m}_chestplate`),
-  legs:  MATERIALS.map(m => `minecraft:${m}_leggings`),
-  feet:  MATERIALS.map(m => `minecraft:${m}_boots`),
-}
-
-const ITEM_SUGGESTIONS = [
-  // Weapons
-  'minecraft:wooden_sword', 'minecraft:stone_sword', 'minecraft:iron_sword', 'minecraft:golden_sword',
-  'minecraft:diamond_sword', 'minecraft:netherite_sword', 'minecraft:bow', 'minecraft:crossbow', 'minecraft:trident',
-  // Tools
-  'minecraft:wooden_pickaxe', 'minecraft:stone_pickaxe', 'minecraft:iron_pickaxe', 'minecraft:diamond_pickaxe', 'minecraft:netherite_pickaxe',
-  'minecraft:wooden_axe', 'minecraft:stone_axe', 'minecraft:iron_axe', 'minecraft:diamond_axe', 'minecraft:netherite_axe',
-  'minecraft:wooden_shovel', 'minecraft:stone_shovel', 'minecraft:iron_shovel', 'minecraft:diamond_shovel', 'minecraft:netherite_shovel',
-  'minecraft:wooden_hoe', 'minecraft:stone_hoe', 'minecraft:iron_hoe', 'minecraft:diamond_hoe', 'minecraft:netherite_hoe',
-  // Food
-  'minecraft:bread', 'minecraft:cooked_beef', 'minecraft:cooked_porkchop', 'minecraft:cooked_chicken', 'minecraft:cooked_salmon',
-  'minecraft:baked_potato', 'minecraft:golden_apple', 'minecraft:enchanted_golden_apple', 'minecraft:golden_carrot',
-  // Resources
-  'minecraft:oak_log', 'minecraft:cobblestone', 'minecraft:iron_ingot', 'minecraft:gold_ingot', 'minecraft:diamond',
-  'minecraft:emerald', 'minecraft:coal', 'minecraft:oak_planks', 'minecraft:stick',
-  // Utility
-  'minecraft:torch', 'minecraft:crafting_table', 'minecraft:furnace', 'minecraft:chest', 'minecraft:ender_pearl',
-  'minecraft:white_bed', 'minecraft:shield', 'minecraft:bucket', 'minecraft:fishing_rod', 'minecraft:compass',
-  'minecraft:map', 'minecraft:spyglass', 'minecraft:flint_and_steel',
-  // Farming
-  'minecraft:wheat_seeds', 'minecraft:melon_seeds', 'minecraft:pumpkin_seeds', 'minecraft:carrot',
-  'minecraft:potato', 'minecraft:beetroot_seeds', 'minecraft:bone_meal',
-]
-
-function SuggestInput({ value, onChange, placeholder, listId, suggestions = ITEM_SUGGESTIONS }) {
-  return (
-    <>
-      <input
-        className={styles.textInput}
-        type="text"
-        value={value ?? ''}
-        onChange={e => onChange(e.target.value)}
-        placeholder={placeholder}
-        list={listId}
-        spellCheck={false}
-        autoComplete="off"
-      />
-      <datalist id={listId}>
-        {suggestions.map(s => <option key={s} value={s} />)}
-      </datalist>
-    </>
-  )
-}
-
-const ARMOR_GHOST_ICONS = {
-  head:  IconHelmetGhost,
-  chest: IconChestplateGhost,
-  legs:  IconLeggingsGhost,
-  feet:  IconBootsGhost,
-}
-
-function shortItemName(id) {
-  if (!id) return ''
-  const name = id.replace(/^minecraft:/, '')
-  return name.length > 10 ? name.slice(0, 9) + '\u2026' : name
-}
-
-function KitDefsEditor({ value = [], onChange }) {
-  const [expanded, setExpanded] = useState({})
-  const [editingItem, setEditingItem] = useState({})
-
-  function toggle(i) {
-    setExpanded(e => ({ ...e, [i]: !e[i] }))
-    setEditingItem(e => ({ ...e, [i]: null }))
-  }
-
-  function update(i, field, val) {
-    const next = value.map((k, j) => j === i ? { ...k, [field]: val } : k)
-    onChange(next)
-  }
-
-  function updateArmor(i, slot, val) {
-    const next = value.map((k, j) => j === i ? { ...k, armor: { ...k.armor, [slot]: val } } : k)
-    onChange(next)
-  }
-
-  function updateItem(kitIdx, itemIdx, field, val) {
-    const next = value.map((k, j) => {
-      if (j !== kitIdx) return k
-      const items = k.items.map((it, ii) => ii === itemIdx ? { ...it, [field]: val } : it)
-      return { ...k, items }
-    })
-    onChange(next)
-  }
-
-  function addItem(kitIdx) {
-    const next = value.map((k, j) => {
-      if (j !== kitIdx) return k
-      return { ...k, items: [...k.items, { item: '', count: 1 }] }
-    })
-    onChange(next)
-    setEditingItem(e => ({ ...e, [kitIdx]: value[kitIdx].items.length }))
-  }
-
-  function removeItem(kitIdx, itemIdx) {
-    const next = value.map((k, j) => {
-      if (j !== kitIdx) return k
-      return { ...k, items: k.items.filter((_, ii) => ii !== itemIdx) }
-    })
-    onChange(next)
-    setEditingItem(e => ({ ...e, [kitIdx]: null }))
-  }
-
-  function addKit() {
-    onChange([...value, {
-      name: '', displayName: '', minTier: 0,
-      armor: { head: '', chest: '', legs: '', feet: '' },
-      items: [],
-    }])
-    setExpanded(e => ({ ...e, [value.length]: true }))
-  }
-
-  function removeKit(i) {
-    onChange(value.filter((_, j) => j !== i))
-  }
-
-  return (
-    <div className={styles.listEditor}>
-      {value.map((kit, i) => (
-        <div key={i} className={styles.kitCard}>
-          <div className={styles.kitHeader} onClick={() => toggle(i)}>
-            <span className={styles.kitCaret}>{expanded[i] ? '▾' : '▸'}</span>
-            <span className={styles.kitName}>{kit.name || '(unnamed)'}</span>
-            {kit.minTier > 0 && (
-              <span className={styles.kitTierBadge}>
-                <IconTierStar size={12} color="#cba6f7" />
-                Tier {kit.minTier}
-              </span>
-            )}
-            <button className={styles.listRemove} onClick={e => { e.stopPropagation(); removeKit(i) }} type="button">✕</button>
-          </div>
-
-          {expanded[i] && (
-            <div className={styles.kitBody}>
-              <div className={styles.kitFieldRow}>
-                <label className={styles.kitFieldLabel}>Name</label>
-                <TextInput value={kit.name} onChange={v => update(i, 'name', v)} placeholder="starter" />
-              </div>
-              <div className={styles.kitFieldRow}>
-                <label className={styles.kitFieldLabel}>Display Name</label>
-                <TextInput value={kit.displayName} onChange={v => update(i, 'displayName', v)} placeholder="&aStarter Kit" />
-              </div>
-              <div className={styles.kitFieldRow}>
-                <label className={styles.kitFieldLabel}>Min Tier</label>
-                <NumInput value={kit.minTier} onChange={v => update(i, 'minTier', v)} />
-              </div>
-
-              <div className={styles.kitSectionLabel}>Armor</div>
-              <div className={styles.armorColumn}>
-                {['head', 'chest', 'legs', 'feet'].map(slot => {
-                  const GhostIcon = ARMOR_GHOST_ICONS[slot]
-                  const filled = !!(kit.armor?.[slot])
-                  return (
-                    <div key={slot} className={styles.armorRow}>
-                      <div className={`${styles.invSlot} ${filled ? styles.invSlotFilled : ''}`}>
-                        <span className={styles.invSlotGhost}>
-                          <GhostIcon size={24} />
-                        </span>
-                      </div>
-                      <SuggestInput
-                        value={kit.armor?.[slot] ?? ''}
-                        onChange={v => updateArmor(i, slot, v)}
-                        placeholder={ARMOR_SUGGESTIONS[slot]?.[2] ?? ''}
-                        listId={`armor-${i}-${slot}`}
-                        suggestions={ARMOR_SUGGESTIONS[slot] ?? []}
-                      />
-                    </div>
-                  )
-                })}
-              </div>
-
-              <div className={styles.kitSectionLabel}>Items</div>
-              <div className={styles.itemGridWrap}>
-                <div className={styles.itemGrid}>
-                  {kit.items.map((it, j) => (
-                    <div
-                      key={j}
-                      className={`${styles.itemSlot} ${editingItem[i] === j ? styles.itemSlotSelected : ''}`}
-                      onClick={() => setEditingItem(e => ({ ...e, [i]: e[i] === j ? null : j }))}
-                      title={it.item || 'Empty'}
-                    >
-                      <span className={styles.itemSlotLabel}>{shortItemName(it.item)}</span>
-                      {it.count > 1 && <span className={styles.itemSlotCount}>{it.count}</span>}
-                    </div>
-                  ))}
-                  <div className={styles.itemSlot} onClick={() => addItem(i)} title="Add item">
-                    <span className={styles.itemSlotAdd}>+</span>
-                  </div>
-                </div>
-              </div>
-              {editingItem[i] != null && kit.items[editingItem[i]] && (
-                <div className={styles.itemEditBar}>
-                  <SuggestInput
-                    value={kit.items[editingItem[i]].item}
-                    onChange={v => updateItem(i, editingItem[i], 'item', v)}
-                    placeholder="minecraft:diamond"
-                    listId={`item-${i}-${editingItem[i]}`}
-                  />
-                  <NumInput value={kit.items[editingItem[i]].count} onChange={v => updateItem(i, editingItem[i], 'count', v)} />
-                  <button className={styles.listRemove} onClick={() => removeItem(i, editingItem[i])} type="button">✕</button>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      ))}
-      <button className={styles.listAdd} onClick={addKit} type="button">+ Add Kit</button>
-    </div>
-  )
-}

@@ -329,11 +329,19 @@ public final class DashboardManager {
         s.addRoute("/api/admin/rtp/save",
                 (m, h, b) -> RtpHandler.handleSave(m, h, b, mcServer));
 
+        s.addRoute("/api/admin/welcomebook",
+                (m, h, b) -> WelcomeBookHandler.handleGet(m, h, b, mcServer));
+        s.addRoute("/api/admin/welcomebook/save",
+                (m, h, b) -> WelcomeBookHandler.handleSave(m, h, b, mcServer));
+
+        s.addRoute("/api/admin/kits",
+                (m, h, b) -> KitHandler.handleGet(m, h, b, mcServer));
+        s.addRoute("/api/admin/kits/save",
+                (m, h, b) -> KitHandler.handleSave(m, h, b, mcServer));
+
         // Shared by every editor that stores an item or an effect, not just RTP.
         s.addRoute("/api/admin/registry",
                 (m, h, b) -> ItemHandler.handleRegistry(m, h, b, mcServer));
-        s.addRoute("/api/admin/items/import",
-                (m, h, b) -> ItemHandler.handleImport(m, h, b, mcServer));
     }
 
     // ── Scheduled ─────────────────────────────────────────────────────────────

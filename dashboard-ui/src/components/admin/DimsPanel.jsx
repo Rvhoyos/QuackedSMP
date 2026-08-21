@@ -231,22 +231,24 @@ export default function DimsPanel({ token, onExpired }) {
             </div>
 
             {isFlatType && (
-              <Field label="Flat layers (block:height, bottom→top)" hint="Leave blank for default layers.">
+              <Field label="Flat layers (block:height, bottom→top)" hint="Blank uses the default layers">
                 <Input placeholder="minecraft:bedrock:1  minecraft:stone:6  minecraft:dirt:2  minecraft:grass_block:1" value={flatConfig} onChange={e => setFlatConfig(e.target.value)} spellCheck={false} />
               </Field>
             )}
 
             {isEtherType && etherParams && etherMeta && (
               <div className={styles.paramGrid}>
-                <Field label="Island frequency" hint="Lower spawns fewer islands.">
-                  <Slider value={etherParams.threshold} min={etherMeta.ranges.threshold[0]} max={etherMeta.ranges.threshold[1]}
+                <Field label="Island frequency" hint="Lower spawns fewer islands"
+                  aside={Number(etherParams.threshold).toFixed(2)}>
+                  <Slider hideValue value={etherParams.threshold} min={etherMeta.ranges.threshold[0]} max={etherMeta.ranges.threshold[1]}
                     step={0.01} onChange={v => setParam('threshold', v)} />
                 </Field>
-                <Field label="Grid spacing" hint="Larger spreads islands further apart.">
-                  <Slider value={etherParams.spacing} min={etherMeta.ranges.spacing[0]} max={etherMeta.ranges.spacing[1]}
+                <Field label="Grid spacing" hint="Larger spreads them further apart"
+                  aside={etherParams.spacing}>
+                  <Slider hideValue value={etherParams.spacing} min={etherMeta.ranges.spacing[0]} max={etherMeta.ranges.spacing[1]}
                     step={1} onChange={v => setParam('spacing', v)} />
                 </Field>
-                <Field label="Radius (blocks)" hint="How wide each island is. Rolled per island.">
+                <Field label="Radius (blocks)" hint="Width, rolled per island">
                   <div className={styles.pairRow}>
                     <Input type="number" aria-label="Minimum radius" value={etherParams.minRadius}
                       min={etherMeta.ranges.radius[0]} max={etherMeta.ranges.radius[1]}
@@ -256,7 +258,7 @@ export default function DimsPanel({ token, onExpired }) {
                       onChange={e => setParam('maxRadius', Number(e.target.value))} />
                   </div>
                 </Field>
-                <Field label="Thickness (blocks)" hint="How tall each island is. Independent of radius.">
+                <Field label="Thickness (blocks)" hint="Height, independent of width">
                   <div className={styles.pairRow}>
                     <Input type="number" aria-label="Minimum thickness" value={etherParams.minThickness}
                       min={etherMeta.ranges.thickness[0]} max={etherMeta.ranges.thickness[1]}
@@ -266,7 +268,7 @@ export default function DimsPanel({ token, onExpired }) {
                       onChange={e => setParam('maxThickness', Number(e.target.value))} />
                   </div>
                 </Field>
-                <Field label="Height band" hint="Y range island centres spawn in.">
+                <Field label="Height band" hint="Y range island centres spawn in">
                   <div className={styles.pairRow}>
                     <Input type="number" aria-label="Lowest island centre" value={etherParams.minCenterY}
                       min={etherMeta.ranges.height[0]} max={etherMeta.ranges.height[1]}
@@ -276,7 +278,7 @@ export default function DimsPanel({ token, onExpired }) {
                       onChange={e => setParam('maxCenterY', Number(e.target.value))} />
                   </div>
                 </Field>
-                <Field label="Structures" hint="Off generates none at all. On, they only appear inside terrain.">
+                <Field label="Structures" hint="On, only inside terrain">
                   <div className={styles.pairRow}>
                     <Toggle checked={etherParams.structures} onChange={v => setParam('structures', v)} aria-label="Generate structures" />
                     <span className={styles.hint}>{etherParams.structures ? 'Generated' : 'None'}</span>
@@ -316,7 +318,7 @@ export default function DimsPanel({ token, onExpired }) {
         <ErrorBanner>{error}</ErrorBanner>
 
         {dims.length === 0 ? (
-          <EmptyState icon={<IconPortal size={30} />} label="No custom dimensions" hint="Create one above. A server restart is required before you can build in a new dimension." />
+          <EmptyState icon={<IconPortal size={30} />} label="No custom dimensions" hint="Create one above, then restart before building in it" />
         ) : (
           <div className={styles.grid}>
             {dims.map(dim => (

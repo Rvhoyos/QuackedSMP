@@ -56,7 +56,7 @@
 /* Lamp status tag, carved stone plate holding the lamp + label. */
 .lampTag {
   display: inline-flex; align-items: center; gap: 6px;
-  font-family: var(--font-pixel); font-size: 7px; letter-spacing: 0.5px;
+  font-family: var(--font-pixel); font-size: 8px; letter-spacing: 0.5px;
   padding: 4px 8px 4px 6px;
   background: rgba(0,0,0,0.5);
   border-top: 1px solid rgba(255,255,255,0.12); border-left: 1px solid rgba(255,255,255,0.12);
@@ -71,11 +71,11 @@
 
 .metaRow { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .sub {
-  font-family: var(--font-pixel); font-size: 6px; color: #f2cf94; letter-spacing: 0.5px;
+  font-family: var(--font-pixel); font-size: 8px; color: #f2cf94; letter-spacing: 0.5px;
   text-shadow: 1px 1px 0 rgba(0,0,0,0.7);
 }
 .chip {
-  font-family: var(--font-sans); font-size: 11px; color: #e9e3d2;
+  font-family: var(--font-sans); font-size: 12.5px; color: #e9e3d2;
   padding: 2px 8px;
   background: rgba(0,0,0,0.5);
   border: 1px solid rgba(255,255,255,0.12);

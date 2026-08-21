@@ -2,11 +2,7 @@ package mc.smpessentials.dashboard;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
-import com.mojang.brigadier.StringReader;
 import com.mojang.serialization.JsonOps;
-import net.minecraft.commands.arguments.item.ItemInput;
-import net.minecraft.commands.arguments.item.ItemParser;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.effect.MobEffect;
@@ -27,10 +23,6 @@ import static mc.smpessentials.dashboard.AdminHandler.err;
  */
 public final class ItemHandler {
 
-    // ItemStack.CODEC clamps count to this range, so the importer clamps to the same.
-    private static final int MIN_COUNT = 1;
-    private static final int MAX_COUNT = 99;
-
     private ItemHandler() {}
 
     /**
@@ -47,37 +39,6 @@ public final class ItemHandler {
         out.add("effects", effectRows());
         out.add("items", itemIds());
         return out.toString();
-    }
-
-    /**
-     * POST /api/admin/items/import. Takes a pasted command or bare item id and hands the stack
-     * back as ItemStack.CODEC JSON.
-     *
-     * Vanilla's own parser does the work, so an item lifted from a command block arrives with its
-     * components intact and no SNBT parser is needed in the browser.
-     */
-    public static String handleImport(String method, Map<String, String> headers, String body,
-                                      MinecraftServer server) {
-        String denied = deny(method, "POST", headers, server);
-        if (denied != null) return denied;
-
-        try {
-            JsonObject req = JsonParser.parseString(body).getAsJsonObject();
-            String give = req.has("give") ? req.get("give").getAsString() : "";
-            if (give.isBlank()) return err(400, "Nothing to import");
-
-            ItemStack stack = parseItemSpec(give, server);
-            var ops = server.registryAccess().createSerializationContext(JsonOps.INSTANCE);
-            JsonElement encoded = ItemStack.CODEC.encodeStart(ops, stack).result()
-                    .orElseThrow(() -> new IllegalArgumentException("that item cannot be stored"));
-
-            JsonObject out = new JsonObject();
-            out.addProperty("ok", true);
-            out.add("stack", encoded);
-            return out.toString();
-        } catch (Exception e) {
-            return err(400, "Could not read that item: " + e.getMessage());
-        }
     }
 
     /**
@@ -115,61 +76,6 @@ public final class ItemHandler {
         com.google.gson.JsonArray items = new com.google.gson.JsonArray();
         BuiltInRegistries.ITEM.keySet().stream().map(Object::toString).sorted().forEach(items::add);
         return items;
-    }
-
-    /**
-     * Pulls an item out of whatever was pasted. Nothing is executed: this only parses item syntax,
-     * which is the same in every command that names one, so a line lifted from /give, /item or a
-     * command block works, as does a bare item id.
-     *
-     * The item is found by trying to parse from each token in turn and keeping the first that
-     * succeeds, which avoids hard-coding the argument layout of any one command.
-     */
-    private static ItemStack parseItemSpec(String raw, MinecraftServer server) throws Exception {
-        String text = raw.trim();
-        if (text.startsWith("/")) text = text.substring(1);
-
-        ItemParser parser = new ItemParser(server.registryAccess());
-
-        for (int start = 0; start < text.length(); start = nextToken(text, start)) {
-            StringReader reader = new StringReader(text.substring(start));
-            ItemInput input;
-            try {
-                input = parser.parse(reader);
-            } catch (Exception notAnItemHere) {
-                continue;
-            }
-
-            int requested = MIN_COUNT;
-            reader.skipWhitespace();
-            if (reader.canRead()) {
-                try {
-                    requested = reader.readInt();
-                } catch (Exception ignored) {
-                    // Trailing words that are not a count, e.g. the tail of an /item command.
-                }
-            }
-            return input.createItemStack(clampCount(input, requested));
-        }
-
-        throw new IllegalArgumentException("no item found in that text");
-    }
-
-    /**
-     * One stored entry is one stack, so a count above what the item stacks to is clamped rather
-     * than refused: /give can hand a player three beds, but three beds are not a single stack.
-     */
-    private static int clampCount(ItemInput input, int requested) throws Exception {
-        int limit = Math.min(MAX_COUNT, input.createItemStack(MIN_COUNT).getMaxStackSize());
-        return Math.max(MIN_COUNT, Math.min(limit, requested));
-    }
-
-    /** Start of the token after the one at {@code from}, or the length when there is none. */
-    private static int nextToken(String text, int from) {
-        int space = text.indexOf(' ', from);
-        if (space < 0) return text.length();
-        while (space < text.length() && text.charAt(space) == ' ') space++;
-        return space;
     }
 
     /** Shared guard for the routes here. Returns an error body, or null to proceed. */

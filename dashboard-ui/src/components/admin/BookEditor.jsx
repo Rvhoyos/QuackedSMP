@@ -220,7 +220,7 @@ export default function BookEditor({ content, onClose, onSave }) {
                 <Select value={segment?.click?.action || ''} onChange={e => setClick('action', e.target.value)}>
                   {CLICK_ACTIONS.map(a => (
                     <option key={a.id || 'none'} value={a.id}>
-                      {a.short ? `${a.label} — ${a.short}` : a.label}
+                      {a.short ? `${a.label}: ${a.short}` : a.label}
                     </option>
                   ))}
                 </Select>
@@ -238,7 +238,7 @@ export default function BookEditor({ content, onClose, onSave }) {
                 </Field>
               )}
 
-              <Field label="Tooltip" hint="Appears when the player's cursor rests on this text.">
+              <Field label="Tooltip" hint="Shown when the cursor rests on this text">
                 <Input value={segment?.hover || ''} onChange={e => setSegField('hover', e.target.value)} />
               </Field>
 

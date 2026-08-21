@@ -15,11 +15,12 @@ const NEW_PROFILE = {
   max_attempts: 24,
   message: '&aWhoosh! You landed &e{distance}&a blocks from spawn.',
   reward_cooldown_seconds: 0,
+  give_welcome_book: true,
   effects: [],
   items: [],
 }
 
-export default function RtpPanel({ token, onExpired }) {
+export default function RtpPanel({ token, onExpired, onNavigate, features }) {
   const [enabled, setEnabled] = useState(false)
   const [config,  setConfig]  = useState(null)
   const [dims,    setDims]    = useState([])
@@ -123,21 +124,35 @@ export default function RtpPanel({ token, onExpired }) {
           title="Teleport"
           subtitle="Applies to every dimension. Distance and rewards are per profile below."
         >
-          <div className={styles.toggleRow}>
-            <span className={styles.toggleLabel}>Enable /rtp</span>
-            <Toggle checked={enabled} onChange={v => { setEnabled(v); setDirty(true) }} aria-label="Enable RTP" />
-          </div>
+          {/* Toggle and both numbers share one line: three short controls do not need three rows,
+              and the units sit beside the inputs so nothing has to be padded out to fill width. */}
+          <div className={styles.teleportRow}>
+            <div className={styles.toggleCell}>
+              <span className={styles.toggleLabel}>Enable /rtp</span>
+              <Toggle checked={enabled} onChange={v => { setEnabled(v); setDirty(true) }} aria-label="Enable RTP" />
+            </div>
 
-          <div className={styles.row}>
-            <Field label="Warmup" hint="seconds, cancels on move or damage" className={styles.num}>
-              <Input type="number" min={0} value={config.warmup_seconds}
-                onChange={e => setGlobal('warmup_seconds', clampInt(e.target.value, 0))} />
-            </Field>
-            <Field label="Cooldown" hint="seconds, per player" className={styles.num}>
-              <Input type="number" min={0} value={config.cooldown_seconds}
-                onChange={e => setGlobal('cooldown_seconds', clampInt(e.target.value, 0))} />
-            </Field>
-            <span className={styles.grow} />
+            <div className={styles.numCell}>
+              <Field label="Warmup" className={styles.numField}>
+                <Input type="number" min={0} value={config.warmup_seconds}
+                  onChange={e => setGlobal('warmup_seconds', clampInt(e.target.value, 0))} />
+              </Field>
+              <span className={styles.unit}>seconds, cancels on move or damage</span>
+            </div>
+
+            <div className={styles.numCell}>
+              <Field label="Cooldown" className={styles.numField}>
+                <Input type="number" min={0} value={config.cooldown_seconds}
+                  onChange={e => setGlobal('cooldown_seconds', clampInt(e.target.value, 0))} />
+              </Field>
+              <span className={styles.unit}>seconds, per player</span>
+            </div>
+
+            <div className={styles.rowEnd}>
+              <Btn size="sm" disabled={unusedDims.length === 0} onClick={() => setPicking(true)}>
+                {unusedDims.length === 0 ? 'Every dimension has a profile' : 'Add dimension profile'}
+              </Btn>
+            </div>
           </div>
         </SectionCard>
 
@@ -152,18 +167,12 @@ export default function RtpPanel({ token, onExpired }) {
             key={profile.dimension}
             profile={profile}
             registry={registry}
-            token={token}
-            onExpired={onExpired}
+            features={features}
+            onNavigate={onNavigate}
             onChange={next => setProfile(i, next)}
             onRemove={() => removeProfile(i)}
           />
         ))}
-
-        <div className={styles.addRow}>
-          <Btn size="sm" disabled={unusedDims.length === 0} onClick={() => setPicking(true)}>
-            {unusedDims.length === 0 ? 'Every dimension has a profile' : 'Add dimension profile'}
-          </Btn>
-        </div>
 
         <Dialog open={picking} onOpenChange={setPicking} title="Which dimension?"
           description="One profile per dimension. Dimensions that already have one are not listed.">

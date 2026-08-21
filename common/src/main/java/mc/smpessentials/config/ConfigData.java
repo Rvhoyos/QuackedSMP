@@ -1,6 +1,7 @@
 package mc.smpessentials.config;
 
 import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
 import java.util.ArrayList;
@@ -113,6 +114,14 @@ public final class ConfigData {
         defaults.messages.forEach(messages::putIfAbsent);
         defaults.skills.cooldowns.forEach(skills.cooldowns::putIfAbsent);
         defaults.skills.abilityUnlockLevels.forEach(skills.abilityUnlockLevels::putIfAbsent);
+
+        // Only reached when a config file already existed, which is exactly when there is
+        // something older than the current kit format to bring forward.
+        if (kits != null && kits.kits != null) {
+            for (KitDef kit : kits.kits) {
+                if (kit != null) kit.migrateLegacyStacks();
+            }
+        }
     }
 
     public boolean hardcoreEnabled = false;
@@ -207,6 +216,10 @@ public final class ConfigData {
     public boolean shopsEnabled = false;
     public boolean economyEnabled = false;
     public KitsConfig kits = new KitsConfig();
+
+    // Welcome book: one command reference handed out by /guide, /smp help, kits and rtp arrivals.
+    // On by default, like the welcome sidebar, since both exist to orient a new player.
+    public WelcomeBookConfig welcomeBook = new WelcomeBookConfig();
 
     // Random teleport. One profile per dimension, so /rtp can behave differently in each.
     // Off by default (opt-in feature).
@@ -316,7 +329,7 @@ public final class ConfigData {
     public static final class KitsConfig {
         public long cooldownSeconds = 86400;
         public List<KitDef> kits = new ArrayList<>(List.of(
-                new KitDef("starter", "&aStarter Kit", 0,
+                new KitDef("starter", "&aStarter Kit", 0, true,
                         new KitArmor("minecraft:leather_helmet", "minecraft:leather_chestplate",
                                 "minecraft:leather_leggings", "minecraft:leather_boots"),
                         new ArrayList<>(List.of(
@@ -327,7 +340,7 @@ public final class ConfigData {
                                 new KitItem("minecraft:crafting_table", 1),
                                 new KitItem("minecraft:wheat_seeds", 8),
                                 new KitItem("minecraft:carrot", 4)))),
-                new KitDef("vip", "&6VIP Kit", 1,
+                new KitDef("vip", "&6VIP Kit", 1, false,
                         new KitArmor("minecraft:iron_helmet", "minecraft:iron_chestplate",
                                 "minecraft:iron_leggings", "minecraft:iron_boots"),
                         new ArrayList<>(List.of(
@@ -343,46 +356,130 @@ public final class ConfigData {
         public String name = "starter";
         public String displayName = "&aStarter Kit";
         public int minTier = 0;
+        // Hands over the welcome book alongside the kit. The book itself lives once under
+        // welcomeBook, so this is a switch rather than a copy of the content.
+        public boolean giveWelcomeBook = false;
         public KitArmor armor = new KitArmor();
         public List<KitItem> items = new ArrayList<>();
 
         public KitDef() {}
 
-        public KitDef(String name, String displayName, int minTier, KitArmor armor, List<KitItem> items) {
+        public KitDef(String name, String displayName, int minTier, boolean giveWelcomeBook,
+                      KitArmor armor, List<KitItem> items) {
             this.name = name;
             this.displayName = displayName;
             this.minTier = minTier;
+            this.giveWelcomeBook = giveWelcomeBook;
             this.armor = armor;
             this.items = items;
         }
+
+        void migrateLegacyStacks() {
+            if (this.armor != null) this.armor.migrateLegacyStacks();
+            if (this.items == null) return;
+            for (KitItem item : this.items) {
+                if (item != null) item.migrateLegacyStack();
+            }
+        }
     }
 
+    /**
+     * The four worn slots, each an ItemStack.CODEC JSON stack so a kit can hand out enchanted or
+     * named armor rather than only a bare item id.
+     */
     public static final class KitArmor {
-        public String head = "";
-        public String chest = "";
-        public String legs = "";
-        public String feet = "";
+        public JsonElement head;
+        public JsonElement chest;
+        public JsonElement legs;
+        public JsonElement feet;
 
         public KitArmor() {}
 
         public KitArmor(String head, String chest, String legs, String feet) {
-            this.head = head;
-            this.chest = chest;
-            this.legs = legs;
-            this.feet = feet;
+            this.head = stackOf(head);
+            this.chest = stackOf(chest);
+            this.legs = stackOf(legs);
+            this.feet = stackOf(feet);
+        }
+
+        /**
+         * Configs written before armor carried stacks stored a bare item id string in each slot.
+         * The field names did not change, so the old value arrives here as a JSON string and is
+         * rewritten in place as a one-item stack.
+         */
+        void migrateLegacyStacks() {
+            this.head = migrateSlot(this.head);
+            this.chest = migrateSlot(this.chest);
+            this.legs = migrateSlot(this.legs);
+            this.feet = migrateSlot(this.feet);
+        }
+
+        private static JsonElement migrateSlot(JsonElement slot) {
+            if (slot == null || !slot.isJsonPrimitive() || !slot.getAsJsonPrimitive().isString()) {
+                return slot;
+            }
+            return stackOf(slot.getAsString());
+        }
+
+        private static JsonElement stackOf(String itemId) {
+            if (itemId == null || itemId.isBlank()) return null;
+            JsonObject stack = new JsonObject();
+            stack.addProperty("id", itemId);
+            stack.addProperty("count", 1);
+            return stack;
         }
     }
 
+    /**
+     * One kit item, held as ItemStack.CODEC JSON ({id, count, components}) so it can carry a
+     * written book or a custom name. Same shape the random teleport arrival list uses.
+     */
     public static final class KitItem {
-        public String item = "minecraft:stone";
-        public int count = 1;
+        public JsonElement stack;
+
+        /**
+         * Configs written before kit items carried stacks stored a bare id and count in these two
+         * fields. Read once on load, folded into {@code stack}, then dropped: Gson omits nulls, so
+         * they disappear from quackedsmp.json the next time it is written.
+         */
+        public String item;
+        public Integer count;
 
         public KitItem() {}
 
-        public KitItem(String item, int count) {
-            this.item = item;
-            this.count = count;
+        public KitItem(String itemId, int count) {
+            JsonObject s = new JsonObject();
+            s.addProperty("id", itemId);
+            s.addProperty("count", count);
+            this.stack = s;
         }
+
+        void migrateLegacyStack() {
+            if (this.stack != null && !this.stack.isJsonNull()) {
+                this.item = null;
+                this.count = null;
+                return;
+            }
+            if (this.item == null || this.item.isBlank()) return;
+
+            JsonObject s = new JsonObject();
+            s.addProperty("id", this.item);
+            s.addProperty("count", this.count == null ? 1 : this.count);
+            this.stack = s;
+            this.item = null;
+            this.count = null;
+        }
+    }
+
+    /**
+     * The welcome book. One book, stored once, handed out by every delivery path, so editing it
+     * in the panel updates /guide, /smp help, kit rewards and rtp arrivals together.
+     */
+    public static final class WelcomeBookConfig {
+        public boolean enabled = true;
+        // minecraft:written_book_content JSON. Typed as JsonElement so it nests inline in
+        // quackedsmp.json rather than becoming an escaped blob.
+        public JsonElement content = mc.smpessentials.welcomebook.DefaultWelcomeBook.content();
     }
 
     /**
@@ -391,7 +488,14 @@ public final class ConfigData {
     public static final class RtpConfig {
         public int warmupSeconds = 5;
         public int cooldownSeconds = 300;
-        public List<RtpProfile> profiles = new ArrayList<>(List.of(new RtpProfile()));
+        public List<RtpProfile> profiles = new ArrayList<>(List.of(defaultProfile()));
+
+        // The out-of-the-box overworld profile, which does hand over the guide on arrival.
+        private static RtpProfile defaultProfile() {
+            RtpProfile profile = new RtpProfile();
+            profile.giveWelcomeBook = true;
+            return profile;
+        }
     }
 
     /** How /rtp behaves in one dimension. Distance is measured from that level's spawn. */
@@ -409,6 +513,13 @@ public final class ConfigData {
         public String message = "&aWhoosh! You landed &e{distance}&a blocks from spawn.";
         // 0 means the arrival reward is granted once and never again.
         public long rewardCooldownSeconds = 0;
+        // Hands over the welcome book on arrival. The book lives once under welcomeBook, so this
+        // is a switch rather than a copy of the content.
+        //
+        // Off here on purpose: a config written before this feature existed has no value for it,
+        // so an upgraded server keeps handing out exactly what it did before. The shipped default
+        // profile turns it on, so a fresh config does include the guide.
+        public boolean giveWelcomeBook = false;
         public List<RtpEffect> effects = new ArrayList<>();
         public List<RtpItem> items = new ArrayList<>(List.of(new RtpItem("{\"id\":\"minecraft:red_bed\",\"count\":1}")));
     }
@@ -422,8 +533,8 @@ public final class ConfigData {
 
     /**
      * One arrival item, held as ItemStack.CODEC JSON ({id, count, components}). Components are
-     * what let a stack carry a written book, which the kit format's plain item id cannot. Typed
-     * as JsonElement so it nests inline in quackedsmp.json rather than becoming an escaped blob.
+     * what let a stack carry a written book or a coloured name. Typed as JsonElement so it nests
+     * inline in quackedsmp.json rather than becoming an escaped blob. Same shape as KitItem.
      */
     public static final class RtpItem {
         public JsonElement stack;

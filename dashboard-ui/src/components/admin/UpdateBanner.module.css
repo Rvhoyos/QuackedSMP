@@ -34,9 +34,9 @@
 }
 .versions {
   font-family: var(--font-pixel);
-  font-size: 6px;
+  font-size: 8px;
   letter-spacing: 0.4px;
-  color: var(--txt-faint);
+  color: var(--txt-muted);
   text-shadow: 1px 1px 0 rgba(0,0,0,0.5);
 }
 .latest { color: var(--warn); }

@@ -10,9 +10,9 @@
 }
 .row:hover { background: rgba(255,255,255,0.04); border-left-color: var(--mc-wood); }
 
-.rank { font-family: var(--font-pixel); font-size: 9px; color: var(--txt-faint); width: 22px; text-align: center; text-shadow: 1px 1px 0 rgba(0,0,0,0.5); flex-shrink: 0; }
+.rank { font-family: var(--font-pixel); font-size: 9px; color: var(--txt-muted); width: 22px; text-align: center; text-shadow: 1px 1px 0 rgba(0,0,0,0.5); flex-shrink: 0; }
 .info { display: flex; flex-direction: column; gap: 2px; width: 130px; flex-shrink: 0; }
 .name { font-family: var(--font-pixel); font-size: 8px; color: var(--txt-primary); text-shadow: 1px 1px 0 rgba(0,0,0,0.5); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.uuid { font-family: var(--font-mono); font-size: 10px; color: var(--txt-faint); }
+.uuid { font-family: var(--font-mono); font-size: 11.5px; color: var(--txt-muted); }
 .barWrap { flex: 1; min-width: 0; }
 .count { font-family: var(--font-pixel); font-size: 8px; color: var(--txt-secondary); width: 42px; text-align: right; flex-shrink: 0; }

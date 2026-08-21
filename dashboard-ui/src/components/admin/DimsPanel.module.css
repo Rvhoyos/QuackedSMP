@@ -1,10 +1,10 @@
 .wrap { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-height: 0; background: var(--panel-surface); }
-.body { flex: 1; overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 12px; }
+.body { flex: 1; overflow-y: auto; padding: var(--pad-panel); display: flex; flex-direction: column; gap: var(--gap-block); }
 
 .createForm { display: flex; flex-direction: column; gap: 12px; }
-.createRow { display: grid; grid-template-columns: 1fr 1fr auto; gap: 10px; align-items: end; }
+.createRow { display: grid; grid-template-columns: 1fr 1fr auto; gap: var(--gap-row) var(--gap-col); align-items: end; }
 
-.paramGrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 10px 12px; }
+.paramGrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: var(--gap-row) var(--gap-col); }
 .pairRow { display: flex; align-items: center; gap: 8px; }
 .pairRow > * { min-width: 0; }
 
@@ -13,8 +13,8 @@
 .weightInput { width: 70px; font-family: var(--font-mono); font-size: 12px; color: var(--txt-primary); background: var(--surf-slot); border-top: 2px solid #0a0a0a; border-left: 2px solid #0a0a0a; border-bottom: 2px solid #3a3a3a; border-right: 2px solid #3a3a3a; padding: 8px; outline: none; }
 
 .chips { display: flex; flex-wrap: wrap; gap: 6px; }
-.chip { display: inline-flex; align-items: center; gap: 6px; padding: 5px 6px 5px 9px; font-family: var(--font-mono); font-size: 11px; color: var(--txt-secondary); background: var(--surf-3); border: 1px solid #0d0d0d; }
-.chipW { color: var(--txt-faint); }
+.chip { display: inline-flex; align-items: center; gap: 6px; padding: 5px 6px 5px 9px; font-family: var(--font-mono); font-size: 11.5px; color: var(--txt-secondary); background: var(--surf-3); border: 1px solid #0d0d0d; }
+.chipW { color: var(--txt-muted); }
 .chipRemove { font-size: 13px; line-height: 1; color: var(--txt-faint); background: none; border: none; cursor: pointer; padding: 0 2px; }
 .chipRemove:hover { color: var(--red); }
 
@@ -24,18 +24,18 @@
 .comboInput::placeholder { color: var(--txt-faint); }
 .invalid { border-color: var(--red) !important; }
 .dropdown { position: absolute; top: 100%; left: 0; right: 0; z-index: 20; max-height: 240px; overflow-y: auto; background: var(--surf-3); border: 1px solid #0d0d0d; box-shadow: 0 8px 24px rgba(0,0,0,0.5); }
-.dropItem { display: block; width: 100%; text-align: left; padding: 7px 10px; font-family: var(--font-mono); font-size: 11px; color: var(--txt-secondary); background: none; border: none; cursor: pointer; }
+.dropItem { display: block; width: 100%; text-align: left; padding: 7px 10px; font-family: var(--font-mono); font-size: 11.5px; color: var(--txt-secondary); background: none; border: none; cursor: pointer; }
 .dropItem:hover { background: var(--mc-wood-dark); color: #fff; }
-.dropMsg { padding: 8px 10px; font-family: var(--font-sans); font-size: 12px; color: var(--txt-faint); }
-.hint { font-family: var(--font-sans); font-size: 12px; color: var(--txt-muted); }
+.dropMsg { padding: 8px 10px; font-family: var(--font-sans); font-size: 12.5px; color: var(--txt-muted); }
+.hint { font-family: var(--font-sans); font-size: 12.5px; color: var(--txt-muted); }
 
-.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 10px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: var(--gap-block); }
 .card { display: flex; flex-direction: column; gap: 8px; padding: 12px; background: var(--panel-card); border-top: 2px solid #56546a; border-left: 2px solid #56546a; border-bottom: 2px solid #0d0d0d; border-right: 2px solid #0d0d0d; }
 .cardTop { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .dimId { font-family: var(--font-pixel); font-size: 8px; color: var(--txt-primary); text-shadow: 1px 1px 0 rgba(0,0,0,0.5); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .tags { display: flex; flex-wrap: wrap; gap: 5px; }
-.config { font-family: var(--font-mono); font-size: 10px; color: var(--txt-faint); }
+.config { font-family: var(--font-mono); font-size: 11.5px; color: var(--txt-muted); }
 .portalEdit { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 4px; }
-.warn { font-family: var(--font-sans); font-size: 11px; color: var(--red); width: 100%; }
+.warn { font-family: var(--font-sans); font-size: 12.5px; color: var(--red); width: 100%; }
 
-.footHint { font-family: var(--font-sans); font-size: 12px; color: var(--txt-muted); line-height: 1.5; padding: 4px 2px; }
+.footHint { font-family: var(--font-sans); font-size: 12.5px; color: var(--txt-muted); line-height: 1.5; padding: 4px 2px; }

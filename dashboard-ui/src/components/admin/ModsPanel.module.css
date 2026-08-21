@@ -1,5 +1,5 @@
 .wrap { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-height: 0; background: var(--panel-surface); }
-.body { flex: 1; overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 14px; }
+.body { flex: 1; overflow-y: auto; padding: var(--pad-panel); display: flex; flex-direction: column; gap: var(--gap-block); }
 
 .dropzone {
   display: flex; flex-direction: column; align-items: center; gap: 8px;
@@ -11,13 +11,13 @@
 .dropActive { border-color: var(--mc-wood-light); background: rgba(200,151,58,0.08); }
 .dropText { font-family: var(--font-sans); font-size: 13px; color: var(--txt-secondary); }
 .dropText b { color: var(--mc-wood-light); }
-.dropHint { font-family: var(--font-sans); font-size: 11px; color: var(--txt-faint); }
+.dropHint { font-family: var(--font-sans); font-size: 12.5px; color: var(--txt-muted); }
 .track { width: 60%; height: 6px; background: var(--surf-slot); margin-top: 4px; }
 .fill { height: 100%; background: linear-gradient(90deg, var(--mc-wood), var(--mc-wood-light)); transition: width 120ms ease; }
 
 .section { display: flex; flex-direction: column; gap: 8px; }
-.sectionLabel { font-family: var(--font-pixel); font-size: 7px; letter-spacing: 0.5px; color: var(--txt-faint); text-shadow: 1px 1px 0 rgba(0,0,0,0.5); }
-.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 10px; }
+.sectionLabel { font-family: var(--font-pixel); font-size: 8px; letter-spacing: 0.5px; color: var(--txt-muted); text-shadow: 1px 1px 0 rgba(0,0,0,0.5); }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: var(--gap-block); }
 
 .card {
   display: flex; flex-direction: column; gap: 6px; padding: 11px;
@@ -27,4 +27,4 @@
 .cardActive { background: rgba(166,227,161,0.05); }
 .cardTop { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .name { font-family: var(--font-pixel); font-size: 8px; color: var(--txt-primary); text-shadow: 1px 1px 0 rgba(0,0,0,0.5); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.meta { font-family: var(--font-mono); font-size: 11px; color: var(--txt-faint); }
+.meta { font-family: var(--font-mono); font-size: 11.5px; color: var(--txt-muted); }

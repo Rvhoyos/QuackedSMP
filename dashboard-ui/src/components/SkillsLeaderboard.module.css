@@ -28,7 +28,7 @@
 
 .title {
   font-family: var(--font-pixel);
-  font-size: 7px;
+  font-size: 8px;
   color: #A855F7;
   letter-spacing: 0.5px;
   text-transform: uppercase;
@@ -43,7 +43,7 @@
 
 .tab {
   font-family: var(--font-pixel);
-  font-size: 6px;
+  font-size: 8px;
   letter-spacing: 0.3px;
   background: none;
   border: 1px solid #2A2A2A;
@@ -53,7 +53,7 @@
   transition: color var(--t-fast), border-color var(--t-fast);
   white-space: nowrap;
 }
-.tab:hover { color: var(--txt-secondary); border-color: var(--txt-faint); }
+.tab:hover { color: var(--txt-secondary); border-color: var(--txt-muted); }
 .tabActive { color: #C084FC; border-color: #5B1A8C; background: rgba(88,26,140,0.2); }
 
 /* ── Body ────────────────────────────────────────────────────────── */
@@ -72,8 +72,8 @@
 
 .thRank, .thPlayer, .thLevel, .thPlaytime, .thTier {
   font-family: var(--font-pixel);
-  font-size: 6px;
-  color: var(--txt-faint);
+  font-size: 8px;
+  color: var(--txt-muted);
   letter-spacing: 0.3px;
   text-transform: uppercase;
   padding: 4px 10px;
@@ -87,7 +87,7 @@
 
 .rank {
   font-family: var(--font-pixel);
-  font-size: 7px;
+  font-size: 8px;
   color: var(--txt-muted);
   padding: 6px 10px;
   width: 30px;
@@ -112,7 +112,7 @@
 
 .playtime {
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: 11.5px;
   color: var(--txt-muted);
   padding: 6px 10px;
   text-align: right;
@@ -127,7 +127,7 @@
 
 .tierBadge {
   font-family: var(--font-pixel);
-  font-size: 5px;
+  font-size: 8px;
   letter-spacing: 0.3px;
   padding: 1px 4px;
   color: var(--mauve);
@@ -137,8 +137,8 @@
 
 .noData {
   font-family: var(--font-pixel);
-  font-size: 6px;
-  color: var(--txt-faint);
+  font-size: 8px;
+  color: var(--txt-muted);
   padding: 12px 10px;
   text-align: center;
   letter-spacing: 0.3px;
@@ -167,7 +167,7 @@
 
 .skillTitle {
   font-family: var(--font-pixel);
-  font-size: 6px;
+  font-size: 8px;
   color: var(--txt-secondary);
   letter-spacing: 0.4px;
   text-transform: uppercase;
@@ -189,7 +189,7 @@
 
 .skillRank {
   font-family: var(--font-pixel);
-  font-size: 6px;
+  font-size: 8px;
   color: var(--txt-muted);
   width: 14px;
   letter-spacing: 0.3px;
@@ -198,7 +198,7 @@
 
 .skillPlayer {
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: 11.5px;
   color: var(--txt-secondary);
   flex: 1;
   overflow: hidden;
@@ -208,7 +208,7 @@
 
 .skillLevel {
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: 11.5px;
   color: #A855F7;
   white-space: nowrap;
   flex-shrink: 0;
@@ -241,8 +241,8 @@
 .podHead { image-rendering: pixelated; border: 2px solid var(--mc-stone-dark); }
 .podRank { font-family: var(--font-pixel); font-size: 9px; text-shadow: 1px 1px 0 rgba(0,0,0,0.6); }
 .podName {
-  font-family: var(--font-pixel); font-size: 6px; color: var(--txt-primary);
+  font-family: var(--font-pixel); font-size: 8px; color: var(--txt-primary);
   text-shadow: 1px 1px 0 rgba(0,0,0,0.5); max-width: 88px;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: center;
 }
-.podLevel { font-family: var(--font-sans); font-size: 11px; color: var(--txt-muted); }
+.podLevel { font-family: var(--font-sans); font-size: 12.5px; color: var(--txt-muted); }

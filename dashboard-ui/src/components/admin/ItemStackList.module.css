@@ -6,24 +6,25 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  margin-top: 14px;
-  padding-top: 10px;
+  margin: 22px 0 12px;
+  padding-top: 14px;
   border-top: 1px solid var(--mc-stone-dark);
 }
 
 .subTitle {
   font-family: var(--font-sans);
-  font-size: 12px;
-  letter-spacing: 0.06em;
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: 0.07em;
   text-transform: uppercase;
-  color: var(--txt-muted);
+  color: var(--txt-secondary);
 }
 
 .hint {
   font-family: var(--font-sans);
-  font-size: 11px;
-  color: var(--txt-faint);
-  line-height: 1.45;
+  font-size: 12.5px;
+  color: var(--txt-muted);
+  line-height: 1.55;
 }
 
 /* ── Rows ────────────────────────────────────────────────────────────────── */
@@ -31,10 +32,11 @@
 .effectRow,
 .itemRow {
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   flex-wrap: wrap;
-  gap: 8px;
-  padding: 8px;
+  gap: 10px;
+  margin-bottom: 8px;
+  padding: 10px 12px;
   background: var(--surf-slot);
   border: 1px solid var(--mc-stone-dark);
 }
@@ -52,8 +54,8 @@
 
 .itemId {
   font-family: var(--font-mono);
-  font-size: 10px;
-  color: var(--txt-faint);
+  font-size: 11.5px;
+  color: var(--txt-muted);
   overflow-wrap: anywhere;
 }
 
@@ -61,7 +63,7 @@
   align-self: center;
   padding: 2px 7px;
   font-family: var(--font-sans);
-  font-size: 10px;
+  font-size: 12.5px;
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--mc-wood-light);
@@ -71,34 +73,20 @@
 
 .inlineField {
   display: flex;
-  flex-direction: column;
-  gap: 3px;
-  width: 84px;
+  align-items: center;
+  gap: 7px;
   flex: 0 0 auto;
 }
 
 .inlineField > span {
   font-family: var(--font-sans);
-  font-size: 11px;
+  font-size: 12.5px;
   color: var(--txt-muted);
+  white-space: nowrap;
 }
 
-.inlineCheck {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  padding-bottom: 6px;
-  font-family: var(--font-sans);
-  font-size: 12px;
-  color: var(--txt-muted);
-  cursor: pointer;
-}
+.inlineField input { width: 68px; }
 
-.importError {
-  font-family: var(--font-sans);
-  font-size: 12px;
-  color: var(--red, #F38BA8);
-}
 
 /* ── Effect picker ───────────────────────────────────────────────────────── */
 
@@ -122,8 +110,8 @@
 .rowNote {
   flex: 1 0 100%;
   font-family: var(--font-sans);
-  font-size: 11px;
-  color: var(--txt-faint);
+  font-size: 12.5px;
+  color: var(--txt-muted);
 }
 
 /* ── Add-item dialog ─────────────────────────────────────────────────────── */
@@ -138,7 +126,7 @@
 .tab {
   padding: 7px 12px;
   font-family: var(--font-sans);
-  font-size: 12px;
+  font-size: 12.5px;
   color: var(--txt-muted);
   background: transparent;
   border: none;
@@ -190,7 +178,15 @@
 
 .pickId {
   font-family: var(--font-mono);
-  font-size: 10px;
-  color: var(--txt-faint);
+  font-size: 11.5px;
+  color: var(--txt-muted);
   overflow-wrap: anywhere;
 }
+
+/* Pinned to the end of a row so the X column lines up down the list. */
+.rowRemove {
+  margin-left: auto;
+  color: var(--txt-muted);
+}
+
+.rowRemove:hover { color: var(--red); }

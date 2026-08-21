@@ -1,0 +1,105 @@
+.wrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
+  background: var(--panel-surface);
+}
+
+.body {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--pad-panel);
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-block);
+}
+
+.settingsRow {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--gap-row) var(--gap-col);
+}
+
+.toggleCell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 0 0 auto;
+}
+
+.toggleLabel {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--txt-secondary);
+  white-space: nowrap;
+}
+
+.unit {
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  color: var(--txt-muted);
+}
+
+.hint {
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  color: var(--txt-muted);
+}
+
+/* The book itself: cover, what it is, and the way in. */
+.bookRow {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 14px;
+  padding: 12px;
+  background: var(--surf-slot);
+  border: 1px solid var(--mc-stone-dark);
+}
+
+.cover {
+  display: inline-flex;
+  flex: 0 0 auto;
+}
+
+.bookMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.bookTitle {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  color: var(--txt-primary);
+  overflow-wrap: anywhere;
+}
+
+.bookBy {
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  color: var(--txt-muted);
+}
+
+.paths {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding-left: 18px;
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  color: var(--txt-muted);
+  line-height: 1.5;
+}
+
+.paths code {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--mc-wood-light);
+}

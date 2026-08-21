@@ -33,6 +33,9 @@ final class RtpRewards {
         for (ConfigData.RtpItem item : this.profile.items) {
             giveItem(player, item);
         }
+        if (this.profile.giveWelcomeBook) {
+            mc.smpessentials.welcomebook.WelcomeBookService.give(player);
+        }
     }
 
     private static void applyEffect(ServerPlayer player, ConfigData.RtpEffect effect) {

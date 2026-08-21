@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { Toolbar, Btn, IconButton, Textarea, Loading, EmptyState, ErrorBanner, useToast } from '../../ui'
+import { Toolbar, Btn, IconButton, Textarea, Loading, EmptyState, ErrorBanner, ConfirmDialog, useToast } from '../../ui'
 import { IconChatFilter } from './MinecraftIcons'
 import styles from './ChatFilterPanel.module.css'
 
@@ -16,6 +16,7 @@ export default function ChatFilterPanel({ token, onExpired }) {
   const [mutes, setMutes] = useState([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
+  const [confirmBulk, setConfirmBulk] = useState(false)
   const toast = useToast()
 
   const auth = { Authorization: `Bearer ${token}` }
@@ -137,7 +138,7 @@ export default function ChatFilterPanel({ token, onExpired }) {
               <input type="checkbox" checked={selected.size === words.length && words.length > 0} onChange={toggleAll} />
               {selected.size > 0 ? `${selected.size} selected` : 'Select page'}
             </label>
-            {selected.size > 0 && <Btn size="sm" variant="danger" onClick={deleteSelected}>Delete ({selected.size})</Btn>}
+            {selected.size > 0 && <Btn size="sm" variant="danger" onClick={() => setConfirmBulk(true)}>Delete ({selected.size})</Btn>}
           </div>
 
           {loading ? <Loading label="Loading…" />
@@ -191,6 +192,13 @@ export default function ChatFilterPanel({ token, onExpired }) {
             )}
         </div>
       )}
+
+      <ConfirmDialog
+        open={confirmBulk} onOpenChange={setConfirmBulk}
+        title={`Delete ${selected.size} word${selected.size === 1 ? '' : 's'} from the ${tab === 'whitelist' ? 'whitelist' : 'blocklist'}?`}
+        description="The live filter changes as soon as this is confirmed. Deleted words have to be typed back in by hand."
+        confirmLabel="Delete" tone="danger" onConfirm={deleteSelected}
+      />
     </div>
   )
 }

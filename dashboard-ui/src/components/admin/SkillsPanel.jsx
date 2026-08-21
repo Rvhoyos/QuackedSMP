@@ -30,14 +30,16 @@ const CFG_KEYS = [
 // xp      2.1e9 - the action-bar readout casts the awarded amount to int
 // armor   30   - ARMOR attribute clamp, shared with worn gear
 // drop/landing 1 - a probability and a damage fraction; both saturate at 1
+// Sliders first, then the two whose real range is far too wide to drag. Grouping by control
+// type keeps the grid symmetrical instead of alternating slider, box, slider.
 const STAT_CAPS = [
-  { key: 'cap_industrial_speed', label: 'Industrial Speed',   hint: 'Move speed at Industrial 100. 0.5 = +50% faster. Past 34 the server kicks the player for moving too quickly.', max: 34, step: 0.05 },
-  { key: 'cap_nature_health',    label: 'Nature Health',      hint: 'Bonus hearts at Nature 100. Vanilla clamps total health at 502 hearts, and rows overlap the hotbar past ~81.', max: 502, step: 0.5 },
-  { key: 'cap_combat_damage',    label: 'Combat Damage',      hint: 'Attack damage at Combat 100. 1 = +100%. Vanilla clamps attack damage at 2048, so a bare fist saturates at 2047.', max: 2047, step: 0.05, control: 'input' },
-  { key: 'cap_knowledge_xp',     label: 'Knowledge XP',       hint: 'Skill XP gain at Knowledge 100, for every non-Knowledge skill. 1 = double XP. One action already maxes a skill around 4,000,000.', max: 2147483647, step: 0.05, control: 'input' },
-  { key: 'cap_double_drop',      label: 'Double Drop Chance', hint: 'Chance at Industrial 100. 0.5 = 50%, 1 = every block.',      max: 1,  step: 0.05 },
-  { key: 'cap_defense_armor',    label: 'Defense Armor',      hint: 'Armor points at Defense 100. Worn armor + this is clamped to 30 by vanilla, and only the first 20 reduce normal-sized hits.', max: 30, step: 0.5 },
-  { key: 'cap_safe_landing',     label: 'Safe Landing',       hint: 'Fall damage absorbed at Agility 100. 1 = no fall damage.',   max: 1,  step: 0.05 },
+  { key: 'cap_double_drop',      label: 'Double Drop Chance', hint: 'Chance per block, 1 = always',                   max: 1,   step: 0.05 },
+  { key: 'cap_safe_landing',     label: 'Safe Landing',       hint: 'Fall damage absorbed, 1 = none',                 max: 1,   step: 0.05 },
+  { key: 'cap_industrial_speed', label: 'Industrial Speed',   hint: 'Move speed, 0.5 = +50% faster',                  max: 34,  step: 0.05 },
+  { key: 'cap_defense_armor',    label: 'Defense Armor',      hint: 'Armor points, 30 max with gear', max: 30,  step: 0.5 },
+  { key: 'cap_nature_health',    label: 'Nature Health',      hint: 'Bonus hearts, ~81 hides the hotbar', max: 502, step: 0.5 },
+  { key: 'cap_combat_damage',    label: 'Combat Damage',      hint: 'Attack damage, 1 = +100%',                       max: 2047,       step: 0.05, control: 'input' },
+  { key: 'cap_knowledge_xp',     label: 'Knowledge XP',       hint: 'Other skills XP, 1 = double',          max: 2147483647, step: 0.05, control: 'input' },
 ]
 
 export default function SkillsPanel({ token, onExpired }) {
@@ -209,20 +211,24 @@ function SettingsTab({ token, onExpired }) {
       <div className={styles.settingsScroll}>
         <SectionCard title="Progression">
           <p className={styles.note}>
-            Every cap is the value reached at skill level 100, scaling linearly from 0 below that.
-            Set a cap to <b>0</b> to switch that perk off.
+            Each cap is the value at level 100, scaling linearly from 0. Set <b>0</b> to switch a perk off.
           </p>
+          {/* Sliders here put their value beside the label rather than to the right of the
+              track. These cells are narrow, and a value on the track's right was taking a
+              third of the width from the control itself. */}
           <div className={styles.capGrid}>
-            <Field label="XP Exponent" hint="Higher = slower leveling past lvl 10. Default 1.5. Levels 1-10 are a flat 50 XP and ignore this. Above 7.9 the XP table overflows.">
-              <Slider value={expo} min={1} max={Math.max(7.9, expo)} step={0.05} onChange={v => patch('skill_xp_exponent', v)} />
+            <Field label="XP Exponent" hint="Higher is slower past level 10" aside={expo}>
+              <Slider hideValue value={expo} min={1} max={Math.max(7.9, expo)} step={0.05}
+                onChange={v => patch('skill_xp_exponent', v)} />
             </Field>
             {STAT_CAPS.map(({ key, label, hint, max, step, control }) => {
               const v = draft[key] ?? 0
+              const isInput = control === 'input'
               return (
-                <Field key={key} label={label} hint={hint}>
-                  {control === 'input'
+                <Field key={key} label={label} hint={hint} aside={isInput ? undefined : v}>
+                  {isInput
                     ? <Input type="number" min="0" max={max} step={step} value={draft[key] ?? ''} onChange={e => patch(key, parseFloat(e.target.value))} />
-                    : <Slider value={v} min={0} max={Math.max(max, v)} step={step} onChange={n => patch(key, n)} />}
+                    : <Slider hideValue value={v} min={0} max={Math.max(max, v)} step={step} onChange={n => patch(key, n)} />}
                 </Field>
               )
             })}
@@ -238,8 +244,8 @@ function SettingsTab({ token, onExpired }) {
           </div>
         }>
           <p className={styles.note}>
-            Cooldown is the base at level 0 and shortens as the skill levels (75% at lvl 10, 25% at lvl 100).
-            <b>0</b> = no cooldown. Unlock Lvl <b>0</b> = usable from the start.
+            Cooldown shortens as the skill levels, to 25% by level 100.
+            <b>0</b> means no cooldown, or usable from the start.
           </p>
           <div className={styles.skillTableHead}><span /><span>Cooldown (s)</span><span>Unlock Lvl</span></div>
           {cat.skills.map(skill => {

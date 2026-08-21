@@ -1660,3 +1660,73 @@ export function IconChorusFruit({ size = 18 }) {
     </svg>
   )
 }
+
+/**
+ * A closed written book: gold clasp and a hanging ribbon. Deliberately unlike IconBookQuill
+ * (open book plus feather, for writing) and IconBookshelf (a shelf of many), since this one
+ * stands for the single finished guide the server hands out.
+ */
+export function IconWrittenBook({ size = 20 }) {
+  return (
+    <svg viewBox="0 0 16 16" width={size} height={size} shapeRendering="crispEdges">
+      {/* Cover */}
+      {px(3, 1, 10, 14, '#8C2F2F')}
+      {px(4, 2, 8, 12, '#A83B3B')}
+      {/* Spine */}
+      {px(2, 1, 2, 14, '#5E1C1C')}
+      {px(2, 1, 1, 14, '#7A2626')}
+      {/* Page block along the fore edge */}
+      {px(12, 2, 2, 12, '#F5ECD0')}
+      {px(12, 3, 2, 1, '#D8CFB0')}
+      {px(12, 7, 2, 1, '#D8CFB0')}
+      {px(12, 11, 2, 1, '#D8CFB0')}
+      {/* Gold clasp */}
+      {px(11, 6, 3, 3, '#CDA040')}
+      {px(11, 6, 3, 1, '#F0D070')}
+      {px(12, 7, 1, 1, '#7A5A18')}
+      {/* Ribbon bookmark */}
+      {px(7, 12, 2, 4, '#E0C060')}
+      {px(7, 12, 1, 4, '#F0DC90')}
+      {px(7, 15, 2, 1, '#A8862F')}
+    </svg>
+  )
+}
+
+/** Chevron up: collapse a card. */
+export function IconCollapse({ size = 12 }) {
+  return (
+    <svg viewBox="0 0 10 10" width={size} height={size} shapeRendering="crispEdges">
+      {px(4, 2, 2, 1, 'currentColor')}
+      {px(3, 3, 1, 1, 'currentColor')}{px(6, 3, 1, 1, 'currentColor')}
+      {px(2, 4, 1, 1, 'currentColor')}{px(7, 4, 1, 1, 'currentColor')}
+      {px(1, 5, 1, 1, 'currentColor')}{px(8, 5, 1, 1, 'currentColor')}
+    </svg>
+  )
+}
+
+/** Chevron down: expand a collapsed card. */
+export function IconExpand({ size = 12 }) {
+  return (
+    <svg viewBox="0 0 10 10" width={size} height={size} shapeRendering="crispEdges">
+      {px(1, 3, 1, 1, 'currentColor')}{px(8, 3, 1, 1, 'currentColor')}
+      {px(2, 4, 1, 1, 'currentColor')}{px(7, 4, 1, 1, 'currentColor')}
+      {px(3, 5, 1, 1, 'currentColor')}{px(6, 5, 1, 1, 'currentColor')}
+      {px(4, 6, 2, 1, 'currentColor')}
+    </svg>
+  )
+}
+
+/** A small X for removing a row, where a full "Remove" button repeats down a list. */
+export function IconX({ size = 11 }) {
+  return (
+    <svg viewBox="0 0 10 10" width={size} height={size} shapeRendering="crispEdges">
+      {px(1, 1, 2, 1, 'currentColor')}{px(7, 1, 2, 1, 'currentColor')}
+      {px(2, 2, 2, 1, 'currentColor')}{px(6, 2, 2, 1, 'currentColor')}
+      {px(3, 3, 2, 1, 'currentColor')}{px(5, 3, 2, 1, 'currentColor')}
+      {px(4, 4, 2, 2, 'currentColor')}
+      {px(3, 6, 2, 1, 'currentColor')}{px(5, 6, 2, 1, 'currentColor')}
+      {px(2, 7, 2, 1, 'currentColor')}{px(6, 7, 2, 1, 'currentColor')}
+      {px(1, 8, 2, 1, 'currentColor')}{px(7, 8, 2, 1, 'currentColor')}
+    </svg>
+  )
+}

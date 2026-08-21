@@ -1,5 +1,6 @@
-import { Btn, Field, Select, Input } from '../../ui'
+import { Btn, IconButton, Select, Input, SwitchField } from '../../ui'
 import { prettyId } from './registryText'
+import { IconX } from './MinecraftIcons'
 import styles from './ItemStackList.module.css'
 
 const CATEGORIES = [
@@ -68,14 +69,14 @@ export default function EffectList({ effects, catalog, onChange, title = 'Effect
                 onChange={e => set(i, 'amplifier', clampInt(e.target.value, 1) - 1)} />
             </label>
 
-            <label className={styles.inlineCheck}>
-              <input type="checkbox" checked={effect.show_particles !== false}
-                onChange={e => set(i, 'show_particles', e.target.checked)} />
-              <span>Particles</span>
-            </label>
+            <SwitchField label="Particles"
+              checked={effect.show_particles !== false}
+              onChange={v => set(i, 'show_particles', v)} />
 
-            <Btn size="sm" variant="danger"
-              onClick={() => onChange(effects.filter((_, j) => j !== i))}>Remove</Btn>
+            <IconButton tip="Remove" className={styles.rowRemove}
+              onClick={() => onChange(effects.filter((_, j) => j !== i))}>
+              <IconX />
+            </IconButton>
 
             {meta?.instant && (
               <span className={styles.rowNote}>Applies once on arrival. Duration is ignored.</span>

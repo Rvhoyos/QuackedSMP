@@ -167,6 +167,9 @@ public final class SmpConfig {
     public static java.util.List<ConfigData.KitDef> KIT_DEFINITIONS = new java.util.ArrayList<>();
 
     // ---- Random teleport ----
+    public static boolean WELCOME_BOOK_ENABLED;
+    public static com.google.gson.JsonElement WELCOME_BOOK_CONTENT;
+
     public static boolean RTP_ENABLED;
     public static int RTP_WARMUP_SECONDS;
     public static int RTP_COOLDOWN_SECONDS;
@@ -349,6 +352,9 @@ public final class SmpConfig {
         KITS_ENABLED = d.kitsEnabled;
         KIT_COOLDOWN_SECONDS = d.kits.cooldownSeconds;
         KIT_DEFINITIONS = d.kits.kits;
+
+        WELCOME_BOOK_ENABLED = d.welcomeBook.enabled;
+        WELCOME_BOOK_CONTENT = d.welcomeBook.content;
 
         RTP_ENABLED = d.rtpEnabled;
         RTP_WARMUP_SECONDS = d.rtp.warmupSeconds;

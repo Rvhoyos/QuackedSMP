@@ -28,7 +28,7 @@
 
 .title {
   font-family: var(--font-pixel);
-  font-size: 7px;
+  font-size: 8px;
   color: #EF4444;
   letter-spacing: 0.5px;
   text-transform: uppercase;
@@ -40,7 +40,7 @@
 
 .tab {
   font-family: var(--font-pixel);
-  font-size: 6px;
+  font-size: 8px;
   letter-spacing: 0.3px;
   background: none;
   border: 1px solid #2A2A2A;
@@ -50,13 +50,13 @@
   transition: color var(--t-fast), border-color var(--t-fast);
   white-space: nowrap;
 }
-.tab:hover { color: var(--txt-secondary); border-color: var(--txt-faint); }
+.tab:hover { color: var(--txt-secondary); border-color: var(--txt-muted); }
 .tabActive { color: #F87171; border-color: #7F1D1D; background: rgba(127,29,29,0.25); }
 
 /* ── Records + counters grid (shared fun stats) ──────────────────── */
 .recordsHeading {
   font-family: var(--font-pixel);
-  font-size: 6px;
+  font-size: 8px;
   color: #EF4444;
   letter-spacing: 0.4px;
   text-transform: uppercase;
@@ -89,7 +89,7 @@
   gap: 6px;
   flex-shrink: 0;
   font-family: var(--font-pixel);
-  font-size: 5px;
+  font-size: 8px;
   color: #9CA3AF;
   letter-spacing: 0.3px;
   text-transform: uppercase;
@@ -121,7 +121,7 @@
 }
 .recordSub {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: 11.5px;
   color: #F59E0B;
   max-width: 100%;
   overflow: hidden;
@@ -132,7 +132,7 @@
 /* ── Rankings: the tab-controlled table in a bounded scroll box ───── */
 .rankingHeading {
   font-family: var(--font-pixel);
-  font-size: 6px;
+  font-size: 8px;
   color: #EF4444;
   letter-spacing: 0.4px;
   text-transform: uppercase;
@@ -151,8 +151,8 @@
 
 .thRank, .thName, .thNum {
   font-family: var(--font-pixel);
-  font-size: 6px;
-  color: var(--txt-faint);
+  font-size: 8px;
+  color: var(--txt-muted);
   letter-spacing: 0.3px;
   text-transform: uppercase;
   padding: 4px 10px;
@@ -166,7 +166,7 @@
 
 .rank {
   font-family: var(--font-pixel);
-  font-size: 7px;
+  font-size: 8px;
   color: var(--txt-muted);
   padding: 6px 10px;
   width: 30px;
@@ -180,7 +180,7 @@
 }
 .by {
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: 11.5px;
   color: var(--txt-secondary);
   padding: 6px 10px;
 }
@@ -194,8 +194,8 @@
 }
 .noData {
   font-family: var(--font-pixel);
-  font-size: 6px;
-  color: var(--txt-faint);
+  font-size: 8px;
+  color: var(--txt-muted);
   padding: 12px 10px;
   text-align: center;
   letter-spacing: 0.3px;
@@ -214,14 +214,14 @@
 }
 .activeTitle {
   font-family: var(--font-pixel);
-  font-size: 5px;
+  font-size: 8px;
   color: #6B7280;
   letter-spacing: 0.3px;
   text-transform: uppercase;
 }
 .activePill {
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: 11.5px;
   color: #CCC;
   padding: 2px 7px;
   background: rgba(239,68,68,0.1);
@@ -241,5 +241,5 @@
 .pod1 { border-top-color: #C0C0C0; }
 .pod2 { border-top-color: #CD7F32; }
 .podRank { font-family: var(--font-pixel); font-size: 9px; text-shadow: 1px 1px 0 rgba(0,0,0,0.6); }
-.podName { font-family: var(--font-pixel); font-size: 6px; color: var(--txt-primary); text-shadow: 1px 1px 0 rgba(0,0,0,0.5); max-width: 96px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: center; }
-.podSub { font-family: var(--font-sans); font-size: 11px; color: var(--txt-muted); }
+.podName { font-family: var(--font-pixel); font-size: 8px; color: var(--txt-primary); text-shadow: 1px 1px 0 rgba(0,0,0,0.5); max-width: 96px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: center; }
+.podSub { font-family: var(--font-sans); font-size: 12.5px; color: var(--txt-muted); }

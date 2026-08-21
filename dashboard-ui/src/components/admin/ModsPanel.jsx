@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { Toolbar, IconButton, Badge, StatCard, Loading, EmptyState, ErrorBanner, ConfirmDialog, Menu, MenuItem, Btn, useToast } from '../../ui'
+import { Toolbar, IconButton, Badge, Loading, EmptyState, ErrorBanner, ConfirmDialog, Menu, MenuItem, Btn, useToast } from '../../ui'
 import { IconMod } from './MinecraftIcons'
 import styles from './ModsPanel.module.css'
 

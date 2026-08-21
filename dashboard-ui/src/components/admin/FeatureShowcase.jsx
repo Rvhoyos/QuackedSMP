@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Badge, Toggle } from '../../ui'
-import { IconFlag, IconSkills, IconChatFilter, IconDiscord, IconVoiceChat, IconBallot, IconMapScroll, IconChest, IconEmerald, IconHardcoreHeart, IconGlowstonePortal, IconBed, IconEyeOfEnder, IconSlimeBall, IconBundle, IconLiveMonitor, IconChorusFruit } from './MinecraftIcons'
+import { IconFlag, IconSkills, IconChatFilter, IconDiscord, IconVoiceChat, IconBallot, IconMapScroll, IconChest, IconEmerald, IconHardcoreHeart, IconGlowstonePortal, IconBed, IconEyeOfEnder, IconSlimeBall, IconBundle, IconLiveMonitor, IconChorusFruit, IconWrittenBook } from './MinecraftIcons'
 import styles from './FeatureShowcase.module.css'
 
 const FEATURES = [
@@ -11,6 +11,7 @@ const FEATURES = [
   { name: 'Hardcore Mode', group: 'Gameplay', Icon: IconHardcoreHeart, desc: 'Player-run hardcore sessions with shared start, inventory stash, and death threshold.', tag: 'hardcore', configKey: 'hardcore_enabled', toggleable: true },
   { name: 'Random Teleport', group: 'Gameplay', Icon: IconChorusFruit, desc: 'On-demand /rtp with a per-dimension profile: distance band, spawn bias, arrival effects and a one-time item package.', tag: 'rtp', configKey: 'rtp_enabled', toggleable: true },
   { name: 'Kits', group: 'Gameplay', Icon: IconBundle, desc: 'Daily kit claims on a cooldown. Tier-gated VIP kits.', tag: 'kits', configKey: 'kits_enabled', toggleable: true },
+  { name: 'Welcome Book', group: 'Gameplay', Icon: IconWrittenBook, desc: 'One in-game guide listing every player command, handed out by /guide, /smp help, kits and rtp arrivals. Edited in the panel.', tag: 'guide', configKey: 'welcome_book_enabled', toggleable: true },
   { name: 'Shops', group: 'Gameplay', Icon: IconEmerald, desc: 'Chest-based player shops with per-shop currency. Spawn shops have unlimited stock.', tag: 'shops', configKey: 'shops_enabled', toggleable: true },
   { name: 'Slime Chunk Hint', group: 'Gameplay', Icon: IconSlimeBall, desc: 'Slime particles at a player\u2019s feet while they stand in a slime chunk below Y40, plus a rare quiet squish.', tag: 'slimehint', configKey: 'slime_hint_enabled', toggleable: true },
   { name: 'End Finder', group: 'Gameplay', Icon: IconEyeOfEnder, desc: 'Holding an eye of ender marks the nearest stronghold on the vanilla Locator Bar, with the distance on the action bar. No client mod.', tag: 'endfinder', configKey: 'end_finder_enabled', toggleable: true },
