@@ -15,6 +15,7 @@ import ShopsPanel from './ShopsPanel'
 import CommandBlocksPanel from './CommandBlocksPanel'
 import BackupsPanel from './BackupsPanel'
 import TimelapsePanel from './TimelapsePanel'
+import UpdateBanner from './UpdateBanner'
 import { TooltipProvider, ToastHost } from '../../ui'
 import { IconPlayerHead, IconCommandBlock, IconBookshelf, IconGlowstonePortal, IconSkills, IconFlag, IconChatFilter, IconMod, IconSword, IconEmerald, IconRepeatCmdBlock, IconShulkerBox, IconHardcoreHeart, IconGear, IconCamera } from './MinecraftIcons'
 import styles from './AdminPanel.module.css'
@@ -107,6 +108,8 @@ export default function AdminPanel({ health, wsStatus, onBack }) {
               <span className={styles.liveDot} />{wsStatus === 'open' ? 'Live' : 'Reconnecting'}
             </span>
           </div>
+
+          <UpdateBanner version={health?.version} />
 
           <div className={styles.mainRow}>
           {navOpen && <div className={styles.scrim} onClick={() => setNavOpen(false)} />}

@@ -1587,3 +1587,38 @@ export function IconTerminalCaret({ size = 20 }) {
     </svg>
   )
 }
+
+// Update-available banner, an emerald arrow rising off a stone plate. Nothing
+// else in this file is an arrow, so the silhouette stays unique next to
+// IconRefreshDust (a ring) and IconTerminalCaret (a chevron).
+export function IconUpgradeArrow({ size = 20 }) {
+  const g = '#4ADE9E', lit = '#B7FFD8', dark = '#1E6B47'
+  const plate = '#6E6E6E', plateLit = '#9A9A9A', plateDark = '#3A3A3A'
+  return (
+    <svg viewBox="0 0 16 16" width={size} height={size} shapeRendering="crispEdges">
+      {/* Arrow head, one row wider each step down */}
+      {px(7, 1, 2, 1, lit)}
+      {px(6, 2, 4, 1, g)}
+      {px(5, 3, 6, 1, g)}
+      {px(4, 4, 8, 1, g)}
+      {px(3, 5, 10, 1, g)}
+      {/* Top-left light, bottom-right shadow, same bevel logic as the buttons */}
+      {px(6, 2, 1, 1, lit)}
+      {px(5, 3, 1, 1, lit)}
+      {px(4, 4, 1, 1, lit)}
+      {px(3, 5, 1, 1, lit)}
+      {px(9, 2, 1, 1, dark)}
+      {px(10, 3, 1, 1, dark)}
+      {px(11, 4, 1, 1, dark)}
+      {px(12, 5, 1, 1, dark)}
+      {/* Shaft */}
+      {px(6, 6, 4, 4, g)}
+      {px(6, 6, 1, 4, lit)}
+      {px(9, 6, 1, 4, dark)}
+      {/* Stone plate it lifts off */}
+      {px(3, 12, 10, 3, plate)}
+      {px(3, 12, 10, 1, plateLit)}
+      {px(3, 14, 10, 1, plateDark)}
+    </svg>
+  )
+}

@@ -1,0 +1,56 @@
+/* Update notice, a strip directly under the admin topbar. Takes the carved
+   header band + wood underline from .topbar so it reads as part of the shell
+   chrome, plus the left accent rule the ui ErrorBanner uses for attention. */
+.banner {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  padding: 8px 14px;
+  flex-shrink: 0;
+  background: var(--panel-card-head);
+  border-left: 3px solid var(--warn);
+  border-bottom: 2px solid var(--mc-wood-dark);
+}
+
+.icon {
+  display: inline-flex;
+  flex-shrink: 0;
+  image-rendering: pixelated;
+}
+
+.text {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+  flex: 1;
+}
+.title {
+  font-family: var(--font-pixel);
+  font-size: 8px;
+  letter-spacing: 0.4px;
+  color: var(--txt-secondary);
+  text-shadow: 1px 1px 0 rgba(0,0,0,0.5);
+}
+.versions {
+  font-family: var(--font-pixel);
+  font-size: 6px;
+  letter-spacing: 0.4px;
+  color: var(--txt-faint);
+  text-shadow: 1px 1px 0 rgba(0,0,0,0.5);
+}
+.latest { color: var(--warn); }
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  flex-shrink: 0;
+}
+
+/* Narrow shells: let the buttons drop under the text instead of squeezing
+   the pixel font, which does not ellipsis cleanly. */
+@media (max-width: 640px) {
+  .banner { flex-wrap: wrap; }
+  .actions { width: 100%; }
+}
