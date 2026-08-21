@@ -1,6 +1,7 @@
 package mc.smpessentials.antixray;
 
 import io.netty.buffer.Unpooled;
+import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import mc.smpessentials.config.SmpConfig;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -10,101 +11,33 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.chunk.LevelChunkSection;
 
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Server-side ore obfuscation engine.
  *
- * Replaces hidden stone, deepslate, netherrack, and ore blocks in outgoing chunk packets
- * with the plain base material for their depth (stone, deepslate, or netherrack) so x-ray
- * clients see uniform rock and no ore locations. Only blocks in {@link #OBFUSCATABLE} are
- * targeted; everything else (dirt, gravel, granite, etc.) is left untouched. A block is
- * considered hidden when all 6 neighbor faces pointing toward it are sturdy (full square
- * faces). Real block states are restored via block-break reveal, proximity reveal, and
- * normal chunk re-sends, so an exposed ore reads as a natural stone-to-ore transition.
+ * Replaces hidden stone, deepslate, netherrack and ore blocks in outgoing chunk packets with the
+ * plain base material for their depth, so x-ray clients see uniform rock and no ore locations.
+ * {@link ObfuscatedBlocks} owns which blocks are targeted and what they are shown as;
+ * {@link ChunkNeighborhood} owns the "is this block fully enclosed" test. Real block states come
+ * back via block-break reveal, proximity reveal and normal chunk re-sends, so an exposed ore
+ * reads as a natural stone-to-ore transition.
  */
 public final class AntiXrayEngine {
     private AntiXrayEngine() {}
 
     private static final int REVEAL_RADIUS = 2;
-    private static final int MAX_REVEALED_PER_PLAYER = 10_000;
 
-    // Per-player tracking for proximity reveal to avoid redundant packets.
-    private static final Map<UUID, BlockPos> lastPositions = new ConcurrentHashMap<>();
-    private static final Map<UUID, Set<Long>> revealedBlocks = new ConcurrentHashMap<>();
-
-    private static final BlockState[] OVERWORLD_ORES = {
-            Blocks.STONE.defaultBlockState(),
-            Blocks.DIAMOND_ORE.defaultBlockState(),
-            Blocks.IRON_ORE.defaultBlockState(),
-            Blocks.GOLD_ORE.defaultBlockState(),
-            Blocks.COAL_ORE.defaultBlockState(),
-            Blocks.EMERALD_ORE.defaultBlockState(),
-            Blocks.LAPIS_ORE.defaultBlockState(),
-            Blocks.COPPER_ORE.defaultBlockState(),
-            Blocks.REDSTONE_ORE.defaultBlockState(),
-    };
-
-    private static final BlockState[] DEEP_ORES = {
-            Blocks.DEEPSLATE.defaultBlockState(),
-            Blocks.DEEPSLATE_DIAMOND_ORE.defaultBlockState(),
-            Blocks.DEEPSLATE_IRON_ORE.defaultBlockState(),
-            Blocks.DEEPSLATE_GOLD_ORE.defaultBlockState(),
-            Blocks.DEEPSLATE_COAL_ORE.defaultBlockState(),
-            Blocks.DEEPSLATE_EMERALD_ORE.defaultBlockState(),
-            Blocks.DEEPSLATE_LAPIS_ORE.defaultBlockState(),
-            Blocks.DEEPSLATE_COPPER_ORE.defaultBlockState(),
-            Blocks.DEEPSLATE_REDSTONE_ORE.defaultBlockState(),
-    };
-
-    private static final BlockState[] NETHER_ORES = {
-            Blocks.NETHERRACK.defaultBlockState(),
-            Blocks.NETHER_GOLD_ORE.defaultBlockState(),
-            Blocks.NETHER_QUARTZ_ORE.defaultBlockState(),
-            Blocks.ANCIENT_DEBRIS.defaultBlockState(),
-    };
-
-    // Only these blocks get replaced when hidden. Everything else (dirt, gravel, granite, etc.)
-    // is left alone so the underground looks natural and only ores are masked.
-    private static final Set<Block> OBFUSCATABLE = Set.of(
-            Blocks.STONE,
-            Blocks.DEEPSLATE,
-            Blocks.NETHERRACK,
-            Blocks.DIAMOND_ORE,
-            Blocks.IRON_ORE,
-            Blocks.GOLD_ORE,
-            Blocks.COAL_ORE,
-            Blocks.EMERALD_ORE,
-            Blocks.LAPIS_ORE,
-            Blocks.COPPER_ORE,
-            Blocks.REDSTONE_ORE,
-            Blocks.DEEPSLATE_DIAMOND_ORE,
-            Blocks.DEEPSLATE_IRON_ORE,
-            Blocks.DEEPSLATE_GOLD_ORE,
-            Blocks.DEEPSLATE_COAL_ORE,
-            Blocks.DEEPSLATE_EMERALD_ORE,
-            Blocks.DEEPSLATE_LAPIS_ORE,
-            Blocks.DEEPSLATE_COPPER_ORE,
-            Blocks.DEEPSLATE_REDSTONE_ORE,
-            Blocks.NETHER_GOLD_ORE,
-            Blocks.NETHER_QUARTZ_ORE,
-            Blocks.ANCIENT_DEBRIS
-    );
+    private static final RevealedPositions REVEALED = new RevealedPositions();
 
     /**
      * Builds an obfuscated copy of the chunk's section buffer. Called from
      * {@link mc.smpessentials.mixin.ChunkPacketDataMixin} during chunk packet construction.
-     * Returns null if nothing was obfuscated.
+     * Returns null if nothing was obfuscated, leaving the vanilla buffer in place.
      */
     public static byte[] obfuscate(LevelChunk chunk) {
         if (!SmpConfig.ANTIXRAY_ENABLED) return null;
@@ -112,57 +45,78 @@ public final class AntiXrayEngine {
         Level level = chunk.getLevel();
         if (level.isClientSide()) return null;
 
-        boolean isNether = level.dimension() == Level.NETHER;
-        ChunkPos chunkPos = chunk.getPos();
         LevelChunkSection[] sections = chunk.getSections();
+        LevelChunkSection[] masked = maskHiddenBlocks(chunk, sections);
+        return masked == null ? null : serialize(sections, masked);
+    }
+
+    /**
+     * Scans every section for hidden target blocks. Returns an array parallel to {@code sections}
+     * holding a masked copy for each section that changed and null elsewhere, or null when the
+     * chunk needs no obfuscation at all. Sections are only copied once they are known to change,
+     * so a chunk full of exposed terrain costs no allocation.
+     */
+    private static LevelChunkSection[] maskHiddenBlocks(LevelChunk chunk, LevelChunkSection[] sections) {
+        boolean nether = chunk.getLevel().dimension() == Level.NETHER;
+        ChunkNeighborhood neighborhood = ChunkNeighborhood.around(chunk);
         int minSectionY = chunk.getMinSectionY();
-        int baseX = chunkPos.x() << 4;
-        int baseZ = chunkPos.z() << 4;
-        boolean modified = false;
-        FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
-        try {
-            for (int i = 0; i < sections.length; i++) {
-                LevelChunkSection section = sections[i];
-                if (section.hasOnlyAir()) {
-                    section.write(buf);
-                    continue;
-                }
+        int baseX = chunk.getPos().x() << 4;
+        int baseZ = chunk.getPos().z() << 4;
+        LevelChunkSection[] masked = null;
 
-                int baseY = (minSectionY + i) << 4;
-                LevelChunkSection copy = section.copy();
-                boolean sectionModified = false;
+        for (int i = 0; i < sections.length; i++) {
+            LevelChunkSection section = sections[i];
+            // The palette test skips whole sections holding none of our target blocks, which is
+            // most of the sky and surface, without visiting any of their 4096 blocks.
+            if (section.hasOnlyAir() || !section.maybeHas(ObfuscatedBlocks.PREDICATE)) continue;
 
-                for (int x = 0; x < 16; x++) {
-                    for (int y = 0; y < 16; y++) {
-                        for (int z = 0; z < 16; z++) {
-                            BlockState state = section.getBlockState(x, y, z);
-                            if (!OBFUSCATABLE.contains(state.getBlock())) continue;
+            int baseY = (minSectionY + i) << 4;
+            LevelChunkSection copy = null;
 
-                            int wx = baseX + x;
-                            int wy = baseY + y;
-                            int wz = baseZ + z;
-                            if (isHidden(level, wx, wy, wz)) {
-                                copy.setBlockState(x, y, z,
-                                        replacement(wx, wy, wz, isNether), false);
-                                sectionModified = true;
-                            }
+            for (int x = 0; x < 16; x++) {
+                for (int y = 0; y < 16; y++) {
+                    for (int z = 0; z < 16; z++) {
+                        if (!ObfuscatedBlocks.matches(section.getBlockState(x, y, z))) continue;
+
+                        int worldY = baseY + y;
+                        if (!neighborhood.isEnclosed(baseX + x, worldY, baseZ + z)) continue;
+
+                        if (copy == null) {
+                            copy = section.copy();
+                            if (masked == null) masked = new LevelChunkSection[sections.length];
+                            masked[i] = copy;
                         }
+                        copy.setBlockState(x, y, z, ObfuscatedBlocks.maskFor(worldY, nether), false);
                     }
                 }
-                (sectionModified ? copy : section).write(buf);
-                modified |= sectionModified;
             }
+        }
+        return masked;
+    }
 
-            if (!modified) {
-                return null;
+    /** Writes the section buffer the client will read, taking the masked copy where one exists. */
+    private static byte[] serialize(LevelChunkSection[] sections, LevelChunkSection[] masked) {
+        int capacity = 0;
+        for (int i = 0; i < sections.length; i++) {
+            capacity += sectionToSend(sections, masked, i).getSerializedSize();
+        }
+
+        FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer(capacity));
+        try {
+            for (int i = 0; i < sections.length; i++) {
+                sectionToSend(sections, masked, i).write(buf);
             }
-
             byte[] result = new byte[buf.readableBytes()];
             buf.readBytes(result);
             return result;
         } finally {
             buf.release();
         }
+    }
+
+    private static LevelChunkSection sectionToSend(LevelChunkSection[] sections,
+                                                   LevelChunkSection[] masked, int index) {
+        return masked[index] != null ? masked[index] : sections[index];
     }
 
     /**
@@ -191,81 +145,56 @@ public final class AntiXrayEngine {
 
     /**
      * Proximity reveal. Called once per server tick per player from both platform tick loops.
-     * When a player moves to a new block position, sends real block states for any hidden
-     * obfuscatable blocks within {@link #REVEAL_RADIUS}.
+     * Sends real block states for any hidden target block within {@link #REVEAL_RADIUS}. There is
+     * no movement gate, so a stationary miner still gets the reveal before breaking, e.g. when
+     * digging straight down; {@link RevealedPositions} is what keeps it from re-sending.
      */
     public static void tickPlayer(ServerPlayer player) {
         if (!SmpConfig.ANTIXRAY_ENABLED) return;
 
-        BlockPos currentPos = player.blockPosition();
-        UUID uuid = player.getUUID();
-        // No movement gate: proximity reveal runs every tick (deduped by the revealed set) so
-        // stationary miners still get pre-reveal before breaking, e.g. when digging straight down.
-        lastPositions.put(uuid, currentPos);
-
-        Set<Long> revealed = revealedBlocks.computeIfAbsent(uuid, k -> new HashSet<>());
-        if (revealed.size() > MAX_REVEALED_PER_PLAYER) {
-            revealed.clear();
-        }
-
         ServerLevel level = (ServerLevel) player.level();
-        int cx = currentPos.getX();
-        int cy = currentPos.getY();
-        int cz = currentPos.getZ();
+        BlockPos center = player.blockPosition();
+        LongOpenHashSet revealed = REVEALED.forPlayer(player.getUUID());
 
-        for (int dx = -REVEAL_RADIUS; dx <= REVEAL_RADIUS; dx++) {
-            for (int dy = -REVEAL_RADIUS; dy <= REVEAL_RADIUS; dy++) {
-                for (int dz = -REVEAL_RADIUS; dz <= REVEAL_RADIUS; dz++) {
-                    int wx = cx + dx;
-                    int wy = cy + dy;
-                    int wz = cz + dz;
-                    long packed = BlockPos.asLong(wx, wy, wz);
+        // X and Z outermost so every Y in a column shares one chunk, keeping the neighbourhood
+        // built at most a handful of times for the whole box.
+        ChunkNeighborhood neighborhood = null;
+        long neighborhoodKey = Long.MIN_VALUE;
 
-                    if (revealed.contains(packed)) continue;
+        for (int x = center.getX() - REVEAL_RADIUS; x <= center.getX() + REVEAL_RADIUS; x++) {
+            for (int z = center.getZ() - REVEAL_RADIUS; z <= center.getZ() + REVEAL_RADIUS; z++) {
+                int chunkX = x >> 4;
+                int chunkZ = z >> 4;
+                long chunkKey = ChunkPos.pack(chunkX, chunkZ);
+                if (chunkKey != neighborhoodKey) {
+                    neighborhoodKey = chunkKey;
+                    LevelChunk chunk = level.getChunkSource().getChunkNow(chunkX, chunkZ);
+                    neighborhood = chunk == null ? null : ChunkNeighborhood.around(chunk);
+                }
+                if (neighborhood == null) continue;
 
-                    BlockPos pos = new BlockPos(wx, wy, wz);
-                    if (!level.isLoaded(pos)) continue;
-
-                    BlockState state = level.getBlockState(pos);
-                    if (!OBFUSCATABLE.contains(state.getBlock())) continue;
-
-                    if (isHidden(level, wx, wy, wz)) {
-                        player.connection.send(new ClientboundBlockUpdatePacket(pos, state));
-                        revealed.add(packed);
-                    }
+                for (int y = center.getY() - REVEAL_RADIUS; y <= center.getY() + REVEAL_RADIUS; y++) {
+                    reveal(player, neighborhood, revealed, x, y, z);
                 }
             }
         }
     }
 
+    /** Sends one position's real state if it is a target block that is currently hidden. */
+    private static void reveal(ServerPlayer player, ChunkNeighborhood neighborhood,
+                               LongOpenHashSet revealed, int x, int y, int z) {
+        long packed = BlockPos.asLong(x, y, z);
+        if (revealed.contains(packed)) return;
+
+        BlockState state = neighborhood.stateAt(x, y, z);
+        if (state == null || !ObfuscatedBlocks.matches(state)) return;
+        if (!neighborhood.isEnclosed(x, y, z)) return;
+
+        player.connection.send(new ClientboundBlockUpdatePacket(new BlockPos(x, y, z), state));
+        revealed.add(packed);
+    }
+
     public static void onPlayerDisconnect(UUID uuid) {
-        lastPositions.remove(uuid);
-        revealedBlocks.remove(uuid);
-    }
-
-    private static boolean isHidden(Level level, int worldX, int worldY, int worldZ) {
-        for (Direction dir : Direction.values()) {
-            BlockPos neighbor = new BlockPos(worldX + dir.getStepX(),
-                    worldY + dir.getStepY(), worldZ + dir.getStepZ());
-            if (!level.isLoaded(neighbor)) return false;
-            // Check the neighbor's face pointing TOWARDS our block. Unlike canOcclude() which
-            // is just a property flag, isFaceSturdy checks the actual block shape, fences,
-            // carpets, slabs, stairs etc. correctly count as not covering.
-            if (!level.getBlockState(neighbor).isFaceSturdy(level, neighbor, dir.getOpposite())) return false;
-        }
-        return true;
-    }
-
-    private static BlockState replacement(int x, int y, int z, boolean nether) {
-        // Stone-mode: hide every obfuscatable block as the plain base material for its depth.
-        // Break/proximity reveal then flickers stone -> the real block, which reads as natural
-        // (unlike fake-ore -> stone, which looks like a glitch). Also leaks no ore info to xrayers.
-        // The *_ORES palettes are kept for a possible fake-ore mode revisit.
-        if (nether) {
-            return Blocks.NETHERRACK.defaultBlockState();
-        } else if (y < 0) {
-            return Blocks.DEEPSLATE.defaultBlockState();
-        }
-        return Blocks.STONE.defaultBlockState();
+        REVEALED.forget(uuid);
     }
 }
