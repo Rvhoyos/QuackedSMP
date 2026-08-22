@@ -35,6 +35,8 @@ Panel is optional. Game features work without it. Panel stays off until you set 
 - Chat filter and auto-mutes
 - VIP tiers and kits (`/vip set`)
 - Anti-xray (on by default)
+- Random teleport (`/rtp`) with per-dimension profiles and arrival rewards
+- In-game guide book (`/guide`) and join sidebar
 - Wilderness regen, player shops, hardcore sessions, world backups, world timelapse
 - Optional: Discord, BlueMap, Votifier, Spark, Simple Voice Chat
 
@@ -209,7 +211,8 @@ Chunk protection: untrusted players cannot build, break, or interact inside your
 | `/unclaim` | Unclaim current chunk | Everyone |
 | `/claim info` | Owned count, limit, remaining, current chunk | Everyone |
 | `/claim map` | Nearby claim map in chat | Everyone |
-| `/claim name <name>` | Name claim (BlueMap) | VIP / OP |
+| `/claim name <name>` | Name region, optional `[tag]` prefix and `&` colors | VIP / OP |
+| `/claim tags` | List region tag icons | Everyone |
 | `/claim trust <player>` | Trust player in all your claims | Everyone |
 | `/claim untrust <player>` | Revoke trust | Everyone |
 | `/claim trustlist` | List trusted players | Everyone |
@@ -225,6 +228,8 @@ Warmup-based (default 5 seconds). Movement cancels the teleport.
 - `/spawn` - world spawn
 - `/tpr <player>` - request teleport to a player
 - `/tpa accept` / `/tpa yes` / `/tpa deny` / `/tpa no` - respond to a request
+- `/rtp` - random teleport, per-dimension profiles with radius, biome filter, and arrival rewards
+- `/visit <name>` - travel to a named region you own or are trusted in
 
 ### Chat Management
 
@@ -234,6 +239,17 @@ Warmup-based (default 5 seconds). Movement cancels the teleport.
 - Periodic tip broadcasts (`message_interval`, default 300s)
 - `/mute <player> <minutes>` and `/unmute <player>` (OP)
 - Manage lists and mutes from the **Chat Filter** admin tab
+
+### Welcome Book
+
+`/guide` hands out an in-game book. One copy lives in config (`welcomeBook.content`) and is edited in the panel Welcome Book tab. Kits and `/rtp` profiles can hand it out on first use.
+
+New players also get a scoreboard sidebar on join (`welcomeSidebar*`).
+
+### World Hints
+
+- Slime chunks show ambient slime particles below Y40 in the overworld
+- Holding an eye of ender marks the nearest stronghold on the Locator Bar with a distance readout
 
 ### Custom Dimensions (`/dim`)
 
@@ -245,7 +261,7 @@ Runtime dimensions without datapacks.
 | Type | Terrain |
 | :--- | :--- |
 | `overworld` | Standard overworld noise |
-| `ether` | Floating islands; falling out the bottom drops you (and anything player-made) into the overworld at the same coordinates; shared central spawn island for portals |
+| `ether` | Floating islands. Falling out the bottom drops you (and anything player-made) into the overworld at the same coordinates. Gliding high enough in the overworld climbs into the linked ether when `etherSkyEntryEnabled` is on. Shared central spawn island for portals |
 | `nether` | Vanilla nether |
 | `end` | Vanilla end |
 
@@ -272,7 +288,21 @@ Set a webhook URL in Config to mirror join/leave and/or chat (toggles `discord` 
 
 ### BlueMap
 
-Optional [BlueMap](https://modrinth.com/plugin/bluemap) (compile API **2.7.3**). When present and `bluemap_enable` is true: claim outlines (normal / VIP / OP colors), home markers, world border, optional spawn-protection outline.
+Optional [BlueMap](https://modrinth.com/plugin/bluemap) (compile API **2.7.3**). Enable with `bluemap_enable`.
+
+Layers: claim outlines (normal / VIP / OP colors), named region icons, home markers, chest shops, video pins, world border, spawn protection.
+
+Named regions take an optional tag prefix that picks their map icon:
+
+```
+/claim name "[shop] Emporium"
+```
+
+The tag is not part of the name, so `/visit Emporium` still works. `&` color codes work the same way. Run `/claim tags` for the full list of 30.
+
+Shops are grouped per chunk. The popup lists item, price, owner, and stock. Markers refresh when the world changes instead of on a fixed timer.
+
+Icons are shared with the admin panel art and hide past `bluemap_icon_max_distance`.
 
 ### Hardcore Mode
 
@@ -369,6 +399,9 @@ Worlds with chunks generated far from everything else are framed on the largest 
 | `/smp help` | Short command tips | Everyone |
 | `/smp reload` | Reload config from disk | OP |
 | `/smp bluemap` | Force-refresh BlueMap markers | OP |
+| `/youtube add <url> <label>` | Pin a video marker on the map | OP |
+| `/youtube remove` | Remove nearest video marker | OP |
+| `/youtube list` | List video markers | OP |
 | `/smp config` | In-game config GUI | OP |
 | `/smp config reset` | Factory reset config | OP |
 | `/smp admin setpassword <password>` | Set panel password and enable dashboard (min 8 chars) | OP |
@@ -442,6 +475,9 @@ File: `config/quackedsmp.json`. Most values editable from the admin Config tab. 
 | `bluemap_vip_claim_color` | `8A2BE2` | VIP claim color |
 | `bluemap_show_worldborder` | `true` | World border outline |
 | `bluemap_worldborder_color` | `FF3C3C` | Border color |
+| `bluemap_show_shops` | `true` | Chest shops on map |
+| `bluemap_show_youtube` | `true` | Video pins on map |
+| `bluemap_icon_max_distance` | `2000` | Hide icons past this camera distance (0 = never) |
 | `bluemap_show_spawn_protection` | `true` | Spawn protection outline |
 | `bluemap_spawn_protection_color` | `80409040` | Spawn outline color |
 | `antixray_enabled` | `true` | Ore obfuscation |
