@@ -199,6 +199,8 @@ public final class DashboardManager {
                 (m, h, b) -> AdminHandler.handleDimTp(m, h, b, mcServer));
         s.addRoute("/api/admin/dims/setportal",
                 (m, h, b) -> AdminHandler.handleDimSetPortal(m, h, b, mcServer));
+        s.addRoute("/api/admin/dims/sky",
+                (m, h, b) -> AdminHandler.handleDimSky(m, h, b, mcServer));
         s.addRoute("/api/admin/blocks",
                 (m, h, b) -> AdminHandler.handleBlocksGet(m, h, b));
         s.addRoute("/api/admin/restore-info",

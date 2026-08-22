@@ -31,7 +31,7 @@ import java.util.concurrent.CompletableFuture;
 
 /**
  * Registers the /dim command tree for runtime dimension management.
- * Supports create (overworld/nether/end/ether), delete, list, setportal, and tp subcommands.
+ * Supports create (overworld/nether/end/ether), delete, list, setportal, setsky, and tp subcommands.
  * Biome list format: "namespace:path[:weight] ..." (weights are ratios, single biome pins the dim).
  * Flat layer format: "blockId:height ..." listed bottom to top.
  * Ether takes keyword island params in any order, all optional, parsed by GeneratorConfig:
@@ -42,6 +42,11 @@ import java.util.concurrent.CompletableFuture;
  * when first created. {@code /dim setportal} overrides this. One frame block per dim; one dim per
  * frame block. Build a nether-portal-shaped frame (2-21 wide, 3-21 tall) in a vanilla dim and
  * right-click the frame block with a water bucket to open the portal. Portals are bidirectional.
+ *
+ * {@code /dim setsky <id>} picks which ether a player reaches by gliding up out of the overworld,
+ * and {@code /dim setsky clear} returns to the default of whichever ether was created first. Only
+ * one ether can hold that link, and {@code /dim list} marks it. The travel itself, in both
+ * directions, is EtherVerticalTravel.
  */
 public final class DimCommands {
 
@@ -184,13 +189,48 @@ public final class DimCommands {
                     )
                 )
 
+                // /dim setsky <dim_id>  and  /dim setsky clear
+                .then(Commands.literal("setsky")
+                    .requires(CommandRegistrar::isOp)
+                    .then(Commands.literal("clear")
+                        .executes(ctx -> {
+                            DimSavedData.get(ctx.getSource().getServer()).setSkyEther(Optional.empty());
+                            ctx.getSource().sendSystemMessage(Component.literal(
+                                    "Sky ether reset to the first one created: " + skyEtherLabel(ctx)));
+                            return 1;
+                        })
+                    )
+                    .then(Commands.argument("id", DimensionArgument.dimension())
+                        .suggests(DimCommands::suggestEtherDims)
+                        .executes(ctx -> {
+                            ServerLevel dim = DimensionArgument.getDimension(ctx, "id");
+                            String dimId = dim.dimension().identifier().toString();
+
+                            if (!DimManager.isEtherDim(dimId)) {
+                                ctx.getSource().sendFailure(Component.literal(
+                                        dimId + " is not an ether dimension."));
+                                return 0;
+                            }
+
+                            DimSavedData.get(ctx.getSource().getServer())
+                                    .setSkyEther(Optional.of(dimId));
+                            ctx.getSource().sendSystemMessage(Component.literal(
+                                    "Flying up out of the overworld now leads to " + dimId));
+                            return 1;
+                        })
+                    )
+                )
+
                 // /dim list
                 .then(Commands.literal("list")
                     .executes(ctx -> {
                         List<ResourceKey<Level>> all = DimManager.listAll(ctx.getSource().getServer());
+                        String sky = DimManager.skyEther(ctx.getSource().getServer())
+                                .map(level -> level.dimension().identifier().toString()).orElse(null);
                         StringBuilder sb = new StringBuilder("Dimensions (" + all.size() + "):");
                         for (ResourceKey<Level> key : all) {
                             sb.append("\n  ").append(key.identifier());
+                            if (key.identifier().toString().equals(sky)) sb.append("  [sky]");
                         }
                         ctx.getSource().sendSystemMessage(Component.literal(sb.toString()));
                         return all.size();
@@ -363,6 +403,25 @@ public final class DimCommands {
                 .filter(id -> id.startsWith(builder.getRemaining()))
                 .forEach(builder::suggest);
         return builder.buildFuture();
+    }
+
+    // Suggests only loaded ether dims. Used for /dim setsky, the one place a non-ether dim is
+    // meaningless rather than merely unusual.
+    private static CompletableFuture<Suggestions> suggestEtherDims(
+            CommandContext<CommandSourceStack> ctx, SuggestionsBuilder builder) {
+        DimManager.listAll(ctx.getSource().getServer()).stream()
+                .map(key -> key.identifier().toString())
+                .filter(DimManager::isEtherDim)
+                .filter(id -> id.startsWith(builder.getRemaining()))
+                .forEach(builder::suggest);
+        return builder.buildFuture();
+    }
+
+    // The dim a climb currently leads to, for confirmation messages.
+    private static String skyEtherLabel(CommandContext<CommandSourceStack> ctx) {
+        return DimManager.skyEther(ctx.getSource().getServer())
+                .map(level -> level.dimension().identifier().toString())
+                .orElse("none, no ether dimension exists");
     }
 
     // Tab-completes the current token against the block registry for a greedy flat-layer argument.

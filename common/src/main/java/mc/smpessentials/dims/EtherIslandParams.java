@@ -12,6 +12,11 @@ import net.minecraft.util.Mth;
  * Radii and thicknesses are in blocks. Centre Y values are block heights inside the
  * FLOATING_ISLANDS noise range (0 to 256), which is the range ether dims generate in regardless of
  * the wider build height their dimension type advertises.
+ *
+ * Every MIN and MAX below is a saturation or break point of the code that reads it, not a taste
+ * call, and each one carries the reason it sits where it does. The panel gets these same values
+ * from /api/admin/dims/etherparams, so widening a bound here widens the control there. SPACING_MAX
+ * is the one exception and says so.
  */
 public record EtherIslandParams(float threshold,
                                 float minRadius, float maxRadius,
@@ -19,20 +24,46 @@ public record EtherIslandParams(float threshold,
                                 float minThickness, float maxThickness,
                                 int minCenterY, int maxCenterY) {
 
-    public static final float THRESHOLD_MIN = -1.0f;
-    public static final float THRESHOLD_MAX = 0.0f;
-    public static final float RADIUS_MIN    = 5.0f;
-    public static final float RADIUS_MAX    = 500.0f;
-    public static final int   SPACING_MIN   = 1;
-    public static final int   SPACING_MAX   = 32;
-    public static final float THICKNESS_MIN = 4.0f;
-    public static final float THICKNESS_MAX = 256.0f;
-    public static final int   CENTER_Y_MIN  = 0;
-    public static final int   CENTER_Y_MAX  = 256;
-
     // How far the density function scans for islands, in island grid cells. One cell is
     // 2 * spacing blocks wide, so this bounds the widest island that can be found.
     public static final int MAX_SCAN_CELLS = 16;
+
+    // Below 1 the grid collapses: spacing divides block coordinates in EtherIslandDensityFunction.
+    public static final int   SPACING_MIN   = 1;
+    // No break point behind this one. Larger spacing is cheaper, not dearer, since the scan window
+    // shrinks as cells grow and is capped at MAX_SCAN_CELLS regardless.
+    public static final int   SPACING_MAX   = 32;
+
+    // Lowest value the 2D simplex can return, so nothing passes the cell test and no island exists.
+    public static final float THRESHOLD_MIN = -1.0f;
+    // Saturation point: at 1.0 every cell in the scan window is an island, so nothing above it can
+    // change the terrain. Cost rises smoothly on the way there, with no cliff, because compute()
+    // walks every island the column scan found. Measured at default radius and spacing, one chunk
+    // of columns over Y 0 to 255, against the default of -0.85:
+    //   -0.85 -> 6 islands/column, 1.0x     -0.6 -> 15, 2.1x      -0.4 -> 53, 7.8x
+    //   -0.2  -> 77, 11.6x                   0.0 -> 109, 16.2x     1.0 -> 225, 31.6x
+    // So this is a slider that can make chunk generation 30 times dearer. That is the operator's
+    // call to make, not a reason to hide the top of the range.
+    public static final float THRESHOLD_MAX = 1.0f;
+
+    // Radius only matters down to the spacing value: below it, the max(radius / spacing, 1) clamp
+    // in EtherIslandDensityFunction saturates and every smaller radius generates the same island.
+    // One block is the smallest value that is not already saturated at every spacing.
+    public static final float RADIUS_MIN    = 1.0f;
+    // The widest island any legal spacing can reach, since the scan window is MAX_SCAN_CELLS cells
+    // of 2 * spacing blocks each. Anything above this is unreachable at every spacing, and
+    // GeneratorConfig warns per-spacing when a radius exceeds what the chosen spacing can reach.
+    public static final float RADIUS_MAX    = 2f * SPACING_MAX * MAX_SCAN_CELLS;
+
+    // Thickness feeds PEAK / halfThickness, which divides by zero at 0. One block is the thinnest
+    // island that can exist.
+    public static final float THICKNESS_MIN = 1.0f;
+    // An island cannot be taller than the band it generates in.
+    public static final float THICKNESS_MAX = 256.0f;
+
+    // The FLOATING_ISLANDS noise range ether dims generate in.
+    public static final int   CENTER_Y_MIN  = 0;
+    public static final int   CENTER_Y_MAX  = 256;
 
     public static final EtherIslandParams DEFAULTS =
             new EtherIslandParams(-0.85f, 40f, 90f, 8, 12f, 40f, CENTER_Y_MIN, CENTER_Y_MAX);

@@ -35,7 +35,7 @@
     "WitherSkullBlockMixin",
     "EndCrystalItemMixin",
     "ChunkGeneratorStructureMixin",
-    "EntityBelowWorldMixin"
+    "EntityVerticalBoundsMixin"
   ],
   "injectors": {
     "defaultRequire": 1

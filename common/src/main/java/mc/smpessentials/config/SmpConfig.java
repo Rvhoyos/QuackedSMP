@@ -116,6 +116,10 @@ public final class SmpConfig {
     public static int     END_FINDER_RECHECK_COOLDOWN_SECONDS;
     public static boolean END_FINDER_ACTION_BAR;
 
+    // Sky entry: gliding up out of the overworld into the linked ether. 0 = auto height.
+    public static boolean ETHER_SKY_ENTRY_ENABLED;
+    public static int     ETHER_SKY_ENTRY_Y;
+
     // ---- Anti-XRay ----
     public static boolean ANTIXRAY_ENABLED;
 
@@ -320,6 +324,9 @@ public final class SmpConfig {
         END_FINDER_RECHECK_DISTANCE = d.endFinderRecheckDistance;
         END_FINDER_RECHECK_COOLDOWN_SECONDS = d.endFinderRecheckCooldownSeconds;
         END_FINDER_ACTION_BAR = d.endFinderActionBar;
+
+        ETHER_SKY_ENTRY_ENABLED = d.etherSkyEntryEnabled;
+        ETHER_SKY_ENTRY_Y = d.etherSkyEntryY;
 
         TEAM_AUTO_ASSIGN = new java.util.HashMap<>();
         for (var entry : d.teamAutoAssign.entrySet()) {

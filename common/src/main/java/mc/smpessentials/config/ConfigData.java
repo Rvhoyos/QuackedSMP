@@ -183,6 +183,14 @@ public final class ConfigData {
     public int     endFinderRecheckCooldownSeconds = 30;
     public boolean endFinderActionBar              = true;
 
+    // Sky entry: glide up past a threshold height in the overworld and cross into the linked ether
+    // dim, the reverse of the void fall that already drops you out of one. Opt-in, like every other
+    // feature that changes how the world behaves. 0 picks the height automatically, which is the
+    // fall-out height (one above the overworld build limit) plus 20, so falling out while still
+    // gliding cannot bounce you straight back up. See EtherVerticalTravel.
+    public boolean etherSkyEntryEnabled = false;
+    public int     etherSkyEntryY       = 0;
+
     public VotifierConfig votifier = new VotifierConfig();
     public DashboardConfig dashboard = new DashboardConfig();
     public DiscordConfig discord = new DiscordConfig();

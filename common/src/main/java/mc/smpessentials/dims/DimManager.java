@@ -69,6 +69,8 @@ import java.util.concurrent.Executor;
  * island shape params. The generatorConfig grammar those params ride in lives in GeneratorConfig.
  * Each custom dim gets a portal frame block (default glowstone); right-click with water bucket
  * to activate. The generatorConfig string is persisted in DimSavedData for restart recovery.
+ * skyEther picks the single ether that sits above the overworld, which is what EtherVerticalTravel
+ * carries a gliding player up into. It is the first ether created unless an admin overrides it.
  */
 public final class DimManager {
 
@@ -87,6 +89,39 @@ public final class DimManager {
     // True if that ether dim was created with structures enabled. See EtherStructureFilter.
     public static boolean etherStructuresEnabled(String dimId) {
         return Boolean.TRUE.equals(etherDims.get(dimId));
+    }
+
+    /**
+     * The one ether dim that sits above the overworld, the destination for EtherVerticalTravel's
+     * climb. The admin override wins when it is set and still points at a loaded ether; otherwise
+     * this is the first ether that was created.
+     *
+     * Order comes from DimSavedData, whose entry list is appended to on create and replayed in the
+     * same order by restoreAll. The etherDims map is a HashMap and says nothing about order.
+     */
+    public static Optional<ServerLevel> skyEther(MinecraftServer server) {
+        DimSavedData saved = DimSavedData.get(server);
+
+        Optional<ServerLevel> chosen = saved.getSkyEther().flatMap(id -> loadedEther(server, id));
+        if (chosen.isPresent()) return chosen;
+
+        return saved.getEntries().stream()
+                .map(DimSavedData.DimEntry::id)
+                .map(id -> loadedEther(server, id))
+                .flatMap(Optional::stream)
+                .findFirst();
+    }
+
+    // The level for this id, but only while it is loaded and still generating ether terrain.
+    private static Optional<ServerLevel> loadedEther(MinecraftServer server, String id) {
+        if (!isEtherDim(id)) return Optional.empty();
+        try {
+            ServerLevel level = server.getLevel(
+                    ResourceKey.create(Registries.DIMENSION, Identifier.parse(id)));
+            return Optional.ofNullable(level);
+        } catch (Exception e) {
+            return Optional.empty();
+        }
     }
 
     // Records where the entity entered the custom dim so the return trip lands in the right spot.

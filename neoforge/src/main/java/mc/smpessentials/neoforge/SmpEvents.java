@@ -136,7 +136,7 @@ public class SmpEvents {
             TeleportScheduler.onPlayerTick(player);
             mc.smpessentials.rtp.RtpService.get().tick(player);
             SkillEvents.onPlayerTick(player);
-            mc.smpessentials.dims.EtherFallthrough.tick(player);
+            mc.smpessentials.dims.EtherVerticalTravel.tick(player);
             mc.smpessentials.antixray.AntiXrayEngine.tickPlayer(player);
             mc.smpessentials.slimechunk.SlimeChunkHint.tick(player);
             mc.smpessentials.endfinder.EndFinder.tick(player);

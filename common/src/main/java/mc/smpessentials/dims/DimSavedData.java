@@ -13,8 +13,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-// SavedData store for custom dimensions created via /dim create.
+// SavedData store for custom dimensions created via /dim create, plus the one server-wide setting
+// that is about the set of dims rather than any single one: which ether the overworld leads up into.
 // Read by DimManager.restoreAll() on startup to reconstruct dimensions before players connect.
+// Entry order is creation order, and DimManager.skyEther depends on that, so entries are appended
+// and never reordered.
 public final class DimSavedData extends SavedData {
 
     // Persisted metadata for a single custom dimension.
@@ -36,18 +39,25 @@ public final class DimSavedData extends SavedData {
 
     private final List<DimEntry> entries;
 
+    // Admin override for which ether dim sits above the overworld. Empty means "the first ether
+    // created", which is what DimManager.skyEther falls back to. Optional in the codec, so worlds
+    // saved before sky entry existed load unchanged.
+    private Optional<String> skyEther;
+
     public static final Codec<DimSavedData> CODEC = RecordCodecBuilder.create(i -> i.group(
-            DimEntry.CODEC.listOf().fieldOf("dims").forGetter(s -> s.entries)
+            DimEntry.CODEC.listOf().fieldOf("dims").forGetter(s -> s.entries),
+            Codec.STRING.optionalFieldOf("skyEther").forGetter(s -> s.skyEther)
     ).apply(i, DimSavedData::new));
 
     public static final SavedDataType<DimSavedData> TYPE = new SavedDataType<>(
             Identifier.withDefaultNamespace("quackedsmp_dims"),
-            () -> new DimSavedData(new ArrayList<>()),
+            () -> new DimSavedData(new ArrayList<>(), Optional.empty()),
             DimSavedData.CODEC,
             DataFixTypes.LEVEL);
 
-    public DimSavedData(List<DimEntry> entries) {
+    public DimSavedData(List<DimEntry> entries, Optional<String> skyEther) {
         this.entries = new ArrayList<>(entries);
+        this.skyEther = skyEther;
     }
 
     // Primary entry point. Lazily creates the store if not yet loaded.
@@ -90,7 +100,13 @@ public final class DimSavedData extends SavedData {
             }
             return false;
         });
-        if (removed) setDirty();
+        if (removed) {
+            // Never leave the sky link pointing at a dim that no longer exists.
+            if (skyEther.isPresent() && entries.stream().noneMatch(e -> e.id().equals(skyEther.get()))) {
+                skyEther = Optional.empty();
+            }
+            setDirty();
+        }
         return removed;
     }
 
@@ -125,5 +141,20 @@ public final class DimSavedData extends SavedData {
                 return;
             }
         }
+    }
+
+    /**
+     * The dim an admin picked as the sky above the overworld, if any. Resolution, including the
+     * first-created fallback and the check that the dim is still loaded, is
+     * {@link DimManager#skyEther}.
+     */
+    public Optional<String> getSkyEther() {
+        return skyEther;
+    }
+
+    /** Passing an empty value returns to the first-created ether. */
+    public void setSkyEther(Optional<String> id) {
+        skyEther = id;
+        setDirty();
     }
 }

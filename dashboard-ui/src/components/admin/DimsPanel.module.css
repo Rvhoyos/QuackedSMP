@@ -5,6 +5,7 @@
 .createRow { display: grid; grid-template-columns: 1fr 1fr auto; gap: var(--gap-row) var(--gap-col); align-items: end; }
 
 .paramGrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: var(--gap-row) var(--gap-col); }
+.skyGrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: var(--gap-row) var(--gap-col); align-items: start; }
 .pairRow { display: flex; align-items: center; gap: 8px; }
 .pairRow > * { min-width: 0; }
 

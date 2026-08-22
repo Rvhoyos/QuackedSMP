@@ -114,7 +114,7 @@ public final class SmpUtilsModFabric implements ModInitializer {
                 mc.smpessentials.teleport.TeleportScheduler.onPlayerTick(player);
                 mc.smpessentials.rtp.RtpService.get().tick(player);
                 mc.smpessentials.skills.SkillEvents.onPlayerTick(player);
-                mc.smpessentials.dims.EtherFallthrough.tick(player);
+                mc.smpessentials.dims.EtherVerticalTravel.tick(player);
                 mc.smpessentials.antixray.AntiXrayEngine.tickPlayer(player);
                 mc.smpessentials.slimechunk.SlimeChunkHint.tick(player);
                 mc.smpessentials.endfinder.EndFinder.tick(player);

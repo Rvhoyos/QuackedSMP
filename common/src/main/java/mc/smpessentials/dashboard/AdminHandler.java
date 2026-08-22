@@ -15,6 +15,7 @@ import mc.smpessentials.chatfilter.ChatFilter;
 import mc.smpessentials.claims.storage.ClaimedSavedData;
 import mc.smpessentials.dims.DimManager;
 import mc.smpessentials.dims.EtherIslandParams;
+import mc.smpessentials.dims.EtherVerticalTravel;
 import mc.smpessentials.dims.GeneratorConfig;
 import mc.smpessentials.dims.DimSavedData;
 import mc.smpessentials.skills.SkillData;
@@ -588,6 +589,8 @@ public final class AdminHandler {
             try {
                 DimSavedData savedData = DimSavedData.get(server);
                 List<ResourceKey<Level>> allLevels = DimManager.listAll(server);
+                String skyId = DimManager.skyEther(server)
+                        .map(level -> level.dimension().identifier().toString()).orElse(null);
                 StringBuilder sb = new StringBuilder("[");
                 boolean first = true;
                 for (ResourceKey<Level> key : allLevels) {
@@ -606,6 +609,7 @@ public final class AdminHandler {
                     entry.flatMap(DimSavedData.DimEntry::portalBlock).ifPresentOrElse(
                         b -> sb.append('"').append(jsonEscape(b)).append('"'),
                         () -> sb.append("null"));
+                    sb.append(",\"sky\":").append(id.equals(skyId));
                     sb.append('}');
                 }
                 sb.append(']');
@@ -802,6 +806,86 @@ public final class AdminHandler {
             return future.get(5, TimeUnit.SECONDS);
         } catch (Exception e) {
             return err(400, "Invalid request: " + jsonEscape(e.getMessage()));
+        }
+    }
+
+    // GET/POST /api/admin/dims/sky. Reads and writes sky entry: the toggle, the crossing height, and
+    // which ether dim the overworld leads up into.
+    // GET returns the resolved values so the panel never has to work out what "auto" or
+    // "first created" mean. POST body: {enabled?, thresholdY?, dimId?}, where dimId "" clears the
+    // override back to first created.
+    public static String handleDimSky(String method, Map<String, String> headers, String body,
+                                      MinecraftServer server) {
+        if (!SmpConfig.ADMIN_ENABLED)           return err(403, "Admin panel disabled");
+        if (!AdminAuth.isAuthorized(headers))   return err(403, "Unauthorized");
+        if (server == null)                     return err(503, "Server not ready");
+
+        CompletableFuture<String> future = new CompletableFuture<>();
+        server.execute(() -> {
+            try {
+                DimSavedData saved = DimSavedData.get(server);
+                ServerLevel overworld = server.overworld();
+
+                if ("POST".equals(method)) {
+                    JsonObject req = JsonParser.parseString(body).getAsJsonObject();
+
+                    if (req.has("thresholdY")) {
+                        int y = req.get("thresholdY").getAsInt();
+                        int floor = EtherVerticalTravel.dropY(overworld);
+                        if (y != 0 && y <= floor) {
+                            future.complete(err(400, "Crossing height must be above " + floor
+                                    + ", the height a fall out of the ether lands at, or 0 for automatic"));
+                            return;
+                        }
+                        SmpConfig.ETHER_SKY_ENTRY_Y = y;
+                    }
+                    if (req.has("enabled")) {
+                        SmpConfig.ETHER_SKY_ENTRY_ENABLED = req.get("enabled").getAsBoolean();
+                    }
+                    if (req.has("dimId")) {
+                        String dimId = req.get("dimId").getAsString().strip();
+                        if (dimId.isEmpty()) {
+                            saved.setSkyEther(Optional.empty());
+                        } else if (!DimManager.isEtherDim(dimId)) {
+                            future.complete(err(400, jsonEscape(dimId + " is not an ether dimension")));
+                            return;
+                        } else {
+                            saved.setSkyEther(Optional.of(dimId));
+                        }
+                    }
+                    ConfigIO.save();
+                }
+
+                String resolved = DimManager.skyEther(server)
+                        .map(level -> level.dimension().identifier().toString()).orElse(null);
+                List<String> candidates = saved.getEntries().stream()
+                        .map(DimSavedData.DimEntry::id)
+                        .filter(DimManager::isEtherDim)
+                        .toList();
+
+                StringBuilder sb = new StringBuilder("{");
+                sb.append("\"enabled\":").append(SmpConfig.ETHER_SKY_ENTRY_ENABLED);
+                sb.append(",\"thresholdY\":").append(SmpConfig.ETHER_SKY_ENTRY_Y);
+                sb.append(",\"resolvedThresholdY\":").append(EtherVerticalTravel.entryY(overworld));
+                sb.append(",\"dropY\":").append(EtherVerticalTravel.dropY(overworld));
+                sb.append(",\"override\":");
+                saved.getSkyEther().ifPresentOrElse(
+                        id -> sb.append('"').append(jsonEscape(id)).append('"'),
+                        () -> sb.append("null"));
+                sb.append(",\"resolved\":");
+                if (resolved == null) sb.append("null");
+                else sb.append('"').append(jsonEscape(resolved)).append('"');
+                sb.append(",\"candidates\":").append(jsonStrArr(candidates));
+                sb.append('}');
+                future.complete(sb.toString());
+            } catch (Exception ex) {
+                future.complete(err(500, jsonEscape(String.valueOf(ex.getMessage()))));
+            }
+        });
+        try {
+            return future.get(5, TimeUnit.SECONDS);
+        } catch (Exception e) {
+            return err(500, "Timeout reading sky entry");
         }
     }
 

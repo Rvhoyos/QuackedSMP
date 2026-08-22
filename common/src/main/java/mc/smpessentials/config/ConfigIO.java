@@ -146,6 +146,9 @@ public final class ConfigIO {
         data.endFinderRecheckCooldownSeconds = SmpConfig.END_FINDER_RECHECK_COOLDOWN_SECONDS;
         data.endFinderActionBar = SmpConfig.END_FINDER_ACTION_BAR;
 
+        data.etherSkyEntryEnabled = SmpConfig.ETHER_SKY_ENTRY_ENABLED;
+        data.etherSkyEntryY = SmpConfig.ETHER_SKY_ENTRY_Y;
+
         data.votifier.enabled = SmpConfig.VOTIFIER_ENABLED;
         data.votifier.port = SmpConfig.VOTIFIER_PORT;
         data.votifier.token = SmpConfig.VOTIFIER_TOKEN;
