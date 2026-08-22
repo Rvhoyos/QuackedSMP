@@ -38,6 +38,11 @@ public final class ConfigData {
     public String bluemapClaimColor = "00FFFF";
     public String bluemapOpClaimColor = "FFD700";
     public String bluemapVipClaimColor = "8A2BE2";
+    // Camera distance past which map icons stop drawing, so a zoomed out view is not a wall of
+    // icons. Purely a looks setting: 0 disables the cutoff and icons always draw.
+    public double bluemapIconMaxDistance = 2000.0;
+    public boolean bluemapShowShops = true;
+    public boolean bluemapShowYoutube = true;
     public boolean bluemapShowSpawnProtection = true;
     public String bluemapSpawnProtectionColor = "80409040";
 

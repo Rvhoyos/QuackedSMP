@@ -270,6 +270,9 @@ public final class AdminHandler {
         sb.append(String.format("\"bluemap_op_claim_color\":\"%s\",", jsonEscape(SmpConfig.BLUEMAP_OP_CLAIM_COLOR)));
         sb.append(String.format("\"bluemap_vip_claim_color\":\"%s\",", jsonEscape(SmpConfig.BLUEMAP_VIP_CLAIM_COLOR)));
         sb.append(String.format("\"bluemap_worldborder_color\":\"%s\",", jsonEscape(SmpConfig.BLUEMAP_WORLDBORDER_COLOR)));
+        sb.append(String.format("\"bluemap_icon_max_distance\":%s,", SmpConfig.BLUEMAP_ICON_MAX_DISTANCE));
+        sb.append(String.format("\"bluemap_show_shops\":%b,", SmpConfig.BLUEMAP_SHOW_SHOPS));
+        sb.append(String.format("\"bluemap_show_youtube\":%b,", SmpConfig.BLUEMAP_SHOW_YOUTUBE));
         sb.append(String.format("\"bluemap_show_spawn_protection\":%b,", SmpConfig.BLUEMAP_SHOW_SPAWN_PROTECTION));
         sb.append(String.format("\"bluemap_spawn_protection_color\":\"%s\",", jsonEscape(SmpConfig.BLUEMAP_SPAWN_PROTECTION_COLOR)));
         // Tiers
@@ -422,6 +425,9 @@ public final class AdminHandler {
             if (patch.has("bluemap_op_claim_color"))    { SmpConfig.BLUEMAP_OP_CLAIM_COLOR    = patch.get("bluemap_op_claim_color").getAsString();     changed++; blueMapChanged = true; }
             if (patch.has("bluemap_vip_claim_color"))   { SmpConfig.BLUEMAP_VIP_CLAIM_COLOR   = patch.get("bluemap_vip_claim_color").getAsString();    changed++; blueMapChanged = true; }
             if (patch.has("bluemap_worldborder_color")) { SmpConfig.BLUEMAP_WORLDBORDER_COLOR = patch.get("bluemap_worldborder_color").getAsString();  changed++; blueMapChanged = true; }
+            if (patch.has("bluemap_icon_max_distance")) { SmpConfig.BLUEMAP_ICON_MAX_DISTANCE = patch.get("bluemap_icon_max_distance").getAsDouble(); changed++; blueMapChanged = true; }
+            if (patch.has("bluemap_show_shops"))        { SmpConfig.BLUEMAP_SHOW_SHOPS        = patch.get("bluemap_show_shops").getAsBoolean();        changed++; blueMapChanged = true; }
+            if (patch.has("bluemap_show_youtube"))      { SmpConfig.BLUEMAP_SHOW_YOUTUBE      = patch.get("bluemap_show_youtube").getAsBoolean();      changed++; blueMapChanged = true; }
             if (patch.has("bluemap_show_spawn_protection"))  { SmpConfig.BLUEMAP_SHOW_SPAWN_PROTECTION  = patch.get("bluemap_show_spawn_protection").getAsBoolean();  changed++; blueMapChanged = true; }
             if (patch.has("bluemap_spawn_protection_color")) { SmpConfig.BLUEMAP_SPAWN_PROTECTION_COLOR = patch.get("bluemap_spawn_protection_color").getAsString();  changed++; blueMapChanged = true; }
             // Lists
@@ -485,7 +491,7 @@ public final class AdminHandler {
                 if (blueMapChanged) {
                     var mm = BlueMapIntegration.getMarkerManager();
                     var sv = BlueMapIntegration.getServer();
-                    if (mm != null && sv != null) sv.execute(mm::updateAll);
+                    if (mm != null && sv != null) sv.execute(() -> mm.updateAll(sv));
                 }
             }
             return String.format("{\"ok\":true,\"changed\":%d}", changed);
@@ -2068,16 +2074,18 @@ public final class AdminHandler {
                     if (i > 0) sb.append(',');
                     var shop = shops.get(i);
                     ServerLevel sl = server.getLevel(shop.dimension());
-                    int stock = sl != null ? mc.smpessentials.shops.ShopService.getStockCount(sl, shop) : 0;
+                    var reading = mc.smpessentials.shops.ShopService.readStock(sl, shop);
                     sb.append(String.format(
                             "{\"x\":%d,\"y\":%d,\"z\":%d,\"dim\":\"%s\",\"owner\":\"%s\",\"ownerName\":\"%s\","
-                                    + "\"item\":\"%s\",\"price\":%d,\"currency\":\"%s\",\"stock\":%s,\"spawnShop\":%b,\"unit\":%d}",
+                                    + "\"item\":\"%s\",\"price\":%d,\"currency\":\"%s\",\"stock\":%s,\"stockLive\":%b,"
+                                    + "\"spawnShop\":%b,\"unit\":%d}",
                             shop.pos().getX(), shop.pos().getY(), shop.pos().getZ(),
                             jsonEscape(shop.dimension().identifier().toString()),
                             shop.owner(), jsonEscape(skills.getDisplayName(shop.owner())),
                             jsonEscape(shop.itemId()), shop.pricePerItem(),
                             jsonEscape(shop.currencyItemId()),
-                            shop.spawnShop() ? "\"unlimited\"" : String.valueOf(stock),
+                            reading.unlimited() ? "\"unlimited\"" : String.valueOf(reading.count()),
+                            reading.live(),
                             shop.spawnShop(),
                             shop.unit()));
                 }

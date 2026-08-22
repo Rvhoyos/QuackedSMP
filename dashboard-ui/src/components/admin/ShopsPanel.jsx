@@ -103,7 +103,11 @@ export default function ShopsPanel({ token, onExpired }) {
                   </div>
                   <span className={styles.price}>{s.price} {itemName(s.currency || 'minecraft:emerald')}{s.unit > 1 && ` / ${s.unit}`}</span>
                   <div className={styles.meta}>
-                    {s.spawnShop ? <Badge variant="ok">unlimited</Badge> : <span className={styles.stock}>{s.stock} in stock</span>}
+                    {s.spawnShop
+                      ? <Badge variant="ok">unlimited</Badge>
+                      : <span className={styles.stock}>
+                          {s.stock} in stock{s.stockLive === false && ' (last seen)'}
+                        </span>}
                     <span className={styles.owner}>{s.ownerName}</span>
                   </div>
                   <span className={styles.loc}>{dimName(s.dim)} [{s.x}, {s.y}, {s.z}]</span>

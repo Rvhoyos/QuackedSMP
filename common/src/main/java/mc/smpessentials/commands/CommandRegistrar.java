@@ -54,6 +54,7 @@ public final class CommandRegistrar {
                 mc.smpessentials.commands.VipCommand.register(dispatcher);
                 mc.smpessentials.dims.DimCommands.register(dispatcher);
                 mc.smpessentials.shops.ShopCommands.register(dispatcher);
+                mc.smpessentials.commands.YoutubeMarkerCommand.register(dispatcher);
                 mc.smpessentials.timelapse.TimelapseCommand.register(dispatcher);
                 dispatcher.register(net.minecraft.commands.Commands.literal("sos")
                                 .requires(src -> src.getEntity() instanceof net.minecraft.server.level.ServerPlayer)

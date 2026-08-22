@@ -275,7 +275,24 @@ public final class ShopService {
             }
             return 0;
         }
-        return countItemInContainer(container, shop.itemId());
+        int count = countItemInContainer(container, shop.itemId());
+        ShopStockCache.record(shop, count);
+        return count;
+    }
+
+    /**
+     * Stock for readers that are not standing at the shop (admin panel, map markers). Falls back
+     * to the last seen count when the chunk is unloaded, flagging it as not live rather than
+     * reporting the zero {@link #getStockCount} has to return in that case.
+     */
+    public static ShopStockCache.Reading readStock(ServerLevel level, ShopEntry shop) {
+        if (shop.spawnShop())
+            return new ShopStockCache.Reading(0, true, true);
+        if (level != null && level.isLoaded(shop.pos()))
+            return new ShopStockCache.Reading(getStockCount(level, shop), true, false);
+        return ShopStockCache.lastSeen(shop)
+                .map(c -> new ShopStockCache.Reading(c, false, false))
+                .orElse(new ShopStockCache.Reading(0, false, false));
     }
 
     public static int shopInfo(ServerPlayer player) {

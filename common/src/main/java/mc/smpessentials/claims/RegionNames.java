@@ -34,8 +34,16 @@ public final class RegionNames {
     private RegionNames() {
     }
 
+    // Canonical form of a name: decoration ([tag] prefix, & colour codes) removed, then folded
+    // to lower case. Everything that matches names by text goes through here, so a decorated name
+    // and its plain spelling are the same name and neither can be used to dodge uniqueness.
     public static String normalize(String name) {
-        return name == null ? "" : name.trim().toLowerCase(Locale.ROOT);
+        return name == null ? "" : RegionDecoration.strip(name).trim().toLowerCase(Locale.ROOT);
+    }
+
+    // The name as players should see it: tag removed, colour codes intact for chat rendering.
+    public static String display(String name) {
+        return RegionDecoration.parse(name).body();
     }
 
     public static Optional<ClaimData> findByName(ClaimedSavedData store, String name) {
@@ -128,7 +136,7 @@ public final class RegionNames {
             if (c.name().isEmpty() || c.name().get().isBlank())
                 continue;
             if (isOp || c.owner().equals(me) || wl.isTrusted(c.owner(), me))
-                out.add(c.name().get());
+                out.add(RegionDecoration.strip(c.name().get()));
         }
         out.sort(String.CASE_INSENSITIVE_ORDER);
         return out;
@@ -151,7 +159,7 @@ public final class RegionNames {
         if (target == null)
             return VisitResult.fail(VisitStatus.DIM_UNAVAILABLE);
 
-        String display = claim.name().orElse(name.trim());
+        String display = display(claim.name().orElse(name.trim()));
         if (claim.warp().isPresent()) {
             WarpAnchor a = claim.warp().get();
             return new VisitResult(VisitStatus.OK, target, a.x(), a.y(), a.z(), a.yaw(), a.pitch(), display);

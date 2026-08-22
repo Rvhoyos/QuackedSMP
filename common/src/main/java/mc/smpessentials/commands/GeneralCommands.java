@@ -181,7 +181,7 @@ public class GeneralCommands {
             ctx.getSource().sendFailure(Component.literal("BlueMap is not loaded."));
             return 0;
         }
-        mgr.updateAll();
+        mgr.updateAll(ctx.getSource().getServer());
         ctx.getSource().sendSuccess(() -> Component.literal("BlueMap markers refreshed."), true);
         return 1;
     }

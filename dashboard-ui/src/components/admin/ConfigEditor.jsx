@@ -97,6 +97,7 @@ const TABS = [
       'votifier_enabled', 'votifier_port', 'votifier_token', 'vote_broadcast', 'vote_rewards', 'vote_vip_rewards',
       'bluemap_enabled', 'bluemap_show_homes', 'bluemap_show_claims', 'bluemap_show_worldborder',
       'bluemap_claim_color', 'bluemap_op_claim_color', 'bluemap_vip_claim_color', 'bluemap_worldborder_color',
+      'bluemap_show_shops', 'bluemap_show_youtube', 'bluemap_icon_max_distance',
       'bluemap_show_spawn_protection', 'bluemap_spawn_protection_color',
     ],
   },
@@ -632,6 +633,15 @@ function IntegrationsTab({ draft, patch }) {
         </Row>
         <Row label="Show Claims" hint="Draw claim region outlines on the map">
           <Toggle value={draft.bluemap_show_claims} onChange={v => patch('bluemap_show_claims', v)} />
+        </Row>
+        <Row label="Icon View Distance" hint="Hide map icons past this camera distance (0 = never hide)">
+          <NumInput value={draft.bluemap_icon_max_distance} onChange={v => patch('bluemap_icon_max_distance', v)} suffix="blocks" />
+        </Row>
+        <Row label="Show Shops" hint="Chest shops, grouped per chunk, with prices">
+          <Toggle value={draft.bluemap_show_shops} onChange={v => patch('bluemap_show_shops', v)} />
+        </Row>
+        <Row label="Show Video Markers" hint="Pins added with /youtube">
+          <Toggle value={draft.bluemap_show_youtube} onChange={v => patch('bluemap_show_youtube', v)} />
         </Row>
         <Row label="Show World Border" hint="Draw the world border on the map">
           <Toggle value={draft.bluemap_show_worldborder} onChange={v => patch('bluemap_show_worldborder', v)} />

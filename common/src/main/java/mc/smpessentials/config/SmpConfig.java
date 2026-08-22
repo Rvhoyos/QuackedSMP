@@ -78,6 +78,9 @@ public final class SmpConfig {
     public static String BLUEMAP_CLAIM_COLOR;
     public static String BLUEMAP_OP_CLAIM_COLOR;
     public static String BLUEMAP_VIP_CLAIM_COLOR;
+    public static double BLUEMAP_ICON_MAX_DISTANCE;
+    public static boolean BLUEMAP_SHOW_SHOPS;
+    public static boolean BLUEMAP_SHOW_YOUTUBE;
     public static boolean BLUEMAP_SHOW_SPAWN_PROTECTION;
     public static String BLUEMAP_SPAWN_PROTECTION_COLOR;
 
@@ -269,6 +272,9 @@ public final class SmpConfig {
         BLUEMAP_CLAIM_COLOR = d.bluemapClaimColor;
         BLUEMAP_OP_CLAIM_COLOR = d.bluemapOpClaimColor;
         BLUEMAP_VIP_CLAIM_COLOR = d.bluemapVipClaimColor;
+        BLUEMAP_ICON_MAX_DISTANCE = d.bluemapIconMaxDistance;
+        BLUEMAP_SHOW_SHOPS = d.bluemapShowShops;
+        BLUEMAP_SHOW_YOUTUBE = d.bluemapShowYoutube;
         BLUEMAP_SHOW_SPAWN_PROTECTION = d.bluemapShowSpawnProtection;
         BLUEMAP_SPAWN_PROTECTION_COLOR = d.bluemapSpawnProtectionColor;
         MUTE_LEVELS_MINUTES = d.muteLevelsMinutes;

@@ -93,6 +93,85 @@ export function IconChest({ size = 18 }) {
   )
 }
 
+// Player home / base. Replaces the old gradient house SVG the BlueMap integration
+// shipped with, so map and panel share one visual language.
+export function IconHouse({ size = 18 }) {
+  return (
+    <svg viewBox="0 0 16 16" width={size} height={size} shapeRendering="crispEdges">
+      {/* Roof */}
+      {px(7, 2, 2, 1, '#8B3A2E')}
+      {px(6, 3, 4, 1, '#A84534')}
+      {px(5, 4, 6, 1, '#A84534')}
+      {px(4, 5, 8, 1, '#A84534')}
+      {/* Roof highlight */}
+      {px(6, 4, 2, 1, '#C05446')}
+      {px(5, 5, 3, 1, '#C05446')}
+      {/* Eave, wider than the walls so the roof overhangs */}
+      {px(3, 6, 10, 1, '#8B3A2E')}
+      {/* Walls */}
+      {px(4, 7, 8, 7, '#C8A06A')}
+      {px(4, 7, 1, 7, '#A8834F')}
+      {px(11, 7, 1, 7, '#A8834F')}
+      {/* Windows */}
+      {px(5, 8, 2, 2, '#6FC5E8')}
+      {px(9, 8, 2, 2, '#6FC5E8')}
+      {/* Door */}
+      {px(7, 11, 2, 3, '#6B4423')}
+      {px(8, 12, 1, 1, '#CDA040')}
+      {/* Foundation */}
+      {px(3, 14, 10, 1, '#7A7A7A')}
+    </svg>
+  )
+}
+
+// Video content marker (BlueMap YouTube POIs). Rounded play badge, deliberately unlike
+// IconMegaphone which the "event" region tag already uses.
+export function IconPlayBadge({ size = 18 }) {
+  return (
+    <svg viewBox="0 0 16 16" width={size} height={size} shapeRendering="crispEdges">
+      {/* Badge body */}
+      {px(2, 4, 12, 8, '#C4302B')}
+      {px(3, 3, 10, 1, '#C4302B')}
+      {px(3, 12, 10, 1, '#C4302B')}
+      {/* Top highlight */}
+      {px(4, 4, 8, 1, '#E04B45')}
+      {/* Play triangle */}
+      {px(6, 5, 1, 6, '#FFFFFF')}
+      {px(7, 6, 1, 4, '#FFFFFF')}
+      {px(8, 7, 1, 2, '#FFFFFF')}
+      {px(9, 8, 1, 1, '#FFFFFF')}
+    </svg>
+  )
+}
+
+// Server-run market stall (unlimited stock), distinct from the player shop chest and from
+// IconEmerald which the "bank" region tag uses.
+export function IconMarketStall({ size = 18 }) {
+  return (
+    <svg viewBox="0 0 16 16" width={size} height={size} shapeRendering="crispEdges">
+      {/* Striped awning */}
+      {px(1, 2, 14, 3, '#E8E8E8')}
+      {px(2, 2, 2, 3, '#C4443C')}
+      {px(6, 2, 2, 3, '#C4443C')}
+      {px(10, 2, 2, 3, '#C4443C')}
+      {/* Awning scallop */}
+      {px(1, 5, 2, 1, '#E8E8E8')}
+      {px(5, 5, 2, 1, '#E8E8E8')}
+      {px(9, 5, 2, 1, '#E8E8E8')}
+      {px(13, 5, 2, 1, '#E8E8E8')}
+      {/* Posts */}
+      {px(1, 6, 1, 8, '#8A6A3A')}
+      {px(14, 6, 1, 8, '#8A6A3A')}
+      {/* Counter */}
+      {px(2, 9, 12, 2, '#B8863F')}
+      {px(2, 9, 12, 1, '#D0A05A')}
+      {/* Goods on the counter */}
+      {px(4, 7, 2, 2, '#4CC96A')}
+      {px(8, 7, 2, 2, '#E8C24A')}
+    </svg>
+  )
+}
+
 export function IconBookshelf({ size = 18 }) {
   return (
     <svg viewBox="0 0 16 16" width={size} height={size} shapeRendering="crispEdges">

@@ -24,7 +24,9 @@ public final class BlueMapIntegration {
     private static MinecraftServer server;
 
     private static int tickCounter = 0;
-    private static final int UPDATE_INTERVAL_TICKS = 12000; // 10 minutes (20 ticks * 60 seconds * 10 mins)
+    // Safety net only: anything that changes the world marks its layer dirty through MarkerRefresh,
+    // so this full sweep exists to catch whatever changes without telling us.
+    private static final int UPDATE_INTERVAL_TICKS = 12000; // 10 minutes
 
     public static void onServerStart(MinecraftServer s) {
         server = s;
@@ -32,7 +34,7 @@ public final class BlueMapIntegration {
             ensureCustomDimConfigs(s);
         }
         if (markerManager != null) {
-            markerManager.updateAll();
+            markerManager.updateAll(s);
         }
     }
 
@@ -65,10 +67,17 @@ public final class BlueMapIntegration {
         if (!isLoaded || markerManager == null)
             return;
 
+        var due = MarkerRefresh.pollDue();
+        if (!due.isEmpty()) {
+            markerManager.updateDue(s, due);
+            tickCounter = 0;
+            return;
+        }
+
         tickCounter++;
         if (tickCounter >= UPDATE_INTERVAL_TICKS) {
             tickCounter = 0;
-            markerManager.updateAll();
+            markerManager.updateAll(s);
         }
     }
 
@@ -87,7 +96,10 @@ public final class BlueMapIntegration {
             BlueMapAPI.onEnable(api -> {
                 SmpUtilsMod.LOGGER.info("BlueMap initialized, setting up markers.");
                 markerManager = new BlueMapMarkerManager(api);
-                markerManager.updateAll();
+                if (server != null) {
+                    ensureCustomDimConfigs(server);
+                    markerManager.updateAll(server);
+                }
             });
 
             BlueMapAPI.onDisable(api -> {
@@ -96,6 +108,7 @@ public final class BlueMapIntegration {
                     markerManager.cleanup();
                     markerManager = null;
                 }
+                MarkerRefresh.reset();
             });
         } catch (ClassNotFoundException e) {
             SmpUtilsMod.LOGGER.info("BlueMap API not found, skipping integration.");
@@ -134,8 +147,12 @@ public final class BlueMapIntegration {
 
             // Resolve config dir relative to the JVM working directory (server root).
             // server.getWorldPath() returns a path ending in "." which gives wrong parent/filename.
+            // Never create this directory. BlueMap writes its default overworld/nether/end configs
+            // only when it finds no maps directory, so creating it first silently suppresses every
+            // vanilla map and the server comes up with custom dims as the only thing on the web map.
+            // If it is not there yet, BlueMap has not initialised, and onEnable will call back here.
             Path mapsDir = Path.of("config/bluemap/maps");
-            Files.createDirectories(mapsDir);
+            if (!Files.isDirectory(mapsDir)) return false;
 
             Path configFile = mapsDir.resolve(mapId + ".conf");
             if (Files.exists(configFile)) return false;
