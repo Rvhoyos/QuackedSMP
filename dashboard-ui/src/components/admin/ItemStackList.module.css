@@ -1,0 +1,192 @@
+/* Styles for the reusable item and effect list editors. Kept out of any one feature's stylesheet
+   so kits or vote rewards can drop these components in without inheriting RTP's CSS. */
+
+.subHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 22px 0 12px;
+  padding-top: 14px;
+  border-top: 1px solid var(--mc-stone-dark);
+}
+
+.subTitle {
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--txt-secondary);
+}
+
+.hint {
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  color: var(--txt-muted);
+  line-height: 1.55;
+}
+
+/* ── Rows ────────────────────────────────────────────────────────────────── */
+
+.effectRow,
+.itemRow {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 8px;
+  padding: 10px 12px;
+  background: var(--surf-slot);
+  border: 1px solid var(--mc-stone-dark);
+}
+
+.itemName {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  flex: 1 1 180px;
+  min-width: 0;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--txt-primary);
+}
+
+.itemId {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--txt-muted);
+  overflow-wrap: anywhere;
+}
+
+.itemTag {
+  align-self: center;
+  padding: 2px 7px;
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--mc-wood-light);
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid var(--mc-wood-dark);
+}
+
+.inlineField {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex: 0 0 auto;
+}
+
+.inlineField > span {
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  color: var(--txt-muted);
+  white-space: nowrap;
+}
+
+.inlineField input { width: 68px; }
+
+
+/* ── Effect picker ───────────────────────────────────────────────────────── */
+
+.effectPick {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex: 1 1 190px;
+  min-width: 0;
+}
+
+.effectPick > select { flex: 1; min-width: 0; }
+
+.effectDot {
+  width: 10px;
+  height: 10px;
+  flex: 0 0 auto;
+  border: 1px solid #0a0a0a;
+}
+
+.rowNote {
+  flex: 1 0 100%;
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  color: var(--txt-muted);
+}
+
+/* ── Add-item dialog ─────────────────────────────────────────────────────── */
+
+.tabs {
+  display: flex;
+  gap: 2px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid var(--mc-stone-dark);
+}
+
+.tab {
+  padding: 7px 12px;
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  color: var(--txt-muted);
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+}
+
+.tab:hover { color: var(--txt-secondary); }
+
+.tabOn {
+  color: var(--mc-wood-light);
+  border-bottom-color: var(--mc-wood-light);
+}
+
+.pickList {
+  display: flex;
+  flex-direction: column;
+  max-height: 240px;
+  overflow-y: auto;
+  background: var(--surf-slot);
+  border: 1px solid var(--mc-stone-dark);
+}
+
+.pickRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 6px 10px;
+  text-align: left;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+}
+
+.pickRow:hover { background: var(--panel-card-hover); }
+
+.pickRowOn {
+  background: var(--panel-card-hover);
+  box-shadow: inset 3px 0 0 var(--mc-wood-light);
+}
+
+.pickName {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--txt-primary);
+}
+
+.pickId {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--txt-muted);
+  overflow-wrap: anywhere;
+}
+
+/* Pinned to the end of a row so the X column lines up down the list. */
+.rowRemove {
+  margin-left: auto;
+  color: var(--txt-muted);
+}
+
+.rowRemove:hover { color: var(--red); }

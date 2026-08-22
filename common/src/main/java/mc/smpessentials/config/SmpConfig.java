@@ -78,6 +78,9 @@ public final class SmpConfig {
     public static String BLUEMAP_CLAIM_COLOR;
     public static String BLUEMAP_OP_CLAIM_COLOR;
     public static String BLUEMAP_VIP_CLAIM_COLOR;
+    public static double BLUEMAP_ICON_MAX_DISTANCE;
+    public static boolean BLUEMAP_SHOW_SHOPS;
+    public static boolean BLUEMAP_SHOW_YOUTUBE;
     public static boolean BLUEMAP_SHOW_SPAWN_PROTECTION;
     public static String BLUEMAP_SPAWN_PROTECTION_COLOR;
 
@@ -115,6 +118,10 @@ public final class SmpConfig {
     public static int     END_FINDER_RECHECK_DISTANCE;
     public static int     END_FINDER_RECHECK_COOLDOWN_SECONDS;
     public static boolean END_FINDER_ACTION_BAR;
+
+    // Sky entry: gliding up out of the overworld into the linked ether. 0 = auto height.
+    public static boolean ETHER_SKY_ENTRY_ENABLED;
+    public static int     ETHER_SKY_ENTRY_Y;
 
     // ---- Anti-XRay ----
     public static boolean ANTIXRAY_ENABLED;
@@ -165,6 +172,15 @@ public final class SmpConfig {
     public static boolean KITS_ENABLED;
     public static long KIT_COOLDOWN_SECONDS;
     public static java.util.List<ConfigData.KitDef> KIT_DEFINITIONS = new java.util.ArrayList<>();
+
+    // ---- Random teleport ----
+    public static boolean WELCOME_BOOK_ENABLED;
+    public static com.google.gson.JsonElement WELCOME_BOOK_CONTENT;
+
+    public static boolean RTP_ENABLED;
+    public static int RTP_WARMUP_SECONDS;
+    public static int RTP_COOLDOWN_SECONDS;
+    public static java.util.List<ConfigData.RtpProfile> RTP_PROFILES = new java.util.ArrayList<>();
 
     // ---- Team Auto-Assign ----
     public static java.util.Map<String, java.util.List<String>> TEAM_AUTO_ASSIGN = new java.util.HashMap<>();
@@ -256,6 +272,9 @@ public final class SmpConfig {
         BLUEMAP_CLAIM_COLOR = d.bluemapClaimColor;
         BLUEMAP_OP_CLAIM_COLOR = d.bluemapOpClaimColor;
         BLUEMAP_VIP_CLAIM_COLOR = d.bluemapVipClaimColor;
+        BLUEMAP_ICON_MAX_DISTANCE = d.bluemapIconMaxDistance;
+        BLUEMAP_SHOW_SHOPS = d.bluemapShowShops;
+        BLUEMAP_SHOW_YOUTUBE = d.bluemapShowYoutube;
         BLUEMAP_SHOW_SPAWN_PROTECTION = d.bluemapShowSpawnProtection;
         BLUEMAP_SPAWN_PROTECTION_COLOR = d.bluemapSpawnProtectionColor;
         MUTE_LEVELS_MINUTES = d.muteLevelsMinutes;
@@ -312,6 +331,9 @@ public final class SmpConfig {
         END_FINDER_RECHECK_COOLDOWN_SECONDS = d.endFinderRecheckCooldownSeconds;
         END_FINDER_ACTION_BAR = d.endFinderActionBar;
 
+        ETHER_SKY_ENTRY_ENABLED = d.etherSkyEntryEnabled;
+        ETHER_SKY_ENTRY_Y = d.etherSkyEntryY;
+
         TEAM_AUTO_ASSIGN = new java.util.HashMap<>();
         for (var entry : d.teamAutoAssign.entrySet()) {
             TEAM_AUTO_ASSIGN.put(entry.getKey(), new java.util.ArrayList<>(entry.getValue()));
@@ -343,6 +365,14 @@ public final class SmpConfig {
         KITS_ENABLED = d.kitsEnabled;
         KIT_COOLDOWN_SECONDS = d.kits.cooldownSeconds;
         KIT_DEFINITIONS = d.kits.kits;
+
+        WELCOME_BOOK_ENABLED = d.welcomeBook.enabled;
+        WELCOME_BOOK_CONTENT = d.welcomeBook.content;
+
+        RTP_ENABLED = d.rtpEnabled;
+        RTP_WARMUP_SECONDS = d.rtp.warmupSeconds;
+        RTP_COOLDOWN_SECONDS = d.rtp.cooldownSeconds;
+        RTP_PROFILES = d.rtp.profiles;
 
         SKILL_XP_EXPONENT = d.skills.xpExponent;
         SKILL_COOLDOWNS = d.skills.cooldowns;

@@ -15,8 +15,12 @@ import ShopsPanel from './ShopsPanel'
 import CommandBlocksPanel from './CommandBlocksPanel'
 import BackupsPanel from './BackupsPanel'
 import TimelapsePanel from './TimelapsePanel'
+import RtpPanel from './RtpPanel'
+import KitsPanel from './KitsPanel'
+import WelcomeBookPanel from './WelcomeBookPanel'
+import UpdateBanner from './UpdateBanner'
 import { TooltipProvider, ToastHost } from '../../ui'
-import { IconPlayerHead, IconCommandBlock, IconBookshelf, IconPortal, IconSkills, IconFlag, IconChatFilter, IconMod, IconSword, IconEmerald, IconRepeatCmdBlock, IconShulkerBox, IconHardcoreHeart, IconGear, IconCamera } from './MinecraftIcons'
+import { IconPlayerHead, IconCommandBlock, IconBookshelf, IconGlowstonePortal, IconSkills, IconFlag, IconChatFilter, IconMod, IconSword, IconEmerald, IconRepeatCmdBlock, IconShulkerBox, IconHardcoreHeart, IconGear, IconCamera, IconChorusFruit, IconLoot, IconWrittenBook } from './MinecraftIcons'
 import styles from './AdminPanel.module.css'
 
 // Sidebar groups. Each item optionally gates on a config flag (hidden when the
@@ -27,13 +31,16 @@ const GROUPS = [
     { id: 'teams',   label: 'Teams',   Icon: IconSword },
   ]},
   { label: 'World', items: [
-    { id: 'dims',   label: 'Dimensions', Icon: IconPortal },
+    { id: 'dims',   label: 'Dimensions', Icon: IconGlowstonePortal },
     { id: 'claims', label: 'Claims',     Icon: IconFlag,    configKey: 'claims_enabled' },
     { id: 'shops',  label: 'Shops',      Icon: IconEmerald, configKey: 'shops_enabled' },
   ]},
   { label: 'Gameplay', items: [
     { id: 'skills',   label: 'Skills',   Icon: IconSkills, configKey: 'skills_enabled' },
     { id: 'hardcore', label: 'Hardcore', Icon: IconHardcoreHeart, configKey: 'hardcore_enabled' },
+    { id: 'rtp',      label: 'RTP',      Icon: IconChorusFruit,   configKey: 'rtp_enabled' },
+    { id: 'kits',     label: 'Kits',     Icon: IconLoot,          configKey: 'kits_enabled' },
+    { id: 'guide',    label: 'Welcome Book', Icon: IconWrittenBook, configKey: 'welcome_book_enabled' },
   ]},
   { label: 'Moderation', items: [
     { id: 'chatfilter', label: 'Chat Filter', Icon: IconChatFilter, configKey: 'chatfilter_enabled' },
@@ -91,7 +98,7 @@ export default function AdminPanel({ health, wsStatus, onBack }) {
 
   if (needsAuth) return <AdminGate onAuth={onAuth} />
 
-  const panelProps = { token, onExpired: logout }
+  const panelProps = { token, onExpired: logout, onNavigate: pick, features: cfg }
 
   return (
     <TooltipProvider>
@@ -107,6 +114,8 @@ export default function AdminPanel({ health, wsStatus, onBack }) {
               <span className={styles.liveDot} />{wsStatus === 'open' ? 'Live' : 'Reconnecting'}
             </span>
           </div>
+
+          <UpdateBanner version={health?.version} />
 
           <div className={styles.mainRow}>
           {navOpen && <div className={styles.scrim} onClick={() => setNavOpen(false)} />}
@@ -148,6 +157,9 @@ export default function AdminPanel({ health, wsStatus, onBack }) {
             {resolvedTab === 'claims'     && <ClaimsPanel {...panelProps} />}
             {resolvedTab === 'chatfilter' && <ChatFilterPanel {...panelProps} />}
             {resolvedTab === 'hardcore'   && <HardcorePanel {...panelProps} />}
+            {resolvedTab === 'rtp'        && <RtpPanel {...panelProps} />}
+            {resolvedTab === 'kits'       && <KitsPanel {...panelProps} />}
+            {resolvedTab === 'guide'      && <WelcomeBookPanel {...panelProps} />}
             {resolvedTab === 'teams'      && <TeamsPanel {...panelProps} />}
             {resolvedTab === 'shops'      && <ShopsPanel {...panelProps} />}
             {resolvedTab === 'cmdblocks'  && <CommandBlocksPanel {...panelProps} />}

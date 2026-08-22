@@ -93,6 +93,85 @@ export function IconChest({ size = 18 }) {
   )
 }
 
+// Player home / base. Replaces the old gradient house SVG the BlueMap integration
+// shipped with, so map and panel share one visual language.
+export function IconHouse({ size = 18 }) {
+  return (
+    <svg viewBox="0 0 16 16" width={size} height={size} shapeRendering="crispEdges">
+      {/* Roof */}
+      {px(7, 2, 2, 1, '#8B3A2E')}
+      {px(6, 3, 4, 1, '#A84534')}
+      {px(5, 4, 6, 1, '#A84534')}
+      {px(4, 5, 8, 1, '#A84534')}
+      {/* Roof highlight */}
+      {px(6, 4, 2, 1, '#C05446')}
+      {px(5, 5, 3, 1, '#C05446')}
+      {/* Eave, wider than the walls so the roof overhangs */}
+      {px(3, 6, 10, 1, '#8B3A2E')}
+      {/* Walls */}
+      {px(4, 7, 8, 7, '#C8A06A')}
+      {px(4, 7, 1, 7, '#A8834F')}
+      {px(11, 7, 1, 7, '#A8834F')}
+      {/* Windows */}
+      {px(5, 8, 2, 2, '#6FC5E8')}
+      {px(9, 8, 2, 2, '#6FC5E8')}
+      {/* Door */}
+      {px(7, 11, 2, 3, '#6B4423')}
+      {px(8, 12, 1, 1, '#CDA040')}
+      {/* Foundation */}
+      {px(3, 14, 10, 1, '#7A7A7A')}
+    </svg>
+  )
+}
+
+// Video content marker (BlueMap YouTube POIs). Rounded play badge, deliberately unlike
+// IconMegaphone which the "event" region tag already uses.
+export function IconPlayBadge({ size = 18 }) {
+  return (
+    <svg viewBox="0 0 16 16" width={size} height={size} shapeRendering="crispEdges">
+      {/* Badge body */}
+      {px(2, 4, 12, 8, '#C4302B')}
+      {px(3, 3, 10, 1, '#C4302B')}
+      {px(3, 12, 10, 1, '#C4302B')}
+      {/* Top highlight */}
+      {px(4, 4, 8, 1, '#E04B45')}
+      {/* Play triangle */}
+      {px(6, 5, 1, 6, '#FFFFFF')}
+      {px(7, 6, 1, 4, '#FFFFFF')}
+      {px(8, 7, 1, 2, '#FFFFFF')}
+      {px(9, 8, 1, 1, '#FFFFFF')}
+    </svg>
+  )
+}
+
+// Server-run market stall (unlimited stock), distinct from the player shop chest and from
+// IconEmerald which the "bank" region tag uses.
+export function IconMarketStall({ size = 18 }) {
+  return (
+    <svg viewBox="0 0 16 16" width={size} height={size} shapeRendering="crispEdges">
+      {/* Striped awning */}
+      {px(1, 2, 14, 3, '#E8E8E8')}
+      {px(2, 2, 2, 3, '#C4443C')}
+      {px(6, 2, 2, 3, '#C4443C')}
+      {px(10, 2, 2, 3, '#C4443C')}
+      {/* Awning scallop */}
+      {px(1, 5, 2, 1, '#E8E8E8')}
+      {px(5, 5, 2, 1, '#E8E8E8')}
+      {px(9, 5, 2, 1, '#E8E8E8')}
+      {px(13, 5, 2, 1, '#E8E8E8')}
+      {/* Posts */}
+      {px(1, 6, 1, 8, '#8A6A3A')}
+      {px(14, 6, 1, 8, '#8A6A3A')}
+      {/* Counter */}
+      {px(2, 9, 12, 2, '#B8863F')}
+      {px(2, 9, 12, 1, '#D0A05A')}
+      {/* Goods on the counter */}
+      {px(4, 7, 2, 2, '#4CC96A')}
+      {px(8, 7, 2, 2, '#E8C24A')}
+    </svg>
+  )
+}
+
 export function IconBookshelf({ size = 18 }) {
   return (
     <svg viewBox="0 0 16 16" width={size} height={size} shapeRendering="crispEdges">
@@ -1016,7 +1095,10 @@ export function IconWolf({ size = 20 }) {
   )
 }
 
-// ── Distinct nav icons (replace reused shields/clocks/signs) ────────────────────
+// ── Distinct nav icons ─────────────────────────────────────────────────────────
+// Added in two passes to keep every nav collision-free: first to replace reused
+// shields/clocks/signs, then to split the shared portals, chests and ender pearls so each
+// concept owns one icon across the sidebar, the settings nav and the Features cards.
 
 // Chat Moderation, a judge's gavel over its sound block.
 export function IconGavel({ size = 20 }) {
@@ -1201,6 +1283,529 @@ export function IconBloodDrop({ size = 20 }) {
       {px(6, 7, 3, 4, mid)}
       {px(6, 6, 1, 5, hi)}
       {px(9, 9, 2, 2, hi)}
+    </svg>
+  )
+}
+
+// Custom Dimensions, a portal in a glowstone frame. Our custom dims are real nether-portal
+// blocks in a non-obsidian frame, so the frame material is what tells them apart.
+export function IconGlowstonePortal({ size = 20 }) {
+  const lit = '#F2C879', stone = '#C49A4E', dark = '#8E6B2E', spark = '#FFE9A8'
+  const swirl = '#A24BE0', inner = '#7A34B8', deep = '#4B1E72'
+  return (
+    <svg viewBox="0 0 16 16" width={size} height={size} shapeRendering="crispEdges">
+      {/* portal interior */}
+      {px(5, 3, 6, 10, inner)}
+      {px(6, 5, 2, 3, swirl)}
+      {px(9, 8, 2, 3, swirl)}
+      {px(5, 11, 3, 2, deep)}
+      {px(8, 3, 3, 2, deep)}
+      {/* glowstone frame */}
+      {px(3, 1, 10, 2, stone)}
+      {px(3, 13, 10, 2, stone)}
+      {px(3, 1, 2, 14, stone)}
+      {px(11, 1, 2, 14, stone)}
+      {/* lit speckles and shadow, so the frame reads as glowstone not sandstone */}
+      {px(3, 1, 10, 1, lit)}
+      {px(3, 3, 1, 4, lit)}
+      {px(12, 8, 1, 4, lit)}
+      {px(4, 2, 1, 1, spark)}
+      {px(11, 13, 1, 1, spark)}
+      {px(3, 14, 10, 1, dark)}
+    </svg>
+  )
+}
+
+// Teleport, a bed from the side. /home sends you to your bed or respawn anchor.
+export function IconBed({ size = 20 }) {
+  return (
+    <svg viewBox="0 0 16 16" width={size} height={size} shapeRendering="crispEdges">
+      {/* pillow at the head end */}
+      {px(2, 5, 4, 2, '#EDEDED')}
+      {px(2, 6, 4, 1, '#CBCBCB')}
+      {/* mattress */}
+      {px(1, 7, 14, 4, '#B02E26')}
+      {px(1, 7, 14, 1, '#C7473C')}
+      {px(1, 10, 14, 1, '#8A2420')}
+      {/* wooden frame and legs */}
+      {px(1, 11, 14, 1, '#8A6234')}
+      {px(1, 12, 2, 2, '#6B4A26')}
+      {px(13, 12, 2, 2, '#6B4A26')}
+    </svg>
+  )
+}
+
+// End Finder, an eye of ender. The item that triggers the feature.
+export function IconEyeOfEnder({ size = 20 }) {
+  const body = '#3B2352', sheen = '#5A3480', edge = '#241134'
+  const iris = '#6EE7A8', irisDark = '#3BAF77', pupil = '#10281C'
+  return (
+    <svg viewBox="0 0 16 16" width={size} height={size} shapeRendering="crispEdges">
+      {/* rounded purple body */}
+      {px(5, 1, 6, 1, edge)}
+      {px(3, 2, 10, 1, body)}
+      {px(2, 3, 12, 10, body)}
+      {px(3, 13, 10, 1, body)}
+      {px(5, 14, 6, 1, edge)}
+      {px(3, 3, 6, 2, sheen)}
+      {px(2, 12, 12, 1, edge)}
+      {/* green iris with a dark pupil */}
+      {px(5, 6, 6, 4, irisDark)}
+      {px(5, 6, 6, 3, iris)}
+      {px(7, 7, 2, 2, pupil)}
+    </svg>
+  )
+}
+
+// Slime Chunk Hint, a slime cube.
+export function IconSlimeBall({ size = 20 }) {
+  const body = '#7CD65C', top = '#9BEF7B', core = '#5BA843', hi = '#DFFFD0'
+  return (
+    <svg viewBox="0 0 16 16" width={size} height={size} shapeRendering="crispEdges">
+      {/* rounded blob */}
+      {px(5, 3, 6, 1, top)}
+      {px(4, 4, 8, 1, top)}
+      {px(3, 5, 10, 7, body)}
+      {px(4, 12, 8, 1, core)}
+      {px(5, 13, 6, 1, core)}
+      {/* inner cube and highlight */}
+      {px(6, 7, 4, 3, core)}
+      {px(4, 5, 2, 2, hi)}
+    </svg>
+  )
+}
+
+// Kits, the vanilla bundle item.
+export function IconBundle({ size = 20 }) {
+  const leather = '#B07A46', shade = '#8A5A2F', lip = '#C68F55', cord = '#6B4A26'
+  return (
+    <svg viewBox="0 0 16 16" width={size} height={size} shapeRendering="crispEdges">
+      {/* drawstring knot */}
+      {px(7, 1, 2, 2, cord)}
+      {/* rolled top */}
+      {px(3, 3, 10, 2, lip)}
+      {px(4, 4, 8, 1, cord)}
+      {/* pouch body, shaded at both sides and the base */}
+      {px(3, 5, 10, 9, leather)}
+      {px(3, 5, 1, 9, shade)}
+      {px(12, 5, 1, 9, shade)}
+      {px(3, 12, 10, 2, shade)}
+      {px(5, 6, 2, 4, lip)}
+    </svg>
+  )
+}
+
+// Dashboard, a lit screen with a rising bar chart.
+export function IconLiveMonitor({ size = 20 }) {
+  const bezel = '#3A4250', rim = '#4E586A', glass = '#123A3C', bar = '#4ADE9E'
+  return (
+    <svg viewBox="0 0 16 16" width={size} height={size} shapeRendering="crispEdges">
+      {/* bezel */}
+      {px(1, 2, 14, 10, bezel)}
+      {px(1, 2, 14, 1, rim)}
+      {/* screen */}
+      {px(3, 4, 10, 6, glass)}
+      {/* rising bars */}
+      {px(4, 7, 2, 2, bar)}
+      {px(7, 6, 2, 3, bar)}
+      {px(10, 5, 2, 4, bar)}
+      {/* stand */}
+      {px(7, 12, 2, 2, bezel)}
+      {px(5, 14, 6, 1, rim)}
+    </svg>
+  )
+}
+
+// ── Commands tab ──────────────────────────────────────────────────────────────
+// One icon per quick action. All drawn fresh rather than borrowing an existing
+// glyph: every obvious candidate (gear, dragon head, sign, eye of ender, grass
+// block, skull, TNT, live monitor) is already on screen somewhere else, and
+// reusing one would make two different things look like the same thing.
+
+// Set Day, a sun with four rays.
+export function IconSun({ size = 20 }) {
+  const body = '#F2C23A', hot = '#FFE07A', ray = '#FFD86A'
+  return (
+    <svg viewBox="0 0 16 16" width={size} height={size} shapeRendering="crispEdges">
+      {px(6, 4, 4, 1, body)}
+      {px(5, 5, 6, 1, body)}
+      {px(4, 6, 8, 4, body)}
+      {px(5, 10, 6, 1, body)}
+      {px(6, 11, 4, 1, body)}
+      {px(6, 6, 4, 3, hot)}
+      {px(7, 1, 2, 2, ray)}
+      {px(7, 13, 2, 2, ray)}
+      {px(1, 7, 2, 2, ray)}
+      {px(13, 7, 2, 2, ray)}
+    </svg>
+  )
+}
+
+// Set Night, a crescent moon with a star.
+export function IconMoonStar({ size = 20 }) {
+  const body = '#CBD5F0', edge = '#EEF2FF', star = '#FFF2B0'
+  return (
+    <svg viewBox="0 0 16 16" width={size} height={size} shapeRendering="crispEdges">
+      {px(6, 3, 4, 1, body)}
+      {px(5, 4, 4, 1, body)}
+      {px(4, 5, 4, 1, body)}
+      {px(3, 6, 4, 3, body)}
+      {px(3, 9, 5, 1, body)}
+      {px(4, 10, 5, 1, body)}
+      {px(5, 11, 6, 1, body)}
+      {px(6, 12, 4, 1, body)}
+      {px(3, 6, 1, 3, edge)}
+      {px(12, 2, 1, 3, star)}
+      {px(11, 3, 3, 1, star)}
+    </svg>
+  )
+}
+
+// Clear Weather, sun behind a cloud.
+export function IconSunCloud({ size = 20 }) {
+  const sun = '#F2C23A', hot = '#FFE07A'
+  const cloud = '#E8EDF5', lit = '#FFFFFF', shade = '#B9C3D4'
+  return (
+    <svg viewBox="0 0 16 16" width={size} height={size} shapeRendering="crispEdges">
+      {px(4, 2, 4, 1, sun)}
+      {px(3, 3, 6, 2, sun)}
+      {px(4, 5, 4, 1, sun)}
+      {px(5, 3, 2, 1, hot)}
+      {px(8, 7, 4, 1, cloud)}
+      {px(6, 8, 8, 1, cloud)}
+      {px(5, 9, 9, 2, cloud)}
+      {px(6, 11, 8, 1, shade)}
+      {px(8, 7, 4, 1, lit)}
+    </svg>
+  )
+}
+
+// Set Thunder, a storm cloud with a bolt.
+export function IconLightning({ size = 20 }) {
+  const body = '#59627A', top = '#727C96', under = '#3E4557'
+  const bolt = '#FFD23A', hot = '#FFF0A0'
+  return (
+    <svg viewBox="0 0 16 16" width={size} height={size} shapeRendering="crispEdges">
+      {px(5, 1, 5, 1, top)}
+      {px(3, 2, 10, 1, top)}
+      {px(2, 3, 12, 2, body)}
+      {px(3, 5, 10, 1, under)}
+      {px(9, 6, 3, 2, bolt)}
+      {px(7, 8, 4, 2, hot)}
+      {px(5, 10, 4, 2, bolt)}
+      {px(6, 12, 2, 2, bolt)}
+    </svg>
+  )
+}
+
+// Reset Dragon, a dragon egg on its base.
+export function IconDragonEgg({ size = 20 }) {
+  const shell = '#1A0E22', sheen = '#2E1A3A', fleck = '#B36BE0'
+  const base = '#2A2A34', foot = '#1E1E26'
+  return (
+    <svg viewBox="0 0 16 16" width={size} height={size} shapeRendering="crispEdges">
+      {px(7, 2, 2, 1, shell)}
+      {px(6, 3, 4, 1, shell)}
+      {px(5, 4, 6, 2, shell)}
+      {px(4, 6, 8, 4, shell)}
+      {px(5, 10, 6, 2, shell)}
+      {px(5, 5, 1, 4, sheen)}
+      {px(8, 4, 1, 1, fleck)}
+      {px(6, 7, 1, 1, fleck)}
+      {px(9, 8, 1, 1, fleck)}
+      {px(7, 10, 1, 1, fleck)}
+      {px(4, 12, 8, 1, base)}
+      {px(3, 13, 10, 1, foot)}
+    </svg>
+  )
+}
+
+// Reload Config, an open refresh loop. The arc deliberately breaks on the right
+// under the arrowhead: a closed ring at 16px just reads as a filled circle.
+export function IconRefreshDust({ size = 20 }) {
+  const ring = '#C2352B', lit = '#E2554A', head = '#F86C58'
+  return (
+    <svg viewBox="0 0 16 16" width={size} height={size} shapeRendering="crispEdges">
+      {/* arc, running counter-clockwise from the top round to the right */}
+      {px(5, 2, 4, 2, lit)}
+      {px(3, 3, 3, 2, ring)}
+      {px(2, 5, 3, 6, ring)}
+      {px(3, 11, 3, 2, ring)}
+      {px(5, 12, 6, 2, ring)}
+      {px(10, 11, 3, 2, ring)}
+      {px(12, 7, 3, 4, ring)}
+      {/* arrowhead closing the loop at the top right */}
+      {px(9, 0, 2, 1, head)}
+      {px(9, 1, 3, 1, head)}
+      {px(9, 2, 4, 1, head)}
+      {px(9, 3, 5, 1, head)}
+      {px(9, 4, 4, 1, head)}
+      {px(9, 5, 3, 1, head)}
+      {px(9, 6, 2, 1, head)}
+    </svg>
+  )
+}
+
+// Broadcast, a megaphone with sound waves. Not a speech bubble: IconChatFilter
+// already owns that silhouette.
+export function IconMegaphone({ size = 20 }) {
+  const body = '#C8C8D2', lit = '#F0F0F8', shade = '#9EA0AE'
+  const cap = '#8E8E9C', grip = '#4A4A55', gripLit = '#5E5E6B', wave = '#F2C23A'
+  return (
+    <svg viewBox="0 0 16 16" width={size} height={size} shapeRendering="crispEdges">
+      {/* grip and back cap */}
+      {px(3, 10, 3, 3, grip)}
+      {px(3, 10, 3, 1, gripLit)}
+      {px(4, 7, 2, 3, cap)}
+      {/* cone, opening to the right */}
+      {px(6, 6, 2, 5, body)}
+      {px(8, 5, 2, 7, body)}
+      {px(10, 4, 2, 9, body)}
+      {px(10, 4, 2, 1, lit)}
+      {px(6, 9, 2, 2, shade)}
+      {px(8, 10, 2, 2, shade)}
+      {px(10, 11, 2, 2, shade)}
+      {/* sound waves */}
+      {px(13, 6, 1, 4, wave)}
+      {px(15, 4, 1, 8, wave)}
+      {px(14, 5, 1, 1, wave)}
+      {px(14, 10, 1, 1, wave)}
+    </svg>
+  )
+}
+
+// Queue End Reset, an end portal: the starfield void inside its stone rim.
+export function IconEndPortal({ size = 20 }) {
+  const rim = '#4A4458', rimLit = '#635C74'
+  const void_ = '#0A0518', hazeTop = '#2A1250', hazeLow = '#180A30'
+  const star = '#FFFFFF', spark = '#C9A0FF'
+  return (
+    <svg viewBox="0 0 16 16" width={size} height={size} shapeRendering="crispEdges">
+      {px(1, 2, 14, 12, rim)}
+      {px(1, 2, 14, 1, rimLit)}
+      {px(3, 4, 10, 8, void_)}
+      {px(3, 4, 10, 2, hazeTop)}
+      {px(3, 10, 10, 2, hazeLow)}
+      {px(4, 5, 1, 1, star)}
+      {px(8, 4, 1, 1, star)}
+      {px(11, 6, 1, 1, star)}
+      {px(6, 8, 1, 1, star)}
+      {px(10, 10, 1, 1, star)}
+      {px(4, 10, 1, 1, spark)}
+      {px(7, 6, 1, 1, spark)}
+      {px(11, 9, 1, 1, spark)}
+      {px(9, 7, 1, 1, star)}
+    </svg>
+  )
+}
+
+// Regen Wilderness, a sapling breaking out of tilled soil.
+export function IconSapling({ size = 20 }) {
+  const leaf = '#4FA33A', lit = '#5FBF46', dark = '#3E8A2E'
+  const stem = '#6B4A2B', soil = '#6B4A2B', tilled = '#7E5A34'
+  return (
+    <svg viewBox="0 0 16 16" width={size} height={size} shapeRendering="crispEdges">
+      {px(5, 2, 6, 2, lit)}
+      {px(3, 4, 10, 3, leaf)}
+      {px(4, 7, 8, 2, dark)}
+      {px(7, 9, 2, 3, stem)}
+      {px(2, 12, 12, 3, soil)}
+      {px(2, 12, 12, 1, tilled)}
+    </svg>
+  )
+}
+
+// Stop Server, the stop glyph on a stone button plate. Not a ring: IconRefreshDust
+// on this same tab is already a red ring, and two of those read as one thing.
+export function IconStopButton({ size = 20 }) {
+  const plate = '#4A4A55', plateLit = '#6C6C79', plateDark = '#2F2F38', recess = '#3B3B45'
+  const stop = '#E2413A', stopLit = '#F26A63', stopDark = '#A62B25'
+  return (
+    <svg viewBox="0 0 16 16" width={size} height={size} shapeRendering="crispEdges">
+      {px(1, 2, 14, 12, plate)}
+      {px(1, 2, 14, 1, plateLit)}
+      {px(1, 13, 14, 1, plateDark)}
+      {px(2, 3, 12, 10, recess)}
+      {px(5, 6, 6, 6, stop)}
+      {px(5, 6, 6, 1, stopLit)}
+      {px(5, 11, 6, 1, stopDark)}
+    </svg>
+  )
+}
+
+// Danger zone heading, hazard stripes. The staircase runs past the viewBox on
+// both sides on purpose; the SVG viewport clips it, which is what keeps the
+// diagonal looking like pixels instead of an anti-aliased line.
+export function IconHazardStripes({ size = 20 }) {
+  const warn = '#F2C23A', dark = '#22222A'
+  return (
+    <svg viewBox="0 0 16 16" width={size} height={size} shapeRendering="crispEdges">
+      {px(0, 0, 16, 16, warn)}
+      {[0, 1, 2, 3].map(band =>
+        [0, 2, 4, 6, 8, 10, 12, 14].map(row => px(band * 8 - row + 2, row, 4, 2, dark)))}
+    </svg>
+  )
+}
+
+// Live terminal heading, a shell prompt caret. Bare glyph, no bezel, so it does
+// not read as a second monitor next to IconLiveMonitor.
+export function IconTerminalCaret({ size = 20 }) {
+  const g = '#4ADE9E', hot = '#B7FFD8'
+  return (
+    <svg viewBox="0 0 16 16" width={size} height={size} shapeRendering="crispEdges">
+      {px(3, 3, 2, 1, g)}
+      {px(4, 4, 2, 1, g)}
+      {px(5, 5, 2, 1, g)}
+      {px(6, 6, 2, 1, g)}
+      {px(7, 7, 2, 1, hot)}
+      {px(6, 8, 2, 1, g)}
+      {px(5, 9, 2, 1, g)}
+      {px(4, 10, 2, 1, g)}
+      {px(3, 11, 2, 1, g)}
+      {px(9, 11, 5, 2, g)}
+    </svg>
+  )
+}
+
+// Update-available banner, an emerald arrow rising off a stone plate. Nothing
+// else in this file is an arrow, so the silhouette stays unique next to
+// IconRefreshDust (a ring) and IconTerminalCaret (a chevron).
+export function IconUpgradeArrow({ size = 20 }) {
+  const g = '#4ADE9E', lit = '#B7FFD8', dark = '#1E6B47'
+  const plate = '#6E6E6E', plateLit = '#9A9A9A', plateDark = '#3A3A3A'
+  return (
+    <svg viewBox="0 0 16 16" width={size} height={size} shapeRendering="crispEdges">
+      {/* Arrow head, one row wider each step down */}
+      {px(7, 1, 2, 1, lit)}
+      {px(6, 2, 4, 1, g)}
+      {px(5, 3, 6, 1, g)}
+      {px(4, 4, 8, 1, g)}
+      {px(3, 5, 10, 1, g)}
+      {/* Top-left light, bottom-right shadow, same bevel logic as the buttons */}
+      {px(6, 2, 1, 1, lit)}
+      {px(5, 3, 1, 1, lit)}
+      {px(4, 4, 1, 1, lit)}
+      {px(3, 5, 1, 1, lit)}
+      {px(9, 2, 1, 1, dark)}
+      {px(10, 3, 1, 1, dark)}
+      {px(11, 4, 1, 1, dark)}
+      {px(12, 5, 1, 1, dark)}
+      {/* Shaft */}
+      {px(6, 6, 4, 4, g)}
+      {px(6, 6, 1, 4, lit)}
+      {px(9, 6, 1, 4, dark)}
+      {/* Stone plate it lifts off */}
+      {px(3, 12, 10, 3, plate)}
+      {px(3, 12, 10, 1, plateLit)}
+      {px(3, 14, 10, 1, plateDark)}
+    </svg>
+  )
+}
+
+// Chorus fruit: vanilla's own random-teleport item, so it reads as /rtp without
+// colliding with the clock, portal, or ender pearl silhouettes already in this file.
+export function IconChorusFruit({ size = 18 }) {
+  return (
+    <svg viewBox="0 0 16 16" width={size} height={size} shapeRendering="crispEdges">
+      {/* Stem */}
+      {px(7, 0, 2, 2, '#6B4A2E')}
+      {/* Body, built row by row so the outline stays lumpy rather than round */}
+      {px(6, 2, 4, 1, '#9B5FB5')}
+      {px(4, 3, 8, 1, '#9B5FB5')}
+      {px(3, 4, 10, 1, '#9B5FB5')}
+      {px(2, 5, 12, 2, '#9B5FB5')}
+      {px(1, 7, 14, 2, '#9B5FB5')}
+      {px(2, 9, 12, 2, '#9B5FB5')}
+      {px(3, 11, 10, 1, '#9B5FB5')}
+      {px(4, 12, 8, 1, '#9B5FB5')}
+      {px(6, 13, 4, 1, '#9B5FB5')}
+      {/* Side lumps */}
+      {px(0, 7, 1, 2, '#8A4FA4')}
+      {px(15, 7, 1, 2, '#8A4FA4')}
+      {px(5, 14, 2, 1, '#8A4FA4')}
+      {px(9, 14, 2, 1, '#8A4FA4')}
+      {/* Lit edge */}
+      {px(4, 4, 3, 1, '#C08FD6')}
+      {px(3, 5, 2, 2, '#C08FD6')}
+      {px(2, 7, 1, 2, '#C08FD6')}
+      {/* Shaded edge */}
+      {px(11, 9, 3, 1, '#6E3F86')}
+      {px(10, 11, 3, 1, '#6E3F86')}
+      {px(13, 7, 2, 2, '#6E3F86')}
+      {/* Blotches */}
+      {px(6, 6, 2, 2, '#7A4694')}
+      {px(9, 4, 2, 2, '#7A4694')}
+      {px(7, 10, 2, 1, '#7A4694')}
+    </svg>
+  )
+}
+
+/**
+ * A closed written book: gold clasp and a hanging ribbon. Deliberately unlike IconBookQuill
+ * (open book plus feather, for writing) and IconBookshelf (a shelf of many), since this one
+ * stands for the single finished guide the server hands out.
+ */
+export function IconWrittenBook({ size = 20 }) {
+  return (
+    <svg viewBox="0 0 16 16" width={size} height={size} shapeRendering="crispEdges">
+      {/* Cover */}
+      {px(3, 1, 10, 14, '#8C2F2F')}
+      {px(4, 2, 8, 12, '#A83B3B')}
+      {/* Spine */}
+      {px(2, 1, 2, 14, '#5E1C1C')}
+      {px(2, 1, 1, 14, '#7A2626')}
+      {/* Page block along the fore edge */}
+      {px(12, 2, 2, 12, '#F5ECD0')}
+      {px(12, 3, 2, 1, '#D8CFB0')}
+      {px(12, 7, 2, 1, '#D8CFB0')}
+      {px(12, 11, 2, 1, '#D8CFB0')}
+      {/* Gold clasp */}
+      {px(11, 6, 3, 3, '#CDA040')}
+      {px(11, 6, 3, 1, '#F0D070')}
+      {px(12, 7, 1, 1, '#7A5A18')}
+      {/* Ribbon bookmark */}
+      {px(7, 12, 2, 4, '#E0C060')}
+      {px(7, 12, 1, 4, '#F0DC90')}
+      {px(7, 15, 2, 1, '#A8862F')}
+    </svg>
+  )
+}
+
+/** Chevron up: collapse a card. */
+export function IconCollapse({ size = 12 }) {
+  return (
+    <svg viewBox="0 0 10 10" width={size} height={size} shapeRendering="crispEdges">
+      {px(4, 2, 2, 1, 'currentColor')}
+      {px(3, 3, 1, 1, 'currentColor')}{px(6, 3, 1, 1, 'currentColor')}
+      {px(2, 4, 1, 1, 'currentColor')}{px(7, 4, 1, 1, 'currentColor')}
+      {px(1, 5, 1, 1, 'currentColor')}{px(8, 5, 1, 1, 'currentColor')}
+    </svg>
+  )
+}
+
+/** Chevron down: expand a collapsed card. */
+export function IconExpand({ size = 12 }) {
+  return (
+    <svg viewBox="0 0 10 10" width={size} height={size} shapeRendering="crispEdges">
+      {px(1, 3, 1, 1, 'currentColor')}{px(8, 3, 1, 1, 'currentColor')}
+      {px(2, 4, 1, 1, 'currentColor')}{px(7, 4, 1, 1, 'currentColor')}
+      {px(3, 5, 1, 1, 'currentColor')}{px(6, 5, 1, 1, 'currentColor')}
+      {px(4, 6, 2, 1, 'currentColor')}
+    </svg>
+  )
+}
+
+/** A small X for removing a row, where a full "Remove" button repeats down a list. */
+export function IconX({ size = 11 }) {
+  return (
+    <svg viewBox="0 0 10 10" width={size} height={size} shapeRendering="crispEdges">
+      {px(1, 1, 2, 1, 'currentColor')}{px(7, 1, 2, 1, 'currentColor')}
+      {px(2, 2, 2, 1, 'currentColor')}{px(6, 2, 2, 1, 'currentColor')}
+      {px(3, 3, 2, 1, 'currentColor')}{px(5, 3, 2, 1, 'currentColor')}
+      {px(4, 4, 2, 2, 'currentColor')}
+      {px(3, 6, 2, 1, 'currentColor')}{px(5, 6, 2, 1, 'currentColor')}
+      {px(2, 7, 2, 1, 'currentColor')}{px(6, 7, 2, 1, 'currentColor')}
+      {px(1, 8, 2, 1, 'currentColor')}{px(7, 8, 2, 1, 'currentColor')}
     </svg>
   )
 }

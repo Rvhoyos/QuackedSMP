@@ -1,0 +1,167 @@
+.wrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
+  background: var(--panel-surface);
+}
+
+.body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* One line of fields: a growing control plus fixed-width numbers and checkboxes.
+   Row gap is larger than column gap so wrapped controls and stacked rows get real vertical
+   separation instead of running together. */
+.row {
+  display: flex;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: var(--gap-row) var(--gap-col);
+}
+
+.row + .row { margin-top: 4px; }
+
+.grow { flex: 1 1 200px; min-width: 0; }
+
+/* A number cell that sizes to its own content instead of a fixed width, so a long label like
+   "Reward cooldown" stays on one line and its input stays level with its neighbour's. */
+.numAuto { flex: 0 0 auto; }
+.numAuto > span  { white-space: nowrap; }
+.numAuto input   { width: 104px; }
+
+/* Full width on its own line: the arrival message is a sentence, not a field to squeeze in
+   beside a number. */
+.wide { flex: 1 1 100%; min-width: 0; }
+
+/* The Teleport card: enable toggle and both numbers on one line. Each number keeps its unit text
+   beside the input instead of under it, so the row ends where the controls end. */
+.teleportRow {
+  display: flex;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: var(--gap-row) var(--gap-col);
+}
+
+.toggleCell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 0 0 auto;
+  padding-bottom: 7px;
+}
+
+.numCell {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+
+.numField { flex: 0 0 auto; width: 82px; }
+
+.unit {
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  color: var(--txt-muted);
+  white-space: nowrap;
+  padding-bottom: 10px;
+}
+
+.hint {
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  color: var(--txt-muted);
+  line-height: 1.55;
+}
+
+.toggleLabel {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--txt-secondary);
+}
+
+
+/* Dimension chooser. A second list styled like the item picker; if a third appears this moves
+   into the shared ui/ primitives rather than being copied again. */
+.pickList {
+  display: flex;
+  flex-direction: column;
+  max-height: 260px;
+  overflow-y: auto;
+  background: var(--surf-slot);
+  border: 1px solid var(--mc-stone-dark);
+}
+
+.pickRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 7px 10px;
+  text-align: left;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+}
+
+.pickRow:hover { background: var(--panel-card-hover); }
+
+.pickName {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--txt-primary);
+}
+
+.pickId {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--txt-muted);
+  overflow-wrap: anywhere;
+}
+
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 32px 16px;
+  text-align: center;
+  background: var(--panel-card);
+  border: 1px solid var(--mc-stone-dark);
+}
+
+.emptyLabel {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--txt-secondary);
+}
+
+/* Pushes a control to the right end of a row it shares, vertically centred against the inputs
+   rather than their labels. No new row, so the card does not grow. */
+.rowEnd {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  flex: 0 0 auto;
+  padding-bottom: 4px;
+}
+
+/* The boolean group. Wider column gap than the field rows, since each switch is a whole
+   phrase and they should not read as one run-on line. */
+.switchRow {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px 32px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--mc-stone-dark);
+  margin-bottom: 4px;
+}

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { Toolbar, IconButton, Btn, Badge, SectionCard, Loading, EmptyState, ErrorBanner, ConfirmDialog, Field, Input, Select, Slider, Toggle, Menu, MenuItem, useToast } from '../../ui'
+import { Toolbar, IconButton, Btn, Badge, SectionCard, Loading, EmptyState, ErrorBanner, ConfirmDialog, Field, Input, Select, Slider, Toggle, SwitchField, Menu, MenuItem, useToast } from '../../ui'
 import { IconPortal } from './MinecraftIcons'
 import styles from './DimsPanel.module.css'
 
@@ -80,6 +80,9 @@ export default function DimsPanel({ token, onExpired }) {
   const [portalInput, setPortalInput] = useState('')
   const [portalSaving, setPortalSaving] = useState(false)
   const [confirmDel, setConfirmDel] = useState(null)
+  const [sky, setSky] = useState(null)
+  const [skyYInput, setSkyYInput] = useState('')
+  const [skySaving, setSkySaving] = useState(false)
   const biomeComboRef = useRef(null)
   const toast = useToast()
 
@@ -140,7 +143,34 @@ export default function DimsPanel({ token, onExpired }) {
     } catch {}
   }, [token, onExpired])
 
+  // Resolved values come from the server: it owns what "auto" and "first created" resolve to.
+  const fetchSky = useCallback(async () => {
+    try {
+      const res = await fetch('/api/admin/dims/sky', { headers: authHeaders(token) })
+      if (res.status === 401 || res.status === 403) { onExpired(); return }
+      const data = await res.json()
+      if (data.error) return
+      setSky(data)
+      setSkyYInput(String(data.thresholdY))
+    } catch {}
+  }, [token, onExpired])
+
+  async function saveSky(patch) {
+    setSkySaving(true); setError(null)
+    try {
+      const res = await fetch('/api/admin/dims/sky', { method: 'POST', headers: { 'Content-Type': 'application/json', ...authHeaders(token) }, body: JSON.stringify(patch) })
+      if (res.status === 401 || res.status === 403) { onExpired(); return }
+      const data = await res.json()
+      if (data.error) { setError(data.error); setSkyYInput(String(sky?.thresholdY ?? 0)); return }
+      setSky(data)
+      setSkyYInput(String(data.thresholdY))
+      toast('Sky entry saved')
+      await fetchDims()
+    } catch { setError('Save failed') } finally { setSkySaving(false) }
+  }
+
   useEffect(() => { fetchDims() }, [fetchDims])
+  useEffect(() => { fetchSky() }, [fetchSky])
   useEffect(() => { if (BIOME_TYPES.has(createUiType)) fetchBiomes() }, [createUiType]) // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { if (ETHER_TYPES.has(createUiType)) fetchEtherMeta() }, [createUiType]) // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { if (tpEditing != null) fetchPlayers() }, [tpEditing]) // eslint-disable-line react-hooks/exhaustive-deps
@@ -231,22 +261,24 @@ export default function DimsPanel({ token, onExpired }) {
             </div>
 
             {isFlatType && (
-              <Field label="Flat layers (block:height, bottom→top)" hint="Leave blank for default layers.">
+              <Field label="Flat layers (block:height, bottom→top)" hint="Blank uses the default layers">
                 <Input placeholder="minecraft:bedrock:1  minecraft:stone:6  minecraft:dirt:2  minecraft:grass_block:1" value={flatConfig} onChange={e => setFlatConfig(e.target.value)} spellCheck={false} />
               </Field>
             )}
 
             {isEtherType && etherParams && etherMeta && (
               <div className={styles.paramGrid}>
-                <Field label="Island frequency" hint="Lower spawns fewer islands.">
-                  <Slider value={etherParams.threshold} min={etherMeta.ranges.threshold[0]} max={etherMeta.ranges.threshold[1]}
+                <Field label="Island frequency" hint="Lower spawns fewer islands, high values slow chunk generation"
+                  aside={Number(etherParams.threshold).toFixed(2)}>
+                  <Slider hideValue value={etherParams.threshold} min={etherMeta.ranges.threshold[0]} max={etherMeta.ranges.threshold[1]}
                     step={0.01} onChange={v => setParam('threshold', v)} />
                 </Field>
-                <Field label="Grid spacing" hint="Larger spreads islands further apart.">
-                  <Slider value={etherParams.spacing} min={etherMeta.ranges.spacing[0]} max={etherMeta.ranges.spacing[1]}
+                <Field label="Grid spacing" hint="Larger spreads them further apart"
+                  aside={etherParams.spacing}>
+                  <Slider hideValue value={etherParams.spacing} min={etherMeta.ranges.spacing[0]} max={etherMeta.ranges.spacing[1]}
                     step={1} onChange={v => setParam('spacing', v)} />
                 </Field>
-                <Field label="Radius (blocks)" hint="How wide each island is. Rolled per island.">
+                <Field label="Radius (blocks)" hint="Width, rolled per island, no effect below the spacing value">
                   <div className={styles.pairRow}>
                     <Input type="number" aria-label="Minimum radius" value={etherParams.minRadius}
                       min={etherMeta.ranges.radius[0]} max={etherMeta.ranges.radius[1]}
@@ -256,7 +288,7 @@ export default function DimsPanel({ token, onExpired }) {
                       onChange={e => setParam('maxRadius', Number(e.target.value))} />
                   </div>
                 </Field>
-                <Field label="Thickness (blocks)" hint="How tall each island is. Independent of radius.">
+                <Field label="Thickness (blocks)" hint="Height, independent of width">
                   <div className={styles.pairRow}>
                     <Input type="number" aria-label="Minimum thickness" value={etherParams.minThickness}
                       min={etherMeta.ranges.thickness[0]} max={etherMeta.ranges.thickness[1]}
@@ -266,7 +298,7 @@ export default function DimsPanel({ token, onExpired }) {
                       onChange={e => setParam('maxThickness', Number(e.target.value))} />
                   </div>
                 </Field>
-                <Field label="Height band" hint="Y range island centres spawn in.">
+                <Field label="Height band" hint="Y range island centres spawn in">
                   <div className={styles.pairRow}>
                     <Input type="number" aria-label="Lowest island centre" value={etherParams.minCenterY}
                       min={etherMeta.ranges.height[0]} max={etherMeta.ranges.height[1]}
@@ -276,7 +308,7 @@ export default function DimsPanel({ token, onExpired }) {
                       onChange={e => setParam('maxCenterY', Number(e.target.value))} />
                   </div>
                 </Field>
-                <Field label="Structures" hint="Off generates none at all. On, they only appear inside terrain.">
+                <Field label="Structures" hint="On, only inside terrain">
                   <div className={styles.pairRow}>
                     <Toggle checked={etherParams.structures} onChange={v => setParam('structures', v)} aria-label="Generate structures" />
                     <span className={styles.hint}>{etherParams.structures ? 'Generated' : 'None'}</span>
@@ -313,10 +345,42 @@ export default function DimsPanel({ token, onExpired }) {
           </form>
         </SectionCard>
 
+        {sky && (
+          <SectionCard title="Sky Entry">
+            <div className={styles.skyGrid}>
+              <SwitchField label="Enabled" hint="glide up out of the overworld to reach the ether"
+                checked={sky.enabled} onChange={v => saveSky({ enabled: v })} disabled={skySaving} />
+
+              {sky.candidates.length === 0 ? (
+                <div className={styles.hint}>Create a dimension of type ether to give the sky somewhere to lead</div>
+              ) : (
+                <>
+                  <Field label="Linked ether" hint="the dim a climb leads into">
+                    <Select value={sky.override ?? ''} disabled={!sky.enabled || skySaving}
+                      onChange={e => saveSky({ dimId: e.target.value })} aria-label="Linked ether dimension">
+                      <option value="">{sky.resolved ? `First created (${sky.resolved})` : 'First created'}</option>
+                      {sky.candidates.map(id => <option key={id} value={id}>{id}</option>)}
+                    </Select>
+                  </Field>
+
+                  <Field label="Crossing height" hint={`0 uses the fall-out height (Y ${sky.dropY}) plus 20`}
+                    aside={`Y ${sky.resolvedThresholdY}`}>
+                    <Input type="number" value={skyYInput} disabled={!sky.enabled || skySaving}
+                      onChange={e => setSkyYInput(e.target.value)}
+                      onBlur={() => { const y = Number(skyYInput); if (y !== sky.thresholdY) saveSky({ thresholdY: y }) }}
+                      onKeyDown={e => { if (e.key === 'Enter') e.currentTarget.blur() }}
+                      aria-label="Crossing height" />
+                  </Field>
+                </>
+              )}
+            </div>
+          </SectionCard>
+        )}
+
         <ErrorBanner>{error}</ErrorBanner>
 
         {dims.length === 0 ? (
-          <EmptyState icon={<IconPortal size={30} />} label="No custom dimensions" hint="Create one above. A server restart is required before you can build in a new dimension." />
+          <EmptyState icon={<IconPortal size={30} />} label="No custom dimensions" hint="Create one above, then restart before building in it" />
         ) : (
           <div className={styles.grid}>
             {dims.map(dim => (
@@ -332,6 +396,7 @@ export default function DimsPanel({ token, onExpired }) {
                 <div className={styles.tags}>
                   <Badge variant="info">{dim.generatorType}</Badge>
                   {dim.portalBlock ? <Badge variant="ok">portal: {dim.portalBlock.split(':').pop()}</Badge> : <Badge>no portal</Badge>}
+                  {dim.sky && <Badge variant="ok">sky</Badge>}
                 </div>
                 {dim.generatorConfig && <span className={styles.config} title={dim.generatorConfig}>{dim.generatorConfig.length > 60 ? dim.generatorConfig.slice(0, 58) + '…' : dim.generatorConfig}</span>}
 

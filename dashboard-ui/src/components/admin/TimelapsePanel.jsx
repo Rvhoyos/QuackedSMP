@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { streamingDownload } from '../../lib/streamingDownload'
-import { Toolbar, IconButton, Btn, Toggle, Field, Input, SectionCard, EmptyState, ErrorBanner } from '../../ui'
+import { Toolbar, IconButton, Btn, Toggle, Field, Input, SectionCard, EmptyState, ErrorBanner, ConfirmDialog } from '../../ui'
 import { IconMapScroll } from './MinecraftIcons'
 import styles from './TimelapsePanel.module.css'
 
@@ -14,6 +14,7 @@ function dimLabel(id) {
 }
 
 export default function TimelapsePanel({ token, onExpired }) {
+  const [confirmFrame, setConfirmFrame] = useState(null)
   const [dims,       setDims]       = useState([]) // [{id, sizeBytes, frames(oldest-first)}]
   const [available,  setAvailable]  = useState([]) // all dim ids, the opt-in universe
   const [totalBytes, setTotalBytes] = useState(0)
@@ -305,7 +306,7 @@ export default function TimelapsePanel({ token, onExpired }) {
         {running && <CaptureMap progress={progress} />}
 
         {dims.length === 0 ? (
-          <EmptyState icon={<IconMapScroll size={30} />} label="No frames yet" hint="Turn on capture or hit Capture Now. Frames render as top-down maps you can play back here." />
+          <EmptyState icon={<IconMapScroll size={30} />} label="No frames yet" hint="Top-down frames you can play back here" />
         ) : (
           <SectionCard
             title="Playback"
@@ -338,11 +339,19 @@ export default function TimelapsePanel({ token, onExpired }) {
               <Btn size="sm" variant="ghost" onClick={() => { setPlaying(false); setIdx(frames.length - 1) }}>⏭</Btn>
               <label className={styles.speed}><span>Speed</span><select value={speed} onChange={e => setSpeed(Number(e.target.value))}>{SPEEDS.map(s => <option key={s} value={s}>{s} fps</option>)}</select></label>
               <span className={styles.ctrlSpacer} />
-              {current && <Btn size="sm" variant="danger" onClick={() => deleteFrame(current.name)}>Delete frame</Btn>}
+              {current && <Btn size="sm" variant="danger" onClick={() => setConfirmFrame(current.name)}>Delete frame</Btn>}
             </div>
           </SectionCard>
         )}
       </div>
+
+      <ConfirmDialog
+        open={!!confirmFrame} onOpenChange={o => !o && setConfirmFrame(null)}
+        title={confirmFrame ? `Delete frame ${confirmFrame}?` : ''}
+        description="The render is removed from disk. A frame captures one moment, so this one cannot be made again."
+        confirmLabel="Delete frame" tone="danger"
+        onConfirm={() => deleteFrame(confirmFrame)}
+      />
     </div>
   )
 }

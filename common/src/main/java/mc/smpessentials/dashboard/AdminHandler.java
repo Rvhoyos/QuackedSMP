@@ -15,6 +15,7 @@ import mc.smpessentials.chatfilter.ChatFilter;
 import mc.smpessentials.claims.storage.ClaimedSavedData;
 import mc.smpessentials.dims.DimManager;
 import mc.smpessentials.dims.EtherIslandParams;
+import mc.smpessentials.dims.EtherVerticalTravel;
 import mc.smpessentials.dims.GeneratorConfig;
 import mc.smpessentials.dims.DimSavedData;
 import mc.smpessentials.skills.SkillData;
@@ -191,6 +192,8 @@ public final class AdminHandler {
         sb.append(String.format("\"chatfilter_enabled\":%b,", SmpConfig.CHATFILTER_ENABLED));
         sb.append(String.format("\"shops_enabled\":%b,", SmpConfig.SHOPS_ENABLED));
         sb.append(String.format("\"economy_enabled\":%b,", SmpConfig.ECONOMY_ENABLED));
+        sb.append(String.format("\"rtp_enabled\":%b,", SmpConfig.RTP_ENABLED));
+        sb.append(String.format("\"welcome_book_enabled\":%b,", SmpConfig.WELCOME_BOOK_ENABLED));
         sb.append(String.format("\"commandblocks_enabled\":%b,", cmdBlocksEnabled));
         sb.append(String.format("\"backup_public_download\":%b,", SmpConfig.BACKUP_PUBLIC_DOWNLOAD));
         sb.append(String.format("\"backup_public_seed_disclosure\":%b,", SmpConfig.BACKUP_PUBLIC_SEED_DISCLOSURE));
@@ -267,6 +270,9 @@ public final class AdminHandler {
         sb.append(String.format("\"bluemap_op_claim_color\":\"%s\",", jsonEscape(SmpConfig.BLUEMAP_OP_CLAIM_COLOR)));
         sb.append(String.format("\"bluemap_vip_claim_color\":\"%s\",", jsonEscape(SmpConfig.BLUEMAP_VIP_CLAIM_COLOR)));
         sb.append(String.format("\"bluemap_worldborder_color\":\"%s\",", jsonEscape(SmpConfig.BLUEMAP_WORLDBORDER_COLOR)));
+        sb.append(String.format("\"bluemap_icon_max_distance\":%s,", SmpConfig.BLUEMAP_ICON_MAX_DISTANCE));
+        sb.append(String.format("\"bluemap_show_shops\":%b,", SmpConfig.BLUEMAP_SHOW_SHOPS));
+        sb.append(String.format("\"bluemap_show_youtube\":%b,", SmpConfig.BLUEMAP_SHOW_YOUTUBE));
         sb.append(String.format("\"bluemap_show_spawn_protection\":%b,", SmpConfig.BLUEMAP_SHOW_SPAWN_PROTECTION));
         sb.append(String.format("\"bluemap_spawn_protection_color\":\"%s\",", jsonEscape(SmpConfig.BLUEMAP_SPAWN_PROTECTION_COLOR)));
         // Tiers
@@ -300,25 +306,9 @@ public final class AdminHandler {
         sb.append(String.format("\"cap_safe_landing\":%.2f,", SmpConfig.CAP_SAFE_LANDING));
         // Kits
         sb.append(String.format("\"kits_enabled\":%b,", SmpConfig.KITS_ENABLED));
-        sb.append(String.format("\"kit_cooldown_seconds\":%d,", SmpConfig.KIT_COOLDOWN_SECONDS));
-        sb.append("\"kit_definitions\":[");
-        for (int i = 0; i < SmpConfig.KIT_DEFINITIONS.size(); i++) {
-            if (i > 0) sb.append(',');
-            var kit = SmpConfig.KIT_DEFINITIONS.get(i);
-            sb.append(String.format("{\"name\":\"%s\",\"displayName\":\"%s\",\"minTier\":%d,",
-                    jsonEscape(kit.name), jsonEscape(kit.displayName), kit.minTier));
-            sb.append(String.format("\"armor\":{\"head\":\"%s\",\"chest\":\"%s\",\"legs\":\"%s\",\"feet\":\"%s\"},",
-                    jsonEscape(kit.armor.head), jsonEscape(kit.armor.chest),
-                    jsonEscape(kit.armor.legs), jsonEscape(kit.armor.feet)));
-            sb.append("\"items\":[");
-            for (int j = 0; j < kit.items.size(); j++) {
-                if (j > 0) sb.append(',');
-                var item = kit.items.get(j);
-                sb.append(String.format("{\"item\":\"%s\",\"count\":%d}", jsonEscape(item.item), item.count));
-            }
-            sb.append("]}");
-        }
-        sb.append("]");
+        sb.append(String.format("\"kit_cooldown_seconds\":%d", SmpConfig.KIT_COOLDOWN_SECONDS));
+        // Kit definitions carry ItemStack JSON, which this hand-rolled writer cannot express.
+        // They have their own route, KitHandler, which round-trips them through Gson.
         sb.append("}");
         return sb.toString();
     }
@@ -351,6 +341,8 @@ public final class AdminHandler {
             if (patch.has("chatfilter_enabled")) { SmpConfig.CHATFILTER_ENABLED = patch.get("chatfilter_enabled").getAsBoolean(); changed++; }
             if (patch.has("shops_enabled"))     { SmpConfig.SHOPS_ENABLED     = patch.get("shops_enabled").getAsBoolean();     changed++; }
             if (patch.has("economy_enabled"))   { SmpConfig.ECONOMY_ENABLED   = patch.get("economy_enabled").getAsBoolean();   changed++; }
+            if (patch.has("rtp_enabled"))       { SmpConfig.RTP_ENABLED       = patch.get("rtp_enabled").getAsBoolean();       changed++; }
+            if (patch.has("welcome_book_enabled")) { SmpConfig.WELCOME_BOOK_ENABLED = patch.get("welcome_book_enabled").getAsBoolean(); changed++; }
             if (patch.has("backup_public_download")) { SmpConfig.BACKUP_PUBLIC_DOWNLOAD = patch.get("backup_public_download").getAsBoolean(); changed++; }
             if (patch.has("backup_public_seed_disclosure")) { SmpConfig.BACKUP_PUBLIC_SEED_DISCLOSURE = patch.get("backup_public_seed_disclosure").getAsBoolean(); changed++; }
             if (patch.has("backup_public_max_concurrent")) { SmpConfig.BACKUP_PUBLIC_MAX_CONCURRENT = patch.get("backup_public_max_concurrent").getAsInt(); changed++; }
@@ -433,6 +425,9 @@ public final class AdminHandler {
             if (patch.has("bluemap_op_claim_color"))    { SmpConfig.BLUEMAP_OP_CLAIM_COLOR    = patch.get("bluemap_op_claim_color").getAsString();     changed++; blueMapChanged = true; }
             if (patch.has("bluemap_vip_claim_color"))   { SmpConfig.BLUEMAP_VIP_CLAIM_COLOR   = patch.get("bluemap_vip_claim_color").getAsString();    changed++; blueMapChanged = true; }
             if (patch.has("bluemap_worldborder_color")) { SmpConfig.BLUEMAP_WORLDBORDER_COLOR = patch.get("bluemap_worldborder_color").getAsString();  changed++; blueMapChanged = true; }
+            if (patch.has("bluemap_icon_max_distance")) { SmpConfig.BLUEMAP_ICON_MAX_DISTANCE = patch.get("bluemap_icon_max_distance").getAsDouble(); changed++; blueMapChanged = true; }
+            if (patch.has("bluemap_show_shops"))        { SmpConfig.BLUEMAP_SHOW_SHOPS        = patch.get("bluemap_show_shops").getAsBoolean();        changed++; blueMapChanged = true; }
+            if (patch.has("bluemap_show_youtube"))      { SmpConfig.BLUEMAP_SHOW_YOUTUBE      = patch.get("bluemap_show_youtube").getAsBoolean();      changed++; blueMapChanged = true; }
             if (patch.has("bluemap_show_spawn_protection"))  { SmpConfig.BLUEMAP_SHOW_SPAWN_PROTECTION  = patch.get("bluemap_show_spawn_protection").getAsBoolean();  changed++; blueMapChanged = true; }
             if (patch.has("bluemap_spawn_protection_color")) { SmpConfig.BLUEMAP_SPAWN_PROTECTION_COLOR = patch.get("bluemap_spawn_protection_color").getAsString();  changed++; blueMapChanged = true; }
             // Lists
@@ -486,36 +481,6 @@ public final class AdminHandler {
             // Kits
             if (patch.has("kits_enabled"))         { SmpConfig.KITS_ENABLED         = patch.get("kits_enabled").getAsBoolean();       changed++; }
             if (patch.has("kit_cooldown_seconds"))  { SmpConfig.KIT_COOLDOWN_SECONDS  = patch.get("kit_cooldown_seconds").getAsLong();  changed++; }
-            if (patch.has("kit_definitions") && patch.get("kit_definitions").isJsonArray()) {
-                SmpConfig.KIT_DEFINITIONS.clear();
-                for (var el : patch.getAsJsonArray("kit_definitions")) {
-                    if (!el.isJsonObject()) continue;
-                    JsonObject ko = el.getAsJsonObject();
-                    var kit = new mc.smpessentials.config.ConfigData.KitDef();
-                    kit.name        = ko.has("name")        ? ko.get("name").getAsString()        : "";
-                    kit.displayName = ko.has("displayName") ? ko.get("displayName").getAsString() : "";
-                    kit.minTier     = ko.has("minTier")     ? ko.get("minTier").getAsInt()        : 0;
-                    if (ko.has("armor") && ko.get("armor").isJsonObject()) {
-                        JsonObject ao = ko.getAsJsonObject("armor");
-                        kit.armor.head  = ao.has("head")  ? ao.get("head").getAsString()  : "";
-                        kit.armor.chest = ao.has("chest") ? ao.get("chest").getAsString() : "";
-                        kit.armor.legs  = ao.has("legs")  ? ao.get("legs").getAsString()  : "";
-                        kit.armor.feet  = ao.has("feet")  ? ao.get("feet").getAsString()  : "";
-                    }
-                    if (ko.has("items") && ko.get("items").isJsonArray()) {
-                        kit.items.clear();
-                        for (var ie : ko.getAsJsonArray("items")) {
-                            if (!ie.isJsonObject()) continue;
-                            JsonObject itemObj = ie.getAsJsonObject();
-                            String itemId = itemObj.has("item")  ? itemObj.get("item").getAsString() : "";
-                            int count     = itemObj.has("count") ? itemObj.get("count").getAsInt()   : 1;
-                            kit.items.add(new mc.smpessentials.config.ConfigData.KitItem(itemId, count));
-                        }
-                    }
-                    if (!kit.name.isBlank()) SmpConfig.KIT_DEFINITIONS.add(kit);
-                }
-                changed++;
-            }
 
             if (changed > 0) {
                 ConfigIO.save();
@@ -526,7 +491,7 @@ public final class AdminHandler {
                 if (blueMapChanged) {
                     var mm = BlueMapIntegration.getMarkerManager();
                     var sv = BlueMapIntegration.getServer();
-                    if (mm != null && sv != null) sv.execute(mm::updateAll);
+                    if (mm != null && sv != null) sv.execute(() -> mm.updateAll(sv));
                 }
             }
             return String.format("{\"ok\":true,\"changed\":%d}", changed);
@@ -630,6 +595,8 @@ public final class AdminHandler {
             try {
                 DimSavedData savedData = DimSavedData.get(server);
                 List<ResourceKey<Level>> allLevels = DimManager.listAll(server);
+                String skyId = DimManager.skyEther(server)
+                        .map(level -> level.dimension().identifier().toString()).orElse(null);
                 StringBuilder sb = new StringBuilder("[");
                 boolean first = true;
                 for (ResourceKey<Level> key : allLevels) {
@@ -648,6 +615,7 @@ public final class AdminHandler {
                     entry.flatMap(DimSavedData.DimEntry::portalBlock).ifPresentOrElse(
                         b -> sb.append('"').append(jsonEscape(b)).append('"'),
                         () -> sb.append("null"));
+                    sb.append(",\"sky\":").append(id.equals(skyId));
                     sb.append('}');
                 }
                 sb.append(']');
@@ -844,6 +812,86 @@ public final class AdminHandler {
             return future.get(5, TimeUnit.SECONDS);
         } catch (Exception e) {
             return err(400, "Invalid request: " + jsonEscape(e.getMessage()));
+        }
+    }
+
+    // GET/POST /api/admin/dims/sky. Reads and writes sky entry: the toggle, the crossing height, and
+    // which ether dim the overworld leads up into.
+    // GET returns the resolved values so the panel never has to work out what "auto" or
+    // "first created" mean. POST body: {enabled?, thresholdY?, dimId?}, where dimId "" clears the
+    // override back to first created.
+    public static String handleDimSky(String method, Map<String, String> headers, String body,
+                                      MinecraftServer server) {
+        if (!SmpConfig.ADMIN_ENABLED)           return err(403, "Admin panel disabled");
+        if (!AdminAuth.isAuthorized(headers))   return err(403, "Unauthorized");
+        if (server == null)                     return err(503, "Server not ready");
+
+        CompletableFuture<String> future = new CompletableFuture<>();
+        server.execute(() -> {
+            try {
+                DimSavedData saved = DimSavedData.get(server);
+                ServerLevel overworld = server.overworld();
+
+                if ("POST".equals(method)) {
+                    JsonObject req = JsonParser.parseString(body).getAsJsonObject();
+
+                    if (req.has("thresholdY")) {
+                        int y = req.get("thresholdY").getAsInt();
+                        int floor = EtherVerticalTravel.dropY(overworld);
+                        if (y != 0 && y <= floor) {
+                            future.complete(err(400, "Crossing height must be above " + floor
+                                    + ", the height a fall out of the ether lands at, or 0 for automatic"));
+                            return;
+                        }
+                        SmpConfig.ETHER_SKY_ENTRY_Y = y;
+                    }
+                    if (req.has("enabled")) {
+                        SmpConfig.ETHER_SKY_ENTRY_ENABLED = req.get("enabled").getAsBoolean();
+                    }
+                    if (req.has("dimId")) {
+                        String dimId = req.get("dimId").getAsString().strip();
+                        if (dimId.isEmpty()) {
+                            saved.setSkyEther(Optional.empty());
+                        } else if (!DimManager.isEtherDim(dimId)) {
+                            future.complete(err(400, jsonEscape(dimId + " is not an ether dimension")));
+                            return;
+                        } else {
+                            saved.setSkyEther(Optional.of(dimId));
+                        }
+                    }
+                    ConfigIO.save();
+                }
+
+                String resolved = DimManager.skyEther(server)
+                        .map(level -> level.dimension().identifier().toString()).orElse(null);
+                List<String> candidates = saved.getEntries().stream()
+                        .map(DimSavedData.DimEntry::id)
+                        .filter(DimManager::isEtherDim)
+                        .toList();
+
+                StringBuilder sb = new StringBuilder("{");
+                sb.append("\"enabled\":").append(SmpConfig.ETHER_SKY_ENTRY_ENABLED);
+                sb.append(",\"thresholdY\":").append(SmpConfig.ETHER_SKY_ENTRY_Y);
+                sb.append(",\"resolvedThresholdY\":").append(EtherVerticalTravel.entryY(overworld));
+                sb.append(",\"dropY\":").append(EtherVerticalTravel.dropY(overworld));
+                sb.append(",\"override\":");
+                saved.getSkyEther().ifPresentOrElse(
+                        id -> sb.append('"').append(jsonEscape(id)).append('"'),
+                        () -> sb.append("null"));
+                sb.append(",\"resolved\":");
+                if (resolved == null) sb.append("null");
+                else sb.append('"').append(jsonEscape(resolved)).append('"');
+                sb.append(",\"candidates\":").append(jsonStrArr(candidates));
+                sb.append('}');
+                future.complete(sb.toString());
+            } catch (Exception ex) {
+                future.complete(err(500, jsonEscape(String.valueOf(ex.getMessage()))));
+            }
+        });
+        try {
+            return future.get(5, TimeUnit.SECONDS);
+        } catch (Exception e) {
+            return err(500, "Timeout reading sky entry");
         }
     }
 
@@ -2026,16 +2074,18 @@ public final class AdminHandler {
                     if (i > 0) sb.append(',');
                     var shop = shops.get(i);
                     ServerLevel sl = server.getLevel(shop.dimension());
-                    int stock = sl != null ? mc.smpessentials.shops.ShopService.getStockCount(sl, shop) : 0;
+                    var reading = mc.smpessentials.shops.ShopService.readStock(sl, shop);
                     sb.append(String.format(
                             "{\"x\":%d,\"y\":%d,\"z\":%d,\"dim\":\"%s\",\"owner\":\"%s\",\"ownerName\":\"%s\","
-                                    + "\"item\":\"%s\",\"price\":%d,\"currency\":\"%s\",\"stock\":%s,\"spawnShop\":%b,\"unit\":%d}",
+                                    + "\"item\":\"%s\",\"price\":%d,\"currency\":\"%s\",\"stock\":%s,\"stockLive\":%b,"
+                                    + "\"spawnShop\":%b,\"unit\":%d}",
                             shop.pos().getX(), shop.pos().getY(), shop.pos().getZ(),
                             jsonEscape(shop.dimension().identifier().toString()),
                             shop.owner(), jsonEscape(skills.getDisplayName(shop.owner())),
                             jsonEscape(shop.itemId()), shop.pricePerItem(),
                             jsonEscape(shop.currencyItemId()),
-                            shop.spawnShop() ? "\"unlimited\"" : String.valueOf(stock),
+                            reading.unlimited() ? "\"unlimited\"" : String.valueOf(reading.count()),
+                            reading.live(),
                             shop.spawnShop(),
                             shop.unit()));
                 }

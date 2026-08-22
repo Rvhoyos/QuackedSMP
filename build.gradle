@@ -51,6 +51,38 @@ tasks.register('npmBuild', Exec) {
     }
 }
 
+// ── BlueMap icon export ──────────────────────────────────────────────────────
+// Run: ./gradlew exportIcons
+// Renders the panel's pixel icons (MinecraftIcons.jsx) to standalone SVGs the BlueMap
+// integration uploads to its AssetStorage, so panel and map never fork the art.
+// Unlike npmBuild this writes straight into resources, so processResources depends on
+// it rather than racing it.
+
+def iconOutDir = rootProject.file('common/src/main/resources/bluemap/icons')
+
+tasks.register('exportIcons', Exec) {
+    group       = 'dashboard'
+    description = 'Exports panel pixel icons to SVG for BlueMap markers'
+    dependsOn   'npmInstall'
+    workingDir  dashboardUiDir
+    commandLine(*npmCmd, 'run', 'export-icons')
+
+    inputs.file "$dashboardUiDir/src/components/admin/MinecraftIcons.jsx"
+    inputs.file "$dashboardUiDir/scripts/export-icons.mjs"
+    outputs.dir iconOutDir
+
+    onlyIf { dashboardUiDir.exists() }
+}
+
+// The icons are generated into common's resource dir, and the platform modules pull that dir
+// into their own compile and packaging tasks, so everything that reads it has to wait for the
+// generator. Gradle fails the build rather than racing, so this list has to stay complete.
+subprojects {
+    tasks.withType(ProcessResources).configureEach { dependsOn rootProject.tasks.named('exportIcons') }
+    tasks.withType(JavaCompile).configureEach     { dependsOn rootProject.tasks.named('exportIcons') }
+    tasks.withType(Jar).configureEach             { dependsOn rootProject.tasks.named('exportIcons') }
+}
+
 allprojects {
     group = rootProject.maven_group
     version = rootProject.mod_version

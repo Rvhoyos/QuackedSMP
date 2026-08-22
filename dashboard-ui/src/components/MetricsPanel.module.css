@@ -15,7 +15,7 @@
 .bandTitleRow { display: flex; align-items: center; gap: 8px; }
 .bandIcon { display: flex; image-rendering: pixelated; }
 .bandTitle { font-family: var(--font-pixel); font-size: 9px; letter-spacing: 0.4px; color: var(--txt-primary); text-shadow: 1px 1px 0 rgba(0,0,0,0.5); }
-.bandSub { font-family: var(--font-sans); font-size: 11px; color: var(--txt-faint); }
+.bandSub { font-family: var(--font-sans); font-size: 12.5px; color: var(--txt-muted); }
 
 .grid {
   display: grid;
@@ -57,7 +57,7 @@
 }
 .big   { font-family: var(--font-pixel); font-size: 15px; line-height: 1; text-shadow: 1px 1px 0 rgba(0,0,0,0.5); }
 .bigSm { font-family: var(--font-pixel); font-size: 9px; line-height: 1.1; text-shadow: 1px 1px 0 rgba(0,0,0,0.5); }
-.unit  { font-family: var(--font-sans); font-size: 10px; color: var(--txt-faint); }
+.unit  { font-family: var(--font-sans); font-size: 12.5px; color: var(--txt-muted); }
 
 /* Sparkline */
 .spark { width: 100%; height: 22px; opacity: 0.85; }
@@ -66,5 +66,5 @@
 /* Substats */
 .stats { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
 .stat { display: flex; flex-direction: column; align-items: center; gap: 1px; }
-.statLabel { font-family: var(--font-sans); font-size: 9px; color: var(--txt-faint); text-transform: uppercase; letter-spacing: 0.4px; }
-.statValue { font-family: var(--font-mono); font-size: 11px; color: var(--txt-secondary); }
+.statLabel { font-family: var(--font-sans); font-size: 12.5px; color: var(--txt-muted); text-transform: uppercase; letter-spacing: 0.4px; }
+.statValue { font-family: var(--font-mono); font-size: 11.5px; color: var(--txt-secondary); }

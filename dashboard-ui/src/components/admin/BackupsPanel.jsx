@@ -280,7 +280,7 @@ export default function BackupsPanel({ token, onExpired }) {
         <div className={styles.body}>
           <RestoreInfo info={restoreInfo} />
           {!loading && snapshots.length === 0 ? (
-            <EmptyState icon={<IconShulkerBox size={30} />} label="No snapshots yet" hint="Create one above. Snapshots zip the world folder; autosave pauses during the zip." />
+            <EmptyState icon={<IconShulkerBox size={30} />} label="No snapshots yet" hint="Create one above, autosave pauses during the zip" />
           ) : (
             <div className={styles.list}>
               {snapshots.map(snap => (
@@ -308,7 +308,7 @@ export default function BackupsPanel({ token, onExpired }) {
                 <Input type="number" min={1} value={intervalHours} onChange={e => setIntervalHours(Number(e.target.value))} onBlur={e => saveIntervalHours(e.target.value)} />
               </Field>
             )}
-            <Field label="Keep last N snapshots" hint="Older snapshots are pruned after each backup.">
+            <Field label="Keep last N snapshots" hint="Older snapshots are pruned after each backup">
               <Input type="number" min={1} value={maxCount} onChange={e => setMaxCount(Number(e.target.value))} onBlur={e => saveMaxCount(e.target.value)} />
             </Field>
           </SectionCard>

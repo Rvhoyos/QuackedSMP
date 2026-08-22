@@ -39,7 +39,7 @@
 .topSpacer { flex: 1; }
 .livePill {
   display: inline-flex; align-items: center; gap: 6px;
-  font-family: var(--font-pixel); font-size: 6px; letter-spacing: 0.4px;
+  font-family: var(--font-pixel); font-size: 8px; letter-spacing: 0.4px;
   padding: 6px 9px; text-shadow: 1px 1px 0 rgba(0,0,0,0.5);
 }
 .liveDot { width: 7px; height: 7px; border-radius: 50%; }
@@ -88,8 +88,8 @@
 }
 .railSub {
   font-family: var(--font-pixel);
-  font-size: 6px;
-  color: var(--txt-faint);
+  font-size: 8px;
+  color: var(--txt-muted);
   letter-spacing: 0.6px;
 }
 
@@ -105,9 +105,9 @@
 
 .groupLabel {
   font-family: var(--font-pixel);
-  font-size: 6px;
+  font-size: 8px;
   letter-spacing: 0.6px;
-  color: var(--txt-faint);
+  color: var(--txt-muted);
   padding: 6px 14px 6px;
   text-shadow: 1px 1px 0 rgba(0,0,0,0.5);
 }
@@ -131,7 +131,7 @@
 
 .itemLabel {
   font-family: var(--font-pixel);
-  font-size: 7px;
+  font-size: 8px;
   letter-spacing: 0.2px;
   color: var(--txt-muted);
   text-shadow: 1px 1px 0 rgba(0,0,0,0.5);
@@ -153,7 +153,7 @@
   margin: 8px 12px 12px;
   padding: 8px 10px;
   font-family: var(--font-pixel);
-  font-size: 6px;
+  font-size: 8px;
   letter-spacing: 0.3px;
   color: var(--red);
   background: rgba(243,139,168,0.08);

@@ -50,6 +50,7 @@ public class GeneralCommands {
                 .then(mc.smpessentials.keepinv.KeepInvCommand.keepInvSubtree())
                 .then(mc.smpessentials.hardcore.HardcoreCommands.hardcoreSubtree())
                 .then(mc.smpessentials.kits.KitCommands.kitSubtree())
+                .then(mc.smpessentials.welcomebook.WelcomeBookCommand.guideSubtree())
                 .then(mc.smpessentials.regen.ChunkRegenCommands.regenSubtree()));
 
         dispatcher.register(Commands.literal("mute")
@@ -139,13 +140,22 @@ public class GeneralCommands {
         net.minecraft.ChatFormatting desc = net.minecraft.ChatFormatting.WHITE;
 
         CommandSourceStack src = ctx.getSource();
+
+        // With the welcome book on, the full reference is the book itself, so hand that over
+        // instead of printing a shorter list the player has to scroll back through.
+        if (mc.smpessentials.welcomebook.WelcomeBookService.isEnabled()
+                && src.getEntity() instanceof ServerPlayer player) {
+            mc.smpessentials.welcomebook.WelcomeBookService.giveWithFeedback(player);
+            return 1;
+        }
+
         src.sendSystemMessage(
                 Component.literal("== QuackedSMP Commands ==").withStyle(title,
                         net.minecraft.ChatFormatting.BOLD));
 
         src.sendSystemMessage(Component.literal("/claim").withStyle(cmd)
                 .append(Component.literal(" - Claim current chunk to protect it").withStyle(desc)));
-        src.sendSystemMessage(Component.literal("/claim trust <player>").withStyle(cmd)
+        src.sendSystemMessage(Component.literal("/trust <player>").withStyle(cmd)
                 .append(Component.literal(" - Give friend permission in all your claims").withStyle(desc)));
         src.sendSystemMessage(Component.literal("/claim info").withStyle(cmd)
                 .append(Component.literal(" - Show your claim count, limit, and current chunk status").withStyle(desc)));
@@ -171,7 +181,7 @@ public class GeneralCommands {
             ctx.getSource().sendFailure(Component.literal("BlueMap is not loaded."));
             return 0;
         }
-        mgr.updateAll();
+        mgr.updateAll(ctx.getSource().getServer());
         ctx.getSource().sendSuccess(() -> Component.literal("BlueMap markers refreshed."), true);
         return 1;
     }

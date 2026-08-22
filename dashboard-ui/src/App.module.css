@@ -15,26 +15,10 @@
   background-attachment: fixed, fixed, fixed;
 }
 
-/* ── Update banner ── */
-.updateBanner {
-  display: flex; align-items: center; justify-content: center; gap: 12px;
-  padding: 8px 24px; background: #2A2010; border-bottom: 2px solid #5A4020;
-  font-family: var(--font-pixel); font-size: 7px; color: #FFAA00;
-  text-shadow: 1px 1px 0 rgba(0,0,0,0.6); flex-shrink: 0;
-}
-.updateBanner strong { color: #FFFF55; }
-.updateLink {
-  padding: 4px 12px; background: var(--mc-stone);
-  border-top: 2px solid var(--mc-stone-light); border-left: 2px solid var(--mc-stone-light);
-  border-bottom: 2px solid #222; border-right: 2px solid #222;
-  font-family: var(--font-pixel); font-size: 6px; color: #55FF55; text-decoration: none;
-  text-shadow: 1px 1px 0 rgba(0,0,0,0.5); cursor: pointer;
-}
-.updateLink:hover { background: #6E6E6E; color: #AAFFAA; }
-.updateDismiss { background: none; border: none; color: #AA8855; font-size: 16px; cursor: pointer; padding: 0 4px; line-height: 1; }
-.updateDismiss:hover { color: #FFAA00; }
-
 /* ── Download world banners + modal ── */
+.bannerDismiss { background: none; border: none; color: #AA8855; font-size: 16px; cursor: pointer; padding: 0 4px; line-height: 1; }
+.bannerDismiss:hover { color: #FFAA00; }
+
 .dlErrorBanner {
   display: flex; align-items: center; justify-content: center; gap: 12px;
   padding: 8px 24px; background: #2A1010; border-bottom: 2px solid #5A1010;

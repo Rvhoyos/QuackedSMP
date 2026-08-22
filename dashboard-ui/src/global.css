@@ -66,13 +66,24 @@
   --surf-slot: #141414; /* inventory-slot recess (inputs, wells) */
 
   /* ── Text roles ──────────────────────────────────────────────────
-     All chosen to clear WCAG AA (~4.5:1) on the --surf-1/--surf-2
-     panel backgrounds. Use these instead of raw #444/#555/#666.
-     --txt-faint is for PIXEL-FONT labels only, never prose. */
+     Measured against --panel-card, NOT the old flat --surf-1/--surf-2.
+     That matters: the "Depth of the World" pass replaced flat #2A2A2A
+     cards with a lighter purple slab, and these values were never
+     re-derived against it. On the lightest surface text ever sits on
+     (--panel-card-hover) the old --txt-faint scored 2.23:1 and the old
+     --txt-muted 3.16:1, both under AA.
+
+     Worst-case ratios on --panel-card-hover:
+       primary 8.26   secondary 5.87   muted 4.54   faint 3.09
+
+     Three readable tiers, not four: a fourth step cannot clear 4.5:1 on
+     this slab and still look different from the third. --txt-faint is
+     therefore for PLACEHOLDER and DISABLED text only, never for a label,
+     a heading, or prose. Reach for size and weight for more hierarchy. */
   --txt-primary:   #ECECF2;
-  --txt-secondary: #BFC2CC;
-  --txt-muted:     #9A9DA8;
-  --txt-faint:     #7E828E;
+  --txt-secondary: #C6C9D3;
+  --txt-muted:     #AEB1BC;
+  --txt-faint:     #8E919C;
 
   /* Semantic accents (reuse Catppuccin hues, named by intent) */
   --accent:        var(--mc-wood-light);
@@ -80,6 +91,20 @@
   --warn:          var(--yellow);
   --danger:        var(--red);
   --info:          var(--blue);
+
+  /* ── Vertical rhythm ─────────────────────────────────────────────
+     A form control is three stacked things: label, control, hint. So the
+     gap BETWEEN rows has to beat the gap inside one, or a hint ends up
+     sitting closer to the next row's label than to its own control, which
+     is what makes a dense panel feel cramped.
+
+     --gap-row is therefore deliberately larger than --gap-col, and grids
+     of fields must use both: gap: var(--gap-row) var(--gap-col). */
+  --gap-field:  8px;   /* label -> control -> hint, inside one Field */
+  --gap-col:   16px;   /* between fields sharing a line */
+  --gap-row:   20px;   /* between rows of fields */
+  --gap-block: 18px;   /* between cards and major blocks */
+  --pad-panel: 18px;   /* panel body padding */
 
   /* Focus ring for keyboard a11y on themed controls */
   --focus-ring:    0 0 0 2px var(--crust), 0 0 0 4px var(--mc-wood-light);
@@ -126,12 +151,12 @@
      header bands feel carved. */
   --panel-card:
     var(--grain-speckle),
-    linear-gradient(180deg, #43424f 0%, #3a3945 52%, #33323d 100%);
+    linear-gradient(180deg, #3b3a46 0%, #33323d 52%, #2d2c36 100%);
   --panel-card-hover:
     var(--grain-speckle),
-    linear-gradient(180deg, #4c4b59 0%, #3d3c48 100%);
+    linear-gradient(180deg, #44434f 0%, #37363f 100%);
   --panel-card-head:
-    linear-gradient(180deg, #2b2a36 0%, #1f1e28 100%);
+    linear-gradient(180deg, #25242e 0%, #1b1a23 100%);
   /* Neutral stone button face (was flat --surf-3). */
   --btn-face:       linear-gradient(180deg, #3b3b45 0%, #313139 100%);
   --btn-face-hover: linear-gradient(180deg, #46464f 0%, #3b3b44 100%);

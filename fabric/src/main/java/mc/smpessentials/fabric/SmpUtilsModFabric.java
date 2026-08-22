@@ -80,6 +80,7 @@ public final class SmpUtilsModFabric implements ModInitializer {
             net.minecraft.server.level.ServerPlayer player = handler.getPlayer();
             mc.smpessentials.skills.SkillEvents.onPlayerLoggedOut(player);
             mc.smpessentials.teleport.TeleportService.clearForPlayer(player.getUUID());
+            mc.smpessentials.rtp.RtpService.get().forget(player.getUUID());
             mc.smpessentials.antixray.AntiXrayEngine.onPlayerDisconnect(player.getUUID());
             mc.smpessentials.slimechunk.SlimeChunkHint.onDisconnect(player.getUUID());
             mc.smpessentials.endfinder.EndFinder.onDisconnect(player.getUUID());
@@ -111,8 +112,9 @@ public final class SmpUtilsModFabric implements ModInitializer {
             mc.smpessentials.bluemap.BlueMapIntegration.onServerTick(server);
             for (net.minecraft.server.level.ServerPlayer player : server.getPlayerList().getPlayers()) {
                 mc.smpessentials.teleport.TeleportScheduler.onPlayerTick(player);
+                mc.smpessentials.rtp.RtpService.get().tick(player);
                 mc.smpessentials.skills.SkillEvents.onPlayerTick(player);
-                mc.smpessentials.dims.EtherFallthrough.tick(player);
+                mc.smpessentials.dims.EtherVerticalTravel.tick(player);
                 mc.smpessentials.antixray.AntiXrayEngine.tickPlayer(player);
                 mc.smpessentials.slimechunk.SlimeChunkHint.tick(player);
                 mc.smpessentials.endfinder.EndFinder.tick(player);

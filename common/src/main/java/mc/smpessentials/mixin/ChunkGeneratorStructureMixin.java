@@ -19,6 +19,7 @@ import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemp
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
@@ -54,8 +55,7 @@ public abstract class ChunkGeneratorStructureMixin {
                 (ChunkGenerator) (Object) this, state, structureManager, centerChunk);
     }
 
-    // With no structures generated there is nothing to find, and vanilla's search would walk
-    // thousands of candidate chunks on the server thread until the watchdog kills the server.
+    // With no structures generated there is nothing to find, so answer immediately.
     @Inject(method = "findNearestMapStructure", at = @At("HEAD"), cancellable = true)
     private void onFindNearestMapStructure(ServerLevel level, HolderSet<Structure> wantedStructures,
                                             BlockPos pos, int maxSearchRadius, boolean createReference,
@@ -64,5 +64,31 @@ public abstract class ChunkGeneratorStructureMixin {
         if (DimManager.isEtherDim(dimId) && !DimManager.etherStructuresEnabled(dimId)) {
             cir.setReturnValue(null);
         }
+    }
+
+    /*
+     * Caps how far the search may walk in an ether dim, whether or not structures are on.
+     *
+     * findNearestMapStructure walks rings 0..maxSearchRadius and only stops early once a ring finds
+     * something. Vanilla passes 100 from /locate, which is roughly 4 * 100 * 100 candidate chunks,
+     * and each candidate blocks the server thread on a chunk scan plus a noise-column placement
+     * check. In the overworld a village turns up in the first ring or two. An ether dim is mostly
+     * void, so the wanted structure is usually absent and the full walk runs: measured at over 60
+     * seconds on a 26.2 Fabric server, which trips the 60 second watchdog and kills the server.
+     *
+     * 8 rings is roughly 4 * 8 * 8 = 256 candidates. The crashed run proves a candidate costs at
+     * least 1.5 ms (over 60 s for fewer than 40400 of them), so 256 is on the order of a second, and
+     * stays under the watchdog even if a candidate turns out to be several times more expensive than
+     * that floor. The search just reports nothing found past that range.
+     */
+    private static final int ETHER_MAX_SEARCH_RADIUS = 8;
+
+    // Mixin only accepts the bare value or the value followed by every parameter of the target,
+    // and the dimension is needed here, so the full list is repeated.
+    @ModifyVariable(method = "findNearestMapStructure", at = @At("HEAD"), argsOnly = true, ordinal = 0)
+    private int clampEtherSearchRadius(int radius, ServerLevel level, HolderSet<Structure> wantedStructures,
+                                        BlockPos pos, int maxSearchRadius, boolean createReference) {
+        if (!DimManager.isEtherDim(level.dimension().identifier().toString())) return radius;
+        return Math.min(radius, ETHER_MAX_SEARCH_RADIUS);
     }
 }

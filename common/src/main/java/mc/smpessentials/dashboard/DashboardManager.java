@@ -3,6 +3,7 @@ package mc.smpessentials.dashboard;
 import mc.smpessentials.SmpUtilsMod;
 import mc.smpessentials.commandblocks.CommandBlockHandler;
 import mc.smpessentials.config.SmpConfig;
+import mc.smpessentials.serverlog.ServerLogService;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.level.storage.LevelResource;
 
@@ -78,6 +79,7 @@ public final class DashboardManager {
     // ── Start / stop ───────────────────────────────────────────────────────────
 
     private static void start(int port) {
+        ServerLogService.get().start();
         DashboardServer s = new DashboardServer(port);
         registerRoutes(s);
         s.start();
@@ -99,6 +101,7 @@ public final class DashboardManager {
 
     private static void stop() {
         running = false;
+        ServerLogService.get().stop();
         ScheduledExecutorService sc = scheduler;
         if (sc != null) { sc.shutdown(); scheduler = null; }
         DashboardServer s = server;
@@ -175,6 +178,7 @@ public final class DashboardManager {
                 (m, h, b) -> AdminHandler.handlePlayers(m, h, b, mcServer));
         s.addRoute("/api/admin/exec",
                 (m, h, b) -> AdminHandler.handleExec(m, h, b, mcServer));
+        s.addRoute("/api/admin/logs",   LogHandler::handleLogs);
         s.addRoute("/api/admin/config",
                 (m, h, b) -> "GET".equals(m)
                         ? AdminHandler.handleConfigGet(m, h, b, mcServer)
@@ -195,6 +199,8 @@ public final class DashboardManager {
                 (m, h, b) -> AdminHandler.handleDimTp(m, h, b, mcServer));
         s.addRoute("/api/admin/dims/setportal",
                 (m, h, b) -> AdminHandler.handleDimSetPortal(m, h, b, mcServer));
+        s.addRoute("/api/admin/dims/sky",
+                (m, h, b) -> AdminHandler.handleDimSky(m, h, b, mcServer));
         s.addRoute("/api/admin/blocks",
                 (m, h, b) -> AdminHandler.handleBlocksGet(m, h, b));
         s.addRoute("/api/admin/restore-info",
@@ -319,6 +325,25 @@ public final class DashboardManager {
                 TimelapseHandler::handleFrame);
         s.addDownloadRoute("/api/admin/timelapse/export",
                 TimelapseHandler::handleExport);
+
+        s.addRoute("/api/admin/rtp",
+                (m, h, b) -> RtpHandler.handleGet(m, h, b, mcServer));
+        s.addRoute("/api/admin/rtp/save",
+                (m, h, b) -> RtpHandler.handleSave(m, h, b, mcServer));
+
+        s.addRoute("/api/admin/welcomebook",
+                (m, h, b) -> WelcomeBookHandler.handleGet(m, h, b, mcServer));
+        s.addRoute("/api/admin/welcomebook/save",
+                (m, h, b) -> WelcomeBookHandler.handleSave(m, h, b, mcServer));
+
+        s.addRoute("/api/admin/kits",
+                (m, h, b) -> KitHandler.handleGet(m, h, b, mcServer));
+        s.addRoute("/api/admin/kits/save",
+                (m, h, b) -> KitHandler.handleSave(m, h, b, mcServer));
+
+        // Shared by every editor that stores an item or an effect, not just RTP.
+        s.addRoute("/api/admin/registry",
+                (m, h, b) -> ItemHandler.handleRegistry(m, h, b, mcServer));
     }
 
     // ── Scheduled ─────────────────────────────────────────────────────────────

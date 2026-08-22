@@ -34,7 +34,7 @@
 }
 .btn:disabled { opacity: 0.4; cursor: default; }
 
-.btn.sm { font-size: 6px; padding: 5px 8px; gap: 4px; }
+.btn.sm { font-size: 8px; padding: 7px 11px; gap: 5px; }
 .btn.lg { font-size: 9px; padding: 10px 16px; }
 .btn.block { display: flex; width: 100%; }
 
@@ -76,7 +76,7 @@
 /* ── Badge ────────────────────────────────────────────────────────────────── */
 .badge {
   display: inline-flex; align-items: center; gap: 4px;
-  font-family: var(--font-pixel); font-size: 6px; letter-spacing: 0.3px;
+  font-family: var(--font-pixel); font-size: 8px; letter-spacing: 0.3px;
   padding: 3px 6px; color: var(--txt-secondary);
   background: rgba(255,255,255,0.05);
   border: 1px solid rgba(255,255,255,0.12);
@@ -100,7 +100,7 @@
   font-family: var(--font-pixel); font-size: 8px; letter-spacing: 0.4px;
   color: var(--txt-secondary); text-shadow: 1px 1px 0 rgba(0,0,0,0.5);
 }
-.toolbarTitle .count { color: var(--txt-faint); }
+.toolbarTitle .count { color: var(--txt-muted); }
 .toolbarActions { display: flex; align-items: center; gap: 8px; }
 
 /* ── Empty / Loading states ───────────────────────────────────────────────── */
@@ -112,7 +112,7 @@
   color: var(--txt-muted); line-height: 1.8;
 }
 .emptyIcon { opacity: 0.35; image-rendering: pixelated; }
-.emptyHint { font-family: var(--font-sans); font-size: 12px; color: var(--txt-faint); max-width: 340px; }
+.emptyHint { font-family: var(--font-sans); font-size: 12.5px; color: var(--txt-muted); max-width: 340px; }
 
 .spinner {
   width: 22px; height: 22px;
@@ -127,18 +127,25 @@
 .errorBanner {
   display: flex; align-items: center; gap: 10px;
   margin: 10px 14px; padding: 9px 12px;
-  font-family: var(--font-sans); font-size: 12px; color: #ffc7d0;
+  font-family: var(--font-sans); font-size: 12.5px; color: #ffc7d0;
   background: rgba(243,139,168,0.1);
   border-left: 3px solid var(--red);
 }
 
 /* ── Field / Input / Select ───────────────────────────────────────────────── */
-.field { display: flex; flex-direction: column; gap: 6px; }
+.field { display: flex; flex-direction: column; gap: var(--gap-field); }
+/* Label line with a value pinned to the right, so a slider's number sits above the track
+   next to its name instead of stealing width from the track itself. */
+.labelRow { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.labelAside { font-family: var(--font-mono); font-size: 13px; color: var(--txt-primary); }
+/* 8px rather than 7, and secondary rather than faint: at 7px the pixel font in --txt-faint
+   (#7E828E) was barely legible against the card, which made field labels read as decoration
+   instead of as the name of the control under them. */
 .label {
-  font-family: var(--font-pixel); font-size: 7px; letter-spacing: 0.3px;
-  color: var(--txt-faint); text-shadow: 1px 1px 0 rgba(0,0,0,0.5);
+  font-family: var(--font-pixel); font-size: 8px; letter-spacing: 0.4px; line-height: 1.5;
+  color: var(--txt-secondary); text-shadow: 1px 1px 0 rgba(0,0,0,0.5);
 }
-.hint { font-family: var(--font-sans); font-size: 12px; color: var(--txt-muted); line-height: 1.5; }
+.hint { font-family: var(--font-sans); font-size: 12.5px; color: var(--txt-muted); line-height: 1.55; }
 
 .input, .select, .textarea {
   font-family: var(--font-sans); font-size: 13px;
@@ -162,6 +169,28 @@
 }
 
 /* ── Toggle switch ────────────────────────────────────────────────────────── */
+.switchField {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex: 0 0 auto;
+  cursor: pointer;
+}
+
+.switchLabel {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--txt-secondary);
+  white-space: nowrap;
+}
+
+.switchHint {
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  color: var(--txt-muted);
+  white-space: nowrap;
+}
+
 .toggle {
   position: relative; display: inline-flex; align-items: center;
   width: 40px; height: 20px; flex-shrink: 0;
@@ -172,7 +201,7 @@
 }
 .toggle::after {
   content: ''; position: absolute; left: 2px; top: 2px;
-  width: 12px; height: 12px; background: var(--txt-faint);
+  width: 12px; height: 12px; background: var(--txt-muted);
   transition: transform var(--t-fast), background var(--t-fast);
 }
 .toggleOn { background: rgba(166,227,161,0.18); }
@@ -211,7 +240,7 @@
 
 /* ── Tooltip (Radix) ──────────────────────────────────────────────────────── */
 .tooltip {
-  font-family: var(--font-pixel); font-size: 7px; letter-spacing: 0.3px;
+  font-family: var(--font-pixel); font-size: 8px; letter-spacing: 0.3px;
   color: var(--txt-primary); background: var(--surf-3);
   padding: 6px 8px; border: 1px solid #0d0d0d;
   box-shadow: 0 4px 12px rgba(0,0,0,0.5); z-index: 120;
@@ -226,7 +255,7 @@
   pointer-events: none;
 }
 .toast {
-  font-family: var(--font-pixel); font-size: 7px; letter-spacing: 0.3px;
+  font-family: var(--font-pixel); font-size: 8px; letter-spacing: 0.3px;
   color: var(--txt-primary); background: var(--surf-3);
   padding: 9px 14px;
   border-top: 2px solid #5c5c5c; border-left: 2px solid #5c5c5c;
@@ -248,7 +277,7 @@
 }
 .menuItem {
   display: flex; align-items: center; gap: 8px;
-  padding: 7px 10px; font-family: var(--font-pixel); font-size: 7px; letter-spacing: 0.3px;
+  padding: 7px 10px; font-family: var(--font-pixel); font-size: 8px; letter-spacing: 0.3px;
   color: var(--txt-secondary); text-shadow: 1px 1px 0 rgba(0,0,0,0.5);
   cursor: pointer; outline: none; user-select: none;
 }
@@ -274,16 +303,18 @@
 .statVal { font-family: var(--font-pixel); font-size: 12px; color: var(--txt-primary); text-shadow: 1px 1px 0 rgba(0,0,0,0.5); }
 .stat_ok { color: var(--green); } .stat_warn { color: var(--yellow); } .stat_danger { color: var(--red); }
 .stat_info { color: var(--blue); } .stat_vip { color: var(--mauve); }
-.statLabel { font-family: var(--font-sans); font-size: 10px; color: var(--txt-faint); text-transform: uppercase; letter-spacing: 0.4px; }
+.statLabel { font-family: var(--font-sans); font-size: 12.5px; color: var(--txt-muted); text-transform: uppercase; letter-spacing: 0.4px; }
 
 /* ── Section card ──────────────────────────────────────────────────────────── */
 .section { background: var(--panel-card); border-top: 2px solid #56546a; border-left: 2px solid #56546a; border-bottom: 2px solid #0d0d0d; border-right: 2px solid #0d0d0d; }
-.sectionHead { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 14px; background: var(--panel-card-head); border-bottom: 1px solid #0d0d0d; box-shadow: inset 0 1px 0 rgba(255,255,255,0.04); }
-.sectionTitles { display: flex; flex-direction: column; gap: 2px; }
-.sectionTitle { font-family: var(--font-pixel); font-size: 8px; letter-spacing: 0.4px; color: var(--txt-secondary); text-shadow: 1px 1px 0 rgba(0,0,0,0.5); }
-.sectionSub { font-family: var(--font-sans); font-size: 11px; color: var(--txt-muted); }
+.sectionHead { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 18px; background: var(--panel-card-head); border-bottom: 1px solid #0d0d0d; box-shadow: inset 0 1px 0 rgba(255,255,255,0.04); }
+.sectionTitles { display: flex; flex-direction: column; gap: 5px; }
+.sectionTitle { font-family: var(--font-pixel); font-size: 8px; line-height: 1.5; letter-spacing: 0.4px; color: var(--txt-primary); text-shadow: 1px 1px 0 rgba(0,0,0,0.5); }
+.sectionSub { font-family: var(--font-sans); font-size: 12.5px; line-height: 1.5; color: var(--txt-muted); }
 .sectionActions { display: flex; align-items: center; gap: 8px; }
-.sectionBody { padding: 14px; }
+
+/* Cards carry rows of controls; 14px left them touching their own borders. */
+.sectionBody { padding: var(--pad-panel); display: flex; flex-direction: column; gap: var(--gap-row); }
 
 /* ── Slider ────────────────────────────────────────────────────────────────── */
 .slider { display: flex; align-items: center; gap: 10px; }

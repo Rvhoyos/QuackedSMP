@@ -99,6 +99,7 @@ public class SmpEvents {
     public static void onPlayerLogout(PlayerEvent.PlayerLoggedOutEvent event) {
         SkillEvents.onPlayerLoggedOut(event.getEntity());
         mc.smpessentials.teleport.TeleportService.clearForPlayer(event.getEntity().getUUID());
+        mc.smpessentials.rtp.RtpService.get().forget(event.getEntity().getUUID());
         mc.smpessentials.antixray.AntiXrayEngine.onPlayerDisconnect(event.getEntity().getUUID());
         mc.smpessentials.slimechunk.SlimeChunkHint.onDisconnect(event.getEntity().getUUID());
         mc.smpessentials.endfinder.EndFinder.onDisconnect(event.getEntity().getUUID());
@@ -133,8 +134,9 @@ public class SmpEvents {
         mc.smpessentials.bluemap.BlueMapIntegration.onServerTick(event.getServer());
         for (ServerPlayer player : event.getServer().getPlayerList().getPlayers()) {
             TeleportScheduler.onPlayerTick(player);
+            mc.smpessentials.rtp.RtpService.get().tick(player);
             SkillEvents.onPlayerTick(player);
-            mc.smpessentials.dims.EtherFallthrough.tick(player);
+            mc.smpessentials.dims.EtherVerticalTravel.tick(player);
             mc.smpessentials.antixray.AntiXrayEngine.tickPlayer(player);
             mc.smpessentials.slimechunk.SlimeChunkHint.tick(player);
             mc.smpessentials.endfinder.EndFinder.tick(player);

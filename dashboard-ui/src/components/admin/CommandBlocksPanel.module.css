@@ -2,27 +2,27 @@
 
 .disabledNote {
   margin: 10px 14px; padding: 9px 12px;
-  font-family: var(--font-sans); font-size: 12px; color: var(--yellow);
+  font-family: var(--font-sans); font-size: 12.5px; color: var(--yellow);
   background: rgba(249,226,175,0.08); border-left: 3px solid var(--yellow);
 }
 
-.body { flex: 1; overflow-y: auto; padding: 12px 14px; display: flex; flex-direction: column; gap: 16px; }
+.body { flex: 1; overflow-y: auto; padding: var(--pad-panel); display: flex; flex-direction: column; gap: var(--gap-block); }
 
 .dimGroup { display: flex; flex-direction: column; gap: 2px; }
 .dimHead { display: flex; align-items: center; gap: 8px; padding: 4px 2px 6px; }
 .dimName { font-family: var(--font-pixel); font-size: 8px; letter-spacing: 0.4px; color: var(--txt-secondary); text-transform: capitalize; text-shadow: 1px 1px 0 rgba(0,0,0,0.5); }
-.dimCount { font-family: var(--font-pixel); font-size: 6px; color: var(--txt-faint); background: var(--surf-3); padding: 2px 6px; }
+.dimCount { font-family: var(--font-pixel); font-size: 8px; color: var(--txt-muted); background: var(--surf-3); padding: 2px 6px; }
 
 .block { background: var(--panel-card); border-left: 3px solid var(--surf-3); }
 .block:hover { border-left-color: var(--mc-wood); }
 .row { display: flex; align-items: center; gap: 10px; padding: 9px 12px; }
-.mode { font-family: var(--font-pixel); font-size: 6px; letter-spacing: 0.3px; padding: 4px 7px; color: #fff; white-space: nowrap; text-shadow: 1px 1px 0 rgba(0,0,0,0.4); flex-shrink: 0; }
+.mode { font-family: var(--font-pixel); font-size: 8px; letter-spacing: 0.3px; padding: 4px 7px; color: #fff; white-space: nowrap; text-shadow: 1px 1px 0 rgba(0,0,0,0.4); flex-shrink: 0; }
 .info { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
-.coords { font-family: var(--font-mono); font-size: 10px; color: var(--txt-faint); }
+.coords { font-family: var(--font-mono); font-size: 11.5px; color: var(--txt-muted); }
 .cmd { font-family: var(--font-mono); font-size: 12px; color: var(--txt-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .flags { display: flex; gap: 4px; flex-shrink: 0; }
 
 .editForm { display: flex; flex-direction: column; gap: 12px; padding: 12px 14px 16px 20px; background: var(--surf-0); border-top: 1px solid #0d0d0d; }
 .editControls { display: flex; gap: 22px; align-items: flex-end; flex-wrap: wrap; }
 .toggleRow { display: flex; align-items: center; gap: 8px; }
-.tLabel { font-family: var(--font-sans); font-size: 12px; color: var(--txt-secondary); }
+.tLabel { font-family: var(--font-sans); font-size: 12.5px; color: var(--txt-secondary); }

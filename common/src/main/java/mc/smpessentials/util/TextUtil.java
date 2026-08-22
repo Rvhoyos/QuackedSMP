@@ -11,7 +11,9 @@ public final class TextUtil {
     private TextUtil() {
     }
 
-    private static final Pattern AMPERSAND = Pattern.compile("(?i)&([0-9a-fk-or])");
+    // Shared with anything that needs to detect or strip legacy codes (region names, map markers),
+    // so the code set is defined once.
+    public static final Pattern AMPERSAND = Pattern.compile("(?i)&([0-9a-fk-or])");
 
     private static final Pattern LINK_PATTERN = Pattern.compile("\\[([^\\]]+)\\]\\(([^)]+)\\)");
 

@@ -1,25 +1,27 @@
 import { useState, useEffect } from 'react'
 import { Badge, Toggle } from '../../ui'
-import { IconFlag, IconSkills, IconPortal, IconChatFilter, IconDiscord, IconVoiceChat, IconBallot, IconMapScroll, IconShield, IconChest, IconEmerald, IconSign, IconPulse, IconEnderPearl } from './MinecraftIcons'
+import { IconFlag, IconSkills, IconChatFilter, IconDiscord, IconVoiceChat, IconBallot, IconMapScroll, IconChest, IconEmerald, IconHardcoreHeart, IconGlowstonePortal, IconBed, IconEyeOfEnder, IconSlimeBall, IconBundle, IconLiveMonitor, IconChorusFruit, IconWrittenBook } from './MinecraftIcons'
 import styles from './FeatureShowcase.module.css'
 
 const FEATURES = [
   { name: 'Land Claims', group: 'Gameplay', Icon: IconFlag, desc: 'Chunk-based land protection. Players claim plots, lock chests, and control access.', tag: 'claims', configKey: 'claims_enabled', toggleable: true },
   { name: 'Skills', group: 'Gameplay', Icon: IconSkills, desc: '12 RPG skills with a configurable XP curve and level-gated active abilities.', tag: 'skills', configKey: 'skills_enabled', toggleable: true },
-  { name: 'Teleport', group: 'Gameplay', Icon: IconPortal, desc: 'Homes, /spawn, and /tpa with configurable warmup timers. Movement cancels the warp.', tag: 'teleport' },
-  { name: 'Custom Dimensions', group: 'Gameplay', Icon: IconPortal, desc: 'Create and manage custom dimensions in-game, including the Ether sky-islands world.', tag: 'dims' },
-  { name: 'Hardcore Mode', group: 'Gameplay', Icon: IconShield, desc: 'Player-run hardcore sessions with shared start, inventory stash, and death threshold.', tag: 'hardcore', configKey: 'hardcore_enabled', toggleable: true },
-  { name: 'Kits', group: 'Gameplay', Icon: IconChest, desc: 'Daily kit claims on a cooldown. Tier-gated VIP kits.', tag: 'kits', configKey: 'kits_enabled', toggleable: true },
+  { name: 'Teleport', group: 'Gameplay', Icon: IconBed, desc: 'Homes, /spawn, and /tpa with configurable warmup timers. Movement cancels the warp.', tag: 'teleport' },
+  { name: 'Custom Dimensions', group: 'Gameplay', Icon: IconGlowstonePortal, desc: 'Create and manage custom dimensions in-game, including the Ether sky-islands world.', tag: 'dims' },
+  { name: 'Hardcore Mode', group: 'Gameplay', Icon: IconHardcoreHeart, desc: 'Player-run hardcore sessions with shared start, inventory stash, and death threshold.', tag: 'hardcore', configKey: 'hardcore_enabled', toggleable: true },
+  { name: 'Random Teleport', group: 'Gameplay', Icon: IconChorusFruit, desc: 'On-demand /rtp with a per-dimension profile: distance band, spawn bias, arrival effects and a one-time item package.', tag: 'rtp', configKey: 'rtp_enabled', toggleable: true },
+  { name: 'Kits', group: 'Gameplay', Icon: IconBundle, desc: 'Daily kit claims on a cooldown. Tier-gated VIP kits.', tag: 'kits', configKey: 'kits_enabled', toggleable: true },
+  { name: 'Welcome Book', group: 'Gameplay', Icon: IconWrittenBook, desc: 'One in-game guide listing every player command, handed out by /guide, /smp help, kits and rtp arrivals. Edited in the panel.', tag: 'guide', configKey: 'welcome_book_enabled', toggleable: true },
   { name: 'Shops', group: 'Gameplay', Icon: IconEmerald, desc: 'Chest-based player shops with per-shop currency. Spawn shops have unlimited stock.', tag: 'shops', configKey: 'shops_enabled', toggleable: true },
-  { name: 'Slime Chunk Hint', group: 'Gameplay', Icon: IconPulse, desc: 'Slime particles at a player\u2019s feet while they stand in a slime chunk below Y40, plus a rare quiet squish.', tag: 'slimehint', configKey: 'slime_hint_enabled', toggleable: true },
-  { name: 'End Finder', group: 'Gameplay', Icon: IconEnderPearl, desc: 'Holding an eye of ender marks the nearest stronghold on the vanilla Locator Bar, with the distance on the action bar. No client mod.', tag: 'endfinder', configKey: 'end_finder_enabled', toggleable: true },
+  { name: 'Slime Chunk Hint', group: 'Gameplay', Icon: IconSlimeBall, desc: 'Slime particles at a player\u2019s feet while they stand in a slime chunk below Y40, plus a rare quiet squish.', tag: 'slimehint', configKey: 'slime_hint_enabled', toggleable: true },
+  { name: 'End Finder', group: 'Gameplay', Icon: IconEyeOfEnder, desc: 'Holding an eye of ender marks the nearest stronghold on the vanilla Locator Bar, with the distance on the action bar. No client mod.', tag: 'endfinder', configKey: 'end_finder_enabled', toggleable: true },
   { name: 'Chat Filter', group: 'Moderation', Icon: IconChatFilter, desc: 'Keyword blocking with leet-speak detection and escalating auto-mutes.', tag: 'chatfilter', configKey: 'chatfilter_enabled', toggleable: true },
   { name: 'Discord', group: 'Integrations', Icon: IconDiscord, desc: 'Webhook relay of join/leave and chat to a Discord channel.', tag: 'discord', configKey: 'discord_enabled', toggleable: true, disableOnly: true, disablePayload: { discord_webhook_url: '' } },
   { name: 'Simple Voice Chat', group: 'Integrations', Icon: IconVoiceChat, desc: 'Proximity voice chat. Requires the Simple Voice Chat mod on server and clients.', tag: 'voicechat', configKey: 'voicechat_enable', toggleable: true, restartRequired: true },
   { name: 'Votifier', group: 'Integrations', Icon: IconBallot, desc: 'NuVotifier v2 listener with randomized, offline-queued vote rewards.', tag: 'votifier', configKey: 'votifier_enabled', toggleable: true },
   { name: 'BlueMap', group: 'Integrations', Icon: IconMapScroll, desc: 'Live web map with claim regions and player homes as markers.', tag: 'bluemap', configKey: 'bluemap_enabled', toggleable: true, restartRequired: true },
   { name: 'Admin Panel', group: 'System', Icon: IconChest, desc: 'Manage players, run commands, and edit config from the browser. Password-protected.', tag: 'admin', configKey: 'admin_enabled' },
-  { name: 'Dashboard', group: 'System', Icon: IconSign, desc: 'Public live metrics, activity feed, chat, and leaderboards.', tag: 'dashboard' },
+  { name: 'Dashboard', group: 'System', Icon: IconLiveMonitor, desc: 'Public live metrics, activity feed, chat, and leaderboards.', tag: 'dashboard' },
 ]
 
 const GROUP_ORDER = ['Gameplay', 'Moderation', 'Integrations', 'System']
@@ -32,7 +34,8 @@ export default function FeatureShowcase({ token, onExpired }) {
   const [toggling, setToggling] = useState({})
 
   useEffect(() => {
-    if (!token) return
+    // No token guard: when no admin password is set the routes serve unauthenticated calls, and
+    // skipping the fetch here left every card falling back to "Active" with no toggle.
     fetch('/api/admin/config', { headers: authHeaders(token) })
       .then(r => (r.status === 401 || r.status === 403) ? (onExpired?.(), null) : r.json())
       .then(d => { if (d) setCfg(d) })
@@ -79,7 +82,7 @@ export default function FeatureShowcase({ token, onExpired }) {
               <div className={styles.grid}>
                 {items.map(f => {
                   const active = resolve(f)
-                  const canToggle = !!token && !!f.toggleable && (active || !f.disableOnly)
+                  const canToggle = !!f.toggleable && (active || !f.disableOnly)
                   return (
                     <div key={f.tag} className={`${styles.card} ${active ? styles.cardOn : styles.cardOff}`}>
                       <div className={styles.cardTop}>

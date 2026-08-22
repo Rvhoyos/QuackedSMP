@@ -41,7 +41,7 @@
   border: 1px solid #444;
   color: #CDA869;
   font-family: var(--font-pixel);
-  font-size: 6px;
+  font-size: 8px;
   letter-spacing: 0.3px;
   padding: 7px 10px;
   cursor: pointer;
@@ -63,7 +63,7 @@
 
 .label {
   font-family: var(--font-pixel);
-  font-size: 6px;
+  font-size: 8px;
   color: var(--txt-secondary);
   letter-spacing: 0.3px;
 }
@@ -75,10 +75,11 @@
   overflow-wrap: anywhere;
 }
 
+/* A sentence, not a label. The pixel face is a display font: legible for two or three words,
+   punishing for prose, which is why this read as tiny even at the 8px pixel floor. */
 .note {
-  font-family: var(--font-pixel);
-  font-size: 6px;
-  color: var(--txt-muted);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--txt-secondary);
   line-height: 1.6;
-  letter-spacing: 0.3px;
 }

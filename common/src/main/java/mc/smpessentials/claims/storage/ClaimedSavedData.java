@@ -140,6 +140,14 @@ public final class ClaimedSavedData extends SavedData {
     }
 
     // The single named chunk in a region, if any (invariant: at most one).
+    // Every claim mutation goes through setDirty, so hooking it here is the one place that keeps
+    // the web map in step with the world without each call site having to remember.
+    @Override
+    public void setDirty() {
+        super.setDirty();
+        mc.smpessentials.bluemap.MarkerRefresh.markDirty(mc.smpessentials.bluemap.MarkerRefresh.Layer.CLAIMS);
+    }
+
     public Optional<ClaimData> namedChunkIn(ResourceKey<Level> dim, Set<ChunkPos> region) {
         for (ChunkPos cp : region) {
             ClaimData c = dimIndex(dim).get(cp.pack());

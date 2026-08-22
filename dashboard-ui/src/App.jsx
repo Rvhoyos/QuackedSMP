@@ -21,17 +21,6 @@ function pushHist(setter, value) {
   setter(h => [...h, value].slice(-HIST_MAX))
 }
 
-function isNewer(latest, current) {
-  const a = latest.split('.').map(Number)
-  const b = current.split('.').map(Number)
-  for (let i = 0; i < Math.max(a.length, b.length); i++) {
-    const x = a[i] || 0, y = b[i] || 0
-    if (x > y) return true
-    if (x < y) return false
-  }
-  return false
-}
-
 export default function App() {
   const [health,      setHealth]      = useState(null)
   const [tps,         setTps]         = useState(null)
@@ -45,7 +34,6 @@ export default function App() {
   const [events,      setEvents]      = useState([])
   const [wsStatus,    setWsStatus]    = useState('connecting')
   const [view,        setView]        = useState('dashboard') // 'dashboard' | 'admin'
-  const [update,      setUpdate]      = useState(null) // {latest, current, url} or null
   const [dlPrompt,    setDlPrompt]    = useState(false)
   const [dlProgress,  setDlProgress]  = useState(null) // { received, total, speed, eta } | null
   const [dlError,     setDlError]     = useState(null)
@@ -106,26 +94,12 @@ export default function App() {
     }
   }, [pushEvent]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const checkForUpdate = useCallback(async (currentVersion) => {
-    if (!currentVersion || currentVersion === 'unknown') return
-    try {
-      const r = await fetch('https://api.github.com/repos/Rvhoyos/QuackedSMP/releases/latest')
-      if (!r.ok) return
-      const rel = await r.json()
-      const latest = (rel.tag_name || '').replace(/^v/, '')
-      if (latest && isNewer(latest, currentVersion)) {
-        setUpdate({ latest, current: currentVersion, url: rel.html_url })
-      }
-    } catch { /* GitHub unreachable, silent */ }
-  }, [])
-
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const bootstrap = useCallback(async () => {
     try {
       const res  = await fetch('/api/health')
       const data = await res.json()
       setHealth(data)
-      checkForUpdate(data.version)
       openWebSocket()
       pollMetrics()
       pollLeaderboard()
@@ -163,22 +137,10 @@ export default function App() {
 
   return (
     <div className={styles.layout}>
-      {update && (
-        <div className={styles.updateBanner}>
-          <span>
-            Update available: <strong>v{update.latest}</strong> (running v{update.current})
-          </span>
-          <a href={update.url} target="_blank" rel="noopener noreferrer" className={styles.updateLink}>
-            Download
-          </a>
-          <button className={styles.updateDismiss} onClick={() => setUpdate(null)}>×</button>
-        </div>
-      )}
-
       {dlError && (
         <div className={styles.dlErrorBanner}>
           <span>Download failed: {dlError}</span>
-          <button className={styles.updateDismiss} onClick={() => setDlError(null)}>×</button>
+          <button className={styles.bannerDismiss} onClick={() => setDlError(null)}>×</button>
         </div>
       )}
 

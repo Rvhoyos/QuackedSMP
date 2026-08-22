@@ -97,13 +97,20 @@ public final class SpawnProtection {
         return isBlockInSpawnProtection(level, pos);
     }
 
+    // Spawn protection radius from server.properties, or 0 when there is none (integrated server,
+    // or the property set to 0). Read straight from the server so it always matches what
+    // isBlockInSpawnProtection enforces.
+    public static int radius(ServerLevel level) {
+        if (level.dimension() != level.getRespawnData().dimension()) return 0;
+        if (!(level.getServer() instanceof DedicatedServer ds)) return 0;
+        return Math.max(0, ds.spawnProtectionRadius());
+    }
+
     // Returns true if pos falls within the spawn protection square. Radius read from
     // server.properties via DedicatedServer.spawnProtectionRadius(). Returns false for
     // non-overworld dimensions, non-dedicated servers, or radius <= 0.
     public static boolean isBlockInSpawnProtection(ServerLevel level, BlockPos pos) {
-        if (level.dimension() != level.getRespawnData().dimension()) return false;
-        if (!(level.getServer() instanceof DedicatedServer ds)) return false;
-        int radius = ds.spawnProtectionRadius();
+        int radius = radius(level);
         if (radius <= 0) return false;
         BlockPos spawn = level.getRespawnData().pos();
         return Math.abs(pos.getX() - spawn.getX()) <= radius

@@ -69,8 +69,16 @@ public final class ShopData extends SavedData {
         Map<BlockPos, ShopEntry> dimShops = shops.get(dim);
         if (dimShops == null || dimShops.remove(pos) == null) return false;
         if (dimShops.isEmpty()) shops.remove(dim);
+        ShopStockCache.forget(dim, pos);
         setDirty();
         return true;
+    }
+
+    // See ClaimedSavedData.setDirty: one hook covers every mutation.
+    @Override
+    public void setDirty() {
+        super.setDirty();
+        mc.smpessentials.bluemap.MarkerRefresh.markDirty(mc.smpessentials.bluemap.MarkerRefresh.Layer.SHOPS);
     }
 
     public List<ShopEntry> listAll() {

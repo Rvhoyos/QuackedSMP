@@ -11,6 +11,7 @@ import net.minecraft.world.level.ChunkPos;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.network.chat.MutableComponent;
+import mc.smpessentials.util.TextUtil;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -166,12 +167,28 @@ public final class ClaimCommands {
                                         return 0;
                                     }
 
+                                    // A [word] prefix that is not a real tag is almost always a typo for one.
+                                    // Rejecting beats storing a name whose brackets silently mean nothing.
+                                    var unknown = RegionDecoration.unknownTag(name);
+                                    if (unknown.isPresent()) {
+                                        String suggestion = RegionTags.closest(unknown.get())
+                                                .map(t -> " Did you mean \u00a7f[" + t + "]\u00a7c?")
+                                                .orElse("");
+                                        ctx.getSource().sendFailure(Component.literal(
+                                                "\u00a7cUnknown region tag \u00a7f[" + unknown.get() + "]\u00a7c."
+                                                        + suggestion + " Run \u00a7f/claim tags\u00a7c to see them all."));
+                                        return 0;
+                                    }
+
                                     ServerLevel lvl = p.level();
+                                    String plain = RegionDecoration.strip(name);
 
                                     switch (ClaimService.nameClaim(p, lvl, name)) {
-                                        case OK -> ctx.getSource().sendSystemMessage(Component.literal(
-                                                "Region named to: " + name.trim()
-                                                        + ". Use /visit " + name.trim() + " to travel here."));
+                                        case OK -> ctx.getSource().sendSystemMessage(
+                                                Component.literal("Region named to: ")
+                                                        .append(TextUtil.format(RegionNames.display(name)))
+                                                        .append(Component.literal(
+                                                                ". Use /visit " + plain + " to travel here.")));
                                         case NAME_TAKEN -> ctx.getSource().sendFailure(Component.literal(
                                                 "That name is already taken. Pick another."));
                                         case EMPTY -> ctx.getSource().sendFailure(
@@ -181,6 +198,23 @@ public final class ClaimCommands {
                                     }
                                     return 1;
                                 })))
+                .then(Commands.literal("tags")
+                        .executes(ctx -> {
+                            MutableComponent msg = Component.literal("== Region Tags ==")
+                                    .withStyle(net.minecraft.ChatFormatting.GOLD);
+                            msg.append(Component.literal(
+                                    "\nPut one in front of a name to give the region a map icon,"
+                                            + "\ne.g. /claim name \"[shop] Emporium\"."
+                                            + "\nThe tag is not part of the name: /visit Emporium still works.")
+                                    .withStyle(net.minecraft.ChatFormatting.GRAY));
+                            msg.append(Component.literal("\n" + String.join(", ", RegionTags.all()))
+                                    .withStyle(net.minecraft.ChatFormatting.WHITE));
+                            msg.append(Component.literal(
+                                    "\nColour codes work too, e.g. &6Gold Fortress.")
+                                    .withStyle(net.minecraft.ChatFormatting.GRAY));
+                            ctx.getSource().sendSystemMessage(msg);
+                            return 1;
+                        }))
                 .then(Commands.literal("info")
                         .executes(ctx -> {
                             ServerPlayer p = ctx.getSource().getPlayerOrException();

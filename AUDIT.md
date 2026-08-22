@@ -68,7 +68,7 @@ Severity scale: **Critical** (exploitable / data-loss), **High**
 **[todo] for session 2, recommended order:**
 
 1. `dims/` package (DimManager 757, DimCommands 416, CustomPortalShape,
-   CustomPortalActivator, EtherIslandDensityFunction, EtherFallthrough,
+   CustomPortalActivator, EtherIslandDensityFunction, EtherVerticalTravel,
    DimSavedData)
 2. `shops/` package (ShopService 474, ShopGui, ShopCommands, ShopData,
    ShopEntry, EconomyData, ShopMenuContainer)

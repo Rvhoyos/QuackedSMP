@@ -1,23 +1,27 @@
 package mc.smpessentials.kits;
 
+import com.google.gson.JsonElement;
+import com.mojang.serialization.JsonOps;
 import mc.smpessentials.config.ConfigData;
 import mc.smpessentials.config.SmpConfig;
 import mc.smpessentials.tier.TierService;
-import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.Identifier;
+import mc.smpessentials.welcomebook.WelcomeBookService;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.EquipmentSlot;
-import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 public final class KitService {
+    private static final Logger LOGGER = LogManager.getLogger("KitService");
+
     private KitService() {}
 
     public static List<ConfigData.KitDef> getAvailableKits(UUID uuid, MinecraftServer server) {
@@ -58,34 +62,38 @@ public final class KitService {
         giveArmorPiece(player, kit.armor.feet, EquipmentSlot.FEET);
 
         for (ConfigData.KitItem ki : kit.items) {
-            Item item = resolveItem(ki.item);
-            if (item == null || item == Items.AIR) continue;
-            ItemStack stack = new ItemStack(item, ki.count);
-            if (!player.getInventory().add(stack)) {
+            decode(player, ki == null ? null : ki.stack).ifPresent(stack -> {
+                if (!player.getInventory().add(stack)) {
+                    player.drop(stack, false);
+                }
+            });
+        }
+
+        if (kit.giveWelcomeBook) {
+            WelcomeBookService.give(player);
+        }
+    }
+
+    private static void giveArmorPiece(ServerPlayer player, JsonElement stored, EquipmentSlot slot) {
+        decode(player, stored).ifPresent(stack -> {
+            if (player.getItemBySlot(slot).isEmpty()) {
+                player.setItemSlot(slot, stack);
+            } else if (!player.getInventory().add(stack)) {
                 player.drop(stack, false);
             }
-        }
+        });
     }
 
-    private static void giveArmorPiece(ServerPlayer player, String itemId, EquipmentSlot slot) {
-        if (itemId == null || itemId.isEmpty()) return;
-        Item item = resolveItem(itemId);
-        if (item == null || item == Items.AIR) return;
-        ItemStack stack = new ItemStack(item, 1);
-
-        if (player.getItemBySlot(slot).isEmpty()) {
-            player.setItemSlot(slot, stack);
-        } else if (!player.getInventory().add(stack)) {
-            player.drop(stack, false);
-        }
-    }
-
-    private static Item resolveItem(String id) {
-        try {
-            return BuiltInRegistries.ITEM.getValue(Identifier.parse(id));
-        } catch (Exception e) {
-            return null;
-        }
+    /**
+     * Rebuilds a stack from its ItemStack.CODEC JSON. Components ride along, which is how a kit
+     * can hand out a written book or an enchanted helmet rather than a plain item id.
+     */
+    private static Optional<ItemStack> decode(ServerPlayer player, JsonElement stored) {
+        if (stored == null || stored.isJsonNull()) return Optional.empty();
+        var ops = player.level().registryAccess().createSerializationContext(JsonOps.INSTANCE);
+        return ItemStack.CODEC.parse(ops, stored)
+                .resultOrPartial(error -> LOGGER.warn("[Kits] Bad item in config: {}", error))
+                .filter(stack -> !stack.isEmpty());
     }
 
     public static String formatDuration(long seconds) {
