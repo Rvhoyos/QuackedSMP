@@ -6,7 +6,9 @@
 
 # QuackedSMP
 
-Server-side mod for **Minecraft 26.1.2** (Fabric + NeoForge). Claims, skills, anti-grief, custom dims, shops, hardcore, and more. Optional browser admin panel for config, backups, players, and commands.
+Server-side mod for **Minecraft 26.2** (Fabric + NeoForge). Claims, skills, anti-grief, custom dims, shops, hardcore, and more. Optional browser admin panel for config, backups, players, and commands.
+
+Nothing to install on the client.
 
 ## Quick Start
 
@@ -19,13 +21,14 @@ Server-side mod for **Minecraft 26.1.2** (Fabric + NeoForge). Claims, skills, an
    - Same PC as the server: `http://localhost:8125` (or `http://127.0.0.1:8125`)
    - Other device on your network: `http://<server-ip>:8125`
 
-Panel is optional. Game features work without it. Panel stays off until you set a password.
+The panel is optional and stays off until you set a password. Every game feature works without it.
 
-**Security (short):**
+**Before you expose the panel:**
 
-- Admin needs the password. Public metrics / chat feed / leaderboard do not.
-- Panel is plain HTTP on port **8125**. Fine on localhost or home LAN. Do not open 8125 to the whole internet without HTTPS (Caddy/Nginx reverse proxy) or a private tunnel (SSH / VPN).
-- Never set `dashboard.enabled=true` in config without a password unless you want open admin.
+- The admin side needs the password. The public side (metrics, chat feed, leaderboard) does not.
+- The panel is plain HTTP on port **8125**. Fine on localhost or a home LAN. Do not open 8125 to the internet without putting HTTPS in front of it (Caddy, Nginx) or using a private tunnel (SSH, VPN).
+- Passwords are hashed, never stored as plain text. Repeated failed logins lock that IP out for a few minutes.
+- Never turn the panel on in config without setting a password, unless you want anyone to have admin.
 
 ## Features
 
@@ -33,101 +36,60 @@ Panel is optional. Game features work without it. Panel stays off until you set 
 - RPG skills and abilities
 - Custom dimensions and portal frames
 - Chat filter and auto-mutes
-- VIP tiers and kits (`/vip set`)
+- VIP tiers and kits
 - Anti-xray (on by default)
 - Random teleport (`/rtp`) with per-dimension profiles and arrival rewards
 - In-game guide book (`/guide`) and join sidebar
 - Wilderness regen, player shops, hardcore sessions, world backups, world timelapse
 - Optional: Discord, BlueMap, Votifier, Spark, Simple Voice Chat
 
-Most systems can be toggled in the panel Config tab or `config/quackedsmp.json`.
+Most systems can be turned on or off in the panel **Config** tab or `config/quackedsmp.json`.
 
 ---
 
 ## Admin Panel
 
-| Tab | What you can do |
-| :--- | :--- |
-| **Players** | Online players, dimension, OP level. Grant/revoke OP, set VIP tier. |
-| **Commands** | Run server commands from the browser. Quick actions (weather, time, broadcast, end reset, wilderness regen, stop). |
-| **Dimensions** | Create, delete, and configure custom dimensions. Wire portal frame blocks. |
-| **Skills** | Browse skill levels. Set level / adjust XP per skill. |
-| **Claims** | View claim counts. Force-unclaim all chunks for a player. |
-| **Chat Filter** | Blocked words and whitelist. Active mutes, unmute. |
-| **Hardcore** | Active sessions, force-end a session. |
-| **Teams** | Scoreboard teams, members, dimension auto-assign. |
-| **Shops** | List player shops, delete shops, view bank balances, toggle economy. |
-| **Cmd Blocks** | List, edit, and delete command blocks in loaded chunks (requires command blocks enabled on the server). |
-| **Mods** | Upload, replace, or remove JARs in `mods/`. |
-| **Backups** | Create / list / download / delete world snapshots. Toggle public download and panel URL messaging. |
-| **Timelapse** | Capture and play back top-down world snapshots. Pick which dimensions to capture, pan/zoom a frame, export the set as a zip. |
-| **Config** | Edit configurable values live. Most settings need no restart. |
-| **Features** | In-panel feature overview. |
+| Group | Tab | What you can do |
+| :--- | :--- | :--- |
+| **People** | Players | Online players, dimension, OP level. Grant/revoke OP, set VIP tier. |
+| | Teams | Scoreboard teams, members, dimension auto-assign. |
+| **World** | Dimensions | Create, delete, and configure custom dimensions. Wire portal frame blocks. |
+| | Claims | View claim counts. Force-unclaim all chunks for a player. |
+| | Shops | List player shops, delete shops, view bank balances, toggle economy. |
+| **Gameplay** | Skills | Browse skill levels. Set level / adjust XP per skill. |
+| | Hardcore | Active sessions, force-end a session. |
+| | RTP | Per-dimension `/rtp` profiles: radius, biome filter, arrival effects and rewards. |
+| | Kits | Build tier-gated kits, including books, enchanted gear, and coloured names. |
+| | Welcome Book | Write and preview the `/guide` book page by page. |
+| **Moderation** | Chat Filter | Blocked words and whitelist. Active mutes, unmute. |
+| | Cmd Blocks | List, edit, and delete command blocks in loaded chunks. |
+| | Commands | Run server commands from the browser and watch a live server log. Quick actions (weather, time, broadcast, end reset, wilderness regen, stop). |
+| **Systems** | Mods | Upload, replace, or remove JARs in `mods/`. |
+| | Backups | Create / list / download / delete world snapshots. Toggle public download. |
+| | Timelapse | Capture and play back top-down world snapshots. Pick which dimensions to capture, pan/zoom a frame, export the set as a zip. |
+| **Setup** | Config | Edit settings live. Most need no restart. |
+| | Features | In-panel feature overview. |
+
+The Cmd Blocks tab needs command blocks enabled on the server.
 
 ### Public dashboard
 
-Anyone who can reach the port (no login):
+Anyone who can reach the port sees this without logging in:
 
 - **Metrics:** RAM, disk, uptime; TPS / CPU / MSPT if Spark is installed
 - **Player count**
-- **Event feed:** join / leave and chat over WebSocket
+- **Event feed:** joins, leaves, and chat
 - **Skills leaderboard**
-- **World download** (opt-in only): when `backup_public_download` is true, a download button streams the latest snapshot
-
-<details>
-<summary><strong>Security details</strong> (auth, rate limits, public API)</summary>
-
-Rules of thumb are in **Quick Start** above. This section is the technical breakdown.
-
-**Auth**
-
-- Passwords hashed with PBKDF2-SHA256 (100,000 iterations)
-- Constant-time comparison on verify
-- 128-bit random session tokens, 24-hour TTL
-- Admin API uses a Bearer token in the `Authorization` header (no cookies)
-
-**Brute-force protection**
-
-- 5 failed logins within 15 minutes lock that IP out for 5 minutes (HTTP 429)
-- Counter clears on successful login
-
-**Public download rate limiting**
-
-- `/api/backups/latest/download`: per-IP concurrent cap (`backup_public_max_per_ip`, default 2) and global concurrent cap (`backup_public_max_concurrent`, default 0 = follow `max-players` from `server.properties`)
-- Over cap returns HTTP 429
-
-**Path traversal**
-
-- Static files reject `..` and serve only from the embedded classpath
-
-**Mod upload**
-
-- Filename must end in `.jar`, no path separators, no `..`
-- 100 MB size cap
-- Written to a temp file, then moved into `mods/`
-
-**Public endpoints (no admin auth)**
-
-- `/api/health` - player count, server name, public flags
-- `/api/metrics` - heap, RAM, disk, uptime, threads
-- `/api/spark/*` - TPS, CPU, MSPT (requires Spark)
-- `/api/skills/leaderboard` - skill rankings
-- `/api/backups/latest/download` - latest world snapshot only when `backup_public_download` is enabled
-- `/api/admin/status` - whether admin is enabled and whether a password is set (no secrets)
-- WebSocket - join / leave and chat events
-
-</details>
+- **World download**, only if you turn on `backup_public_download`
 
 ---
 
 <details>
-<summary><strong>Features</strong></summary>
-
-Most systems are toggleable from the admin **Config** tab or `config/quackedsmp.json`. The dashboard itself defaults **off** until `/smp admin setpassword`. Command-block tools follow the server's `enable-command-blocks` setting.
+<summary><strong>Feature Details</strong></summary>
 
 ### RPG Skills
 
-12 skills in 4 categories. XP from normal play, passive category buffs, active abilities.
+12 skills in 4 categories. XP comes from normal play. Each category gives a passive buff, and each skill has an active ability you trigger yourself.
 
 | Category | Skills | XP sources (examples) |
 | :--- | :--- | :--- |
@@ -138,71 +100,57 @@ Most systems are toggleable from the admin **Config** tab or `config/quackedsmp.
 
 **Leveling**
 
-- Levels 1-10: flat 50 XP per level
-- Levels 11-100: `floor(100 * level ^ xp_exponent)` (default exponent `1.5`)
+Levels 1-10 cost 50 XP each. After that every level costs more than the last, up to level 100.
 
-**Parent buffs** (from average category level, scales to caps at high levels):
+**Category buffs**, based on your average level in that category:
 
-- Industrial → movement speed (cap +50%)
-- Nature → max health (cap +10 hearts)
-- Combat → attack damage (cap +100%)
-- Knowledge → XP orb gain (cap +100%)
+- Industrial → movement speed (up to +50%)
+- Nature → max health (up to +10 hearts)
+- Combat → attack damage (up to +100%)
+- Knowledge → skill XP gain for your non-Knowledge skills (up to +100%)
 
 **Active abilities**
 
-Default unlock levels: most skills **10**. Exceptions: **Agility 3**, **Defense 5**, **Scout Zoom (Archery) 5**, **Trading 1**. All configurable.
+Most unlock at level **10**. Exceptions: **Agility 3**, **Defense 5**, **Scout Zoom (Archery) 5**, **Trading 1**. All configurable.
 
-Buff durations (unless noted): `(10 + level × 0.2)` seconds (12s at level 10, 30s at level 100). Tycoon's Charm: `(30 + level × 0.5)` s. Scout Zoom: `(10 + level × 0.25)` s; Night Vision II at Archery 67+.
+Buffs last about **12 seconds** at unlock and up to **30 seconds** at level 100. Tycoon's Charm and Scout Zoom last longer. Cooldowns shrink as the skill levels, roughly to a quarter of the listed time by level 100.
 
-Cooldowns use a configured base (seconds), then scale with skill level (about 75% of base at level 10, 25% of base at level 100).
-
-| Skill | Ability | Effect | Cooldown (approx. Lv 10 → Lv 100) |
+| Skill | Ability | Effect | Cooldown (Lv 10 → Lv 100) |
 | :--- | :--- | :--- | :--- |
 | Mining | Super Breaker | Haste V | 3m → 1m |
 | Excavation | Giga Drill | Haste V | 3m 45s → 1m 15s |
 | Woodcutting | Tree Feller | Chain-breaks logs (max 64) | 3m 45s → 1m 15s |
 | Farming | Green Terra | Bonemeals crops in 5-block radius | 2m 15s → 45s |
-| Fishing | Master Angler | Luck V (duration scales with level) | 3m 45s → 1m 15s |
+| Fishing | Master Angler | Luck V | 3m 45s → 1m 15s |
 | Melee | Berzerk | Strength II + Speed II | 3m 45s → 1m 15s |
 | Archery | Sniper | Slow Falling + Night Vision | 2m 15s → 45s |
-| Archery | Scout Zoom | Spyglass zoom, mob glow in cone, NV / slow falling | ~22s → ~7s |
+| Archery | Scout Zoom | Spyglass zoom, mobs glow in a cone ahead | ~22s → ~7s |
 | Defense | Juggernaut | Resistance IV + Slowness IV | 7m 30s → 2m 30s |
-| Enchanting | Arcane Infusion | Repair held item by 10% durability | 15m → 5m |
-| Alchemy | Philosopher's Touch | Silk Touch a Spawner into inventory | 7m 30s → 2m 30s |
-| Trading | Tycoon's Charm | Hero of the Village (amplifier scales) | 15m → 5m |
-| Agility | Dash | Velocity boost in look direction | ~7s → ~2s |
+| Enchanting | Arcane Infusion | Repairs the held item a little | 15m → 5m |
+| Alchemy | Philosopher's Touch | Picks up a Spawner intact | 7m 30s → 2m 30s |
+| Trading | Tycoon's Charm | Hero of the Village | 15m → 5m |
+| Agility | Dash | Velocity boost in the direction you look | ~7s → ~2s |
 
-**Triggers**
+**How to trigger them**
 
-- **Tool / item abilities:** hold the matching item + Sneak + Drop (Q). Drop is cancelled and the item is returned.
+- **Most abilities:** hold the matching tool, then Sneak + Drop (Q). You keep the item.
   - Pickaxe, shovel, axe, hoe, rod, sword, bow/crossbow, shield as listed above
-  - Alchemy: Book or Enchanted Book, looking at a Spawner
-  - Trading: Emerald
-  - Arcane Infusion: any damaged damageable item (can fire with another ability on the same drop)
-- **Dash:** sprint + sneak while not on the ground (typically sprint-jump then sneak)
-- **Scout Zoom:** Sneak + F (swap offhand) with both hands empty; F again to cancel early
+  - Alchemy: hold a Book or Enchanted Book while looking at a Spawner
+  - Trading: hold an Emerald
+  - Arcane Infusion: hold any damaged item
+- **Dash:** sprint + sneak while off the ground (sprint-jump, then sneak)
+- **Scout Zoom:** Sneak + F with both hands empty. F again to cancel.
 
 **Passive perks (examples)**
 
-- Double drops (Industrial parent level)
-- Bleed on melee, arrow recovery on projectile kills
+- Double drops from Industrial skills
+- Bleed on melee hits, arrow recovery on kills
 - Treasure Hunter (excavation), Leaf Blower (woodcutting), Auto Replant (farming)
-- Defense armor bonus, Agility Safe Landing (fall damage absorb scales with level)
+- Extra armor from Defense, reduced fall damage from Agility
 
 ### Land Claiming
 
-Chunk protection: untrusted players cannot build, break, or interact inside your claims.
-
-**Anti-grief (toggleable)**
-
-- Explosions blocked when they would affect claims (`protect_explosions`, default true)
-- Fire protection inside claims (`protect_fire_claims`, default true)
-- Wilderness fire and lava placement gated (`allow_fire_wilderness` / `allow_lava_wilderness`, default **false**)
-- Water does not flow into another owner's claim from outside
-- Farmland trampling blocked in claims and spawn protection (`protect_farmland`)
-- Endermen cannot grief claims / spawn protection (`protect_enderman`)
-- Armor stands, item frames, paintings, villagers protected from damage / theft in claims
-- PvP immunity inside own claims; separate spawn PvP block via `spawn_no_pvp`
+Claim chunks so untrusted players cannot build, break, or interact inside them.
 
 | Command | Description | Permission |
 | :--- | :--- | :--- |
@@ -218,61 +166,86 @@ Chunk protection: untrusted players cannot build, break, or interact inside your
 | `/claim trustlist` | List trusted players | Everyone |
 | `/sos` | Eject untrusted players from your claims | Everyone |
 
-`/trust`, `/untrust`, and `/trustlist` also work as root commands.
+`/trust`, `/untrust`, and `/trustlist` also work on their own.
+
+**Anti-grief**, each one toggleable:
+
+- Explosions that would damage a claim are blocked (`protect_explosions`)
+- Fire cannot spread inside claims (`protect_fire_claims`)
+- Fire and lava placement in the wilderness is off by default (`allow_fire_wilderness`, `allow_lava_wilderness`)
+- Water cannot flow into someone else's claim
+- Farmland cannot be trampled in claims or spawn (`protect_farmland`)
+- Endermen cannot steal blocks from claims or spawn (`protect_enderman`)
+- Armor stands, item frames, paintings, and villagers are safe in claims
+- No PvP inside your own claims, and none in spawn if `spawn_no_pvp` is on
 
 ### Teleportation
 
-Warmup-based (default 5 seconds). Movement cancels the teleport.
+All teleports have a **5 second** warmup by default. Moving cancels them.
 
-- `/home` - bed / respawn point, else world spawn
+- `/home` - your bed or respawn point, otherwise world spawn
 - `/spawn` - world spawn
-- `/tpr <player>` - request teleport to a player
-- `/tpa accept` / `/tpa yes` / `/tpa deny` / `/tpa no` - respond to a request
-- `/rtp` - random teleport, per-dimension profiles with radius, biome filter, and arrival rewards
+- `/rtp` - random teleport, with per-dimension radius, biome filter, and arrival rewards
 - `/visit <name>` - travel to a named region you own or are trusted in
+- `/tpr <player>` - ask to teleport to someone
+- `/tpa accept` / `yes` / `deny` / `no` - answer a request
 
 ### Chat Management
 
-- Keyword filter with leet / separator style evasion checks
-- Whitelist for false positives
-- Progressive auto-mutes (`mute_levels_minutes`, default 60 / 120 / 240 / 480 / 1440)
-- Periodic tip broadcasts (`message_interval`, default 300s)
+- Blocks keywords, including attempts to disguise them with symbols or number swaps
+- Whitelist for words that trip the filter by accident
+- Repeat offenders are muted for longer each time (`mute_levels_minutes`, default 60 / 120 / 240 / 480 / 1440)
+- Tip broadcasts every `message_interval` seconds (default 300)
 - `/mute <player> <minutes>` and `/unmute <player>` (OP)
-- Manage lists and mutes from the **Chat Filter** admin tab
+- Manage the lists and active mutes from the **Chat Filter** tab
 
 ### Welcome Book
 
-`/guide` hands out an in-game book. One copy lives in config (`welcomeBook.content`) and is edited in the panel Welcome Book tab. Kits and `/rtp` profiles can hand it out on first use.
+`/guide` hands out an in-game book, written in the panel's **Welcome Book** tab. Kits and `/rtp` profiles can hand it out on first use, alongside any other written book, enchanted gear, or coloured item name you put in them.
 
-New players also get a scoreboard sidebar on join (`welcomeSidebar*`).
+New players also get a scoreboard sidebar when they join.
 
 ### World Hints
 
-- Slime chunks show ambient slime particles below Y40 in the overworld
-- Holding an eye of ender marks the nearest stronghold on the Locator Bar with a distance readout
+- Slime chunks give off slime particles below Y40 in the overworld
+- Holding an eye of ender marks the nearest stronghold on the Locator Bar, with a distance readout
 
 ### Custom Dimensions (`/dim`)
 
-Runtime dimensions without datapacks.
+Create dimensions at runtime, no datapack needed.
 
 > [!IMPORTANT]
-> **Restart required** after create for full block interaction (break/place). Until restart the new dim is effectively read-only for players.
+> **Restart the server after creating one.** Until you do, players cannot break or place blocks there.
 
 | Type | Terrain |
 | :--- | :--- |
-| `overworld` | Standard overworld noise |
-| `ether` | Floating islands. Falling out the bottom drops you (and anything player-made) into the overworld at the same coordinates. Gliding high enough in the overworld climbs into the linked ether when `etherSkyEntryEnabled` is on. Shared central spawn island for portals |
+| `overworld` | Standard overworld |
+| `ether` | Floating islands, with a shared central spawn island for portals |
 | `nether` | Vanilla nether |
 | `end` | Vanilla end |
 
-Optional: weighted biomes; flat layers (`overworld` only); ether island shape. Ether params are keywords, all optional and in any order: `threshold <f>`, `radius <min> <max>`, `spacing <i>`, `thickness <min> <max>`, `height <minY> <maxY>`, `structures <true|false>`, and `biomes` last. Islands are blobs, so `radius` sets how wide they are, `thickness` how tall, and `height` the band their centres spawn in. Examples:
+Ether dimensions connect to the overworld vertically. Fall off the bottom of an ether and you drop into the overworld at the same coordinates, along with anything you threw or built. Glide high enough in the overworld and you climb into the linked ether, if `etherSkyEntryEnabled` is on.
+
+**Shaping an ether.** All of these are optional and can go in any order, `biomes` last:
+
+| Parameter | What it changes |
+| :--- | :--- |
+| `radius <min> <max>` | How wide the islands are |
+| `thickness <min> <max>` | How tall they are |
+| `height <minY> <maxY>` | The band they float in |
+| `spacing <i>` | How far apart they sit |
+| `threshold <f>` | How much of the world is island vs open sky |
+| `structures <true\|false>` | Whether vanilla structures generate |
+| `biomes <ids>` | Which biomes to use |
 
 ```
-/dim create quacksmp:flatworld overworld flat minecraft:bedrock:1 minecraft:dirt:2 minecraft:grass_block:1
 /dim create quacksmp:sky_jungle ether threshold -0.9 radius 20 50 thickness 8 24 height 60 200 biomes minecraft:jungle
+/dim create quacksmp:flatworld overworld flat minecraft:bedrock:1 minecraft:dirt:2 minecraft:grass_block:1
 ```
 
-**Portals:** new custom dims default to a **glowstone** frame block (`/dim setportal` to change). Build a nether-portal-shaped frame (2-21 wide, 3-21 tall) in a vanilla dimension, activate with a **water bucket**. Travel is bidirectional; return portals are placed on first entry.
+Flat layers work on `overworld` only.
+
+**Portals.** New dimensions use a **glowstone** frame by default (`/dim setportal` to change). Build a nether-portal shape (2-21 wide, 3-21 tall) in a vanilla dimension and activate it with a **water bucket**. It works both ways, and the return portal appears the first time you go through.
 
 | Command | Permission |
 | :--- | :--- |
@@ -281,52 +254,51 @@ Optional: weighted biomes; flat layers (`overworld` only); ether island shape. E
 | `/dim list` | Everyone |
 | `/dim tp <id>` / `/dim tp <player> <id>` | OP |
 | `/dim setportal <dim_id> <block_id>` | OP |
+| `/dim setsky <dim_id>` / `/dim setsky clear` | OP |
 
 ### Discord
 
-Set a webhook URL in Config to mirror join/leave and/or chat (toggles `discord` join/leave and chat flags).
+Put a webhook URL in Config to mirror joins, leaves, and chat to a Discord channel. Each is a separate toggle.
 
 ### BlueMap
 
-Optional [BlueMap](https://modrinth.com/plugin/bluemap) (compile API **2.7.3**). Enable with `bluemap_enable`.
+Works with [BlueMap](https://modrinth.com/plugin/bluemap) if you have it installed. Turn on with `bluemap_enable`.
 
-Layers: claim outlines (normal / VIP / OP colors), named region icons, home markers, chest shops, video pins, world border, spawn protection.
+Shows claim outlines (different colors for normal, VIP, and OP), named regions, homes, chest shops, video pins, the world border, and spawn protection.
 
-Named regions take an optional tag prefix that picks their map icon:
+Naming a region with a tag picks its map icon:
 
 ```
 /claim name "[shop] Emporium"
 ```
 
-The tag is not part of the name, so `/visit Emporium` still works. `&` color codes work the same way. Run `/claim tags` for the full list of 30.
+The tag is not part of the name, so `/visit Emporium` still works. `&` color codes work the same way. Run `/claim tags` for all 30.
 
-Shops are grouped per chunk. The popup lists item, price, owner, and stock. Markers refresh when the world changes instead of on a fixed timer.
-
-Icons are shared with the admin panel art and hide past `bluemap_icon_max_distance`.
+Shop pins group by chunk and show item, price, owner, and stock. Icons disappear when you zoom out past `bluemap_icon_max_distance`.
 
 ### Hardcore Mode
 
-Off by default (`hardcore_enabled`). Password sessions under `/smp hardcore`.
+Off by default (`hardcore_enabled`). Password-protected sessions under `/smp hardcore`.
 
-- Create picks a random start at least **1000** blocks from world center, inside the world border
-- Join stashes inventory / XP / effects and teleports to the session start with a clean survival loadout
-- **Leave** restores normal life and **suspends** hardcore state; **join again with the password** resumes where you left off
-- Deaths tracked; when deaths reach `hardcore_death_percent` of peak players (default 50%), session ends for everyone
-- Dead players spectate until leave or session end
-- Optional withered hardcore hearts HUD for session members (`hardcore_withered_hearts`, default true; applies on connect)
-- Entering the End as an alive member ensures a dragon if none is present; killing the dragon can **win** the session for alive members in the End
+- Sessions start at a random spot at least **1000** blocks from world center
+- Joining stores your inventory, XP, and effects, then drops you in with a clean loadout
+- **Leaving** gives your normal life back and pauses your hardcore progress. **Join again with the password** to pick up where you left off.
+- When deaths reach `hardcore_death_percent` of the session's peak player count (default 50%), the session ends for everyone
+- Dead players spectate until they leave or the session ends
+- Session members can show withered hearts instead of normal ones (`hardcore_withered_hearts`)
+- Entering the End as a living member brings back the dragon if it is gone. Killing it can **win** the session.
 
 | Command | Description |
 | :--- | :--- |
-| `/smp hardcore create <name> <password>` | Create and auto-join |
+| `/smp hardcore create <name> <password>` | Create and join |
 | `/smp hardcore join <name> <password>` | Join or resume |
-| `/smp hardcore leave` | Leave (always allowed even if feature toggled off mid-session) |
+| `/smp hardcore leave` | Leave |
 | `/smp hardcore status [name]` | Status |
 | `/smp hardcore list` | Active sessions |
 
 ### Kits
 
-Daily kit claim (`kits_enabled`, default true). Global cooldown default **86400** seconds. Tier-gated kits editable from the panel. Default kits: `starter` (tier 0), `vip` (tier 1).
+One kit claim per day by default (`kits.cooldownSeconds`, 86400). Kits can be locked to a VIP tier and are built in the panel. Ships with `starter` (everyone) and `vip` (tier 1).
 
 | Command | Description |
 | :--- | :--- |
@@ -335,57 +307,57 @@ Daily kit claim (`kits_enabled`, default true). Global cooldown default **86400*
 
 ### Simple Voice Chat
 
-Optional age-gate (compile API **2.6.0**). When `voicechat_enable` is true and SVC is installed: unverified players cannot use voice until `/smp verify confirm` (or `/verify confirm`). Deny with `deny`.
+If you have Simple Voice Chat installed and `voicechat_enable` is on, players cannot use voice until they confirm they are 18+ with `/verify confirm`. Decline with `/verify deny`.
 
 ### End Reset
 
-- `/smp end reset dragon` - respawn dragon fight without wiping the dimension
-- `/smp end reset world` - queue full End reset on next restart
+- `/smp end reset dragon` - bring the dragon fight back without wiping the End
+- `/smp end reset world` - wipe the whole End on the next restart
 
 ### Wilderness Regen
 
-`/smp regen` (OP): queue wipe/regen of **unclaimed** chunks (3-chunk buffer around claims kept) on next shutdown. Confirm / cancel / status subcommands. Also available from the dashboard Commands tab.
+`/smp regen` (OP) resets **unclaimed** chunks on the next shutdown, leaving a 3-chunk buffer around every claim. Confirm, cancel, or check status with subcommands, or run it from the Commands tab.
 
 ### Spawn PvP Protection
 
-`spawn_no_pvp` (default true): cancel PvP if attacker or victim is inside vanilla spawn protection radius.
+`spawn_no_pvp` (on by default) blocks PvP when either player is inside the spawn protection radius.
 
 ### Anti-XRay
 
-`antixray_enabled` (default true): server-side obfuscation of fully hidden ores and stone in chunk data. Hidden blocks are sent as plain stone / deepslate / netherrack (depth-aware), so x-ray clients see no ore locations and leak nothing. Real blocks reveal as you break into them and via proximity as you move, so any reveal reads as a natural stone-to-ore transition rather than a flicker.
+`antixray_enabled` (on by default) hides ores that are completely buried, so x-ray clients see nothing but plain stone. Ores appear normally as you dig toward them.
 
 ### Player Shops
 
-Off by default (`shops_enabled`). Look at a chest you may use, `/shop create <price> [currency] [unit]`. Stock is the chest inventory. Spawn-protection chests are admin/OP spawn shops (unlimited stock rules).
+Off by default (`shops_enabled`). Look at a chest you own and run `/shop create <price> [currency] [unit]`. The chest's contents are the stock. Chests inside spawn protection become admin shops with unlimited stock.
 
-**Economy bank** (`economy_enabled`, default false): virtual emeralds for deposit / withdraw / transfer / balance. Shop purchases still use **physical** items only.
+**Economy bank** (`economy_enabled`, off by default) adds virtual emeralds you can deposit, withdraw, and transfer. Buying from shops still uses real items.
 
 > [!WARNING]
 > The economy bank is a **beta** feature. Enable at your own risk.
 
 | Command | Notes |
 | :--- | :--- |
-| `/shop create <price> [currency] [unit]` | Create on looked-at chest |
-| `/shop delete` / `info` / `list` | Manage / inspect |
-| `/shop deposit` / `withdraw` / `transfer` / `balance` | Bank (if economy on) |
+| `/shop create <price> [currency] [unit]` | Create on the chest you are looking at |
+| `/shop delete` / `info` / `list` | Manage and inspect |
+| `/shop deposit` / `withdraw` / `transfer` / `balance` | Bank, if economy is on |
 
-### Command Blocks Dashboard
+### Command Blocks
 
-Scan loaded chunks for command blocks; edit or delete from the panel when the server allows command blocks.
+Find every command block in loaded chunks and edit or delete it from the panel. Needs command blocks enabled on the server.
 
 ### Vote Rewards (Votifier)
 
-Optional NuVotifier v2 TCP listener (`votifier.enabled` default false, port **8192**). Shared `votifier.token`. Tier-stacked reward commands; offline queue.
+Reward players for voting on server lists (`votifier.enabled`, off by default, port **8192**). Set the same token your list site uses. Rewards can stack by VIP tier, and votes that arrive while a player is offline are held until they return.
 
 ### World Backups
 
-Admin panel: create / list / download / delete zips under `backup_dir` (default `backups`), retention `backup_max_count` (default 5). Optional public download and `panel_url` + periodic / `/smp download` messaging when public download is on and a URL is set.
+Create, download, and delete world snapshots from the panel. They go in `backup_dir` (default `backups`), and the oldest are removed past `backup_max_count` (default 5). You can optionally let players download the latest one and share the link with `/smp download`.
 
 ### World Timelapse
 
-Off by default (`timelapse_enabled`). Renders a top-down PNG of each opted-in dimension (`timelapse_dimensions`) straight from its region files every `timelapse_interval_minutes`, stored under `timelapse_dir` (default `timelapse`). Frames are 1 block = 1 pixel and only downsample when a render would not fit free heap; `timelapse_max_render_mb` caps that only for captures forced while players are online, after `timelapse_max_skips` idle waits. `timelapse_max_frames` (0 = keep all) bounds how many frames are kept per dimension.
+Off by default (`timelapse_enabled`). Every `timelapse_interval_minutes`, it saves a top-down picture of each dimension you opted into (`timelapse_dimensions`), building up a time-lapse you can play back in the panel.
 
-Worlds with chunks generated far from everything else are framed on the largest cluster of chunks; the excluded chunk count is logged. Capture on demand with `/timelapse capture` or the panel's Capture Now.
+Frames are full resolution, one pixel per block, and only shrink if the server is short on memory. `timelapse_max_frames` limits how many are kept per dimension (0 keeps everything). Grab one on demand with `/timelapse capture` or **Capture Now** in the panel.
 
 </details>
 
@@ -397,43 +369,37 @@ Worlds with chunks generated far from everything else are framed on the largest 
 | Command | Description | Permission |
 | :--- | :--- | :--- |
 | `/smp help` | Short command tips | Everyone |
-| `/smp reload` | Reload config from disk | OP |
-| `/smp bluemap` | Force-refresh BlueMap markers | OP |
-| `/youtube add <url> <label>` | Pin a video marker on the map | OP |
-| `/youtube remove` | Remove nearest video marker | OP |
-| `/youtube list` | List video markers | OP |
-| `/smp config` | In-game config GUI | OP |
-| `/smp config reset` | Factory reset config | OP |
-| `/smp admin setpassword <password>` | Set panel password and enable dashboard (min 8 chars) | OP |
-| `/smp download` | Send panel / world download link (only if public download + `panel_url` set) | Everyone |
-| `/timelapse capture` | Capture a timelapse frame now | OP |
-| `/smp end reset dragon` | Reset Ender Dragon fight | OP |
-| `/smp end reset world` | Queue End dimension reset | OP |
-| `/smp regen` | Wilderness regen warning + click confirm | OP |
-| `/smp regen confirm` | Queue wilderness regen | OP |
-| `/smp regen cancel` | Cancel pending regen | OP |
-| `/smp regen status` | Pending regen? | OP |
-| `/smp keepinv` / `on` / `off` | Keep inventory preference (also `/keepinv`) | Everyone |
-| `/smp verify confirm` / `deny` | Voice chat age gate (also `/verify`) | Everyone |
-| `/smp hardcore create\|join\|leave\|status\|list` | Hardcore sessions | Everyone (feature flag) |
-| `/smp kit` / `list` / `<name>` | Daily kits | Everyone (feature flag) |
-| `/mute <player> <mins>` | Mute | OP |
-| `/unmute <player>` | Unmute | OP |
+| `/guide` | Get the server guide book | Everyone |
 | `/rules` | Server rules | Everyone |
-| `/claim` … / `/unclaim` / `/sos` | Claims (see Features) | Everyone / VIP for name |
-| `/trust` / `/untrust` / `/trustlist` | Trust list (also under `/claim`) | Everyone |
 | `/home` | Bed / respawn / spawn fallback | Everyone |
 | `/spawn` | World spawn | Everyone |
+| `/rtp` | Random teleport | Everyone |
+| `/visit <name>` | Travel to a named region | Everyone |
 | `/tpr <player>` | Teleport request | Everyone |
 | `/tpa accept\|yes\|deny\|no` | Answer teleport request | Everyone |
-| `/vip set <player> <tier>` | Assign tier | OP |
-| `/vip remove <player>` | Clear assigned tier | OP |
-| `/vip list` | List assigned tiers | OP |
-| `/vip info <player>` | Assigned / earned / effective tier | OP |
+| `/claim` … / `/unclaim` / `/sos` | Claims (see Feature Details) | Everyone / VIP to name |
+| `/trust` / `/untrust` / `/trustlist` | Trust list (also under `/claim`) | Everyone |
+| `/skills` … | Skills overview, view, top | Everyone |
+| `/shop` … | Player shops and bank | Everyone |
+| `/smp kit` / `list` / `<name>` | Daily kits | Everyone |
+| `/smp hardcore create\|join\|leave\|status\|list` | Hardcore sessions | Everyone |
+| `/smp keepinv` / `on` / `off` | Keep inventory preference (also `/keepinv`) | Everyone |
+| `/verify confirm` / `deny` | Voice chat age gate | Everyone |
+| `/smp download` | Send the world download link | Everyone |
+| `/dim list` | List dimensions | Everyone |
+| `/smp reload` | Reload config from disk | OP |
+| `/smp config` / `reset` | In-game config menu / factory reset | OP |
+| `/smp admin setpassword <password>` | Set panel password and turn the panel on | OP |
+| `/mute <player> <mins>` / `/unmute <player>` | Mute and unmute | OP |
 | `/punish <player>` | Wipe inventory and claim items | OP |
-| `/skills` … | Skills overview, view, top, admin givexp/setlevel | Everyone / OP |
-| `/shop` … | Player shops and bank | Everyone (feature flags) |
-| `/dim` … | Custom dimensions | OP for mutate / tp |
+| `/vip set\|remove\|list\|info` | VIP tiers | OP |
+| `/skills givexp\|setlevel` | Adjust a player's skills | OP |
+| `/dim create\|delete\|tp\|setportal\|setsky` | Custom dimensions | OP |
+| `/smp end reset dragon\|world` | Reset the dragon or the End | OP |
+| `/smp regen` / `confirm` / `cancel` / `status` | Wilderness regen | OP |
+| `/timelapse capture` | Capture a timelapse frame now | OP |
+| `/smp bluemap` | Force-refresh BlueMap markers | OP |
+| `/youtube add\|remove\|list` | Video markers on the map | OP |
 
 </details>
 
@@ -442,32 +408,32 @@ Worlds with chunks generated far from everything else are framed on the largest 
 <details>
 <summary><strong>Configuration Reference</strong></summary>
 
-File: `config/quackedsmp.json`. Most values editable from the admin Config tab. Hot-reload: `/smp reload`. Defaults below match the mod's built-in `ConfigData` defaults.
+File: `config/quackedsmp.json`. Most values are editable from the panel's **Config** tab. Apply changes without a restart using `/smp reload`.
 
 | Key | Default | Description |
 | :--- | :--- | :--- |
 | `max_claims` | `50` | Max claim chunks for a normal player |
 | `tiers` | one VIP tier (1, 100h, +20 claims) | Tier definitions |
-| `tp_warmup` | `5` | Teleport standup seconds |
+| `tp_warmup` | `5` | Teleport warmup seconds |
 | `message_interval` | `300` | Seconds between tip broadcasts |
-| `welcome_message` | `&6Welcome to QuackedSMP, {player}!` | Join message; `{player}` and `{server}` (falls back to `QuackedSMP` if `dashboard.server_name` blank) |
+| `welcome_message` | `&6Welcome to QuackedSMP, {player}!` | Join message; supports `{player}` and `{server}` |
 | `allow_lava_wilderness` | `false` | Allow lava placement outside claims |
-| `allow_fire_wilderness` | `false` | Allow fire spread / placement rules in wilderness |
-| `spawn_no_pvp` | `true` | Block PvP in vanilla spawn protection |
+| `allow_fire_wilderness` | `false` | Allow fire in the wilderness |
+| `spawn_no_pvp` | `true` | Block PvP in spawn protection |
 | `protect_explosions` | `true` | Claim explosion protection |
 | `protect_fire_claims` | `true` | Fire protection inside claims |
-| `protect_enderman` | `true` | Enderman grief block in claims / spawn |
+| `protect_enderman` | `true` | Stop endermen griefing claims / spawn |
 | `protect_farmland` | `true` | Farmland trampling protection |
 | `claims_enabled` | `true` | Claiming system |
 | `skills_enabled` | `true` | Skills system |
 | `chatfilter_enabled` | `true` | Chat filter |
-| `voicechat_enable` | `true` | Simple Voice Chat age-gate |
+| `voicechat_enable` | `true` | Voice chat age gate |
 | `mute_levels_minutes` | `[60,120,240,480,1440]` | Auto-mute escalation |
-| `dashboard.enabled` | `false` | HTTP dashboard process |
-| `dashboard.port` | `8125` | Dashboard port |
-| `dashboard.admin_enabled` | `false` | Admin UI enabled (set via setpassword) |
-| `dashboard.server_name` | `""` | Name shown in panel header |
-| `bluemap_enable` | `true` | BlueMap integration when mod present |
+| `dashboard.enabled` | `false` | Panel on or off |
+| `dashboard.port` | `8125` | Panel port |
+| `dashboard.admin_enabled` | `false` | Admin side enabled (set by `setpassword`) |
+| `dashboard.server_name` | `""` | Name shown in the panel header |
+| `bluemap_enable` | `true` | BlueMap integration when installed |
 | `bluemap_show_homes` | `true` | Homes on map |
 | `bluemap_show_claims` | `true` | Claim outlines |
 | `bluemap_claim_color` | `00FFFF` | Normal claim color |
@@ -477,46 +443,51 @@ File: `config/quackedsmp.json`. Most values editable from the admin Config tab. 
 | `bluemap_worldborder_color` | `FF3C3C` | Border color |
 | `bluemap_show_shops` | `true` | Chest shops on map |
 | `bluemap_show_youtube` | `true` | Video pins on map |
-| `bluemap_icon_max_distance` | `2000` | Hide icons past this camera distance (0 = never) |
+| `bluemap_icon_max_distance` | `2000` | Hide icons past this zoom distance (0 = never) |
 | `bluemap_show_spawn_protection` | `true` | Spawn protection outline |
 | `bluemap_spawn_protection_color` | `80409040` | Spawn outline color |
-| `antixray_enabled` | `true` | Ore obfuscation |
+| `antixray_enabled` | `true` | Hide buried ores |
 | `shops_enabled` | `false` | `/shop` |
 | `economy_enabled` | `false` | Emerald bank (beta) |
-| `backup_max_count` | `5` | Snapshot retention |
-| `backup_dir` | `"backups"` | Snapshot directory |
-| `backup_public_download` | `false` | Public latest-snapshot download |
-| `backup_public_max_per_ip` | `2` | Concurrent public downloads per IP |
-| `backup_public_max_concurrent` | `0` | Global concurrent public downloads (`0` = max-players) |
-| `panel_url` | `""` | Public panel URL for `/smp download` and optional broadcast |
-| `panel_message` | see JSON | Chat template; `{url}` substituted |
-| `panel_message_enabled` | `false` | Periodic panel link broadcast |
-| `panel_message_interval` | `1800` | Seconds between panel link broadcasts (min 60 on save) |
+| `backup_max_count` | `5` | How many snapshots to keep |
+| `backup_dir` | `"backups"` | Snapshot folder |
+| `backup_public_download` | `false` | Let players download the latest snapshot |
+| `backup_public_max_per_ip` | `2` | Downloads at once per player |
+| `backup_public_max_concurrent` | `0` | Downloads at once total (`0` = your max-players) |
+| `panel_url` | `""` | Public panel URL used by `/smp download` |
+| `panel_message` | see JSON | Chat template; `{url}` is replaced |
+| `panel_message_enabled` | `false` | Broadcast the panel link periodically |
+| `panel_message_interval` | `1800` | Seconds between those broadcasts |
 | `votifier.enabled` | `false` | Vote listener |
-| `votifier.port` | `8192` | Vote TCP port |
-| `votifier.token` | `""` | Shared secret |
+| `votifier.port` | `8192` | Vote port |
+| `votifier.token` | `""` | Token shared with your server list |
 | `votifier.broadcast` | see JSON | Vote chat line |
 | `kits_enabled` | `true` | Kit system |
-| `kits.cooldownSeconds` | `86400` | Global kit cooldown |
-| `kits.kits` | starter + vip defaults | Kit definitions |
+| `kits.cooldownSeconds` | `86400` | Time between kit claims |
+| `kits.kits` | starter + vip | Kit definitions |
 | `hardcore_enabled` | `false` | Hardcore sessions |
-| `hardcore_death_percent` | `50` | Deaths vs peak players to end session |
-| `hardcore_withered_hearts` | `true` | Hardcore heart HUD for session members |
+| `hardcore_death_percent` | `50` | Deaths vs peak players before a session ends |
+| `hardcore_withered_hearts` | `true` | Withered hearts for session members |
+| `timelapse_enabled` | `false` | World timelapse |
+| `timelapse_dimensions` | `["minecraft:overworld"]` | Which dimensions to capture |
+| `timelapse_interval_minutes` | `60` | Minutes between captures |
+| `timelapse_max_frames` | `0` | Frames kept per dimension (0 = all) |
+| `timelapse_dir` | `"timelapse"` | Frame folder |
 | `team_auto_assign` | `{}` | Team name → dimension IDs |
-| `skills.xp_exponent` | `1.5` | XP curve exponent |
+| `skills.xp_exponent` | `1.5` | How fast levels get expensive |
 | `skills.ability_unlock_levels` | see JSON | Per-ability unlock levels |
 | `skills.cooldowns` | see JSON | Base ability cooldowns (seconds) |
-| `skills.caps` | see JSON | Passive caps at high level |
+| `skills.caps` | see JSON | Category buff limits |
 
-**Caps (max at level 100, defaults)**
+**Category buff limits at level 100**
 
 - `industrial_speed` 0.5 → +50% movement speed
 - `nature_health` 10.0 → +10 hearts
 - `combat_damage` 1.0 → +100% attack damage
-- `knowledge_xp` 1.0 → +100% XP orb gain
-- `double_drop` 0.5 → max 50% double drop chance
-- `defense_armor` 10.0 → max +10 armor points
-- `safe_landing` 1.0 → max 100% fall damage absorbed
+- `knowledge_xp` 1.0 → +100% skill XP for non-Knowledge skills
+- `double_drop` 0.5 → 50% chance of double drops
+- `defense_armor` 10.0 → +10 armor
+- `safe_landing` 1.0 → all fall damage absorbed
 
 </details>
 
