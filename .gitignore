@@ -28,7 +28,9 @@ dashboard-ui/node_modules/
 dashboard-ui/dist/
 
 # --- Planning / scratch docs (not release artifacts) ---
-docs/
+docs/*
+# except assets the README links to
+!docs/tutorial-thumbnail.png
 
 # --- Root-level build artifact (fabric/neoforge META-INF are legitimate) ---
 /META-INF/

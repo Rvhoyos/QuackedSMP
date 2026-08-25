@@ -10,6 +10,10 @@ Server-side mod for **Minecraft 26.2** (Fabric + NeoForge). Claims, skills, anti
 
 Nothing to install on the client.
 
+**Video tutorial** (click to watch on YouTube): install, plus Caddy, firewall, BlueMap and voice chat setup.
+
+[![Watch the tutorial on YouTube](docs/tutorial-thumbnail.png)](https://www.youtube.com/watch?v=fey4f_5HBtM)
+
 ## Quick Start
 
 1. Put the Fabric or NeoForge JAR in `mods/` and start the server.
