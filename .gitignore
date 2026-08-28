@@ -37,9 +37,3 @@ docs/*
 
 # --- Stray extracted vanilla .class files (use javap for inspection, don't commit) ---
 /net/
-
-# --- Claude Code internal files ---
-CLAUDE.md
-.claude-decompiled/
-.gradlew-vscode
-.vscode

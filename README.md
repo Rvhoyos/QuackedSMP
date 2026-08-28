@@ -30,7 +30,7 @@ The panel is optional and stays off until you set a password. Every game feature
 **Before you expose the panel:**
 
 - The admin side needs the password. The public side (metrics, chat feed, leaderboard) does not.
-- The panel is plain HTTP on port **8125**. Fine on localhost or a home LAN. Do not open 8125 to the internet without putting HTTPS in front of it (Caddy, Nginx) or using a private tunnel (SSH, VPN).
+- The panel is plain HTTP on port 8125. Fine on localhost or a home LAN. Do not open 8125 to the internet without putting HTTPS in front of it (Caddy, Nginx) or using a private tunnel (SSH, VPN).
 - Passwords are hashed, never stored as plain text. Repeated failed logins lock that IP out for a few minutes.
 - Never turn the panel on in config without setting a password, unless you want anyone to have admin.
 
@@ -108,32 +108,34 @@ Levels 1-10 cost 50 XP each. After that every level costs more than the last, up
 
 **Category buffs**, based on your average level in that category:
 
-- Industrial → movement speed (up to +50%)
-- Nature → max health (up to +10 hearts)
-- Combat → attack damage (up to +100%)
-- Knowledge → skill XP gain for your non-Knowledge skills (up to +100%)
+| Category | Buff | Cap at level 100 |
+| :--- | :--- | :--- |
+| Industrial | Movement speed | +50% |
+| Nature | Max health | +10 hearts |
+| Combat | Attack damage | +100% |
+| Knowledge | Skill XP for your non-Knowledge skills | +100% |
 
 **Active abilities**
 
-Most unlock at level **10**. Exceptions: **Agility 3**, **Defense 5**, **Scout Zoom (Archery) 5**, **Trading 1**. All configurable.
+Most unlock at level 10. Exceptions: Agility 3, Defense 5, Scout Zoom (Archery) 5, Trading 1. All configurable.
 
-Buffs last about **12 seconds** at unlock and up to **30 seconds** at level 100. Tycoon's Charm and Scout Zoom last longer. Cooldowns shrink as the skill levels, roughly to a quarter of the listed time by level 100.
+Buffs last about 12 seconds at unlock and up to 30 seconds at level 100. Tycoon's Charm and Scout Zoom last longer. Cooldowns shrink as the skill levels.
 
-| Skill | Ability | Effect | Cooldown (Lv 10 → Lv 100) |
-| :--- | :--- | :--- | :--- |
-| Mining | Super Breaker | Haste V | 3m → 1m |
-| Excavation | Giga Drill | Haste V | 3m 45s → 1m 15s |
-| Woodcutting | Tree Feller | Chain-breaks logs (max 64) | 3m 45s → 1m 15s |
-| Farming | Green Terra | Bonemeals crops in 5-block radius | 2m 15s → 45s |
-| Fishing | Master Angler | Luck V | 3m 45s → 1m 15s |
-| Melee | Berzerk | Strength II + Speed II | 3m 45s → 1m 15s |
-| Archery | Sniper | Slow Falling + Night Vision | 2m 15s → 45s |
-| Archery | Scout Zoom | Spyglass zoom, mobs glow in a cone ahead | ~22s → ~7s |
-| Defense | Juggernaut | Resistance IV + Slowness IV | 7m 30s → 2m 30s |
-| Enchanting | Arcane Infusion | Repairs the held item a little | 15m → 5m |
-| Alchemy | Philosopher's Touch | Picks up a Spawner intact | 7m 30s → 2m 30s |
-| Trading | Tycoon's Charm | Hero of the Village | 15m → 5m |
-| Agility | Dash | Velocity boost in the direction you look | ~7s → ~2s |
+| Skill | Ability | Effect | Cooldown at Lv 10 | At Lv 100 |
+| :--- | :--- | :--- | :--- | :--- |
+| Mining | Super Breaker | Haste V | 3m | 1m |
+| Excavation | Giga Drill | Haste V | 3m 45s | 1m 15s |
+| Woodcutting | Tree Feller | Chain-breaks logs (max 64) | 3m 45s | 1m 15s |
+| Farming | Green Terra | Bonemeals crops in 5-block radius | 2m 15s | 45s |
+| Fishing | Master Angler | Luck V | 3m 45s | 1m 15s |
+| Melee | Berzerk | Strength II + Speed II | 3m 45s | 1m 15s |
+| Archery | Sniper | Slow Falling + Night Vision | 2m 15s | 45s |
+| Archery | Scout Zoom | Spyglass zoom, mobs glow in a cone ahead | ~22s | ~7s |
+| Defense | Juggernaut | Resistance IV + Slowness IV | 7m 30s | 2m 30s |
+| Enchanting | Arcane Infusion | Repairs the held item a little | 15m | 5m |
+| Alchemy | Philosopher's Touch | Picks up a Spawner intact | 7m 30s | 2m 30s |
+| Trading | Tycoon's Charm | Hero of the Village | 15m | 5m |
+| Agility | Dash | Velocity boost in the direction you look | ~7s | ~2s |
 
 **How to trigger them**
 
@@ -185,14 +187,16 @@ Claim chunks so untrusted players cannot build, break, or interact inside them.
 
 ### Teleportation
 
-All teleports have a **5 second** warmup by default. Moving cancels them.
+All teleports have a 5 second warmup by default. Moving cancels them.
 
-- `/home` - your bed or respawn point, otherwise world spawn
-- `/spawn` - world spawn
-- `/rtp` - random teleport, with per-dimension radius, biome filter, and arrival rewards
-- `/visit <name>` - travel to a named region you own or are trusted in
-- `/tpr <player>` - ask to teleport to someone
-- `/tpa accept` / `yes` / `deny` / `no` - answer a request
+| Command | Description |
+| :--- | :--- |
+| `/home` | Your bed or respawn point, otherwise world spawn |
+| `/spawn` | World spawn |
+| `/rtp` | Random teleport, with per-dimension radius, biome filter, and arrival rewards |
+| `/visit <name>` | Travel to a named region you own or are trusted in |
+| `/tpr <player>` | Ask to teleport to someone |
+| `/tpa accept` / `yes` / `deny` / `no` | Answer a request |
 
 ### Chat Management
 
@@ -219,7 +223,7 @@ New players also get a scoreboard sidebar when they join.
 Create dimensions at runtime, no datapack needed.
 
 > [!IMPORTANT]
-> **Restart the server after creating one.** Until you do, players cannot break or place blocks there.
+> Restart the server after creating one. Until you do, players cannot break or place blocks there.
 
 | Type | Terrain |
 | :--- | :--- |
@@ -249,7 +253,7 @@ Ether dimensions connect to the overworld vertically. Fall off the bottom of an 
 
 Flat layers work on `overworld` only.
 
-**Portals.** New dimensions use a **glowstone** frame by default (`/dim setportal` to change). Build a nether-portal shape (2-21 wide, 3-21 tall) in a vanilla dimension and activate it with a **water bucket**. It works both ways, and the return portal appears the first time you go through.
+**Portals.** New dimensions use a glowstone frame by default (`/dim setportal` to change). Build a nether-portal shape (2-21 wide, 3-21 tall) in a vanilla dimension and activate it with a water bucket. It works both ways, and the return portal appears the first time you go through.
 
 | Command | Permission |
 | :--- | :--- |
@@ -284,13 +288,13 @@ Shop pins group by chunk and show item, price, owner, and stock. Icons disappear
 
 Off by default (`hardcore_enabled`). Password-protected sessions under `/smp hardcore`.
 
-- Sessions start at a random spot at least **1000** blocks from world center
+- Sessions start at a random spot at least 1000 blocks from world center
 - Joining stores your inventory, XP, and effects, then drops you in with a clean loadout
-- **Leaving** gives your normal life back and pauses your hardcore progress. **Join again with the password** to pick up where you left off.
+- Leaving gives your normal life back and pauses your hardcore progress. Join again with the password to pick up where you left off.
 - When deaths reach `hardcore_death_percent` of the session's peak player count (default 50%), the session ends for everyone
 - Dead players spectate until they leave or the session ends
 - Session members can show withered hearts instead of normal ones (`hardcore_withered_hearts`)
-- Entering the End as a living member brings back the dragon if it is gone. Killing it can **win** the session.
+- Entering the End as a living member brings back the dragon if it is gone. Killing it can win the session.
 
 | Command | Description |
 | :--- | :--- |
@@ -315,8 +319,10 @@ If you have Simple Voice Chat installed and `voicechat_enable` is on, players ca
 
 ### End Reset
 
-- `/smp end reset dragon` - bring the dragon fight back without wiping the End
-- `/smp end reset world` - wipe the whole End on the next restart
+| Command | Description |
+| :--- | :--- |
+| `/smp end reset dragon` | Bring the dragon fight back without wiping the End |
+| `/smp end reset world` | Wipe the whole End on the next restart |
 
 ### Wilderness Regen
 
@@ -337,7 +343,7 @@ Off by default (`shops_enabled`). Look at a chest you own and run `/shop create 
 **Economy bank** (`economy_enabled`, off by default) adds virtual emeralds you can deposit, withdraw, and transfer. Buying from shops still uses real items.
 
 > [!WARNING]
-> The economy bank is a **beta** feature. Enable at your own risk.
+> The economy bank is a beta feature. Enable at your own risk.
 
 | Command | Notes |
 | :--- | :--- |
@@ -351,7 +357,7 @@ Find every command block in loaded chunks and edit or delete it from the panel. 
 
 ### Vote Rewards (Votifier)
 
-Reward players for voting on server lists (`votifier.enabled`, off by default, port **8192**). Set the same token your list site uses. Rewards can stack by VIP tier, and votes that arrive while a player is offline are held until they return.
+Reward players for voting on server lists (`votifier.enabled`, off by default, port 8192). Set the same token your list site uses. Rewards can stack by VIP tier, and votes that arrive while a player is offline are held until they return.
 
 ### World Backups
 
@@ -477,7 +483,7 @@ File: `config/quackedsmp.json`. Most values are editable from the panel's **Conf
 | `timelapse_interval_minutes` | `60` | Minutes between captures |
 | `timelapse_max_frames` | `0` | Frames kept per dimension (0 = all) |
 | `timelapse_dir` | `"timelapse"` | Frame folder |
-| `team_auto_assign` | `{}` | Team name → dimension IDs |
+| `team_auto_assign` | `{}` | Team name to dimension IDs |
 | `skills.xp_exponent` | `1.5` | How fast levels get expensive |
 | `skills.ability_unlock_levels` | see JSON | Per-ability unlock levels |
 | `skills.cooldowns` | see JSON | Base ability cooldowns (seconds) |
@@ -485,13 +491,15 @@ File: `config/quackedsmp.json`. Most values are editable from the panel's **Conf
 
 **Category buff limits at level 100**
 
-- `industrial_speed` 0.5 → +50% movement speed
-- `nature_health` 10.0 → +10 hearts
-- `combat_damage` 1.0 → +100% attack damage
-- `knowledge_xp` 1.0 → +100% skill XP for non-Knowledge skills
-- `double_drop` 0.5 → 50% chance of double drops
-- `defense_armor` 10.0 → +10 armor
-- `safe_landing` 1.0 → all fall damage absorbed
+| Key | Default | Effect at the cap |
+| :--- | :--- | :--- |
+| `industrial_speed` | `0.5` | +50% movement speed |
+| `nature_health` | `10.0` | +10 hearts |
+| `combat_damage` | `1.0` | +100% attack damage |
+| `knowledge_xp` | `1.0` | +100% skill XP for non-Knowledge skills |
+| `double_drop` | `0.5` | 50% chance of double drops |
+| `defense_armor` | `10.0` | +10 armor |
+| `safe_landing` | `1.0` | All fall damage absorbed |
 
 </details>
 
