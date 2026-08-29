@@ -8,10 +8,11 @@ import HardcoreLeaderboard from './components/HardcoreLeaderboard'
 import DownloadProgress from './components/DownloadProgress'
 import RestoreInfo from './components/RestoreInfo'
 import { streamingDownload, hasFileSystemAccess } from './lib/streamingDownload'
+import { fmtSize, fmtDate } from './lib/format'
 import styles from './App.module.css'
 
 const PUBLIC_DOWNLOAD_URL = '/api/backups/latest/download'
-const PUBLIC_DOWNLOAD_FILENAME = 'world.zip'
+const PUBLIC_LATEST_URL = '/api/backups/latest'
 
 const MAX_EVENTS = 150
 const HIST_MAX = 48
@@ -37,6 +38,8 @@ export default function App() {
   const [dlPrompt,    setDlPrompt]    = useState(false)
   const [dlProgress,  setDlProgress]  = useState(null) // { received, total, speed, eta } | null
   const [dlError,     setDlError]     = useState(null)
+  const [latest,      setLatest]      = useState(null) // { name, sizeBytes, createdAt } | null
+  const [latestError, setLatestError] = useState(null)
 
   const wsRef         = useRef(null)
   const retryRef      = useRef(null)
@@ -108,19 +111,38 @@ export default function App() {
     }
   }, [openWebSocket, pollMetrics, pollLeaderboard])
 
+  // The snapshot's name is fetched when the prompt opens, not on the Download click:
+  // the save picker needs the click's user activation, which awaiting a fetch can outlive.
+  const openDownloadPrompt = useCallback(async () => {
+    setDlError(null)
+    setDlProgress(null)
+    setLatest(null)
+    setLatestError(null)
+    setDlPrompt(true)
+    try {
+      const r = await fetch(PUBLIC_LATEST_URL)
+      const d = await r.json()
+      if (d.error) setLatestError(r.status === 404 ? 'No snapshot has been taken yet' : d.error)
+      else setLatest(d)
+    } catch {
+      setLatestError('Could not reach the server')
+    }
+  }, [])
+
   const startPublicDownload = useCallback(async () => {
+    if (!latest) return
     setDlError(null)
     setDlPrompt(false)
     setDlProgress({ received: 0, total: 0, speed: 0, eta: null })
     const result = await streamingDownload({
       url: PUBLIC_DOWNLOAD_URL,
-      filename: PUBLIC_DOWNLOAD_FILENAME,
+      filename: latest.name,
       onProgress: setDlProgress,
       allowBlobFallback: true,
     })
     setDlProgress(null)
     if (!result.ok && !result.userCancelled) setDlError(result.error || 'Download failed')
-  }, [])
+  }, [latest])
 
   const lbRef = useRef(null)
   useEffect(() => {
@@ -159,6 +181,11 @@ export default function App() {
               Full Minecraft world as a <code>.zip</code>. Large worlds can take a while
               on slow connections.
             </p>
+            <p className={styles.dlSnapshot}>
+              {latest
+                ? <><code>{latest.name}</code> · {fmtDate(latest.createdAt)} · {fmtSize(latest.sizeBytes)}</>
+                : latestError || 'Checking the latest snapshot…'}
+            </p>
             {!hasFileSystemAccess() && (
               <p className={styles.dlCaveat}>
                 Your browser will hold the file in memory while downloading.
@@ -171,8 +198,8 @@ export default function App() {
               <button className={styles.btnGhost} onClick={() => setDlPrompt(false)}>
                 Cancel
               </button>
-              <button className={styles.btnPrimary} onClick={startPublicDownload}>
-                Download
+              <button className={styles.btnPrimary} onClick={startPublicDownload} disabled={!latest}>
+                {latest ? 'Download' : latestError ? 'Unavailable' : 'Checking…'}
               </button>
             </div>
           </div>
@@ -190,7 +217,7 @@ export default function App() {
             wsStatus={wsStatus}
             sys={sysMetrics}
             downloading={dlProgress != null}
-            onDownload={health?.backupPublicEnabled ? () => { setDlError(null); setDlProgress(null); setDlPrompt(true) } : null}
+            onDownload={health?.backupPublicEnabled ? openDownloadPrompt : null}
             onAdmin={health?.adminEnabled ? () => setView('admin') : null}
           />
           <div className={styles.grid}>

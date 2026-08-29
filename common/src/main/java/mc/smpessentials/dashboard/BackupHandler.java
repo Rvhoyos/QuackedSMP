@@ -80,6 +80,24 @@ public final class BackupHandler {
     }
 
     /**
+     * GET /api/backups/latest. Names the snapshot {@link #handleLatestPublic} would hand over,
+     * so a client can save it under the name it has on disk. Gated by
+     * {@link SmpConfig#BACKUP_PUBLIC_DOWNLOAD}, same as the download itself.
+     */
+    public static String handleLatestInfo(String method, Map<String, String> headers, String body) {
+        if (!"GET".equals(method))             return err(405, "Method not allowed");
+        if (!SmpConfig.BACKUP_PUBLIC_DOWNLOAD) return err(403, "Public downloads disabled");
+
+        List<BackupService.Snapshot> all = BackupService.get().list();
+        if (all.isEmpty()) return err(404, "No snapshots available");
+
+        BackupService.Snapshot latest = all.get(0);
+        return String.format(Locale.US,
+                "{\"name\":\"%s\",\"sizeBytes\":%d,\"createdAt\":%d}",
+                jsonEscape(latest.name()), latest.sizeBytes(), latest.createdAt());
+    }
+
+    /**
      * GET /api/backups/latest/download. Public route gated by
      * {@link SmpConfig#BACKUP_PUBLIC_DOWNLOAD}. Streams the newest snapshot,
      * with per-IP and global concurrency caps enforced by {@link PublicDownloadLimiter}.
