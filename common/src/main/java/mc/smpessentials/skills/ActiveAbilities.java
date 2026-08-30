@@ -1,5 +1,10 @@
 package mc.smpessentials.skills;
 
+import it.unimi.dsi.fastutil.longs.Long2BooleanOpenHashMap;
+import it.unimi.dsi.fastutil.longs.LongArrayFIFOQueue;
+import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
+
+import mc.smpessentials.claims.ClaimAccess;
 import mc.smpessentials.config.SmpConfig;
 
 import net.minecraft.core.BlockPos;
@@ -13,6 +18,7 @@ import net.minecraft.tags.ItemTags;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.item.*;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.level.ClipContext;
@@ -173,7 +179,22 @@ public final class ActiveAbilities {
         return true;
     }
 
-    // Called when a log is broken. If Tree Feller is active, chain-breaks connected logs upward (up to 64).
+    // Measured between the two furthest-apart logs of a tree, not from its trunk, because the leash
+    // is anchored wherever the player cut and that can be a branch tip. MegaJungleTrunkPlacer offsets
+    // branch logs by (int)(1.5 + cos(angle) * i) for i up to 4, so 1.5 +/- 4 truncates to the range
+    // -2 to 5 on each axis: opposite tips are 7 apart, and 7 reaches every log of every vanilla tree
+    // from any cut. There is deliberately no vertical bound, the radius keeps a fell to one trunk's
+    // column and FELL_MAX_LOGS caps the cost, so a third limit would only risk cutting a tall tree
+    // short.
+    private static final int FELL_RADIUS = 7;
+
+    // The largest tree vanilla can grow is a mega jungle at 159 logs (4 trunk columns of up to 31,
+    // plus at most 7 branches of 5). This is the same single-tick destroyBlock budget that
+    // SkillEvents.applyLeafBlower already spends on this very event, so it stops a fell running into
+    // a log build without ever being the thing that leaves a real tree standing.
+    private static final int FELL_MAX_LOGS = 343;
+
+    // Called when a log is broken. If Tree Feller is active, fells the rest of the tree.
     public static void onLogBreak(ServerPlayer sp, BlockPos pos, ServerLevel level) {
         UUID uuid = sp.getUUID();
         Long expiry = treeFellerActive.get(uuid);
@@ -181,33 +202,102 @@ public final class ActiveAbilities {
             treeFellerActive.remove(uuid);
             return;
         }
-        chainBreakLogs(level, pos, sp, 64);
+        chainBreakLogs(level, pos, sp);
     }
 
-    private static void chainBreakLogs(ServerLevel level, BlockPos start, ServerPlayer sp, int maxBlocks) {
-        Queue<BlockPos> queue = new LinkedList<>();
-        Set<BlockPos> visited = new HashSet<>();
-        queue.add(start.above());
+    /**
+     * Breaks every log connected to {@code start}, within {@link #FELL_RADIUS} of it.
+     *
+     * All 26 neighbours are walked, not just the 6 faces. Mega jungle branches step diagonally in
+     * all three axes at once, and a 2x2 trunk needs the sideways step at the broken log's own level
+     * to reach its other three columns.
+     */
+    private static void chainBreakLogs(ServerLevel level, BlockPos start, ServerPlayer sp) {
+        // The chained breaks go straight to Level.destroyBlock, which posts no break event on either
+        // loader, so claims have to be checked here or not at all. On Fabric this runs before the
+        // claim check on the player's own block, hence testing the origin up front.
+        ClaimCache claims = new ClaimCache(level, sp);
+        if (!claims.canModify(start))
+            return;
+
+        LongOpenHashSet visited = new LongOpenHashSet();
+        LongArrayFIFOQueue queue = new LongArrayFIFOQueue();
+        BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
+
+        // The player's own break already drops this log, so it is marked seen rather than enqueued.
+        // Breaking it again here would run the drops a second time.
+        visited.add(start.asLong());
+        enqueueNeighbors(queue, visited, start, start);
+
         int broken = 0;
-
-        while (!queue.isEmpty() && broken < maxBlocks) {
-            BlockPos pos = queue.poll();
-            if (visited.contains(pos))
+        while (!queue.isEmpty() && broken < FELL_MAX_LOGS) {
+            cursor.set(queue.dequeueLong());
+            if (!level.getBlockState(cursor).is(BlockTags.LOGS))
                 continue;
-            visited.add(pos);
-
-            BlockState state = level.getBlockState(pos);
-            if (!state.is(BlockTags.LOGS))
+            if (!claims.canModify(cursor))
                 continue;
 
-            level.destroyBlock(pos, true, sp);
+            BlockPos log = cursor.immutable();
+            level.destroyBlock(log, true, sp);
             broken++;
+            enqueueNeighbors(queue, visited, log, start);
+        }
+    }
 
-            queue.add(pos.above());
-            queue.add(pos.north());
-            queue.add(pos.south());
-            queue.add(pos.east());
-            queue.add(pos.west());
+    /**
+     * Queues the 26 neighbours of {@code from} that are unseen and still within {@link #FELL_RADIUS}
+     * of {@code origin}. Marking them seen here rather than on dequeue is what keeps each position
+     * to a single block lookup: neighbouring logs share most of their neighbours, so a face-only
+     * check on dequeue would look at the same position over and over.
+     */
+    private static void enqueueNeighbors(LongArrayFIFOQueue queue, LongOpenHashSet visited,
+            BlockPos from, BlockPos origin) {
+        for (int dx = -1; dx <= 1; dx++) {
+            for (int dy = -1; dy <= 1; dy++) {
+                for (int dz = -1; dz <= 1; dz++) {
+                    if (dx == 0 && dy == 0 && dz == 0)
+                        continue;
+                    int x = from.getX() + dx;
+                    int y = from.getY() + dy;
+                    int z = from.getZ() + dz;
+                    if (Math.abs(x - origin.getX()) > FELL_RADIUS
+                            || Math.abs(z - origin.getZ()) > FELL_RADIUS)
+                        continue;
+                    long packed = BlockPos.asLong(x, y, z);
+                    if (visited.add(packed))
+                        queue.enqueue(packed);
+                }
+            }
+        }
+    }
+
+    /**
+     * Claim answers for one fell, kept per chunk. A fell spans at most four chunks, so this turns
+     * hundreds of lookups into a handful. Deliberately not ClaimProtection.onBlockBreak, which chats
+     * the player on every denial and would print one line per log.
+     */
+    private static final class ClaimCache {
+        private final ServerLevel level;
+        private final ServerPlayer player;
+        private final Long2BooleanOpenHashMap byChunk = new Long2BooleanOpenHashMap();
+
+        ClaimCache(ServerLevel level, ServerPlayer player) {
+            this.level = level;
+            this.player = player;
+        }
+
+        boolean canModify(BlockPos pos) {
+            // ClaimAccess answers from the saved claims whether or not the feature is on, so without
+            // this the chain would still honour stale claim data on a server that turned claims off.
+            // ClaimProtection.onBlockBreak carries the same guard for the normal break path.
+            if (!SmpConfig.CLAIMS_ENABLED)
+                return true;
+            long key = ChunkPos.pack(pos);
+            if (this.byChunk.containsKey(key))
+                return this.byChunk.get(key);
+            boolean allowed = ClaimAccess.canModify(this.player, this.level, ChunkPos.unpack(key));
+            this.byChunk.put(key, allowed);
+            return allowed;
         }
     }
 
