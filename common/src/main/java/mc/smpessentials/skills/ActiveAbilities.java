@@ -1,10 +1,9 @@
 package mc.smpessentials.skills;
 
-import it.unimi.dsi.fastutil.longs.Long2BooleanOpenHashMap;
 import it.unimi.dsi.fastutil.longs.LongArrayFIFOQueue;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 
-import mc.smpessentials.claims.ClaimAccess;
+import mc.smpessentials.claims.ClaimAccessCache;
 import mc.smpessentials.config.SmpConfig;
 
 import net.minecraft.core.BlockPos;
@@ -18,7 +17,6 @@ import net.minecraft.tags.ItemTags;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.item.*;
-import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.level.ClipContext;
@@ -50,7 +48,9 @@ public final class ActiveAbilities {
     private ActiveAbilities() {
     }
 
-    // Returns true if the drop event should be cancelled (ability activated or on cooldown).
+    // Returns true if the drop event should be cancelled, which is only when an ability actually
+    // fired. A gesture that hits a cooldown still says so and then drops the item normally, so
+    // sneak + Q never silently swallows an item the player meant to throw away.
     public static boolean onPlayerDropItem(net.minecraft.world.entity.player.Player player,
             net.minecraft.world.entity.item.ItemEntity entity) {
         if (!mc.smpessentials.config.SmpConfig.SKILLS_ENABLED) return false;
@@ -68,38 +68,21 @@ public final class ActiveAbilities {
 
         boolean handled = false;
 
-        if (dropped.is(ItemTags.PICKAXES)) {
-            if (tryActivate(sp, data, SkillType.MINING, "Super Breaker", uuid))
-                handled = true;
-        } else if (dropped.is(ItemTags.SHOVELS)) {
-            if (tryActivate(sp, data, SkillType.EXCAVATION, "Giga Drill", uuid))
-                handled = true;
-        } else if (dropped.is(ItemTags.AXES)) {
-            if (tryActivateTreeFeller(sp, data, uuid))
-                handled = true;
-        } else if (dropped.is(ItemTags.HOES)) {
-            if (tryActivateGreenTerra(sp, data, uuid, sl))
-                handled = true;
-        } else if (dropped.getItem() instanceof FishingRodItem) {
-            if (tryActivateMasterAngler(sp, data, uuid))
-                handled = true;
-        } else if (dropped.is(ItemTags.SWORDS)) {
-            if (tryActivateBerzerk(sp, data, uuid))
-                handled = true;
-        } else if (dropped.getItem() instanceof BowItem || dropped.getItem() instanceof CrossbowItem) {
-            if (tryActivateSniper(sp, data, uuid))
-                handled = true;
-        } else if (dropped.getItem() instanceof ShieldItem) {
-            if (tryActivateJuggernaut(sp, data, uuid))
-                handled = true;
-        } else if (dropped.getItem() == Items.BOOK || dropped.getItem() == Items.ENCHANTED_BOOK) {
-            // Alchemy: Book + Sneak + Q -> Silk Touch Spawner
-            if (tryActivateAlchemy(sp, data, uuid))
-                handled = true;
-        } else if (dropped.getItem() == Items.EMERALD) {
-            // Trading: Emerald + Sneak + Q -> Tycoon's Charm (Hero of Village)
-            if (tryActivateTycoon(sp, data, uuid))
-                handled = true;
+        SkillType triggered = abilityFor(dropped);
+        if (triggered != null) {
+            handled = switch (triggered) {
+                case MINING      -> tryActivate(sp, data, SkillType.MINING, "Super Breaker", uuid);
+                case EXCAVATION  -> tryActivate(sp, data, SkillType.EXCAVATION, "Giga Drill", uuid);
+                case WOODCUTTING -> tryActivateTreeFeller(sp, data, uuid);
+                case FARMING     -> tryActivateGreenTerra(sp, data, uuid, sl);
+                case FISHING     -> tryActivateMasterAngler(sp, data, uuid);
+                case MELEE       -> tryActivateBerzerk(sp, data, uuid);
+                case ARCHERY     -> tryActivateSniper(sp, data, uuid);
+                case DEFENSE     -> tryActivateJuggernaut(sp, data, uuid);
+                case ALCHEMY     -> tryActivateAlchemy(sp, data, uuid);
+                case TRADING     -> tryActivateTycoon(sp, data, uuid);
+                case AGILITY, ENCHANTING -> false;
+            };
         }
 
         // Independent check: Arcane Infusion (Repair)
@@ -121,6 +104,26 @@ public final class ActiveAbilities {
         return false;
     }
 
+    /**
+     * The skill whose sneak + Q ability {@code stack} triggers, or null for an item that triggers
+     * none. Agility and Enchanting are absent on purpose: Dash has no trigger item, and Arcane
+     * Infusion overlays any damaged item rather than owning one, so both are handled separately.
+     */
+    public static SkillType abilityFor(ItemStack stack) {
+        if (stack.is(ItemTags.PICKAXES)) return SkillType.MINING;
+        if (stack.is(ItemTags.SHOVELS))  return SkillType.EXCAVATION;
+        if (stack.is(ItemTags.AXES))     return SkillType.WOODCUTTING;
+        if (stack.is(ItemTags.HOES))     return SkillType.FARMING;
+        if (stack.is(ItemTags.SWORDS))   return SkillType.MELEE;
+        Item item = stack.getItem();
+        if (item instanceof FishingRodItem)                    return SkillType.FISHING;
+        if (item instanceof BowItem || item instanceof CrossbowItem) return SkillType.ARCHERY;
+        if (item instanceof ShieldItem)                        return SkillType.DEFENSE;
+        if (item == Items.BOOK || item == Items.ENCHANTED_BOOK) return SkillType.ALCHEMY;
+        if (item == Items.EMERALD)                             return SkillType.TRADING;
+        return null;
+    }
+
     // ========== ABILITY IMPLEMENTATIONS ==========
 
     // Shared handler for Super Breaker (Mining) and Giga Drill (Excavation). Applies Haste V; duration: 10s + 0.2s/level.
@@ -133,7 +136,7 @@ public final class ActiveAbilities {
             long remaining = data.getCooldownRemaining(uuid, skill);
             sp.sendSystemMessage(Component.literal(
                     "\u00a7c" + name + " on cooldown! \u00a77(" + formatTime(remaining) + ")"), true);
-            return true; // handled: cancel the drop, show cooldown
+            return false; // not activated, so the drop goes through as a normal drop
         }
 
         data.setCooldown(uuid, skill);
@@ -142,12 +145,12 @@ public final class ActiveAbilities {
 
         switch (skill) {
             case MINING -> {
-                sp.addEffect(new MobEffectInstance(MobEffects.HASTE, durationTicks, 4, false, false));
+                sp.addEffect(new MobEffectInstance(MobEffects.HASTE, durationTicks, 4, false, false, true));
                 announce(sp, name, durationTicks / 20, SoundEvents.ANVIL_LAND);
                 resyncHand(sp);
             }
             case EXCAVATION -> {
-                sp.addEffect(new MobEffectInstance(MobEffects.HASTE, durationTicks, 4, false, false));
+                sp.addEffect(new MobEffectInstance(MobEffects.HASTE, durationTicks, 4, false, false, true));
                 announce(sp, name, durationTicks / 20, SoundEvents.GRASS_BREAK);
                 resyncHand(sp);
             }
@@ -167,7 +170,7 @@ public final class ActiveAbilities {
             long remaining = data.getCooldownRemaining(uuid, SkillType.WOODCUTTING);
             sp.sendSystemMessage(Component.literal(
                     "\u00a7cTree Feller on cooldown! \u00a77(" + formatTime(remaining) + ")"), true);
-            return true;
+            return false; // not activated, so the drop goes through as a normal drop
         }
 
         data.setCooldown(uuid, SkillType.WOODCUTTING);
@@ -213,10 +216,9 @@ public final class ActiveAbilities {
      * to reach its other three columns.
      */
     private static void chainBreakLogs(ServerLevel level, BlockPos start, ServerPlayer sp) {
-        // The chained breaks go straight to Level.destroyBlock, which posts no break event on either
-        // loader, so claims have to be checked here or not at all. On Fabric this runs before the
-        // claim check on the player's own block, hence testing the origin up front.
-        ClaimCache claims = new ClaimCache(level, sp);
+        // On Fabric this runs before the claim check on the player's own block, hence testing the
+        // origin up front.
+        ClaimAccessCache claims = new ClaimAccessCache(level, sp);
         if (!claims.canModify(start))
             return;
 
@@ -271,36 +273,6 @@ public final class ActiveAbilities {
         }
     }
 
-    /**
-     * Claim answers for one fell, kept per chunk. A fell spans at most four chunks, so this turns
-     * hundreds of lookups into a handful. Deliberately not ClaimProtection.onBlockBreak, which chats
-     * the player on every denial and would print one line per log.
-     */
-    private static final class ClaimCache {
-        private final ServerLevel level;
-        private final ServerPlayer player;
-        private final Long2BooleanOpenHashMap byChunk = new Long2BooleanOpenHashMap();
-
-        ClaimCache(ServerLevel level, ServerPlayer player) {
-            this.level = level;
-            this.player = player;
-        }
-
-        boolean canModify(BlockPos pos) {
-            // ClaimAccess answers from the saved claims whether or not the feature is on, so without
-            // this the chain would still honour stale claim data on a server that turned claims off.
-            // ClaimProtection.onBlockBreak carries the same guard for the normal break path.
-            if (!SmpConfig.CLAIMS_ENABLED)
-                return true;
-            long key = ChunkPos.pack(pos);
-            if (this.byChunk.containsKey(key))
-                return this.byChunk.get(key);
-            boolean allowed = ClaimAccess.canModify(this.player, this.level, ChunkPos.unpack(key));
-            this.byChunk.put(key, allowed);
-            return allowed;
-        }
-    }
-
     // Green Terra: applies bonemeal to all crops in an 11x11x5 area around the player.
     private static boolean tryActivateGreenTerra(ServerPlayer sp, SkillData data, UUID uuid, ServerLevel level) {
         int farmLevel = data.getLevel(uuid, SkillType.FARMING);
@@ -311,11 +283,16 @@ public final class ActiveAbilities {
             long remaining = data.getCooldownRemaining(uuid, SkillType.FARMING);
             sp.sendSystemMessage(Component.literal(
                     "\u00a7cGreen Terra on cooldown! \u00a77(" + formatTime(remaining) + ")"), true);
-            return true;
+            return false; // not activated, so the drop goes through as a normal drop
         }
 
         data.setCooldown(uuid, SkillType.FARMING);
         BlockPos center = sp.blockPosition();
+
+        // The area is centred on the player, so standing near a border reaches into a neighbouring
+        // claim. performBonemeal changes blocks without ever going near a break or place event, so
+        // nothing else would check this.
+        ClaimAccessCache claims = new ClaimAccessCache(level, sp);
 
         int bonemealed = 0;
         for (int dx = -5; dx <= 5; dx++) {
@@ -325,10 +302,10 @@ public final class ActiveAbilities {
                     BlockState state = level.getBlockState(pos);
                     if (state.is(net.minecraft.tags.BlockTags.CROPS)
                             && state.getBlock() instanceof net.minecraft.world.level.block.BonemealableBlock bonemealable
-                            && bonemealable.isValidBonemealTarget(level, pos, state)) {
-                        if (bonemealable.isBonemealSuccess(level, level.getRandom(), pos, state)) {
-                            bonemealable.performBonemeal(level, level.getRandom(), pos, state);
-                        }
+                            && bonemealable.isValidBonemealTarget(level, pos, state)
+                            && claims.canModify(pos)
+                            && bonemealable.isBonemealSuccess(level, level.getRandom(), pos, state)) {
+                        bonemealable.performBonemeal(level, level.getRandom(), pos, state);
                         bonemealed++;
                     }
                 }
@@ -348,12 +325,16 @@ public final class ActiveAbilities {
             long remaining = data.getCooldownRemaining(uuid, SkillType.FISHING);
             sp.sendSystemMessage(Component.literal(
                     "\u00a7cMaster Angler on cooldown! \u00a77(" + formatTime(remaining) + ")"), true);
-            return true;
+            return false; // not activated, so the drop goes through as a normal drop
         }
 
         data.setCooldown(uuid, SkillType.FISHING);
-        int durationTicks = (int) ((10 + fishLevel * 0.2) * 20);
-        sp.addEffect(new MobEffectInstance(MobEffects.LUCK, durationTicks, 4, false, false));
+        // Luck is read at FishingHook.retrieve, not at cast, so the buff has to outlive the whole
+        // wait or it does nothing at all. Vanilla's worst case is timeUntilLured 600 plus
+        // timeUntilHooked 80 plus a 40 tick nibble, so 36s is the shortest base that always covers
+        // it, and 34 + 10 * 0.2 is exactly 36s at the level 10 unlock.
+        int durationTicks = (int) ((34 + fishLevel * 0.2) * 20);
+        sp.addEffect(new MobEffectInstance(MobEffects.LUCK, durationTicks, 4, false, false, true));
         announce(sp, "Master Angler", durationTicks / 20, SoundEvents.EXPERIENCE_ORB_PICKUP);
         resyncHand(sp);
         return true;
@@ -368,13 +349,13 @@ public final class ActiveAbilities {
             long remaining = data.getCooldownRemaining(uuid, SkillType.MELEE);
             sp.sendSystemMessage(Component.literal(
                     "\u00a7cBerzerk on cooldown! \u00a77(" + formatTime(remaining) + ")"), true);
-            return true;
+            return false; // not activated, so the drop goes through as a normal drop
         }
 
         data.setCooldown(uuid, SkillType.MELEE);
         int durationTicks = (int) ((10 + meleeLevel * 0.2) * 20);
-        sp.addEffect(new MobEffectInstance(MobEffects.STRENGTH, durationTicks, 1, false, false));
-        sp.addEffect(new MobEffectInstance(MobEffects.SPEED, durationTicks, 1, false, false));
+        sp.addEffect(new MobEffectInstance(MobEffects.STRENGTH, durationTicks, 1, false, false, true));
+        sp.addEffect(new MobEffectInstance(MobEffects.SPEED, durationTicks, 1, false, false, true));
         announce(sp, "Berzerk", durationTicks / 20, SoundEvents.ENDER_DRAGON_GROWL);
         resyncHand(sp);
         return true;
@@ -389,13 +370,13 @@ public final class ActiveAbilities {
             long remaining = data.getCooldownRemaining(uuid, SkillType.ARCHERY);
             sp.sendSystemMessage(Component.literal(
                     "\u00a7cSniper on cooldown! \u00a77(" + formatTime(remaining) + ")"), true);
-            return true;
+            return false; // not activated, so the drop goes through as a normal drop
         }
 
         data.setCooldown(uuid, SkillType.ARCHERY);
         int durationTicks = (int) ((10 + archLevel * 0.2) * 20);
-        sp.addEffect(new MobEffectInstance(MobEffects.SLOW_FALLING, durationTicks, 0, false, false));
-        sp.addEffect(new MobEffectInstance(MobEffects.NIGHT_VISION, durationTicks, 0, false, false));
+        sp.addEffect(new MobEffectInstance(MobEffects.SLOW_FALLING, durationTicks, 0, false, false, true));
+        sp.addEffect(new MobEffectInstance(MobEffects.NIGHT_VISION, durationTicks, 0, false, false, true));
         announce(sp, "Sniper", durationTicks / 20, SoundEvents.ARROW_HIT_PLAYER);
         resyncHand(sp);
         return true;
@@ -410,13 +391,13 @@ public final class ActiveAbilities {
             long remaining = data.getCooldownRemaining(uuid, SkillType.DEFENSE);
             sp.sendSystemMessage(Component.literal(
                     "\u00a7cJuggernaut on cooldown! \u00a77(" + formatTime(remaining) + ")"), true);
-            return true;
+            return false; // not activated, so the drop goes through as a normal drop
         }
 
         data.setCooldown(uuid, SkillType.DEFENSE);
         int durationTicks = (int) ((10 + defLevel * 0.2) * 20);
-        sp.addEffect(new MobEffectInstance(MobEffects.RESISTANCE, durationTicks, 3, false, false));
-        sp.addEffect(new MobEffectInstance(MobEffects.SLOWNESS, durationTicks, 3, false, false));
+        sp.addEffect(new MobEffectInstance(MobEffects.RESISTANCE, durationTicks, 3, false, false, true));
+        sp.addEffect(new MobEffectInstance(MobEffects.SLOWNESS, durationTicks, 3, false, false, true));
         announce(sp, "Juggernaut", durationTicks / 20, SoundEvents.SHIELD_BLOCK);
         resyncHand(sp);
         return true;
@@ -482,8 +463,8 @@ public final class ActiveAbilities {
 
         // Night Vision: level I below 67, level II at 67+
         int nvAmp = archLevel >= 67 ? 1 : 0;
-        sp.addEffect(new MobEffectInstance(MobEffects.NIGHT_VISION, durationTicks, nvAmp, false, false));
-        sp.addEffect(new MobEffectInstance(MobEffects.SLOW_FALLING, durationTicks, 0, false, false));
+        sp.addEffect(new MobEffectInstance(MobEffects.NIGHT_VISION, durationTicks, nvAmp, false, false, true));
+        sp.addEffect(new MobEffectInstance(MobEffects.SLOW_FALLING, durationTicks, 0, false, false, true));
 
         zoomActive.put(uuid, new ZoomState(savedOffhand, expiryMs, priorSpyglassCount));
         data.setCooldown(uuid, ZOOM_KEY);
@@ -577,7 +558,7 @@ public final class ActiveAbilities {
             long remaining = data.getCooldownRemaining(uuid, SkillType.ENCHANTING);
             sp.sendSystemMessage(Component.literal(
                     "\u00a7cArcane Infusion on cooldown! \u00a77(" + formatTime(remaining) + ")"), true);
-            return true;
+            return false; // not activated, so the drop goes through as a normal drop
         }
 
         data.setCooldown(uuid, SkillType.ENCHANTING);
@@ -643,7 +624,7 @@ public final class ActiveAbilities {
         sp.playSound(sound, 1.0f, 1.5f);
     }
 
-    private static String formatTime(long seconds) {
+    static String formatTime(long seconds) {
         if (seconds >= 3600)
             return (seconds / 3600) + "h " + ((seconds % 3600) / 60) + "m";
         if (seconds >= 60)
@@ -679,12 +660,20 @@ public final class ActiveAbilities {
         if (!state.is(Blocks.SPAWNER))
             return false;
 
+        // Checked before the cooldown is spent, so a refused attempt does not cost the charge.
+        // Not handled, so the book drops as it already does when nothing valid is in view.
+        if (!new ClaimAccessCache((ServerLevel) sp.level(), sp).canModify(pos)) {
+            sp.sendSystemMessage(
+                    Component.literal("\u00a7cThat spawner is in a protected area."), true);
+            return false;
+        }
+
         // Check cooldown only after verifying a valid target
         if (!data.isAbilityReady(uuid, SkillType.ALCHEMY)) {
             long remaining = data.getCooldownRemaining(uuid, SkillType.ALCHEMY);
             sp.sendSystemMessage(Component.literal(
                     "\u00a7cAlchemy on cooldown! \u00a77(" + formatTime(remaining) + ")"), true);
-            return true;
+            return false; // not activated, so the drop goes through as a normal drop
         }
 
         // Get spawner data
@@ -729,7 +718,7 @@ public final class ActiveAbilities {
             long remaining = data.getCooldownRemaining(uuid, SkillType.TRADING);
             sp.sendSystemMessage(Component.literal(
                     "\u00a7cTycoon's Charm on cooldown! \u00a77(" + formatTime(remaining) + ")"), true);
-            return true;
+            return false; // not activated, so the drop goes through as a normal drop
         }
 
         data.setCooldown(uuid, SkillType.TRADING);
@@ -744,7 +733,7 @@ public final class ActiveAbilities {
         else if (tradeLevel >= 50)
             amp = 1; // Hero II
 
-        sp.addEffect(new MobEffectInstance(MobEffects.HERO_OF_THE_VILLAGE, durationTicks, amp, false, false));
+        sp.addEffect(new MobEffectInstance(MobEffects.HERO_OF_THE_VILLAGE, durationTicks, amp, false, false, true));
         announce(sp, "Tycoon's Charm", durationTicks / 20, SoundEvents.UI_TOAST_CHALLENGE_COMPLETE);
         resyncHand(sp);
         return true;

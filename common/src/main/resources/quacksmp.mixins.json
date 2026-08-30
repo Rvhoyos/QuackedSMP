@@ -6,6 +6,7 @@
   "client": [],
   "mixins": [
     "FishingHookMixin",
+    "BerryPickMixin",
     "EnchantmentMenuMixin",
     "BrewingStandMixin",
     "VillagerMixin",
