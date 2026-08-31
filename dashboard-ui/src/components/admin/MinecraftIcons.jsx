@@ -1859,3 +1859,52 @@ export function IconOreVeiled({ size = 18 }) {
     </svg>
   )
 }
+
+/**
+ * Keep Inventory: a padlock sitting on a row of inventory slots, so it reads as "your slots stay
+ * shut". The slot-grid-plus-lock silhouette is not used anywhere else; IconBundle and IconChest are
+ * the other two carry-your-stuff icons and both are containers with no grid.
+ */
+export function IconLockedSlots({ size = 18 }) {
+  const slot = '#6E6E7A', slotTop = '#8A8A96'
+  return (
+    <svg viewBox="0 0 16 16" width={size} height={size} shapeRendering="crispEdges">
+      {/* shackle */}
+      {px(6, 0, 4, 1, '#B0B0BC')}
+      {px(5, 1, 1, 2, '#B0B0BC')}
+      {px(10, 1, 1, 2, '#B0B0BC')}
+      {/* lock body */}
+      {px(4, 3, 8, 4, '#C8A83A')}
+      {px(4, 3, 8, 1, '#E0C455')}
+      {px(7, 4, 2, 2, '#5A4A10')}
+      {/* slot bar */}
+      {px(1, 8, 14, 7, '#3A3A44')}
+      {px(2, 9, 12, 5, '#20202A')}
+      {[3, 7, 11].map(x => <g key={`s${x}`}>{px(x, 10, 3, 3, slot)}{px(x, 10, 3, 1, slotTop)}</g>)}
+    </svg>
+  )
+}
+
+/**
+ * Welcome Sidebar: a screen with a titled panel docked against its right edge, which is exactly
+ * where the sidebar appears in game. Deliberately unlike IconScoreboard, which is a filled panel
+ * with score numbers and fills the whole frame.
+ */
+export function IconSidebarPanel({ size = 18 }) {
+  return (
+    <svg viewBox="0 0 16 16" width={size} height={size} shapeRendering="crispEdges">
+      {/* screen */}
+      {px(0, 2, 16, 12, '#4A4A56')}
+      {px(1, 3, 14, 10, '#2A3A2A')}
+      {/* a scrap of world on the left, so the docked panel reads as an overlay */}
+      {px(2, 4, 2, 2, '#C8A83A')}
+      {px(1, 11, 7, 2, '#3A5A2A')}
+      {/* docked sidebar */}
+      {px(9, 3, 6, 10, '#3E4A6E')}
+      {px(9, 3, 6, 2, '#C8A83A')}
+      {px(10, 6, 4, 1, '#C8C8D2')}
+      {px(10, 8, 3, 1, '#C8C8D2')}
+      {px(10, 10, 4, 1, '#C8C8D2')}
+    </svg>
+  )
+}

@@ -187,6 +187,10 @@ public final class AdminHandler {
         sb.append(String.format("\"protect_enderman\":%b,", SmpConfig.PROTECT_ENDERMAN));
         sb.append(String.format("\"protect_farmland\":%b,", SmpConfig.PROTECT_FARMLAND));
         // Feature toggles
+        sb.append(String.format("\"keep_inv_enabled\":%b,", SmpConfig.KEEP_INV_ENABLED));
+        sb.append(String.format("\"teleport_enabled\":%b,", SmpConfig.TELEPORT_ENABLED));
+        sb.append(String.format("\"dims_enabled\":%b,", SmpConfig.DIMS_ENABLED));
+        sb.append(String.format("\"backup_enabled\":%b,", SmpConfig.BACKUP_ENABLED));
         sb.append(String.format("\"claims_enabled\":%b,", SmpConfig.CLAIMS_ENABLED));
         sb.append(String.format("\"skills_enabled\":%b,", SmpConfig.SKILLS_ENABLED));
         sb.append(String.format("\"chatfilter_enabled\":%b,", SmpConfig.CHATFILTER_ENABLED));
@@ -341,6 +345,10 @@ public final class AdminHandler {
             if (patch.has("protect_enderman"))     { SmpConfig.PROTECT_ENDERMAN      = patch.get("protect_enderman").getAsBoolean();     changed++; }
             if (patch.has("protect_farmland"))     { SmpConfig.PROTECT_FARMLAND      = patch.get("protect_farmland").getAsBoolean();     changed++; }
             // Feature toggles
+            if (patch.has("keep_inv_enabled"))  { SmpConfig.KEEP_INV_ENABLED  = patch.get("keep_inv_enabled").getAsBoolean();  changed++; }
+            if (patch.has("teleport_enabled"))  { SmpConfig.TELEPORT_ENABLED  = patch.get("teleport_enabled").getAsBoolean();  changed++; }
+            if (patch.has("dims_enabled"))      { SmpConfig.DIMS_ENABLED      = patch.get("dims_enabled").getAsBoolean();      changed++; }
+            if (patch.has("backup_enabled"))    { SmpConfig.BACKUP_ENABLED    = patch.get("backup_enabled").getAsBoolean();    changed++; }
             if (patch.has("claims_enabled"))     { SmpConfig.CLAIMS_ENABLED     = patch.get("claims_enabled").getAsBoolean();     changed++; }
             if (patch.has("skills_enabled"))     { SmpConfig.SKILLS_ENABLED     = patch.get("skills_enabled").getAsBoolean();     changed++; }
             if (patch.has("chatfilter_enabled")) { SmpConfig.CHATFILTER_ENABLED = patch.get("chatfilter_enabled").getAsBoolean(); changed++; }
@@ -676,6 +684,7 @@ public final class AdminHandler {
                                          MinecraftServer server) {
         if (!"POST".equals(method))             return err(405, "Method not allowed");
         if (!SmpConfig.ADMIN_ENABLED)           return err(403, "Admin panel disabled");
+        if (!SmpConfig.DIMS_ENABLED)            return err(403, "Custom dimensions disabled");
         if (!AdminAuth.isAuthorized(headers))   return err(403, "Unauthorized");
         if (server == null)                     return err(503, "Server not ready");
         try {
@@ -721,6 +730,7 @@ public final class AdminHandler {
                                          MinecraftServer server) {
         if (!"POST".equals(method))             return err(405, "Method not allowed");
         if (!SmpConfig.ADMIN_ENABLED)           return err(403, "Admin panel disabled");
+        if (!SmpConfig.DIMS_ENABLED)            return err(403, "Custom dimensions disabled");
         if (!AdminAuth.isAuthorized(headers))   return err(403, "Unauthorized");
         if (server == null)                     return err(503, "Server not ready");
         try {

@@ -25,6 +25,15 @@ public final class ConfigData {
     public boolean protectFireClaims = true;
     public boolean protectEnderman = true;
     public boolean protectFarmland = true;
+    // These four shipped before they had a flag, so they default ON: an absent JSON key takes the
+    // field initializer, and false here would switch them off on every server that upgrades.
+    public boolean keepInvEnabled = true;
+    public boolean teleportEnabled = true;
+    // Off blocks creating and deleting dims. Existing dims still load and stay usable.
+    public boolean dimsEnabled = true;
+    // Top-level gate over the whole backup* block below, periodic and public download included.
+    public boolean backupEnabled = true;
+
     // Big features default OFF: this is a modular plugin, operators opt in per feature.
     public boolean claimsEnabled = false;
     public boolean skillsEnabled = false;

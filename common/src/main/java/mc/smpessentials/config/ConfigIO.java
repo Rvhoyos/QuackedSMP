@@ -100,6 +100,10 @@ public final class ConfigIO {
         data.protectFireClaims = SmpConfig.PROTECT_FIRE_CLAIMS;
         data.protectEnderman = SmpConfig.PROTECT_ENDERMAN;
         data.protectFarmland = SmpConfig.PROTECT_FARMLAND;
+        data.keepInvEnabled = SmpConfig.KEEP_INV_ENABLED;
+        data.teleportEnabled = SmpConfig.TELEPORT_ENABLED;
+        data.dimsEnabled = SmpConfig.DIMS_ENABLED;
+        data.backupEnabled = SmpConfig.BACKUP_ENABLED;
         data.claimsEnabled = SmpConfig.CLAIMS_ENABLED;
         data.skillsEnabled = SmpConfig.SKILLS_ENABLED;
         data.chatfilterEnabled = SmpConfig.CHATFILTER_ENABLED;

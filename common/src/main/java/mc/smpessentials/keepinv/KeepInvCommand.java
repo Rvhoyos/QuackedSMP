@@ -19,7 +19,8 @@ public final class KeepInvCommand {
     /** Returns the keepinv subtree for use as a standalone command or as a subcommand (e.g. /smp keepinv). */
     public static LiteralArgumentBuilder<CommandSourceStack> keepInvSubtree() {
         return Commands.literal("keepinv")
-                .requires(src -> src.getEntity() instanceof ServerPlayer)
+                .requires(src -> mc.smpessentials.config.SmpConfig.KEEP_INV_ENABLED
+                        && src.getEntity() instanceof ServerPlayer)
                 .executes(ctx -> showStatus(ctx.getSource()))
                 .then(Commands.literal("on")
                         .executes(ctx -> setKeepInv(ctx.getSource(), true)))

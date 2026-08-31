@@ -116,7 +116,7 @@ public final class DashboardManager {
             int     online        = mcServer != null ? mcServer.getPlayerList().getPlayerCount() : 0;
             boolean adminOn       = SmpConfig.ADMIN_ENABLED;
             boolean hasPassword   = !SmpConfig.ADMIN_PASSWORD_HASH.isBlank();
-            boolean publicBackup  = SmpConfig.BACKUP_PUBLIC_DOWNLOAD;
+            boolean publicBackup  = SmpConfig.backupPublicAvailable();
             String  serverName    = SmpConfig.SERVER_NAME;
             String version = mc.smpessentials.SmpUtilsMod.VERSION;
             // Restore info rides along only when public download is on. The seed is included
@@ -310,7 +310,7 @@ public final class DashboardManager {
         s.addDownloadRoute("/api/admin/backups/download",
                 BackupHandler::handleDownload);
 
-        // Public latest-snapshot name and download (both gated by BACKUP_PUBLIC_DOWNLOAD)
+        // Public latest-snapshot name and download (both gated by backupPublicAvailable)
         s.addRoute("/api/backups/latest",
                 BackupHandler::handleLatestInfo);
         s.addDownloadRoute("/api/backups/latest/download",

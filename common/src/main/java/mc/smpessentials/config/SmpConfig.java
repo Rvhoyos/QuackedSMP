@@ -39,6 +39,10 @@ public final class SmpConfig {
     public static java.util.Map<String, String> MESSAGES = new java.util.HashMap<>();
 
     // ---- Feature toggles ----
+    public static boolean KEEP_INV_ENABLED;
+    public static boolean TELEPORT_ENABLED;
+    public static boolean DIMS_ENABLED;
+    public static boolean BACKUP_ENABLED;
     public static boolean CLAIMS_ENABLED;
     public static boolean SKILLS_ENABLED;
     public static boolean CHATFILTER_ENABLED;
@@ -157,10 +161,16 @@ public final class SmpConfig {
     public static boolean PANEL_MESSAGE_ENABLED;
     public static int     PANEL_MESSAGE_INTERVAL; // Seconds
 
+    // Single gate for every public-download surface: the backup feature and the public download
+    // sub-setting must both be on.
+    public static boolean backupPublicAvailable() {
+        return BACKUP_ENABLED && BACKUP_PUBLIC_DOWNLOAD;
+    }
+
     // Single gate for both /smp download and the periodic broadcast: public download must be
-    // on and a URL configured. URL scheme (http/https) is validated at save time in AdminHandler.
+    // available and a URL configured. URL scheme (http/https) is validated at save time in AdminHandler.
     public static boolean panelLinkAvailable() {
-        return BACKUP_PUBLIC_DOWNLOAD && PANEL_URL != null && !PANEL_URL.isBlank();
+        return backupPublicAvailable() && PANEL_URL != null && !PANEL_URL.isBlank();
     }
 
     // panelMessage with {url} substituted for the configured panel URL. Still needs TextUtil.format
@@ -265,6 +275,10 @@ public final class SmpConfig {
         PROTECT_FIRE_CLAIMS = d.protectFireClaims;
         PROTECT_ENDERMAN = d.protectEnderman;
         PROTECT_FARMLAND = d.protectFarmland;
+        KEEP_INV_ENABLED = d.keepInvEnabled;
+        TELEPORT_ENABLED = d.teleportEnabled;
+        DIMS_ENABLED = d.dimsEnabled;
+        BACKUP_ENABLED = d.backupEnabled;
         CLAIMS_ENABLED = d.claimsEnabled;
         SKILLS_ENABLED = d.skillsEnabled;
         CHATFILTER_ENABLED = d.chatfilterEnabled;

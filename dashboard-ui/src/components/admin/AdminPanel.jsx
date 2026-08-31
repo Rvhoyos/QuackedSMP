@@ -32,7 +32,7 @@ const GROUPS = [
     { id: 'teams',   label: 'Teams',   Icon: IconSword },
   ]},
   { label: 'World', items: [
-    { id: 'dims',   label: 'Dimensions', Icon: IconGlowstonePortal },
+    { id: 'dims',   label: 'Dimensions', Icon: IconGlowstonePortal, configKey: 'dims_enabled' },
     { id: 'claims', label: 'Claims',     Icon: IconFlag,    configKey: 'claims_enabled' },
     { id: 'shops',  label: 'Shops',      Icon: IconEmerald, configKey: 'shops_enabled' },
   ]},
@@ -50,7 +50,7 @@ const GROUPS = [
   ]},
   { label: 'Systems', items: [
     { id: 'mods',      label: 'Mods',      Icon: IconMod },
-    { id: 'backups',   label: 'Backups',   Icon: IconShulkerBox },
+    { id: 'backups',   label: 'Backups',   Icon: IconShulkerBox, configKey: 'backup_enabled' },
     { id: 'timelapse', label: 'Timelapse', Icon: IconCamera, configKey: 'timelapse_enabled' },
     { id: 'pregen',    label: 'Pregen',    Icon: IconChunkFill, configKey: 'pregen_enabled' },
   ]},

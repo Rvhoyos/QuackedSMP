@@ -48,6 +48,7 @@ public final class BackupHandler {
                                        MinecraftServer server) {
         if (!"POST".equals(method))           return err(405, "Method not allowed");
         if (!SmpConfig.ADMIN_ENABLED)         return err(403, "Admin panel disabled");
+        if (!SmpConfig.BACKUP_ENABLED)        return err(403, "Backups disabled");
         if (!AdminAuth.isAuthorized(headers)) return err(403, "Unauthorized");
         if (server == null)                   return err(503, "Server not ready");
         try {
@@ -82,11 +83,11 @@ public final class BackupHandler {
     /**
      * GET /api/backups/latest. Names the snapshot {@link #handleLatestPublic} would hand over,
      * so a client can save it under the name it has on disk. Gated by
-     * {@link SmpConfig#BACKUP_PUBLIC_DOWNLOAD}, same as the download itself.
+     * {@link SmpConfig#backupPublicAvailable()}, same as the download itself.
      */
     public static String handleLatestInfo(String method, Map<String, String> headers, String body) {
         if (!"GET".equals(method))             return err(405, "Method not allowed");
-        if (!SmpConfig.BACKUP_PUBLIC_DOWNLOAD) return err(403, "Public downloads disabled");
+        if (!SmpConfig.backupPublicAvailable()) return err(403, "Public downloads disabled");
 
         List<BackupService.Snapshot> all = BackupService.get().list();
         if (all.isEmpty()) return err(404, "No snapshots available");
@@ -99,13 +100,13 @@ public final class BackupHandler {
 
     /**
      * GET /api/backups/latest/download. Public route gated by
-     * {@link SmpConfig#BACKUP_PUBLIC_DOWNLOAD}. Streams the newest snapshot,
+     * {@link SmpConfig#backupPublicAvailable()}. Streams the newest snapshot,
      * with per-IP and global concurrency caps enforced by {@link PublicDownloadLimiter}.
      */
     public static DashboardServer.DownloadResult handleLatestPublic(
             String method, Map<String, String> headers, MinecraftServer server) {
         if (!"GET".equals(method))             return new DashboardServer.DownloadResult.Error(405, "Method not allowed");
-        if (!SmpConfig.BACKUP_PUBLIC_DOWNLOAD) return new DashboardServer.DownloadResult.Error(403, "Public downloads disabled");
+        if (!SmpConfig.backupPublicAvailable()) return new DashboardServer.DownloadResult.Error(403, "Public downloads disabled");
 
         List<BackupService.Snapshot> all = BackupService.get().list();
         if (all.isEmpty()) return new DashboardServer.DownloadResult.Error(404, "No snapshots available");

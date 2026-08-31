@@ -17,7 +17,7 @@ import net.minecraft.world.level.saveddata.SavedDataType;
 import java.util.*;
 
 // Persists UUIDs of players who opted out of keep-inventory. Default is keep; only opt-outs are stored.
-// keepInventory gamerule must stay ON; opted-out players get their inventory dropped manually on death.
+// keep_inventory gamerule must stay ON; opted-out players get their inventory dropped manually on death.
 public final class KeepInvSavedData extends SavedData {
 
     private final Set<UUID> optedOut = new HashSet<>();
@@ -46,12 +46,14 @@ public final class KeepInvSavedData extends SavedData {
         return server.overworld().getDataStorage().computeIfAbsent(TYPE);
     }
 
-    // Forces keepInventory=true on startup; our system relies on this and handles drops manually.
+    // Forces keep_inventory=true on startup while the feature is on; drops are then done by hand.
     public static void enforceGamerule(MinecraftServer server) {
+        // Off means the mod stops touching death entirely, so the server's own gamerule stands.
+        if (!mc.smpessentials.config.SmpConfig.KEEP_INV_ENABLED) return;
         GameRules rules = server.overworld().getGameRules();
         if (!((Boolean) rules.get(GameRules.KEEP_INVENTORY))) {
             rules.set(GameRules.KEEP_INVENTORY, true, server);
-            mc.smpessentials.SmpUtilsMod.LOGGER.info("[QuackedSMP] keepInventory gamerule forced ON by KeepInv system.");
+            mc.smpessentials.SmpUtilsMod.LOGGER.info("[QuackedSMP] keep_inventory gamerule forced ON by KeepInv system.");
         }
     }
 
@@ -70,14 +72,21 @@ public final class KeepInvSavedData extends SavedData {
         return changed;
     }
 
-    // If the player opted out, drops all items and XP at the death position and clears them before respawn.
+    // Drops all items and XP at the death position and clears them before respawn. Applies to a
+    // player who opted out, and to every hardcore session member.
     public static void onPlayerDeath(ServerPlayer player) {
         KeepInvSavedData data = get((net.minecraft.server.level.ServerLevel) player.level());
-        // Hardcore players always drop items regardless of keepinv setting
+        // Hardcore always drops, whatever the flag and whatever the player's own preference:
+        // this is the only code that drops a hardcore player's in-session gear.
         boolean inHardcore = mc.smpessentials.hardcore.HardcoreSavedData
                 .get(((net.minecraft.server.level.ServerLevel) player.level()).getServer())
                 .getPlayerSessionName(player.getUUID()) != null;
-        if (!inHardcore && data.isKeeping(player.getUUID())) return;
+        if (!inHardcore) {
+            // Feature off: the vanilla gamerule governs this death, we add nothing.
+            if (!mc.smpessentials.config.SmpConfig.KEEP_INV_ENABLED) return;
+            // Player never opted out, so the forced gamerule already keeps their items.
+            if (data.isKeeping(player.getUUID())) return;
+        }
 
         double x = player.getX();
         double y = player.getY();

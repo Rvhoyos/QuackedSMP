@@ -25,7 +25,8 @@ public final class TeleportCommands {
                 CommandDispatcher<CommandSourceStack> dispatcher = (CommandDispatcher<CommandSourceStack>) rawDispatcher;
 
                 dispatcher.register(Commands.literal("tpr")
-                                .requires(src -> src.getEntity() instanceof ServerPlayer)
+                                .requires(src -> SmpConfig.TELEPORT_ENABLED
+                                                && src.getEntity() instanceof ServerPlayer)
                                 .then(Commands.argument("player", EntityArgument.player())
                                                 .executes(ctx -> {
                                                         if (mc.smpessentials.hardcore.HardcoreSavedData.denyIfInSession(ctx.getSource())) return 0;
@@ -79,7 +80,8 @@ public final class TeleportCommands {
                                                 })));
 
                 dispatcher.register(Commands.literal("tpa")
-                                .requires(src -> src.getEntity() instanceof ServerPlayer)
+                                .requires(src -> SmpConfig.TELEPORT_ENABLED
+                                                && src.getEntity() instanceof ServerPlayer)
                                 .then(Commands.literal("accept")
                                                 .executes(ctx -> acceptOldest(ctx.getSource())))
                                 .then(Commands.literal("yes")
