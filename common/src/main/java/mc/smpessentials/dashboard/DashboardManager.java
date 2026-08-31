@@ -182,7 +182,7 @@ public final class DashboardManager {
         s.addRoute("/api/admin/config",
                 (m, h, b) -> "GET".equals(m)
                         ? AdminHandler.handleConfigGet(m, h, b, mcServer)
-                        : AdminHandler.handleConfigPost(m, h, b));
+                        : AdminHandler.handleConfigPost(m, h, b, mcServer));
         s.addRoute("/api/admin/setop",
                 (m, h, b) -> AdminHandler.handleSetOp(m, h, b, mcServer));
         s.addRoute("/api/admin/players/settier",
@@ -327,6 +327,14 @@ public final class DashboardManager {
                 TimelapseHandler::handleFrame);
         s.addDownloadRoute("/api/admin/timelapse/export",
                 TimelapseHandler::handleExport);
+
+        // Chunk pre-generation
+        s.addRoute("/api/admin/pregen",
+                (m, h, b) -> PregenHandler.handleGet(m, h, b, mcServer));
+        s.addRoute("/api/admin/pregen/save",
+                (m, h, b) -> PregenHandler.handleSave(m, h, b, mcServer));
+        s.addRoute("/api/admin/pregen/preview",
+                (m, h, b) -> PregenHandler.handlePreview(m, h, b, mcServer));
 
         s.addRoute("/api/admin/rtp",
                 (m, h, b) -> RtpHandler.handleGet(m, h, b, mcServer));

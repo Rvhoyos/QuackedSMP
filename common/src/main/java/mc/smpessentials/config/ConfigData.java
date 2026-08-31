@@ -263,6 +263,21 @@ public final class ConfigData {
     // rather than losing its beginning.
     public int     timelapseMaxFrames       = 0;
 
+    // Chunk pre-generation: generates the area around spawn at startup so players never walk into
+    // terrain the server has to invent on the spot. Off by default (opt-in feature). The run is
+    // blocking, so a server with this on does not accept joins until it finishes.
+    public boolean pregenEnabled = false;
+    public PregenConfig pregen = new PregenConfig();
+
+    /** Which dimensions pre-generate and how far past the spawn protection radius they go. */
+    public static final class PregenConfig {
+        // Blocks beyond the spawn protection radius, in overworld scale. A dimension with a
+        // coordinate scale of its own (the nether's 8) covers the same ground with 1/8 the radius.
+        public int distance = 1000;
+        // Ids not present on the running server are skipped, the same way timelapse treats them.
+        public List<String> dimensions = new ArrayList<>(List.of("minecraft:overworld"));
+    }
+
     public static final class VotifierConfig {
         public boolean enabled = false;
         public int port = 8192;

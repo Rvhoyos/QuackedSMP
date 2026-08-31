@@ -16,11 +16,12 @@ import CommandBlocksPanel from './CommandBlocksPanel'
 import BackupsPanel from './BackupsPanel'
 import TimelapsePanel from './TimelapsePanel'
 import RtpPanel from './RtpPanel'
+import PregenPanel from './PregenPanel'
 import KitsPanel from './KitsPanel'
 import WelcomeBookPanel from './WelcomeBookPanel'
 import UpdateBanner from './UpdateBanner'
 import { TooltipProvider, ToastHost } from '../../ui'
-import { IconPlayerHead, IconCommandBlock, IconBookshelf, IconGlowstonePortal, IconSkills, IconFlag, IconChatFilter, IconMod, IconSword, IconEmerald, IconRepeatCmdBlock, IconShulkerBox, IconHardcoreHeart, IconGear, IconCamera, IconChorusFruit, IconLoot, IconWrittenBook } from './MinecraftIcons'
+import { IconPlayerHead, IconCommandBlock, IconBookshelf, IconGlowstonePortal, IconSkills, IconFlag, IconChatFilter, IconMod, IconSword, IconEmerald, IconRepeatCmdBlock, IconShulkerBox, IconHardcoreHeart, IconGear, IconCamera, IconChorusFruit, IconLoot, IconWrittenBook, IconChunkFill } from './MinecraftIcons'
 import styles from './AdminPanel.module.css'
 
 // Sidebar groups. Each item optionally gates on a config flag (hidden when the
@@ -51,6 +52,7 @@ const GROUPS = [
     { id: 'mods',      label: 'Mods',      Icon: IconMod },
     { id: 'backups',   label: 'Backups',   Icon: IconShulkerBox },
     { id: 'timelapse', label: 'Timelapse', Icon: IconCamera },
+    { id: 'pregen',    label: 'Pregen',    Icon: IconChunkFill, configKey: 'pregen_enabled' },
   ]},
   { label: 'Setup', items: [
     { id: 'config',   label: 'Config',   Icon: IconGear },
@@ -166,6 +168,7 @@ export default function AdminPanel({ health, wsStatus, onBack }) {
             {resolvedTab === 'mods'       && <ModsPanel {...panelProps} />}
             {resolvedTab === 'backups'    && <BackupsPanel {...panelProps} />}
             {resolvedTab === 'timelapse'  && <TimelapsePanel {...panelProps} />}
+            {resolvedTab === 'pregen'     && <PregenPanel {...panelProps} />}
             {resolvedTab === 'config'     && <ConfigEditor {...panelProps} />}
             {resolvedTab === 'features'   && <FeatureShowcase {...panelProps} />}
           </div>

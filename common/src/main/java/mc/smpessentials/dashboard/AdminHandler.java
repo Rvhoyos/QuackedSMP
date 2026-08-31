@@ -209,6 +209,9 @@ public final class AdminHandler {
         sb.append(String.format("\"timelapse_max_render_mb\":%d,", SmpConfig.TIMELAPSE_MAX_RENDER_MB));
         sb.append(String.format("\"timelapse_max_skips\":%d,", SmpConfig.TIMELAPSE_MAX_SKIPS));
         sb.append(String.format("\"timelapse_max_frames\":%d,", SmpConfig.TIMELAPSE_MAX_FRAMES));
+        // Chunk pre-generation. The area itself is edited in the Pregen panel, which needs live
+        // server data this flat payload cannot carry; only the enable flag belongs here.
+        sb.append(String.format("\"pregen_enabled\":%b,", SmpConfig.PREGEN_ENABLED));
         // Web panel link (gated on public download)
         sb.append(String.format("\"panel_url\":\"%s\",", jsonEscape(SmpConfig.PANEL_URL)));
         sb.append(String.format("\"panel_message\":\"%s\",", jsonEscape(SmpConfig.PANEL_MESSAGE)));
@@ -314,7 +317,8 @@ public final class AdminHandler {
     }
 
     // POST /api/admin/config. Applies a partial config patch and hot-reloads. Port changes require restart.
-    public static String handleConfigPost(String method, Map<String, String> headers, String body) {
+    public static String handleConfigPost(String method, Map<String, String> headers, String body,
+                                          MinecraftServer server) {
         if (!"POST".equals(method))             return err(405, "Method not allowed");
         if (!SmpConfig.ADMIN_ENABLED)           return err(403, "Admin panel disabled");
         if (!AdminAuth.isAuthorized(headers))   return err(403, "Unauthorized");
@@ -357,6 +361,16 @@ public final class AdminHandler {
             if (patch.has("timelapse_max_render_mb"))    { SmpConfig.TIMELAPSE_MAX_RENDER_MB    = Math.max(0, patch.get("timelapse_max_render_mb").getAsInt());        changed++; }
             if (patch.has("timelapse_max_skips"))        { SmpConfig.TIMELAPSE_MAX_SKIPS        = Math.max(0, patch.get("timelapse_max_skips").getAsInt());            changed++; }
             if (patch.has("timelapse_max_frames"))       { SmpConfig.TIMELAPSE_MAX_FRAMES       = Math.max(0, patch.get("timelapse_max_frames").getAsInt());         changed++; }
+            // Chunk pre-generation. Turning it on while a regen is queued would have the next
+            // shutdown delete wilderness the following startup then rebuilds.
+            if (patch.has("pregen_enabled")) {
+                boolean on = patch.get("pregen_enabled").getAsBoolean();
+                if (on && mc.smpessentials.regen.ChunkRegenManager.isPending(server)) {
+                    return err(409, "A wilderness regen is queued. Cancel it before enabling pre-generation.");
+                }
+                SmpConfig.PREGEN_ENABLED = on;
+                changed++;
+            }
             // Web panel link
             if (patch.has("panel_url")) {
                 String url = patch.get("panel_url").getAsString().trim();
@@ -522,7 +536,7 @@ public final class AdminHandler {
             String     name = req.get("name").getAsString().strip();
             String     uuid = req.get("uuid").getAsString().strip();
             int        lvl  = req.get("level").getAsInt();
-            if (lvl < 1 || lvl > 4) return err(400, "Level must be 1–4");
+            if (lvl < 1 || lvl > 4) return err(400, "Level must be 1 to 4");
 
             // Write ops.json synchronously on the HTTP thread
             Path opsPath = server.getFile("ops.json");
@@ -1076,7 +1090,7 @@ public final class AdminHandler {
             SkillType skill = SkillType.valueOf(req.get("skill").getAsString().toUpperCase(Locale.ROOT));
             int level       = req.get("level").getAsInt();
             if (level < 0 || level > SkillManager.MAX_LEVEL)
-                return err(400, "Level must be 0–" + SkillManager.MAX_LEVEL);
+                return err(400, "Level must be 0 to " + SkillManager.MAX_LEVEL);
             long xp = SkillManager.totalXpForLevel(level);
 
             CompletableFuture<String> future = new CompletableFuture<>();
@@ -1590,6 +1604,11 @@ public final class AdminHandler {
         }
 
         if ("POST".equals(method)) {
+            // Regen destroys wilderness chunks and pregen builds them, so a server that ran both
+            // would spend every restart undoing the last one.
+            if (SmpConfig.PREGEN_ENABLED) {
+                return err(409, "Chunk pre-generation is enabled. Turn it off before queueing a regen.");
+            }
             try {
                 mc.smpessentials.regen.ChunkRegenManager.queueRegen(server);
                 return "{\"ok\":true}";
@@ -2179,8 +2198,11 @@ public final class AdminHandler {
         return Integer.parseInt(result.substring(7, 10));
     }
 
+    // "__HTTP_" plus a 3-digit status plus "__" is 12 characters, the same 7 and 10 errStatus
+    // indexes into. Cutting 13 ate the opening brace and made every error body invalid JSON, so
+    // the panel's r.json() threw and showed its own fallback text instead of the server's reason.
     static String errBody(String result) {
-        return result.substring(13);
+        return result.substring(12);
     }
 
     private static String jsonStrArr(java.util.List<String> list) {

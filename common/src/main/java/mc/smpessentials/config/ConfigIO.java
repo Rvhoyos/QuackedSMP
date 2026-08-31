@@ -197,6 +197,10 @@ public final class ConfigIO {
         data.timelapseMaxRenderMb     = SmpConfig.TIMELAPSE_MAX_RENDER_MB;
         data.timelapseMaxSkips        = SmpConfig.TIMELAPSE_MAX_SKIPS;
         data.timelapseMaxFrames       = SmpConfig.TIMELAPSE_MAX_FRAMES;
+
+        data.pregenEnabled     = SmpConfig.PREGEN_ENABLED;
+        data.pregen.distance   = SmpConfig.PREGEN_DISTANCE;
+        data.pregen.dimensions = new java.util.ArrayList<>(SmpConfig.PREGEN_DIMENSIONS);
         data.kitsEnabled = SmpConfig.KITS_ENABLED;
         data.kits.cooldownSeconds = SmpConfig.KIT_COOLDOWN_SECONDS;
         data.kits.kits = new java.util.ArrayList<>(SmpConfig.KIT_DEFINITIONS);

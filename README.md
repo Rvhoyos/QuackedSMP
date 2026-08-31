@@ -44,7 +44,7 @@ The panel is optional and stays off until you set a password. Every game feature
 - Anti-xray (on by default)
 - Random teleport (`/rtp`) with per-dimension profiles and arrival rewards
 - In-game guide book (`/guide`) and join sidebar
-- Wilderness regen, player shops, hardcore sessions, world backups, world timelapse
+- Wilderness regen, chunk pre-generation, player shops, hardcore sessions, world backups, world timelapse
 - Optional: Discord, BlueMap, Votifier, Spark, Simple Voice Chat
 
 Most systems can be turned on or off in the panel **Config** tab or `config/quackedsmp.json`.
@@ -71,6 +71,7 @@ Most systems can be turned on or off in the panel **Config** tab or `config/quac
 | **Systems** | Mods | Upload, replace, or remove JARs in `mods/`. |
 | | Backups | Create / list / download / delete world snapshots. Toggle public download. |
 | | Timelapse | Capture and play back top-down world snapshots. Pick which dimensions to capture, pan/zoom a frame, export the set as a zip. |
+| | Pregen | Set the area to pre-generate and see what it will cost in chunks, disk and time before you commit. |
 | **Setup** | Config | Edit settings live. Most need no restart. |
 | | Features | In-panel feature overview. |
 
@@ -328,6 +329,27 @@ If you have Simple Voice Chat installed and `voicechat_enable` is on, players ca
 
 `/smp regen` (OP) resets **unclaimed** chunks on the next shutdown, leaving a 3-chunk buffer around every claim. Confirm, cancel, or check status with subcommands, or run it from the Commands tab.
 
+### Chunk Pre-generation
+
+Off by default (`pregen_enabled`). Generates the world around spawn ahead of time, so players never
+walk into terrain the server has to build on the spot, and a timelapse stops growing its frame every
+time somebody explores.
+
+Set the area in the panel's **Pregen** tab: a distance in blocks on top of the `spawn-protection`
+radius, and which dimensions to cover. A dimension with a coordinate scale of its own, like the
+nether, covers the same ground with a proportionally smaller radius.
+
+The panel prices the area as you type: how many chunks, how much disk and how long, plus how much of
+it your world already has. A distance past your world border, or one that would claim most of your
+free disk, is refused with the number that would fit.
+
+The work happens on the **next restart**, before the server accepts any players, and nobody can join
+until it finishes. A finished area never delays a later startup, and a run cut short by a crash
+picks up where it left off rather than starting over. `/smp pregen status` and `/smp pregen estimate`
+report the same numbers in game.
+
+Pre-generation and wilderness regen cannot both be on: one builds the wilderness the other deletes.
+
 ### Spawn PvP Protection
 
 `spawn_no_pvp` (on by default) blocks PvP when either player is inside the spawn protection radius.
@@ -407,6 +429,7 @@ Frames are full resolution, one pixel per block, and only shrink if the server i
 | `/dim create\|delete\|tp\|setportal\|setsky` | Custom dimensions | OP |
 | `/smp end reset dragon\|world` | Reset the dragon or the End | OP |
 | `/smp regen` / `confirm` / `cancel` / `status` | Wilderness regen | OP |
+| `/smp pregen status\|estimate` | Chunk pre-generation progress and cost | OP |
 | `/timelapse capture` | Capture a timelapse frame now | OP |
 | `/smp bluemap` | Force-refresh BlueMap markers | OP |
 | `/youtube add\|remove\|list` | Video markers on the map | OP |

@@ -1809,3 +1809,32 @@ export function IconX({ size = 11 }) {
     </svg>
   )
 }
+
+/**
+ * Chunk pre-generation: a 3x3 field of chunk tiles, generated ones filled in as grass over dirt
+ * and the rest still empty outlines. The staircase edge between them is the silhouette, so it
+ * does not read as another square block icon.
+ */
+export function IconChunkFill({ size = 18 }) {
+  const generated = [[0, 10], [5, 10], [10, 10], [0, 5], [5, 5], [0, 0]]
+  const empty = [[10, 5], [5, 0], [10, 0]]
+  return (
+    <svg viewBox="0 0 16 16" width={size} height={size} shapeRendering="crispEdges">
+      {empty.map(([x, y]) => (
+        <g key={`e${x}-${y}`}>
+          {px(x, y, 4, 1, '#54545F')}
+          {px(x, y + 3, 4, 1, '#54545F')}
+          {px(x, y + 1, 1, 2, '#54545F')}
+          {px(x + 3, y + 1, 1, 2, '#54545F')}
+        </g>
+      ))}
+      {generated.map(([x, y]) => (
+        <g key={`g${x}-${y}`}>
+          {px(x, y, 4, 1, '#7BC142')}
+          {px(x, y + 1, 4, 2, '#8B5A2B')}
+          {px(x, y + 3, 4, 1, '#6B4423')}
+        </g>
+      ))}
+    </svg>
+  )
+}

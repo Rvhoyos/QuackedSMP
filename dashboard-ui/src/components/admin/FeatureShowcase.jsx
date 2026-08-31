@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Badge, Toggle } from '../../ui'
-import { IconFlag, IconSkills, IconChatFilter, IconDiscord, IconVoiceChat, IconBallot, IconMapScroll, IconChest, IconEmerald, IconHardcoreHeart, IconGlowstonePortal, IconBed, IconEyeOfEnder, IconSlimeBall, IconBundle, IconLiveMonitor, IconChorusFruit, IconWrittenBook } from './MinecraftIcons'
+import { IconFlag, IconSkills, IconChatFilter, IconDiscord, IconVoiceChat, IconBallot, IconMapScroll, IconChest, IconEmerald, IconHardcoreHeart, IconGlowstonePortal, IconBed, IconEyeOfEnder, IconSlimeBall, IconBundle, IconLiveMonitor, IconChorusFruit, IconWrittenBook, IconChunkFill } from './MinecraftIcons'
 import styles from './FeatureShowcase.module.css'
 
 const FEATURES = [
@@ -21,6 +21,7 @@ const FEATURES = [
   { name: 'Votifier', group: 'Integrations', Icon: IconBallot, desc: 'NuVotifier v2 listener with randomized, offline-queued vote rewards.', tag: 'votifier', configKey: 'votifier_enabled', toggleable: true },
   { name: 'BlueMap', group: 'Integrations', Icon: IconMapScroll, desc: 'Live web map with claim regions and player homes as markers.', tag: 'bluemap', configKey: 'bluemap_enabled', toggleable: true, restartRequired: true },
   { name: 'Admin Panel', group: 'System', Icon: IconChest, desc: 'Manage players, run commands, and edit config from the browser. Password-protected.', tag: 'admin', configKey: 'admin_enabled' },
+  { name: 'Chunk Pre-generation', group: 'System', Icon: IconChunkFill, desc: 'Generates the area around spawn on the next restart, so nobody walks into terrain the server has to invent on the spot. The server does not accept joins until it finishes.', tag: 'pregen', configKey: 'pregen_enabled', toggleable: true, restartRequired: true },
   { name: 'Dashboard', group: 'System', Icon: IconLiveMonitor, desc: 'Public live metrics, activity feed, chat, and leaderboards.', tag: 'dashboard' },
 ]
 

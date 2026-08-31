@@ -146,6 +146,11 @@ public final class SmpConfig {
     public static int     TIMELAPSE_MAX_SKIPS;
     public static int     TIMELAPSE_MAX_FRAMES;
 
+    // ---- Chunk pre-generation ----
+    public static boolean PREGEN_ENABLED;
+    public static int     PREGEN_DISTANCE;
+    public static java.util.List<String> PREGEN_DIMENSIONS;
+
     // ---- Web Panel link (gated on public download) ----
     public static String  PANEL_URL;
     public static String  PANEL_MESSAGE;
@@ -356,6 +361,10 @@ public final class SmpConfig {
         TIMELAPSE_MAX_RENDER_MB    = d.timelapseMaxRenderMb;
         TIMELAPSE_MAX_SKIPS        = d.timelapseMaxSkips;
         TIMELAPSE_MAX_FRAMES       = d.timelapseMaxFrames;
+
+        PREGEN_ENABLED    = d.pregenEnabled;
+        PREGEN_DISTANCE   = d.pregen.distance;
+        PREGEN_DIMENSIONS = d.pregen.dimensions;
         PANEL_URL                    = d.panelUrl;
         PANEL_MESSAGE                = d.panelMessage;
         PANEL_MESSAGE_ENABLED        = d.panelMessageEnabled;

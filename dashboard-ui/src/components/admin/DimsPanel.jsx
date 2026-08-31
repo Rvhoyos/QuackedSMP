@@ -426,7 +426,7 @@ export default function DimsPanel({ token, onExpired }) {
         )}
 
         <div className={styles.footHint}>
-          Portal: build a nether-portal-shaped frame (2–21 wide, 3–21 tall) with the portal block, then right-click a frame block with a water bucket.
+          Portal: build a nether-portal-shaped frame (2 to 21 wide, 3 to 21 tall) with the portal block, then right-click a frame block with a water bucket.
         </div>
       </div>
 

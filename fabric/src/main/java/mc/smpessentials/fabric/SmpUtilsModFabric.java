@@ -43,6 +43,9 @@ public final class SmpUtilsModFabric implements ModInitializer {
             mc.smpessentials.timelapse.TimelapseService.get().start(server);
             mc.smpessentials.votifier.VoteHandler.init(server);
             mc.smpessentials.votifier.VotifierListener.start();
+            // Last: custom dimensions have been restored by now, and the dashboard is already
+            // serving, so its log feed shows the run while the server thread is busy with it.
+            mc.smpessentials.pregen.PregenRunner.onServerStarted(server);
         });
         net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents.SERVER_STOPPING.register(server -> {
             mc.smpessentials.commands.EndResetLogic.onServerStopping(server);

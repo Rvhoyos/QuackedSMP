@@ -56,6 +56,9 @@ public class SmpEvents {
         mc.smpessentials.timelapse.TimelapseService.get().start(event.getServer());
         mc.smpessentials.votifier.VoteHandler.init(event.getServer());
         mc.smpessentials.votifier.VotifierListener.start();
+        // Last: custom dimensions have been restored by now, and the dashboard is already serving,
+        // so its log feed shows the run while the server thread is busy with it.
+        mc.smpessentials.pregen.PregenRunner.onServerStarted(event.getServer());
     }
 
     @SubscribeEvent
