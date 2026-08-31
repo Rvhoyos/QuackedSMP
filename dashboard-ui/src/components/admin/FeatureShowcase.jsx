@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Badge, Toggle } from '../../ui'
-import { IconFlag, IconSkills, IconChatFilter, IconDiscord, IconVoiceChat, IconBallot, IconMapScroll, IconChest, IconEmerald, IconHardcoreHeart, IconGlowstonePortal, IconBed, IconEyeOfEnder, IconSlimeBall, IconBundle, IconLiveMonitor, IconChorusFruit, IconWrittenBook, IconChunkFill } from './MinecraftIcons'
+import { IconCamera, IconFlag, IconSkills, IconChatFilter, IconDiscord, IconVoiceChat, IconBallot, IconMapScroll, IconChest, IconEmerald, IconHardcoreHeart, IconGlowstonePortal, IconBed, IconEyeOfEnder, IconSlimeBall, IconBundle, IconLiveMonitor, IconChorusFruit, IconWrittenBook, IconChunkFill, IconOreVeiled } from './MinecraftIcons'
 import styles from './FeatureShowcase.module.css'
 
 const FEATURES = [
@@ -16,12 +16,14 @@ const FEATURES = [
   { name: 'Slime Chunk Hint', group: 'Gameplay', Icon: IconSlimeBall, desc: 'Slime particles at a player\u2019s feet while they stand in a slime chunk below Y40, plus a rare quiet squish.', tag: 'slimehint', configKey: 'slime_hint_enabled', toggleable: true },
   { name: 'End Finder', group: 'Gameplay', Icon: IconEyeOfEnder, desc: 'Holding an eye of ender marks the nearest stronghold on the vanilla Locator Bar, with the distance on the action bar. No client mod.', tag: 'endfinder', configKey: 'end_finder_enabled', toggleable: true },
   { name: 'Chat Filter', group: 'Moderation', Icon: IconChatFilter, desc: 'Keyword blocking with leet-speak detection and escalating auto-mutes.', tag: 'chatfilter', configKey: 'chatfilter_enabled', toggleable: true },
+  { name: 'Anti-Xray', group: 'Moderation', Icon: IconOreVeiled, desc: 'Server-side ore obfuscation. Hidden ores are replaced with random blocks in chunk packets and revealed the moment a real block is broken. No client mod.', tag: 'antixray', configKey: 'antixray_enabled', toggleable: true },
   { name: 'Discord', group: 'Integrations', Icon: IconDiscord, desc: 'Webhook relay of join/leave and chat to a Discord channel.', tag: 'discord', configKey: 'discord_enabled', toggleable: true, disableOnly: true, disablePayload: { discord_webhook_url: '' } },
   { name: 'Simple Voice Chat', group: 'Integrations', Icon: IconVoiceChat, desc: 'Proximity voice chat. Requires the Simple Voice Chat mod on server and clients.', tag: 'voicechat', configKey: 'voicechat_enable', toggleable: true, restartRequired: true },
   { name: 'Votifier', group: 'Integrations', Icon: IconBallot, desc: 'NuVotifier v2 listener with randomized, offline-queued vote rewards.', tag: 'votifier', configKey: 'votifier_enabled', toggleable: true },
   { name: 'BlueMap', group: 'Integrations', Icon: IconMapScroll, desc: 'Live web map with claim regions and player homes as markers.', tag: 'bluemap', configKey: 'bluemap_enabled', toggleable: true, restartRequired: true },
   { name: 'Admin Panel', group: 'System', Icon: IconChest, desc: 'Manage players, run commands, and edit config from the browser. Password-protected.', tag: 'admin', configKey: 'admin_enabled' },
   { name: 'Chunk Pre-generation', group: 'System', Icon: IconChunkFill, desc: 'Generates the area around spawn on the next restart, so nobody walks into terrain the server has to invent on the spot. The server does not accept joins until it finishes.', tag: 'pregen', configKey: 'pregen_enabled', toggleable: true, restartRequired: true },
+  { name: 'Timelapse', group: 'System', Icon: IconCamera, desc: 'Periodic top-down world snapshots rendered straight from region files, played back in the panel with pan and zoom.', tag: 'timelapse', configKey: 'timelapse_enabled', toggleable: true },
   { name: 'Dashboard', group: 'System', Icon: IconLiveMonitor, desc: 'Public live metrics, activity feed, chat, and leaderboards.', tag: 'dashboard' },
 ]
 

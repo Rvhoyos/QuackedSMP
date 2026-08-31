@@ -1838,3 +1838,24 @@ export function IconChunkFill({ size = 18 }) {
     </svg>
   )
 }
+
+/**
+ * Anti-Xray: a stone block with an ore vein showing through it in a dimmed, broken-up teal, so it
+ * reads as ore that is there but not visible. Deliberately unlike IconChunkFill (a tile field) and
+ * IconGrassBlock (a solid block face), which are the two other block-shaped icons.
+ */
+export function IconOreVeiled({ size = 18 }) {
+  const vein = [[4, 5], [7, 4], [6, 8], [10, 7], [9, 11], [4, 10]]
+  const glint = [[4, 5], [10, 7], [6, 8]]
+  return (
+    <svg viewBox="0 0 16 16" width={size} height={size} shapeRendering="crispEdges">
+      {px(2, 2, 12, 12, '#6E6E78')}
+      {px(2, 2, 12, 1, '#8A8A96')}
+      {px(2, 3, 1, 10, '#7C7C88')}
+      {px(13, 3, 1, 10, '#565660')}
+      {px(2, 13, 12, 1, '#4A4A54')}
+      {vein.map(([x, y]) => px(x, y, 2, 2, '#3E7F86'))}
+      {glint.map(([x, y]) => <g key={`gl${x}-${y}`}>{px(x, y, 1, 1, '#5FD0D8')}</g>)}
+    </svg>
+  )
+}

@@ -90,6 +90,7 @@ public final class TimelapseHandler {
         if (!SmpConfig.ADMIN_ENABLED)         return err(403, "Admin panel disabled");
         if (!AdminAuth.isAuthorized(headers)) return err(403, "Unauthorized");
         if (server == null)                   return err(503, "Server not ready");
+        if (!SmpConfig.TIMELAPSE_ENABLED)     return err(409, "Timelapse is disabled");
         if (TimelapseService.get().isRunning()) return err(409, "Capture already in progress");
         TimelapseService.get().capture(server);
         return "{\"ok\":true}";

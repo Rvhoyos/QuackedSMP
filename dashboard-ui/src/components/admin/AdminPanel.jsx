@@ -51,7 +51,7 @@ const GROUPS = [
   { label: 'Systems', items: [
     { id: 'mods',      label: 'Mods',      Icon: IconMod },
     { id: 'backups',   label: 'Backups',   Icon: IconShulkerBox },
-    { id: 'timelapse', label: 'Timelapse', Icon: IconCamera },
+    { id: 'timelapse', label: 'Timelapse', Icon: IconCamera, configKey: 'timelapse_enabled' },
     { id: 'pregen',    label: 'Pregen',    Icon: IconChunkFill, configKey: 'pregen_enabled' },
   ]},
   { label: 'Setup', items: [
@@ -69,8 +69,9 @@ export default function AdminPanel({ health, wsStatus, onBack }) {
   const [navOpen,   setNavOpen] = useState(false)
 
   useEffect(() => {
-    if (!token) return
-    fetch('/api/admin/config', { headers: { Authorization: `Bearer ${token}` } })
+    // No token guard: with no admin password set the routes serve unauthenticated calls, and
+    // skipping the fetch left cfg null, so every configKey read as undefined and no tab ever hid.
+    fetch('/api/admin/config', { headers: token ? { Authorization: `Bearer ${token}` } : {} })
       .then(r => (r.status === 401 || r.status === 403) ? null : r.json())
       .then(d => { if (d && !d.error) setCfg(d) })
       .catch(() => {})

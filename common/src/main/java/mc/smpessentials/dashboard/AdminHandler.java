@@ -190,6 +190,7 @@ public final class AdminHandler {
         sb.append(String.format("\"claims_enabled\":%b,", SmpConfig.CLAIMS_ENABLED));
         sb.append(String.format("\"skills_enabled\":%b,", SmpConfig.SKILLS_ENABLED));
         sb.append(String.format("\"chatfilter_enabled\":%b,", SmpConfig.CHATFILTER_ENABLED));
+        sb.append(String.format("\"antixray_enabled\":%b,", SmpConfig.ANTIXRAY_ENABLED));
         sb.append(String.format("\"shops_enabled\":%b,", SmpConfig.SHOPS_ENABLED));
         sb.append(String.format("\"economy_enabled\":%b,", SmpConfig.ECONOMY_ENABLED));
         sb.append(String.format("\"rtp_enabled\":%b,", SmpConfig.RTP_ENABLED));
@@ -343,6 +344,7 @@ public final class AdminHandler {
             if (patch.has("claims_enabled"))     { SmpConfig.CLAIMS_ENABLED     = patch.get("claims_enabled").getAsBoolean();     changed++; }
             if (patch.has("skills_enabled"))     { SmpConfig.SKILLS_ENABLED     = patch.get("skills_enabled").getAsBoolean();     changed++; }
             if (patch.has("chatfilter_enabled")) { SmpConfig.CHATFILTER_ENABLED = patch.get("chatfilter_enabled").getAsBoolean(); changed++; }
+            if (patch.has("antixray_enabled"))   { SmpConfig.ANTIXRAY_ENABLED   = patch.get("antixray_enabled").getAsBoolean();   changed++; }
             if (patch.has("shops_enabled"))     { SmpConfig.SHOPS_ENABLED     = patch.get("shops_enabled").getAsBoolean();     changed++; }
             if (patch.has("economy_enabled"))   { SmpConfig.ECONOMY_ENABLED   = patch.get("economy_enabled").getAsBoolean();   changed++; }
             if (patch.has("rtp_enabled"))       { SmpConfig.RTP_ENABLED       = patch.get("rtp_enabled").getAsBoolean();       changed++; }
