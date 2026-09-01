@@ -20,6 +20,7 @@
     "LivingEntityMixin",
     "ExplosionMixin",
     "BlockItemMixin",
+    "BlockItemSpawnerMixin",
     "BucketItemMixin",
     "PlayerActionMixin",
     "MinecraftServerMixin",

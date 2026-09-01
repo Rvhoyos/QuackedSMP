@@ -24,11 +24,6 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraft.nbt.CompoundTag;
-
-import net.minecraft.core.component.DataComponents;
-import net.minecraft.world.item.component.TypedEntityData;
-import net.minecraft.world.level.block.entity.BlockEntityTypes;
 
 import net.minecraft.world.entity.player.Inventory;
 
@@ -681,12 +676,7 @@ public final class ActiveAbilities {
         if (be == null)
             return false;
 
-        // Create spawner item with NBT
-        ItemStack spawnerItem = new ItemStack(Blocks.SPAWNER);
-        CompoundTag tag = be.saveWithFullMetadata(sp.registryAccess());
-
-        // Use DataComponents for 1.21+
-        spawnerItem.set(DataComponents.BLOCK_ENTITY_DATA, TypedEntityData.of(BlockEntityTypes.MOB_SPAWNER, tag));
+        ItemStack spawnerItem = SilkTouchedSpawner.create(be, sp.registryAccess());
 
         // Drop item
         net.minecraft.world.entity.item.ItemEntity it = new net.minecraft.world.entity.item.ItemEntity(
