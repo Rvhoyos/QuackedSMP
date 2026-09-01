@@ -65,6 +65,14 @@ export default function App() {
     } catch { /* server may be starting */ }
   }, [])
 
+  // sampledAt rides along so the header can tell a running world clock from a
+  // stopped one: two polls reporting the same day time mean the clock is not moving.
+  const pollHealth = useCallback(async () => {
+    const res  = await fetch('/api/health')
+    const data = await res.json()
+    setHealth({ ...data, sampledAt: Date.now() })
+  }, [])
+
   const pollLeaderboard = useCallback(async () => {
     try {
       const r = await fetch('/api/skills/leaderboard')
@@ -100,16 +108,14 @@ export default function App() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const bootstrap = useCallback(async () => {
     try {
-      const res  = await fetch('/api/health')
-      const data = await res.json()
-      setHealth(data)
+      await pollHealth()
       openWebSocket()
       pollMetrics()
       pollLeaderboard()
     } catch {
       retryRef.current = setTimeout(bootstrap, 5000)
     }
-  }, [openWebSocket, pollMetrics, pollLeaderboard])
+  }, [openWebSocket, pollHealth, pollMetrics, pollLeaderboard])
 
   // The snapshot's name is fetched when the prompt opens, not on the Download click:
   // the save picker needs the click's user activation, which awaiting a fetch can outlive.
@@ -147,7 +153,8 @@ export default function App() {
   const lbRef = useRef(null)
   useEffect(() => {
     bootstrap()
-    pollRef.current = setInterval(pollMetrics, 15_000)
+    // bootstrap retries when health fails, a periodic poll just waits for the next one.
+    pollRef.current = setInterval(() => { pollMetrics(); pollHealth().catch(() => {}) }, 15_000)
     lbRef.current   = setInterval(pollLeaderboard, 60_000)
     return () => {
       clearTimeout(retryRef.current)

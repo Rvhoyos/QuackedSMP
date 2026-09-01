@@ -119,6 +119,11 @@ public final class DashboardManager {
             boolean publicBackup  = SmpConfig.backupPublicAvailable();
             String  serverName    = SmpConfig.SERVER_NAME;
             String version = mc.smpessentials.SmpUtilsMod.VERSION;
+            // Overworld day time, 0 to 23999. The public header paints its sky from it.
+            // -1 means the levels are not loaded yet, which the panel reads as unknown.
+            long dayTime = (mcServer != null && mcServer.overworld() != null)
+                    ? mcServer.overworld().getOverworldClockTime() % 24000L
+                    : -1L;
             // Restore info rides along only when public download is on. The seed is included
             // only when the owner also opts into disclosure; otherwise it stays admin-only.
             String restore = "";
@@ -129,8 +134,8 @@ public final class DashboardManager {
                 }
             }
             return String.format(
-                    "{\"status\":\"ok\",\"online\":%d,\"adminEnabled\":%b,\"hasPassword\":%b,\"backupPublicEnabled\":%b,\"serverName\":\"%s\",\"version\":\"%s\"%s}",
-                    online, adminOn, hasPassword, publicBackup, jsonEscape(serverName), jsonEscape(version), restore);
+                    "{\"status\":\"ok\",\"online\":%d,\"adminEnabled\":%b,\"hasPassword\":%b,\"backupPublicEnabled\":%b,\"serverName\":\"%s\",\"version\":\"%s\",\"dayTime\":%d%s}",
+                    online, adminOn, hasPassword, publicBackup, jsonEscape(serverName), jsonEscape(version), dayTime, restore);
         });
         s.addRoute("/api/metrics", () -> {
             Runtime rt       = Runtime.getRuntime();
