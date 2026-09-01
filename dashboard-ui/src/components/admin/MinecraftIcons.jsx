@@ -1264,6 +1264,30 @@ export function IconPulse({ size = 20 }) {
   )
 }
 
+// Question mark, for settings that reveal something the player cannot otherwise see.
+// Vanilla reserves the exclamation for a warning (world_list/warning) and marks the unknown
+// with a question mark (icon/ping_unknown), so this is the glyph that fits World Hints.
+export function IconQuestionMark({ size = 20 }) {
+  const g = '#FDD835', hi = '#FFEC70', d = '#ECC820'
+  return (
+    <svg viewBox="0 0 16 16" width={size} height={size} shapeRendering="crispEdges">
+      {/* Hook: top bar, left shoulder, right side, then a staircase down to the stem */}
+      {px(5, 1, 6, 2, g)}
+      {px(5, 1, 6, 1, hi)}
+      {px(4, 2, 2, 2, g)}
+      {px(10, 2, 2, 3, g)}
+      {px(9, 4, 2, 2, g)}
+      {px(8, 6, 2, 1, g)}
+      {/* Stem, down to the gap above the dot */}
+      {px(7, 7, 2, 3, g)}
+      {px(7, 9, 2, 1, d)}
+      {/* Dot */}
+      {px(7, 11, 2, 2, g)}
+      {px(7, 12, 2, 1, d)}
+    </svg>
+  )
+}
+
 // Blood droplet. Used for the Hardcore leaderboard "Bloodiest run" record so it
 // no longer shares IconSkull with the panel title.
 export function IconBloodDrop({ size = 20 }) {

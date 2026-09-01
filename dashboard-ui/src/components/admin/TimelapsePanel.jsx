@@ -270,10 +270,11 @@ export default function TimelapsePanel({ token, onExpired }) {
       {status && <div className={styles.status}>{status}</div>}
 
       <div className={styles.body}>
-        <SectionCard title="Capture Settings" subtitle="One pixel per block, per selected dimension. Runs when idle; forced after the skip limit.">
+        <SectionCard title="Capture Settings" subtitle="One pixel per block, per selected dimension. Runs when idle, forced after the skip limit.">
           <div className={styles.toggleRow}>
-            <span className={styles.tLabel}>Automatically capture on a schedule{enabled ? `, every ${interval} min` : ''}</span>
-            <Toggle checked={enabled} onChange={toggleEnabled} aria-label="Auto capture" />
+            {/* This is the feature flag: off stops manual captures and /smp timelapse too. */}
+            <span className={styles.tLabel}>Timelapse capture{enabled ? `, automatically every ${interval} min` : ', off entirely'}</span>
+            <Toggle checked={enabled} onChange={toggleEnabled} aria-label="Timelapse capture" />
           </div>
 
           <Field label="Capture these dimensions">

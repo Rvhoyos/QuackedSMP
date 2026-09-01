@@ -67,6 +67,8 @@ export default function AdminPanel({ health, wsStatus, onBack }) {
   const [activeTab, setTab]     = useState('players')
   const [cfg,       setCfg]     = useState(null)
   const [navOpen,   setNavOpen] = useState(false)
+  // Set when something navigates to a specific settings section rather than the config tab at large.
+  const [configSection, setConfigSection] = useState(null)
 
   useEffect(() => {
     // No token guard: with no admin password set the routes serve unauthenticated calls, and
@@ -97,11 +99,15 @@ export default function AdminPanel({ health, wsStatus, onBack }) {
     sessionStorage.removeItem(TOKEN_KEY)
     setToken('')
   }
-  function pick(id) { setTab(id); setNavOpen(false) }
+  function pick(id, section) { setTab(id); setConfigSection(section ?? null); setNavOpen(false) }
+
+  // The Features tab toggles features, and the rail hides a feature's tab while it is off, so the
+  // rail has to learn about a toggle without waiting for a reload.
+  function applyFeature(key, value) { setCfg(c => ({ ...c, [key]: value })) }
 
   if (needsAuth) return <AdminGate onAuth={onAuth} />
 
-  const panelProps = { token, onExpired: logout, onNavigate: pick, features: cfg }
+  const panelProps = { token, onExpired: logout, onNavigate: pick, features: cfg, onFeatureChange: applyFeature }
 
   return (
     <TooltipProvider>
@@ -170,7 +176,7 @@ export default function AdminPanel({ health, wsStatus, onBack }) {
             {resolvedTab === 'backups'    && <BackupsPanel {...panelProps} />}
             {resolvedTab === 'timelapse'  && <TimelapsePanel {...panelProps} />}
             {resolvedTab === 'pregen'     && <PregenPanel {...panelProps} />}
-            {resolvedTab === 'config'     && <ConfigEditor {...panelProps} />}
+            {resolvedTab === 'config'     && <ConfigEditor {...panelProps} initialSection={configSection} />}
             {resolvedTab === 'features'   && <FeatureShowcase {...panelProps} />}
           </div>
           </div>
