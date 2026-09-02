@@ -142,6 +142,9 @@ public final class ConfigData {
     // Percent of peak players that must die to end a session. 100 = ends only when everyone dies.
     public int hardcoreDeathPercent = 100;
     public boolean hardcoreWitheredHearts = true;
+    // Moves the world clock to day when a session is created, so a one-life run never opens in a
+    // night the player cannot survive. The clock is server wide, so this affects everyone online.
+    public boolean hardcoreStartAtDay = true;
     // Optional scoreboard-team identity for session members (nametag/tab color). Off by
     // default: current behavior is unchanged until enabled. The team's color/prefix are edited
     // in the dashboard teams editor; only the name is fixed here.

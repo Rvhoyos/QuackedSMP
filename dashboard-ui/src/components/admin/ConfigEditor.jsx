@@ -71,7 +71,7 @@ const TABS = [
       'spawn_no_hostiles',
       'protect_explosions', 'protect_fire_claims', 'protect_enderman', 'protect_farmland',
       'tp_warmup', 'mute_levels_minutes',
-      'hardcore_enabled', 'hardcore_death_percent', 'hardcore_team_visibility',
+      'hardcore_enabled', 'hardcore_death_percent', 'hardcore_start_at_day', 'hardcore_team_visibility',
       'hardcore_sidebar_enabled', 'hardcore_sidebar_interval_seconds',
       'hardcore_sidebar_show_seconds', 'hardcore_sidebar_on_entry_seconds',
       'slime_hint_enabled', 'slime_hint_interval_ticks', 'slime_hint_particle_count',
@@ -314,6 +314,9 @@ function GeneralTab({ draft, patch, onDisable, disabling, disableMsg }) {
         </Row>
         <Row label="Death Threshold" hint="Percent of peak players that must die to end a session">
           <NumInput value={draft.hardcore_death_percent} onChange={v => patch('hardcore_death_percent', v)} />
+        </Row>
+        <Row label="Start at Day" hint="Set the world to day when a hardcore session is created">
+          <Toggle value={draft.hardcore_start_at_day} onChange={v => patch('hardcore_start_at_day', v)} />
         </Row>
         <Row label="Team Identity" hint="Team name tag for session members, styled in Teams">
           <Toggle value={draft.hardcore_team_visibility} onChange={v => patch('hardcore_team_visibility', v)} />

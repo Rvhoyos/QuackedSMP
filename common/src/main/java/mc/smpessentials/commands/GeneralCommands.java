@@ -166,7 +166,7 @@ public class GeneralCommands {
         helpLine(src, SmpConfig.CLAIMS_ENABLED, "/claim info", "Show your claim count, limit, and current chunk status");
         helpLine(src, SmpConfig.TELEPORT_ENABLED, "/tpr <player>", "Teleport request to a friend");
         helpLine(src, SmpConfig.SKILLS_ENABLED, "/skills", "View your RPG skill progression");
-        helpLine(src, SmpConfig.KEEP_INV_ENABLED, "/smp keepinv on/off", "Toggle keeping items on death");
+        helpLine(src, SmpConfig.KEEP_INV_ENABLED, "/smp keepinv on/off", "Toggle keeping items and XP on death");
         helpLine(src, SmpConfig.HARDCORE_ENABLED, "/smp hardcore create|join|leave|status|list", "Hardcore mode sessions");
         helpLine(src, SmpConfig.KITS_ENABLED, "/smp kit", "Claim a daily kit");
         helpLine(src, SmpConfig.RTP_ENABLED, "/rtp", "Teleport to a random spot far from spawn");
@@ -189,6 +189,7 @@ public class GeneralCommands {
     private static int reloadConfig(CommandContext<CommandSourceStack> ctx) {
         try {
             SmpConfig.load();
+            mc.smpessentials.keepinv.KeepInvSavedData.syncGamerule(ctx.getSource().getServer());
             mc.smpessentials.votifier.VotifierListener.restart();
             var res = mc.smpessentials.chatfilter.ChatFilterConfig
                     .mergeFromConfig(ctx.getSource().getServer());
@@ -215,6 +216,7 @@ public class GeneralCommands {
     private static int resetConfig(CommandContext<CommandSourceStack> ctx) {
         try {
             mc.smpessentials.config.ConfigIO.resetToFactory();
+            mc.smpessentials.keepinv.KeepInvSavedData.syncGamerule(ctx.getSource().getServer());
             ctx.getSource().sendSuccess(
                     () -> Component.literal("\u00a7aConfiguration reset to factory defaults!"),
                     true);

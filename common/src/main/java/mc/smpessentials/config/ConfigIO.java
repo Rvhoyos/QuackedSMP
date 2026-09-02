@@ -127,6 +127,7 @@ public final class ConfigIO {
         data.hardcoreEnabled = SmpConfig.HARDCORE_ENABLED;
         data.hardcoreDeathPercent = SmpConfig.HARDCORE_DEATH_PERCENT;
         data.hardcoreWitheredHearts = SmpConfig.HARDCORE_WITHERED_HEARTS;
+        data.hardcoreStartAtDay     = SmpConfig.HARDCORE_START_AT_DAY;
         data.hardcoreTeamVisibility = SmpConfig.HARDCORE_TEAM_VISIBILITY;
         data.hardcoreTeamName = SmpConfig.HARDCORE_TEAM_NAME;
         data.hardcoreSidebarEnabled = SmpConfig.HARDCORE_SIDEBAR_ENABLED;

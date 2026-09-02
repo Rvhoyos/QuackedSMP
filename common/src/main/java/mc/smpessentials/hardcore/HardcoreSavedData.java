@@ -8,6 +8,7 @@ import mc.smpessentials.config.SmpConfig;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.GlobalPos;
 import net.minecraft.core.UUIDUtil;
+import net.minecraft.core.Holder;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -19,6 +20,8 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.clock.ClockTimeMarkers;
+import net.minecraft.world.clock.WorldClock;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.GameType;
@@ -227,7 +230,18 @@ public final class HardcoreSavedData extends SavedData {
                 List.of(), List.of(), 0, 0, Map.of(), System.currentTimeMillis());
         sessions.put(name, session);
         setDirty();
+        if (SmpConfig.HARDCORE_START_AT_DAY) moveClockToDay(level);
         return null;
+    }
+
+    // Opens the run in daylight so a one life attempt never starts in a night the player cannot
+    // survive. The clock is server wide, so this moves time for everyone online, not just the
+    // session. A dimension with no day cycle has no clock and is left alone.
+    private static void moveClockToDay(ServerLevel level) {
+        Optional<Holder<WorldClock>> clock = level.dimensionTypeRegistration().value().defaultClock();
+        if (clock.isPresent()) {
+            level.getServer().clockManager().moveToTimeMarker(clock.get(), ClockTimeMarkers.DAY);
+        }
     }
 
     public String joinSession(String name, String password, ServerPlayer player) {

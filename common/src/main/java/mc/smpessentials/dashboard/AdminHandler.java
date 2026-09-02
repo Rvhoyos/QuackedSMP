@@ -225,6 +225,7 @@ public final class AdminHandler {
         // Hardcore
         sb.append(String.format("\"hardcore_enabled\":%b,", SmpConfig.HARDCORE_ENABLED));
         sb.append(String.format("\"hardcore_death_percent\":%d,", SmpConfig.HARDCORE_DEATH_PERCENT));
+        sb.append(String.format("\"hardcore_start_at_day\":%b,", SmpConfig.HARDCORE_START_AT_DAY));
         sb.append(String.format("\"hardcore_team_visibility\":%b,", SmpConfig.HARDCORE_TEAM_VISIBILITY));
         sb.append(String.format("\"hardcore_sidebar_enabled\":%b,", SmpConfig.HARDCORE_SIDEBAR_ENABLED));
         sb.append(String.format("\"hardcore_sidebar_interval_seconds\":%d,", SmpConfig.HARDCORE_SIDEBAR_INTERVAL_SECONDS));
@@ -406,6 +407,7 @@ public final class AdminHandler {
             // Hardcore
             if (patch.has("hardcore_enabled"))        { SmpConfig.HARDCORE_ENABLED        = patch.get("hardcore_enabled").getAsBoolean();       changed++; }
             if (patch.has("hardcore_death_percent"))   { SmpConfig.HARDCORE_DEATH_PERCENT   = patch.get("hardcore_death_percent").getAsInt();     changed++; }
+            if (patch.has("hardcore_start_at_day"))     { SmpConfig.HARDCORE_START_AT_DAY     = patch.get("hardcore_start_at_day").getAsBoolean();     changed++; }
             if (patch.has("hardcore_team_visibility")) { SmpConfig.HARDCORE_TEAM_VISIBILITY = patch.get("hardcore_team_visibility").getAsBoolean(); changed++; }
             if (patch.has("hardcore_sidebar_enabled")) { SmpConfig.HARDCORE_SIDEBAR_ENABLED = patch.get("hardcore_sidebar_enabled").getAsBoolean(); changed++; }
             if (patch.has("hardcore_sidebar_interval_seconds")) { SmpConfig.HARDCORE_SIDEBAR_INTERVAL_SECONDS = Math.max(10, patch.get("hardcore_sidebar_interval_seconds").getAsInt()); changed++; }
@@ -508,6 +510,11 @@ public final class AdminHandler {
 
             if (changed > 0) {
                 ConfigIO.save();
+                // Keep Inventory owns the keep_inventory gamerule while it is on. GameRules.set
+                // notifies the server, so the write has to leave this HTTP thread.
+                if (patch.has("keep_inv_enabled") && server != null) {
+                    server.execute(() -> mc.smpessentials.keepinv.KeepInvSavedData.syncGamerule(server));
+                }
                 // Votifier: restart the TCP listener so the new enabled/port/token values take effect immediately.
                 if (patch.has("votifier_enabled") || patch.has("votifier_port") || patch.has("votifier_token")) {
                     mc.smpessentials.votifier.VotifierListener.restart();
