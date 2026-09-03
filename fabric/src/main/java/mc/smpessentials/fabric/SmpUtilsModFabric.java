@@ -92,8 +92,9 @@ public final class SmpUtilsModFabric implements ModInitializer {
         });
 
         // 9. Keep Inventory, drop items on death for opted-out players
-        // Order matters: hardcore must run first. On session-ending deaths it removes the
-        // player from playerSessions, so KeepInv sees them as non-hardcore and skips the drop.
+        // Order matters: hardcore must run first, so that a death which ends a session has already
+        // marked the player's stash pending by the time KeepInv decides what to drop. KeepInv reads
+        // that through holdsSessionGear, so the session-ending death drops like any other one.
         net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents.AFTER_DEATH.register((entity, source) -> {
             if (entity instanceof net.minecraft.server.level.ServerPlayer sp) {
                 mc.smpessentials.hardcore.HardcoreSavedData.get(((net.minecraft.server.level.ServerLevel) sp.level()).getServer()).onPlayerDeath(sp);

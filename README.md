@@ -85,7 +85,7 @@ Anyone who can reach the port sees this without logging in:
 - **Player count**
 - **Event feed:** joins, leaves, and chat
 - **Skills leaderboard**
-- **World download**, only if you turn on `backup_public_download`
+- **World download**, only if you turn on both `backup_enabled` and `backup_public_download`
 
 ---
 
@@ -457,10 +457,14 @@ File: `config/quackedsmp.json`. Most values are editable from the panel's **Conf
 | `protect_fire_claims` | `true` | Fire protection inside claims |
 | `protect_enderman` | `true` | Stop endermen griefing claims / spawn |
 | `protect_farmland` | `true` | Farmland trampling protection |
-| `claims_enabled` | `true` | Claiming system |
-| `skills_enabled` | `true` | Skills system |
-| `chatfilter_enabled` | `true` | Chat filter |
-| `voicechat_enable` | `true` | Voice chat age gate |
+| `keep_inv_enabled` | `true` | Keep items on death, per player opt-out with `/smp keepinv` |
+| `teleport_enabled` | `true` | `/home`, `/spawn`, `/tpr`, `/tpa` |
+| `dims_enabled` | `true` | Creating and deleting custom dimensions |
+| `backup_enabled` | `true` | World snapshots, scheduled and on demand |
+| `claims_enabled` | `false` | Claiming system |
+| `skills_enabled` | `false` | Skills system |
+| `chatfilter_enabled` | `false` | Chat filter |
+| `voicechat_enable` | `false` | Voice chat age gate |
 | `mute_levels_minutes` | `[60,120,240,480,1440]` | Auto-mute escalation |
 | `dashboard.enabled` | `false` | Panel on or off |
 | `dashboard.port` | `8125` | Panel port |
@@ -495,11 +499,12 @@ File: `config/quackedsmp.json`. Most values are editable from the panel's **Conf
 | `votifier.port` | `8192` | Vote port |
 | `votifier.token` | `""` | Token shared with your server list |
 | `votifier.broadcast` | see JSON | Vote chat line |
-| `kits_enabled` | `true` | Kit system |
+| `kits_enabled` | `false` | Kit system |
 | `kits.cooldownSeconds` | `86400` | Time between kit claims |
 | `kits.kits` | starter + vip | Kit definitions |
 | `hardcore_enabled` | `false` | Hardcore sessions |
-| `hardcore_death_percent` | `50` | Deaths vs peak players before a session ends |
+| `hardcore_death_percent` | `100` | Deaths vs peak players before a session ends |
+| `hardcore_start_at_day` | `true` | Set the world to day when a session is created |
 | `hardcore_withered_hearts` | `true` | Withered hearts for session members |
 | `timelapse_enabled` | `false` | World timelapse |
 | `timelapse_dimensions` | `["minecraft:overworld"]` | Which dimensions to capture |

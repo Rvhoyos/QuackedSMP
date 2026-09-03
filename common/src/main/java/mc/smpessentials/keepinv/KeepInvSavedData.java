@@ -108,7 +108,7 @@ public final class KeepInvSavedData extends SavedData {
         // this is the only code that drops a hardcore player's in-session gear.
         boolean inHardcore = mc.smpessentials.hardcore.HardcoreSavedData
                 .get(server)
-                .getPlayerSessionName(player.getUUID()) != null;
+                .holdsSessionGear(player.getUUID());
         if (!inHardcore) {
             // Feature off: the gamerule is the owner's own, we add nothing.
             if (!mc.smpessentials.config.SmpConfig.KEEP_INV_ENABLED) return;
