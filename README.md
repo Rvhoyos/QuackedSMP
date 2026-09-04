@@ -47,16 +47,29 @@ The panel is optional and stays off until you set a password. Every game feature
 - Wilderness regen, chunk pre-generation, player shops, hardcore sessions, world backups, world timelapse
 - Optional: Discord, BlueMap, Votifier, Spark, Simple Voice Chat
 
-Most systems can be turned on or off in the panel **Config** tab or `config/quackedsmp.json`.
+Most features start off. Turn the ones you want on in the panel's **Features** tab, or in
+`config/quackedsmp.json` if you are not running the panel.
 
 ---
 
 ## Admin Panel
 
+These tabs are always in the sidebar:
+
 | Group | Tab | What you can do |
 | :--- | :--- | :--- |
 | **People** | Players | Online players, dimension, OP level. Grant/revoke OP, set VIP tier. |
 | | Teams | Scoreboard teams, members, dimension auto-assign. |
+| **Moderation** | Commands | Run server commands from the browser and watch a live server log. Quick actions (weather, time, broadcast, end reset, wilderness regen, stop). |
+| **Systems** | Mods | Upload, replace, or remove JARs in `mods/`. |
+| **Setup** | Config | Edit settings live. Most need no restart. |
+| | Features | Turn features on and off. |
+
+Every other tab belongs to one feature and appears only while that feature is on. **Features** is
+the only tab that can turn a feature on.
+
+| Group | Tab | What you can do |
+| :--- | :--- | :--- |
 | **World** | Dimensions | Create, delete, and configure custom dimensions. Wire portal frame blocks. |
 | | Claims | View claim counts. Force-unclaim all chunks for a player. |
 | | Shops | List player shops, delete shops, view bank balances, toggle economy. |
@@ -67,15 +80,11 @@ Most systems can be turned on or off in the panel **Config** tab or `config/quac
 | | Welcome Book | Write and preview the `/guide` book page by page. |
 | **Moderation** | Chat Filter | Blocked words and whitelist. Active mutes, unmute. |
 | | Cmd Blocks | List, edit, and delete command blocks in loaded chunks. |
-| | Commands | Run server commands from the browser and watch a live server log. Quick actions (weather, time, broadcast, end reset, wilderness regen, stop). |
-| **Systems** | Mods | Upload, replace, or remove JARs in `mods/`. |
-| | Backups | Create / list / download / delete world snapshots. Toggle public download. |
+| **Systems** | Backups | Create / list / download / delete world snapshots. Toggle public download. |
 | | Timelapse | Capture and play back top-down world snapshots. Pick which dimensions to capture, pan/zoom a frame, export the set as a zip. |
 | | Pregen | Set the area to pre-generate and see what it will cost in chunks, disk and time before you commit. |
-| **Setup** | Config | Edit settings live. Most need no restart. |
-| | Features | In-panel feature overview. |
 
-The Cmd Blocks tab needs command blocks enabled on the server.
+The Cmd Blocks tab also needs command blocks enabled on the server.
 
 ### Public dashboard
 
@@ -470,7 +479,7 @@ File: `config/quackedsmp.json`. Most values are editable from the panel's **Conf
 | `dashboard.port` | `8125` | Panel port |
 | `dashboard.admin_enabled` | `false` | Admin side enabled (set by `setpassword`) |
 | `dashboard.server_name` | `""` | Name shown in the panel header |
-| `bluemap_enable` | `true` | BlueMap integration when installed |
+| `bluemap_enable` | `false` | BlueMap integration when installed |
 | `bluemap_show_homes` | `true` | Homes on map |
 | `bluemap_show_claims` | `true` | Claim outlines |
 | `bluemap_claim_color` | `00FFFF` | Normal claim color |
