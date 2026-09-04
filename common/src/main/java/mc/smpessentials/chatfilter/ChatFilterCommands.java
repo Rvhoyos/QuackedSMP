@@ -94,30 +94,17 @@ public final class ChatFilterCommands {
                                                         return words.size();
                                                 }))
 
-                                // --- load ---
+                                // --- load (re-adds any builtin word that was removed) ---
                                 .then(Commands.literal("load")
                                                 .executes(ctx -> {
                                                         var src = ctx.getSource();
-                                                        try {
-                                                                var res = ChatFilterConfig
-                                                                                .mergeFromConfig(src.getServer());
-                                                                src.sendSuccess(() -> Component
-                                                                                .literal("Loaded " + res.added()
-                                                                                                + " new words (total "
-                                                                                                + res.total() + ")."),
-                                                                                false);
-                                                                for (String warn : res.warnings()) {
-                                                                        src.sendFailure(Component.literal(
-                                                                                        "\u00a7e[Warning] \u00a7f"
-                                                                                                        + warn));
-                                                                }
-                                                                return res.added();
-                                                        } catch (mc.smpessentials.config.ConfigIO.ConfigParseException e) {
-                                                                src.sendFailure(Component
-                                                                                .literal("\u00a7c[Error] \u00a7f"
-                                                                                                + e.getMessage()));
-                                                                return 0;
-                                                        }
+                                                        var res = ChatFilterBuiltins.merge(src.getServer());
+                                                        src.sendSuccess(() -> Component
+                                                                        .literal("Restored " + res.restored()
+                                                                                        + " builtin words (total "
+                                                                                        + res.total() + ")."),
+                                                                        false);
+                                                        return res.restored();
                                                 }))
 
                                 // --- test (dry-run: shows what the filter would do) ---

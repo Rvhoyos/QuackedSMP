@@ -3,6 +3,8 @@ package mc.smpessentials.config;
 import com.google.gson.FieldNamingPolicy;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
 import mc.smpessentials.platform.SmpServices;
 
@@ -10,6 +12,8 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 
 // Shared config file helpers for all packages.
 public final class ConfigIO {
@@ -34,20 +38,16 @@ public final class ConfigIO {
         return SmpServices.PLATFORM.getConfigDir().resolve(FILE_NAME);
     }
 
-    // Returns the chatfilter import queue from the config file without writing the file back.
-    public static ConfigData.ChatFilterData readChatFilterQueue() {
-        Path p = path();
-        try {
-            if (Files.exists(p) && Files.size(p) > 0) {
-                String s = Files.readString(p, StandardCharsets.UTF_8);
-                ConfigData data = GSON.fromJson(s, ConfigData.class);
-                if (data != null && data.chatfilter != null) {
-                    return data.chatfilter;
-                }
-            }
-        } catch (JsonSyntaxException | IOException ignored) {
-        }
-        return new ConfigData.ChatFilterData();
+    // The in-memory mirror of quackedsmp.json, of which the SmpConfig statics are the live subset.
+    // save() copies the statics onto this rather than onto a blank ConfigData, so a field with no
+    // copy line in save() keeps its stored value instead of reverting to its factory default.
+    private static ConfigData stored;
+
+    // Words rescued from the retired chatfilter import queue, null when there is nothing to migrate.
+    private static LegacyChatFilterQueue legacyChatFilter;
+
+    /** Blocked words and whitelist found in the pre-2.3.3 {@code chatfilter} config block. */
+    public record LegacyChatFilterQueue(List<String> contents, List<String> whitelist) {
     }
 
     // Reads the config file, filling in defaults for any missing fields.
@@ -59,7 +59,11 @@ public final class ConfigIO {
             ConfigData data = null;
             if (Files.exists(p) && Files.size(p) > 0) {
                 String s = Files.readString(p, StandardCharsets.UTF_8);
-                data = GSON.fromJson(s, ConfigData.class);
+                JsonObject tree = GSON.fromJson(s, JsonObject.class);
+                // Before the write-back below drops the key, since ConfigData no longer has a field
+                // for it and Gson silently discards what it cannot map.
+                captureLegacyChatFilter(tree);
+                data = GSON.fromJson(tree, ConfigData.class);
             }
             if (data == null) {
                 data = new ConfigData();
@@ -67,13 +71,53 @@ public final class ConfigIO {
                 data.mergeDefaults();
             }
             Files.writeString(p, GSON.toJson(data), StandardCharsets.UTF_8);
+            stored = data;
             return data;
         } catch (JsonSyntaxException e) {
             throw new ConfigParseException(
                     "Malformed JSON in " + FILE_NAME + ": " + e.getMessage(), e);
         } catch (IOException e) {
-            return new ConfigData();
+            stored = new ConfigData();
+            return stored;
         }
+    }
+
+    // The chat filter's config import queue was retired: words live in NBT and are edited from the
+    // panel or /chatfilter add, both of which already take a list. A config written before that can
+    // still hold words nobody imported, so take them here and log them, because the write-back
+    // happens at mod init and the server that owns the NBT does not exist yet.
+    private static void captureLegacyChatFilter(JsonObject tree) {
+        if (tree == null || !tree.has("chatfilter") || !tree.get("chatfilter").isJsonObject()) return;
+        JsonObject block = tree.getAsJsonObject("chatfilter");
+        List<String> contents = stringList(block, "contents");
+        List<String> whitelist = stringList(block, "whitelist");
+        if (contents.isEmpty() && whitelist.isEmpty()) return;
+
+        legacyChatFilter = new LegacyChatFilterQueue(contents, whitelist);
+        mc.smpessentials.SmpUtilsMod.LOGGER.info(
+                "[Config] Retired chatfilter config block holds {} blocked and {} whitelisted words,"
+                        + " importing them into the filter. Blocked: {}. Whitelisted: {}",
+                contents.size(), whitelist.size(),
+                String.join(", ", contents), String.join(", ", whitelist));
+    }
+
+    private static List<String> stringList(JsonObject block, String key) {
+        if (!block.has(key) || !block.get(key).isJsonArray()) return List.of();
+        List<String> out = new ArrayList<>();
+        for (JsonElement element : block.getAsJsonArray(key)) {
+            if (!element.isJsonPrimitive()) continue;
+            String word = element.getAsString().strip();
+            if (!word.isEmpty()) out.add(word);
+        }
+        return out;
+    }
+
+    // Hands the rescued words over once, then forgets them. Null for any config that has been
+    // through a single start since the queue existed, because the queue emptied itself on write.
+    public static LegacyChatFilterQueue takeLegacyChatFilterQueue() {
+        LegacyChatFilterQueue queue = legacyChatFilter;
+        legacyChatFilter = null;
+        return queue;
     }
 
     // Thrown when quackedsmp.json contains invalid JSON syntax.
@@ -83,10 +127,12 @@ public final class ConfigIO {
         }
     }
 
-    // Serializes current SmpConfig static fields back to disk.
-    // chatfilter is always written as empty arrays; it is an import queue, not persistent storage.
+    // Serializes current SmpConfig static fields back to disk, over the settings already stored.
+    // Every field a panel or a command can change needs a copy line below. A field without one keeps
+    // its stored value, so forgetting a line means the setting cannot be saved, never that the
+    // owner's value is overwritten with a default.
     public static void save() {
-        ConfigData data = new ConfigData();
+        ConfigData data = stored != null ? stored : new ConfigData();
 
         data.maxClaims = SmpConfig.MAX_CLAIMS;
         data.tpWarmup = SmpConfig.TP_WARMUP;
@@ -118,6 +164,9 @@ public final class ConfigIO {
         data.bluemapVipClaimColor = SmpConfig.BLUEMAP_VIP_CLAIM_COLOR;
         data.bluemapShowSpawnProtection = SmpConfig.BLUEMAP_SHOW_SPAWN_PROTECTION;
         data.bluemapSpawnProtectionColor = SmpConfig.BLUEMAP_SPAWN_PROTECTION_COLOR;
+        data.bluemapIconMaxDistance = SmpConfig.BLUEMAP_ICON_MAX_DISTANCE;
+        data.bluemapShowShops = SmpConfig.BLUEMAP_SHOW_SHOPS;
+        data.bluemapShowYoutube = SmpConfig.BLUEMAP_SHOW_YOUTUBE;
         data.muteLevelsMinutes = new java.util.ArrayList<>(SmpConfig.MUTE_LEVELS_MINUTES);
         data.tiers = new java.util.ArrayList<>(SmpConfig.TIERS);
         data.rules = new java.util.ArrayList<>(SmpConfig.RULES);
@@ -210,6 +259,9 @@ public final class ConfigIO {
         data.kits.cooldownSeconds = SmpConfig.KIT_COOLDOWN_SECONDS;
         data.kits.kits = new java.util.ArrayList<>(SmpConfig.KIT_DEFINITIONS);
 
+        data.welcomeBook.enabled = SmpConfig.WELCOME_BOOK_ENABLED;
+        data.welcomeBook.content = SmpConfig.WELCOME_BOOK_CONTENT;
+
         data.rtpEnabled = SmpConfig.RTP_ENABLED;
         data.rtp.warmupSeconds = SmpConfig.RTP_WARMUP_SECONDS;
         data.rtp.cooldownSeconds = SmpConfig.RTP_COOLDOWN_SECONDS;
@@ -226,7 +278,7 @@ public final class ConfigIO {
         data.skills.caps.defenseArmor = SmpConfig.CAP_DEFENSE_ARMOR;
         data.skills.caps.safeLanding = SmpConfig.CAP_SAFE_LANDING;
 
-        // chatfilter intentionally left as empty arrays; it is an import queue.
+        stored = data;
 
         try {
             Files.writeString(path(), GSON.toJson(data), StandardCharsets.UTF_8);

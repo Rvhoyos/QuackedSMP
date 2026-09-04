@@ -212,8 +212,6 @@ public final class ConfigData {
     public DashboardConfig dashboard = new DashboardConfig();
     public DiscordConfig discord = new DiscordConfig();
     public SkillsConfig skills = new SkillsConfig();
-    // Import queue: loaded into NBT on startup/reload, then cleared from the file by ConfigIO.save().
-    public ChatFilterData chatfilter = new ChatFilterData();
     public boolean kitsEnabled = false;
     public Map<String, List<String>> teamAutoAssign = new HashMap<>();
 
@@ -359,11 +357,6 @@ public final class ConfigData {
         public double doubleDrop = 0.5;
         public double defenseArmor = 10.0;
         public double safeLanding = 1.0;
-    }
-
-    public static final class ChatFilterData {
-        public List<String> contents = new ArrayList<>();
-        public List<String> whitelist = new ArrayList<>();
     }
 
     public static final class KitsConfig {

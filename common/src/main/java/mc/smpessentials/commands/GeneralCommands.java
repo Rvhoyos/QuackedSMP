@@ -191,16 +191,8 @@ public class GeneralCommands {
             SmpConfig.load();
             mc.smpessentials.keepinv.KeepInvSavedData.syncGamerule(ctx.getSource().getServer());
             mc.smpessentials.votifier.VotifierListener.restart();
-            var res = mc.smpessentials.chatfilter.ChatFilterConfig
-                    .mergeFromConfig(ctx.getSource().getServer());
+            mc.smpessentials.chatfilter.ChatFilterBuiltins.merge(ctx.getSource().getServer());
             ctx.getSource().sendSuccess(() -> Component.literal("QuackedSMP config reloaded!"), true);
-            if (!res.warnings().isEmpty()) {
-                ctx.getSource().sendSystemMessage(
-                        Component.literal("\u00a7e[Warning] Chat Filter issues:"));
-                for (String w : res.warnings()) {
-                    ctx.getSource().sendSystemMessage(Component.literal("\u00a7e - " + w));
-                }
-            }
             return 1;
         } catch (mc.smpessentials.config.ConfigIO.ConfigParseException e) {
             ctx.getSource().sendFailure(
