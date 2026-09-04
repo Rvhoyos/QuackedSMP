@@ -28,6 +28,9 @@ public final class CustomPortalActivator {
     public static InteractionResult onRightClickBlock(Player player, Level world,
                                                        InteractionHand hand, BlockPos pos,
                                                        Direction face) {
+        // Off blocks lighting a NEW custom portal. Portals in dims that already exist keep
+        // working, they are plain nether_portal blocks handled by NetherPortalBlockMixin.
+        if (!mc.smpessentials.config.SmpConfig.DIMS_ENABLED) return InteractionResult.PASS;
         if (!(player instanceof ServerPlayer sp)) return InteractionResult.PASS;
         if (hand != InteractionHand.MAIN_HAND) return InteractionResult.PASS;
         if (!sp.getItemInHand(hand).is(Items.WATER_BUCKET)) return InteractionResult.PASS;

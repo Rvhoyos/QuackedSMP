@@ -5,7 +5,7 @@ import {
   IconPlayerHead, IconChest, IconSign, IconClock,
   IconVoiceChat, IconCrown, IconTierStar,
   IconGavel, IconHardcoreHeart, IconTNT, IconDyes, IconScoreboard,
-  IconPulse,
+  IconQuestionMark,
 } from './MinecraftIcons'
 import styles from './ConfigEditor.module.css'
 
@@ -21,7 +21,7 @@ const SECTIONS = [
     { id: 'gen-teleport', label: 'Teleport',            Icon: IconBed },
     { id: 'gen-chatmod',  label: 'Chat Moderation',     Icon: IconGavel },
     { id: 'gen-hardcore', label: 'Hardcore',            Icon: IconHardcoreHeart },
-    { id: 'gen-worldhints', label: 'World Hints',      Icon: IconPulse },
+    { id: 'gen-worldhints', label: 'World Hints',      Icon: IconQuestionMark },
     { id: 'gen-admin',    label: 'Admin Panel',         Icon: IconChest },
     { id: 'gen-danger',   label: 'Danger Zone',         Icon: IconTNT },
   ]},
@@ -71,7 +71,7 @@ const TABS = [
       'spawn_no_hostiles',
       'protect_explosions', 'protect_fire_claims', 'protect_enderman', 'protect_farmland',
       'tp_warmup', 'mute_levels_minutes',
-      'hardcore_enabled', 'hardcore_death_percent', 'hardcore_team_visibility',
+      'hardcore_enabled', 'hardcore_death_percent', 'hardcore_start_at_day', 'hardcore_team_visibility',
       'hardcore_sidebar_enabled', 'hardcore_sidebar_interval_seconds',
       'hardcore_sidebar_show_seconds', 'hardcore_sidebar_on_entry_seconds',
       'slime_hint_enabled', 'slime_hint_interval_ticks', 'slime_hint_particle_count',
@@ -105,10 +105,12 @@ const TABS = [
 
 // ── Main component ────────────────────────────────────────────────────────────
 
-export default function ConfigEditor({ token, onExpired }) {
+// initialSection opens the editor on one section. It is read once, which is enough: the editor is
+// unmounted whenever the admin tab changes, so every arrival here mounts fresh.
+export default function ConfigEditor({ token, onExpired, initialSection }) {
   const [cfg,           setCfg]           = useState(null)
   const [draft,         setDraft]         = useState({})
-  const [activeSection, setActiveSection] = useState('gen-claims')
+  const [activeSection, setActiveSection] = useState(initialSection ?? 'gen-claims')
   const tab = SECTION_TO_GROUP[activeSection]
   const [saving,      setSaving]     = useState({})
   const [msgs,        setMsgs]       = useState({})
@@ -296,7 +298,7 @@ function GeneralTab({ draft, patch, onDisable, disabling, disableMsg }) {
 
       <Group id="gen-teleport" icon={<IconBed />} title="Teleport" accent="teal">
         <Row label="Warmup Duration" hint="Seconds before teleport fires, cancelled by moving">
-          <NumInput value={draft.tp_warmup} onChange={v => patch('tp_warmup', v)} suffix="s" />
+          <NumInput value={draft.tp_warmup} onChange={v => patch('tp_warmup', v)} />
         </Row>
       </Group>
 
@@ -311,7 +313,10 @@ function GeneralTab({ draft, patch, onDisable, disabling, disableMsg }) {
           <Toggle value={draft.hardcore_enabled} onChange={v => patch('hardcore_enabled', v)} />
         </Row>
         <Row label="Death Threshold" hint="Percent of peak players that must die to end a session">
-          <NumInput value={draft.hardcore_death_percent} onChange={v => patch('hardcore_death_percent', v)} suffix="%" />
+          <NumInput value={draft.hardcore_death_percent} onChange={v => patch('hardcore_death_percent', v)} />
+        </Row>
+        <Row label="Start at Day" hint="Set the world to day when a hardcore session is created">
+          <Toggle value={draft.hardcore_start_at_day} onChange={v => patch('hardcore_start_at_day', v)} />
         </Row>
         <Row label="Team Identity" hint="Team name tag for session members, styled in Teams">
           <Toggle value={draft.hardcore_team_visibility} onChange={v => patch('hardcore_team_visibility', v)} />
@@ -320,27 +325,27 @@ function GeneralTab({ draft, patch, onDisable, disabling, disableMsg }) {
           <Toggle value={draft.hardcore_sidebar_enabled} onChange={v => patch('hardcore_sidebar_enabled', v)} />
         </Row>
         <Row label="Sidebar Interval" hint="Average seconds between periodic sidebar pulses (jittered ±50%)">
-          <NumInput value={draft.hardcore_sidebar_interval_seconds} onChange={v => patch('hardcore_sidebar_interval_seconds', v)} suffix="s" />
+          <NumInput value={draft.hardcore_sidebar_interval_seconds} onChange={v => patch('hardcore_sidebar_interval_seconds', v)} />
         </Row>
         <Row label="Sidebar Duration" hint="Seconds the periodic pulse stays on screen">
-          <NumInput value={draft.hardcore_sidebar_show_seconds} onChange={v => patch('hardcore_sidebar_show_seconds', v)} suffix="s" />
+          <NumInput value={draft.hardcore_sidebar_show_seconds} onChange={v => patch('hardcore_sidebar_show_seconds', v)} />
         </Row>
         <Row label="Sidebar On-Join" hint="Seconds the sidebar flashes when a member joins or creates a session">
-          <NumInput value={draft.hardcore_sidebar_on_entry_seconds} onChange={v => patch('hardcore_sidebar_on_entry_seconds', v)} suffix="s" />
+          <NumInput value={draft.hardcore_sidebar_on_entry_seconds} onChange={v => patch('hardcore_sidebar_on_entry_seconds', v)} />
         </Row>
       </Group>
 
-      <Group id="gen-worldhints" icon={<IconPulse />} title="World Hints" accent="green">
+      <Group id="gen-worldhints" icon={<IconQuestionMark />} title="World Hints" accent="green">
         <Row label="Slime Chunk Hint" hint="Slime particles at a player's feet while they stand in a slime chunk below Y40">
           <Toggle value={draft.slime_hint_enabled} onChange={v => patch('slime_hint_enabled', v)} />
         </Row>
         <Row label="Hint Interval" hint="Ticks between particle emissions, higher is subtler">
-          <NumInput value={draft.slime_hint_interval_ticks} onChange={v => patch('slime_hint_interval_ticks', v)} suffix="t" />
+          <NumInput value={draft.slime_hint_interval_ticks} onChange={v => patch('slime_hint_interval_ticks', v)} />
         </Row>
         <Row label="Particle Count" hint="Particles per emission">
           <NumInput value={draft.slime_hint_particle_count} onChange={v => patch('slime_hint_particle_count', v)} />
         </Row>
-        <Row label="Squish Chance" hint="Chance per emission of a quiet squish sound">
+        <Row label="Squish Chance" hint="Chance per emission of a quiet squish sound, 0 to 1">
           <NumInput value={draft.slime_hint_sound_chance} step={0.01} onChange={v => patch('slime_hint_sound_chance', v)} />
         </Row>
         <Row label="End Finder" hint="Mark the nearest stronghold on the Locator Bar while a player holds an eye of ender">
@@ -353,10 +358,10 @@ function GeneralTab({ draft, patch, onDisable, disabling, disableMsg }) {
           <NumInput value={draft.end_finder_search_radius} onChange={v => patch('end_finder_search_radius', v)} />
         </Row>
         <Row label="Recheck Distance" hint="Blocks a player must travel before the nearest stronghold is looked up again">
-          <NumInput value={draft.end_finder_recheck_distance} onChange={v => patch('end_finder_recheck_distance', v)} suffix="b" />
+          <NumInput value={draft.end_finder_recheck_distance} onChange={v => patch('end_finder_recheck_distance', v)} />
         </Row>
         <Row label="Recheck Cooldown" hint="Minimum seconds between stronghold lookups for one player">
-          <NumInput value={draft.end_finder_recheck_cooldown_seconds} onChange={v => patch('end_finder_recheck_cooldown_seconds', v)} suffix="s" />
+          <NumInput value={draft.end_finder_recheck_cooldown_seconds} onChange={v => patch('end_finder_recheck_cooldown_seconds', v)} />
         </Row>
       </Group>
 
@@ -515,12 +520,12 @@ function ChatTab({ draft, patch }) {
   return (
     <>
       <Section id="chat-colors"><ColorLegend /></Section>
-      <Group id="chat-announce" icon={<IconSign />} title="Announcements" accent="yellow">
+      <Group id="chat-announce" single icon={<IconSign />} title="Announcements" accent="yellow">
         <StackedRow label="Welcome Message" hint="{player} = joining player's name, {server} = server name from General tab">
           <TextInput value={draft.welcome_message} onChange={v => patch('welcome_message', v)} />
         </StackedRow>
         <Row label="Periodic Tip Interval" hint="Seconds between automatic tip broadcasts">
-          <NumInput value={draft.message_interval} onChange={v => patch('message_interval', v)} suffix="s" />
+          <NumInput value={draft.message_interval} onChange={v => patch('message_interval', v)} />
         </Row>
       </Group>
 
@@ -544,7 +549,7 @@ function ChatTab({ draft, patch }) {
         </StackedRow>
       </Group>
 
-      <Group id="chat-sidebar" icon={<IconScoreboard />} title="Welcome Sidebar" accent="green">
+      <Group id="chat-sidebar" single icon={<IconScoreboard />} title="Welcome Sidebar" accent="green">
         <Row label="Enabled" hint="Second MOTD shown on join (unless in a hardcore session) and when returning to survival from one">
           <Toggle value={draft.welcome_sidebar_enabled} onChange={v => patch('welcome_sidebar_enabled', v)} />
         </Row>
@@ -558,8 +563,8 @@ function ChatTab({ draft, patch }) {
             placeholder="&eNew here? &f/rules"
           />
         </StackedRow>
-        <Row label="Show Duration" hint="How long the sidebar stays on screen">
-          <NumInput value={draft.welcome_sidebar_show_seconds} onChange={v => patch('welcome_sidebar_show_seconds', v)} suffix="s" />
+        <Row label="Show Duration" hint="Seconds the sidebar stays on screen">
+          <NumInput value={draft.welcome_sidebar_show_seconds} onChange={v => patch('welcome_sidebar_show_seconds', v)} />
         </Row>
       </Group>
     </>
@@ -571,7 +576,7 @@ function ChatTab({ draft, patch }) {
 function IntegrationsTab({ draft, patch }) {
   return (
     <>
-      <Group id="int-discord" icon={<IconDiscord />} title="Discord Webhook" accent="blue">
+      <Group id="int-discord" single icon={<IconDiscord />} title="Discord Webhook" accent="blue">
         <StackedRow label="Webhook URL" hint="Paste the webhook URL from your Discord channel settings">
           <SecretInput
             value={draft.discord_webhook_url}
@@ -593,7 +598,7 @@ function IntegrationsTab({ draft, patch }) {
         </Row>
       </Group>
 
-      <Group id="int-votifier" icon={<IconBallot />} title="Votifier" accent="peach">
+      <Group id="int-votifier" single icon={<IconBallot />} title="Votifier" accent="peach">
         <Row label="Enabled" hint="Receives votes from listing sites via NuVotifier v2.">
           <Toggle value={draft.votifier_enabled} onChange={v => patch('votifier_enabled', v)} />
         </Row>
@@ -634,8 +639,8 @@ function IntegrationsTab({ draft, patch }) {
         <Row label="Show Claims" hint="Draw claim region outlines on the map">
           <Toggle value={draft.bluemap_show_claims} onChange={v => patch('bluemap_show_claims', v)} />
         </Row>
-        <Row label="Icon View Distance" hint="Hide map icons past this camera distance (0 = never hide)">
-          <NumInput value={draft.bluemap_icon_max_distance} onChange={v => patch('bluemap_icon_max_distance', v)} suffix="blocks" />
+        <Row label="Icon View Distance" hint="Blocks of camera distance past which map icons stop drawing, 0 never hides them">
+          <NumInput value={draft.bluemap_icon_max_distance} onChange={v => patch('bluemap_icon_max_distance', v)} />
         </Row>
         <Row label="Show Shops" hint="Chest shops, grouped per chunk, with prices">
           <Toggle value={draft.bluemap_show_shops} onChange={v => patch('bluemap_show_shops', v)} />
@@ -671,7 +676,9 @@ function IntegrationsTab({ draft, patch }) {
 
 // ── Section group ─────────────────────────────────────────────────────────────
 
-function Group({ id, icon, title, accent = 'blue', children }) {
+// single: one column, for groups that mix Row with the full-width StackedRow. Without it the
+// plain rows sit in the left half and their controls stop short of the card's right edge.
+function Group({ id, icon, title, accent = 'blue', single, children }) {
   // Self-hide unless this is the active section (two-pane navigator).
   const active = useContext(ActiveSectionCtx)
   if (id && active !== id) return null
@@ -681,7 +688,7 @@ function Group({ id, icon, title, accent = 'blue', children }) {
         <span className={styles.groupIcon}>{icon}</span>
         <span className={styles.groupTitle}>{title}</span>
       </div>
-      <div className={styles.groupBody}>{children}</div>
+      <div className={`${styles.groupBody} ${single ? styles.groupBodySingle : ''}`}>{children}</div>
     </div>
   )
 }
@@ -724,9 +731,12 @@ function Toggle({ value, onChange }) {
   )
 }
 
-function NumInput({ value, step = 1, onChange, suffix }) {
+// The unit sits in front of the box, never after it, so every control in a row ends on the same
+// right edge. Rows with a label and a hint say the unit in the hint instead and pass none.
+function NumInput({ value, step = 1, onChange, unit }) {
   return (
     <div className={styles.numWrap}>
+      {unit && <span className={styles.unit}>{unit}</span>}
       <input
         className={styles.numInput}
         type="number"
@@ -734,7 +744,6 @@ function NumInput({ value, step = 1, onChange, suffix }) {
         step={step}
         onChange={e => onChange(step < 1 ? parseFloat(e.target.value) : parseInt(e.target.value))}
       />
-      {suffix && <span className={styles.suffix}>{suffix}</span>}
     </div>
   )
 }
@@ -772,6 +781,7 @@ function ColorInput({ value, onChange }) {
   const rgb    = isArgb ? raw.slice(2) : (raw || '000000')
   return (
     <label className={styles.colorWrap}>
+      <span className={styles.colorHex}>#{raw.toUpperCase()}</span>
       <input
         className={styles.colorInput}
         type="color"
@@ -781,7 +791,6 @@ function ColorInput({ value, onChange }) {
           onChange(isArgb ? raw.slice(0, 2) + newRgb : newRgb)
         }}
       />
-      <span className={styles.colorHex}>#{raw.toUpperCase()}</span>
     </label>
   )
 }
@@ -865,10 +874,10 @@ function TierDefsEditor({ value = [], onChange }) {
             <TextInput value={item.name} onChange={v => update(i, 'name', v)} placeholder="Name" />
           </div>
           <div style={{ flexShrink: 0 }}>
-            <NumInput value={item.minPlaytimeHours} onChange={v => update(i, 'minPlaytimeHours', v)} suffix="h" />
+            <NumInput value={item.minPlaytimeHours} onChange={v => update(i, 'minPlaytimeHours', v)} unit="hours" />
           </div>
           <div style={{ flexShrink: 0 }}>
-            <NumInput value={item.bonusClaims} onChange={v => update(i, 'bonusClaims', v)} suffix="claims" />
+            <NumInput value={item.bonusClaims} onChange={v => update(i, 'bonusClaims', v)} unit="claims" />
           </div>
           <button className={styles.listRemove} onClick={() => onChange(value.filter((_, j) => j !== i))} type="button">✕</button>
         </div>
@@ -892,7 +901,6 @@ function MuteLevels({ value = [], onChange }) {
               next[i] = n
               onChange(next)
             }}
-            suffix="min"
           />
         </div>
       ))}

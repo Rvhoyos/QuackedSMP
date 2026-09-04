@@ -51,7 +51,8 @@ public class GeneralCommands {
                 .then(mc.smpessentials.hardcore.HardcoreCommands.hardcoreSubtree())
                 .then(mc.smpessentials.kits.KitCommands.kitSubtree())
                 .then(mc.smpessentials.welcomebook.WelcomeBookCommand.guideSubtree())
-                .then(mc.smpessentials.regen.ChunkRegenCommands.regenSubtree()));
+                .then(mc.smpessentials.regen.ChunkRegenCommands.regenSubtree())
+                .then(mc.smpessentials.pregen.PregenCommands.pregenSubtree()));
 
         dispatcher.register(Commands.literal("mute")
                 .requires(s -> net.minecraft.commands.Commands.LEVEL_GAMEMASTERS.check(s.permissions()))
@@ -134,10 +135,17 @@ public class GeneralCommands {
         }
     }
 
+    // One help line, printed only when the feature that owns the command is on. Every line here
+    // used to print regardless of its flag, so the help advertised commands that answered
+    // "Unknown command".
+    private static void helpLine(CommandSourceStack src, boolean enabled, String command, String description) {
+        if (!enabled) return;
+        src.sendSystemMessage(Component.literal(command).withStyle(net.minecraft.ChatFormatting.YELLOW)
+                .append(Component.literal(" - " + description).withStyle(net.minecraft.ChatFormatting.WHITE)));
+    }
+
     private static int sendHelp(CommandContext<CommandSourceStack> ctx) {
         net.minecraft.ChatFormatting title = net.minecraft.ChatFormatting.GOLD;
-        net.minecraft.ChatFormatting cmd = net.minecraft.ChatFormatting.YELLOW;
-        net.minecraft.ChatFormatting desc = net.minecraft.ChatFormatting.WHITE;
 
         CommandSourceStack src = ctx.getSource();
 
@@ -153,24 +161,16 @@ public class GeneralCommands {
                 Component.literal("== QuackedSMP Commands ==").withStyle(title,
                         net.minecraft.ChatFormatting.BOLD));
 
-        src.sendSystemMessage(Component.literal("/claim").withStyle(cmd)
-                .append(Component.literal(" - Claim current chunk to protect it").withStyle(desc)));
-        src.sendSystemMessage(Component.literal("/trust <player>").withStyle(cmd)
-                .append(Component.literal(" - Give friend permission in all your claims").withStyle(desc)));
-        src.sendSystemMessage(Component.literal("/claim info").withStyle(cmd)
-                .append(Component.literal(" - Show your claim count, limit, and current chunk status").withStyle(desc)));
-        src.sendSystemMessage(Component.literal("/tpr <player>").withStyle(cmd)
-                .append(Component.literal(" - Teleport request to a friend").withStyle(desc)));
-        src.sendSystemMessage(Component.literal("/skills").withStyle(cmd)
-                .append(Component.literal(" - View your RPG skill progression").withStyle(desc)));
-        src.sendSystemMessage(Component.literal("/smp keepinv on/off").withStyle(cmd)
-                .append(Component.literal(" - Toggle keeping items on death").withStyle(desc)));
-        src.sendSystemMessage(Component.literal("/smp hardcore create|join|leave|status|list").withStyle(cmd)
-                .append(Component.literal(" - Hardcore mode sessions").withStyle(desc)));
-        src.sendSystemMessage(Component.literal("/smp kit").withStyle(cmd)
-                .append(Component.literal(" - Claim a daily kit").withStyle(desc)));
-        src.sendSystemMessage(Component.literal("/rules").withStyle(cmd)
-                .append(Component.literal(" - Read the server rules").withStyle(desc)));
+        helpLine(src, SmpConfig.CLAIMS_ENABLED, "/claim", "Claim current chunk to protect it");
+        helpLine(src, SmpConfig.CLAIMS_ENABLED, "/trust <player>", "Give friend permission in all your claims");
+        helpLine(src, SmpConfig.CLAIMS_ENABLED, "/claim info", "Show your claim count, limit, and current chunk status");
+        helpLine(src, SmpConfig.TELEPORT_ENABLED, "/tpr <player>", "Teleport request to a friend");
+        helpLine(src, SmpConfig.SKILLS_ENABLED, "/skills", "View your RPG skill progression");
+        helpLine(src, SmpConfig.KEEP_INV_ENABLED, "/smp keepinv on/off", "Toggle keeping items and XP on death");
+        helpLine(src, SmpConfig.HARDCORE_ENABLED, "/smp hardcore create|join|leave|status|list", "Hardcore mode sessions");
+        helpLine(src, SmpConfig.KITS_ENABLED, "/smp kit", "Claim a daily kit");
+        helpLine(src, SmpConfig.RTP_ENABLED, "/rtp", "Teleport to a random spot far from spawn");
+        helpLine(src, true, "/rules", "Read the server rules");
 
         return 1;
     }
@@ -189,6 +189,7 @@ public class GeneralCommands {
     private static int reloadConfig(CommandContext<CommandSourceStack> ctx) {
         try {
             SmpConfig.load();
+            mc.smpessentials.keepinv.KeepInvSavedData.syncGamerule(ctx.getSource().getServer());
             mc.smpessentials.votifier.VotifierListener.restart();
             var res = mc.smpessentials.chatfilter.ChatFilterConfig
                     .mergeFromConfig(ctx.getSource().getServer());
@@ -215,6 +216,7 @@ public class GeneralCommands {
     private static int resetConfig(CommandContext<CommandSourceStack> ctx) {
         try {
             mc.smpessentials.config.ConfigIO.resetToFactory();
+            mc.smpessentials.keepinv.KeepInvSavedData.syncGamerule(ctx.getSource().getServer());
             ctx.getSource().sendSuccess(
                     () -> Component.literal("\u00a7aConfiguration reset to factory defaults!"),
                     true);

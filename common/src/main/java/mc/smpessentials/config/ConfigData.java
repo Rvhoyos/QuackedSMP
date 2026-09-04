@@ -25,6 +25,15 @@ public final class ConfigData {
     public boolean protectFireClaims = true;
     public boolean protectEnderman = true;
     public boolean protectFarmland = true;
+    // These four shipped before they had a flag, so they default ON: an absent JSON key takes the
+    // field initializer, and false here would switch them off on every server that upgrades.
+    public boolean keepInvEnabled = true;
+    public boolean teleportEnabled = true;
+    // Off blocks creating and deleting dims. Existing dims still load and stay usable.
+    public boolean dimsEnabled = true;
+    // Top-level gate over the whole backup* block below, periodic and public download included.
+    public boolean backupEnabled = true;
+
     // Big features default OFF: this is a modular plugin, operators opt in per feature.
     public boolean claimsEnabled = false;
     public boolean skillsEnabled = false;
@@ -133,6 +142,9 @@ public final class ConfigData {
     // Percent of peak players that must die to end a session. 100 = ends only when everyone dies.
     public int hardcoreDeathPercent = 100;
     public boolean hardcoreWitheredHearts = true;
+    // Moves the world clock to day when a session is created, so a one-life run never opens in a
+    // night the player cannot survive. The clock is server wide, so this affects everyone online.
+    public boolean hardcoreStartAtDay = true;
     // Optional scoreboard-team identity for session members (nametag/tab color). Off by
     // default: current behavior is unchanged until enabled. The team's color/prefix are edited
     // in the dashboard teams editor; only the name is fixed here.
@@ -262,6 +274,21 @@ public final class ConfigData {
     // are downsampled (every Nth dropped) so the timelapse degrades in smoothness
     // rather than losing its beginning.
     public int     timelapseMaxFrames       = 0;
+
+    // Chunk pre-generation: generates the area around spawn at startup so players never walk into
+    // terrain the server has to invent on the spot. Off by default (opt-in feature). The run is
+    // blocking, so a server with this on does not accept joins until it finishes.
+    public boolean pregenEnabled = false;
+    public PregenConfig pregen = new PregenConfig();
+
+    /** Which dimensions pre-generate and how far past the spawn protection radius they go. */
+    public static final class PregenConfig {
+        // Blocks beyond the spawn protection radius, in overworld scale. A dimension with a
+        // coordinate scale of its own (the nether's 8) covers the same ground with 1/8 the radius.
+        public int distance = 1000;
+        // Ids not present on the running server are skipped, the same way timelapse treats them.
+        public List<String> dimensions = new ArrayList<>(List.of("minecraft:overworld"));
+    }
 
     public static final class VotifierConfig {
         public boolean enabled = false;

@@ -53,8 +53,8 @@
 }
 @keyframes dlPopIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
 .dlTitle { font-family: var(--font-pixel); font-size: 10px; color: var(--txt-primary); text-shadow: 1px 1px 0 rgba(0,0,0,0.5); letter-spacing: 0.5px; margin: 0; }
-.dlBody, .dlCaveat { font-family: var(--font-sans); font-size: 13px; line-height: 1.5; margin: 0; color: var(--txt-secondary); }
-.dlBody code { background: #0A0A0A; padding: 1px 5px; border: 1px solid #222; font-size: 11px; }
+.dlBody, .dlCaveat, .dlSnapshot { font-family: var(--font-sans); font-size: 13px; line-height: 1.5; margin: 0; color: var(--txt-secondary); }
+.dlBody code, .dlSnapshot code { background: #0A0A0A; padding: 1px 5px; border: 1px solid #222; font-size: 11px; }
 .dlCaveat { color: #FFC080; border-left: 3px solid #8A5A20; padding-left: 10px; }
 .dlBtns { display: flex; gap: 8px; justify-content: flex-end; margin-top: 4px; }
 .btnGhost, .btnPrimary {
@@ -65,6 +65,7 @@
 .btnGhost:hover { color: var(--txt-primary); border-color: #555; }
 .btnPrimary { background: var(--mc-wood); border: none; color: #FFF8E1; }
 .btnPrimary:hover { filter: brightness(1.15); }
+.btnPrimary:disabled { filter: grayscale(0.7); opacity: 0.55; cursor: default; }
 
 /* ── Public main ── */
 .main {

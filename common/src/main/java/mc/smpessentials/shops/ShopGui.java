@@ -2,9 +2,7 @@ package mc.smpessentials.shops;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponents;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -39,27 +37,25 @@ public final class ShopGui {
     private static final int SLOT_CONFIRM = 21;
     private static final int SLOT_CANCEL = 23;
 
-    public static void open(ServerPlayer buyer, ShopEntry shop, int stock) {
+    public static void open(ServerPlayer buyer, ShopEntry shop, ShopOffer offer) {
         MenuProvider provider = new MenuProvider() {
             @Override
             public Component getDisplayName() {
-                Item item = resolveItem(shop.itemId());
-                String itemName = item != null ? new ItemStack(item).getHoverName().getString() : shop.itemId();
-                return Component.literal("Shop: " + itemName);
+                return Component.literal("Shop: " + ShopService.displayName(offer, shop.itemId()));
             }
 
             @Override
             public AbstractContainerMenu createMenu(int containerId, Inventory inventory, Player p) {
                 ShopMenuContainer container = new ShopMenuContainer(27, shop.pos(), shop.dimension());
                 ChestMenu menu = ChestMenu.threeRows(containerId, inventory, container);
-                populate(container, shop, stock, 1);
+                populate(container, shop, offer, 1);
                 return menu;
             }
         };
         buyer.openMenu(provider);
     }
 
-    private static void populate(ShopMenuContainer container, ShopEntry shop, int stock, int quantity) {
+    private static void populate(ShopMenuContainer container, ShopEntry shop, ShopOffer offer, int quantity) {
         container.setSelectedQuantity(quantity);
         String currencyName = ShopService.getCurrencyName(shop.currencyItemId());
 
@@ -70,25 +66,22 @@ public final class ShopGui {
             container.setItem(i, filler.copy());
         }
 
-        // Item display (slot 4)
-        Item saleItem = resolveItem(shop.itemId());
+        // Item display (slot 4). A copy of the stack the buyer actually receives, so enchantments,
+        // firework durations and every other component show up in the tooltip.
         int totalItems = quantity * shop.unit();
-        if (saleItem != null) {
-            ItemStack display = new ItemStack(saleItem, Math.min(totalItems, saleItem.getDefaultMaxStackSize()));
-            List<Component> lore = new ArrayList<>();
-            if (shop.unit() > 1) {
-                lore.add(Component.literal("\u00a77Price: \u00a76" + shop.pricePerItem() + " " + currencyName + " per " + shop.unit()));
-            } else {
-                lore.add(Component.literal("\u00a77Price: \u00a76" + shop.pricePerItem() + " " + currencyName + " each"));
-            }
-            if (shop.spawnShop()) {
-                lore.add(Component.literal("\u00a77Stock: \u00a7fUnlimited"));
-            } else if (shop.unit() > 1) {
-                lore.add(Component.literal("\u00a77Stock: \u00a7f" + stock / shop.unit() + " units (" + stock + " items)"));
-            } else {
-                lore.add(Component.literal("\u00a77Stock: \u00a7f" + stock));
-            }
-            display.set(DataComponents.LORE, new ItemLore(lore));
+        if (offer.isEmpty()) {
+            container.setItem(SLOT_ITEM_DISPLAY, createButton(Items.BARRIER, "\u00a7cNothing to sell right now"));
+        } else {
+            ItemStack variant = offer.variant();
+            ItemStack display = variant.copyWithCount(Math.min(totalItems, variant.getMaxStackSize()));
+            // Added to the item's own lore rather than replacing it, so a shop can sell a stack that
+            // already carries lore of its own.
+            ItemLore lore = display.getOrDefault(DataComponents.LORE, ItemLore.EMPTY)
+                    .withLineAdded(Component.literal(shop.unit() > 1
+                            ? "\u00a77Price: \u00a76" + shop.pricePerItem() + " " + currencyName + " per " + shop.unit()
+                            : "\u00a77Price: \u00a76" + shop.pricePerItem() + " " + currencyName + " each"))
+                    .withLineAdded(Component.literal(stockLine(shop, offer.available())));
+            display.set(DataComponents.LORE, lore);
             container.setItem(SLOT_ITEM_DISPLAY, display);
         }
 
@@ -147,8 +140,9 @@ public final class ShopGui {
         }
 
         ShopEntry shop = shopOpt.get();
-        int stock = ShopService.getStockCount(level.getServer().getLevel(shop.dimension()), shop);
-        int maxQty = Math.max(1, shop.spawnShop() ? 2304 / shop.unit() : stock / shop.unit());
+        // Re-resolved every click, so the quantity cap follows a chest edited while the GUI is open.
+        ShopOffer offer = ShopService.offerAt(level.getServer().getLevel(shop.dimension()), shop);
+        int maxQty = Math.max(1, shop.spawnShop() ? 2304 / shop.unit() : offer.available() / shop.unit());
         int qty = container.getSelectedQuantity();
 
         switch (slotId) {
@@ -168,21 +162,21 @@ public final class ShopGui {
             default -> { return; } // filler slots: no-op
         }
 
-        populate(container, shop, stock, qty);
+        populate(container, shop, offer, qty);
         player.playSound(SoundEvents.UI_BUTTON_CLICK.value(), 0.5f, 1f);
+    }
+
+    // Counts the offered variant only, not every variant of the shop's item, because that is what
+    // this purchase can actually draw from.
+    private static String stockLine(ShopEntry shop, int available) {
+        if (shop.spawnShop()) return "\u00a77Stock: \u00a7fUnlimited";
+        if (shop.unit() > 1) return "\u00a77Stock: \u00a7f" + available / shop.unit() + " units (" + available + " items)";
+        return "\u00a77Stock: \u00a7f" + available;
     }
 
     private static ItemStack createButton(Item item, String name) {
         ItemStack stack = new ItemStack(item);
         stack.set(DataComponents.CUSTOM_NAME, Component.literal(name));
         return stack;
-    }
-
-    private static Item resolveItem(String id) {
-        try {
-            return BuiltInRegistries.ITEM.getValue(Identifier.parse(id));
-        } catch (Exception e) {
-            return null;
-        }
     }
 }

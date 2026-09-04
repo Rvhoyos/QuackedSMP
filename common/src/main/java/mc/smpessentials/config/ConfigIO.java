@@ -100,6 +100,10 @@ public final class ConfigIO {
         data.protectFireClaims = SmpConfig.PROTECT_FIRE_CLAIMS;
         data.protectEnderman = SmpConfig.PROTECT_ENDERMAN;
         data.protectFarmland = SmpConfig.PROTECT_FARMLAND;
+        data.keepInvEnabled = SmpConfig.KEEP_INV_ENABLED;
+        data.teleportEnabled = SmpConfig.TELEPORT_ENABLED;
+        data.dimsEnabled = SmpConfig.DIMS_ENABLED;
+        data.backupEnabled = SmpConfig.BACKUP_ENABLED;
         data.claimsEnabled = SmpConfig.CLAIMS_ENABLED;
         data.skillsEnabled = SmpConfig.SKILLS_ENABLED;
         data.chatfilterEnabled = SmpConfig.CHATFILTER_ENABLED;
@@ -123,6 +127,7 @@ public final class ConfigIO {
         data.hardcoreEnabled = SmpConfig.HARDCORE_ENABLED;
         data.hardcoreDeathPercent = SmpConfig.HARDCORE_DEATH_PERCENT;
         data.hardcoreWitheredHearts = SmpConfig.HARDCORE_WITHERED_HEARTS;
+        data.hardcoreStartAtDay     = SmpConfig.HARDCORE_START_AT_DAY;
         data.hardcoreTeamVisibility = SmpConfig.HARDCORE_TEAM_VISIBILITY;
         data.hardcoreTeamName = SmpConfig.HARDCORE_TEAM_NAME;
         data.hardcoreSidebarEnabled = SmpConfig.HARDCORE_SIDEBAR_ENABLED;
@@ -197,6 +202,10 @@ public final class ConfigIO {
         data.timelapseMaxRenderMb     = SmpConfig.TIMELAPSE_MAX_RENDER_MB;
         data.timelapseMaxSkips        = SmpConfig.TIMELAPSE_MAX_SKIPS;
         data.timelapseMaxFrames       = SmpConfig.TIMELAPSE_MAX_FRAMES;
+
+        data.pregenEnabled     = SmpConfig.PREGEN_ENABLED;
+        data.pregen.distance   = SmpConfig.PREGEN_DISTANCE;
+        data.pregen.dimensions = new java.util.ArrayList<>(SmpConfig.PREGEN_DIMENSIONS);
         data.kitsEnabled = SmpConfig.KITS_ENABLED;
         data.kits.cooldownSeconds = SmpConfig.KIT_COOLDOWN_SECONDS;
         data.kits.kits = new java.util.ArrayList<>(SmpConfig.KIT_DEFINITIONS);

@@ -44,19 +44,32 @@ The panel is optional and stays off until you set a password. Every game feature
 - Anti-xray (on by default)
 - Random teleport (`/rtp`) with per-dimension profiles and arrival rewards
 - In-game guide book (`/guide`) and join sidebar
-- Wilderness regen, player shops, hardcore sessions, world backups, world timelapse
+- Wilderness regen, chunk pre-generation, player shops, hardcore sessions, world backups, world timelapse
 - Optional: Discord, BlueMap, Votifier, Spark, Simple Voice Chat
 
-Most systems can be turned on or off in the panel **Config** tab or `config/quackedsmp.json`.
+Most features start off. Turn the ones you want on in the panel's **Features** tab, or in
+`config/quackedsmp.json` if you are not running the panel.
 
 ---
 
 ## Admin Panel
 
+These tabs are always in the sidebar:
+
 | Group | Tab | What you can do |
 | :--- | :--- | :--- |
 | **People** | Players | Online players, dimension, OP level. Grant/revoke OP, set VIP tier. |
 | | Teams | Scoreboard teams, members, dimension auto-assign. |
+| **Moderation** | Commands | Run server commands from the browser and watch a live server log. Quick actions (weather, time, broadcast, end reset, wilderness regen, stop). |
+| **Systems** | Mods | Upload, replace, or remove JARs in `mods/`. |
+| **Setup** | Config | Edit settings live. Most need no restart. |
+| | Features | Turn features on and off. |
+
+Every other tab belongs to one feature and appears only while that feature is on. **Features** is
+the only tab that can turn a feature on.
+
+| Group | Tab | What you can do |
+| :--- | :--- | :--- |
 | **World** | Dimensions | Create, delete, and configure custom dimensions. Wire portal frame blocks. |
 | | Claims | View claim counts. Force-unclaim all chunks for a player. |
 | | Shops | List player shops, delete shops, view bank balances, toggle economy. |
@@ -67,14 +80,11 @@ Most systems can be turned on or off in the panel **Config** tab or `config/quac
 | | Welcome Book | Write and preview the `/guide` book page by page. |
 | **Moderation** | Chat Filter | Blocked words and whitelist. Active mutes, unmute. |
 | | Cmd Blocks | List, edit, and delete command blocks in loaded chunks. |
-| | Commands | Run server commands from the browser and watch a live server log. Quick actions (weather, time, broadcast, end reset, wilderness regen, stop). |
-| **Systems** | Mods | Upload, replace, or remove JARs in `mods/`. |
-| | Backups | Create / list / download / delete world snapshots. Toggle public download. |
+| **Systems** | Backups | Create / list / download / delete world snapshots. Toggle public download. |
 | | Timelapse | Capture and play back top-down world snapshots. Pick which dimensions to capture, pan/zoom a frame, export the set as a zip. |
-| **Setup** | Config | Edit settings live. Most need no restart. |
-| | Features | In-panel feature overview. |
+| | Pregen | Set the area to pre-generate and see what it will cost in chunks, disk and time before you commit. |
 
-The Cmd Blocks tab needs command blocks enabled on the server.
+The Cmd Blocks tab also needs command blocks enabled on the server.
 
 ### Public dashboard
 
@@ -84,7 +94,7 @@ Anyone who can reach the port sees this without logging in:
 - **Player count**
 - **Event feed:** joins, leaves, and chat
 - **Skills leaderboard**
-- **World download**, only if you turn on `backup_public_download`
+- **World download**, only if you turn on both `backup_enabled` and `backup_public_download`
 
 ---
 
@@ -328,6 +338,27 @@ If you have Simple Voice Chat installed and `voicechat_enable` is on, players ca
 
 `/smp regen` (OP) resets **unclaimed** chunks on the next shutdown, leaving a 3-chunk buffer around every claim. Confirm, cancel, or check status with subcommands, or run it from the Commands tab.
 
+### Chunk Pre-generation
+
+Off by default (`pregen_enabled`). Generates the world around spawn ahead of time, so players never
+walk into terrain the server has to build on the spot, and a timelapse stops growing its frame every
+time somebody explores.
+
+Set the area in the panel's **Pregen** tab: a distance in blocks on top of the `spawn-protection`
+radius, and which dimensions to cover. A dimension with a coordinate scale of its own, like the
+nether, covers the same ground with a proportionally smaller radius.
+
+The panel prices the area as you type: how many chunks, how much disk and how long, plus how much of
+it your world already has. A distance past your world border, or one that would claim most of your
+free disk, is refused with the number that would fit.
+
+The work happens on the **next restart**, before the server accepts any players, and nobody can join
+until it finishes. A finished area never delays a later startup, and a run cut short by a crash
+picks up where it left off rather than starting over. `/smp pregen status` and `/smp pregen estimate`
+report the same numbers in game.
+
+Pre-generation and wilderness regen cannot both be on: one builds the wilderness the other deletes.
+
 ### Spawn PvP Protection
 
 `spawn_no_pvp` (on by default) blocks PvP when either player is inside the spawn protection radius.
@@ -407,6 +438,7 @@ Frames are full resolution, one pixel per block, and only shrink if the server i
 | `/dim create\|delete\|tp\|setportal\|setsky` | Custom dimensions | OP |
 | `/smp end reset dragon\|world` | Reset the dragon or the End | OP |
 | `/smp regen` / `confirm` / `cancel` / `status` | Wilderness regen | OP |
+| `/smp pregen status\|estimate` | Chunk pre-generation progress and cost | OP |
 | `/timelapse capture` | Capture a timelapse frame now | OP |
 | `/smp bluemap` | Force-refresh BlueMap markers | OP |
 | `/youtube add\|remove\|list` | Video markers on the map | OP |
@@ -434,16 +466,20 @@ File: `config/quackedsmp.json`. Most values are editable from the panel's **Conf
 | `protect_fire_claims` | `true` | Fire protection inside claims |
 | `protect_enderman` | `true` | Stop endermen griefing claims / spawn |
 | `protect_farmland` | `true` | Farmland trampling protection |
-| `claims_enabled` | `true` | Claiming system |
-| `skills_enabled` | `true` | Skills system |
-| `chatfilter_enabled` | `true` | Chat filter |
-| `voicechat_enable` | `true` | Voice chat age gate |
+| `keep_inv_enabled` | `true` | Keep items on death, per player opt-out with `/smp keepinv` |
+| `teleport_enabled` | `true` | `/home`, `/spawn`, `/tpr`, `/tpa` |
+| `dims_enabled` | `true` | Creating and deleting custom dimensions |
+| `backup_enabled` | `true` | World snapshots, scheduled and on demand |
+| `claims_enabled` | `false` | Claiming system |
+| `skills_enabled` | `false` | Skills system |
+| `chatfilter_enabled` | `false` | Chat filter |
+| `voicechat_enable` | `false` | Voice chat age gate |
 | `mute_levels_minutes` | `[60,120,240,480,1440]` | Auto-mute escalation |
 | `dashboard.enabled` | `false` | Panel on or off |
 | `dashboard.port` | `8125` | Panel port |
 | `dashboard.admin_enabled` | `false` | Admin side enabled (set by `setpassword`) |
 | `dashboard.server_name` | `""` | Name shown in the panel header |
-| `bluemap_enable` | `true` | BlueMap integration when installed |
+| `bluemap_enable` | `false` | BlueMap integration when installed |
 | `bluemap_show_homes` | `true` | Homes on map |
 | `bluemap_show_claims` | `true` | Claim outlines |
 | `bluemap_claim_color` | `00FFFF` | Normal claim color |
@@ -472,11 +508,12 @@ File: `config/quackedsmp.json`. Most values are editable from the panel's **Conf
 | `votifier.port` | `8192` | Vote port |
 | `votifier.token` | `""` | Token shared with your server list |
 | `votifier.broadcast` | see JSON | Vote chat line |
-| `kits_enabled` | `true` | Kit system |
+| `kits_enabled` | `false` | Kit system |
 | `kits.cooldownSeconds` | `86400` | Time between kit claims |
 | `kits.kits` | starter + vip | Kit definitions |
 | `hardcore_enabled` | `false` | Hardcore sessions |
-| `hardcore_death_percent` | `50` | Deaths vs peak players before a session ends |
+| `hardcore_death_percent` | `100` | Deaths vs peak players before a session ends |
+| `hardcore_start_at_day` | `true` | Set the world to day when a session is created |
 | `hardcore_withered_hearts` | `true` | Withered hearts for session members |
 | `timelapse_enabled` | `false` | World timelapse |
 | `timelapse_dimensions` | `["minecraft:overworld"]` | Which dimensions to capture |
