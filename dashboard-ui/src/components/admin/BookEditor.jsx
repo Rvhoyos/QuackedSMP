@@ -1,6 +1,6 @@
 import { useState, useRef, useLayoutEffect } from 'react'
 import { Btn, Input, Select, Field } from '../../ui'
-import { parseBook, buildBook, emptySegment, MC_COLORS, CLICK_ACTIONS, GENERATIONS } from './bookModel'
+import { parseBook, buildBook, emptySegment, badLinkReason, firstBadLink, MC_COLORS, CLICK_ACTIONS, GENERATIONS } from './bookModel'
 import styles from './BookEditor.module.css'
 
 /**
@@ -118,6 +118,8 @@ export default function BookEditor({ content, onClose, onSave }) {
   })
 
   const clickSpec = CLICK_ACTIONS.find(a => a.id === (segment?.click?.action || ''))
+  const badLink = firstBadLink(book)
+  const linkError = clickSpec?.id === 'open_url' ? badLinkReason(segment?.click?.value) : null
 
   return (
     <div className={styles.backdrop} role="dialog" aria-label="Book editor">
@@ -129,7 +131,9 @@ export default function BookEditor({ content, onClose, onSave }) {
             {showRaw ? 'Hide JSON' : 'Show JSON'}
           </Btn>
           <Btn size="sm" onClick={onClose}>Cancel</Btn>
-          <Btn size="sm" variant="primary" onClick={() => onSave(buildBook(book))}>Done</Btn>
+          <Btn size="sm" variant="primary" disabled={!!badLink}
+            title={badLink ? `Page ${badLink.page}: ${badLink.reason}` : undefined}
+            onClick={() => onSave(buildBook(book))}>Done</Btn>
         </div>
 
         <div className={styles.columns}>
@@ -229,7 +233,11 @@ export default function BookEditor({ content, onClose, onSave }) {
               {clickSpec?.field && (
                 <Field
                   label={CLICK_FIELD_LABEL[clickSpec.field]}
-                  hint={clickSpec.id === 'open_url' ? 'http or https. mailto is rejected.' : undefined}>
+                  hint={clickSpec.id === 'open_url'
+                    ? (linkError
+                        ? <span className={styles.linkError}>{linkError}</span>
+                        : 'http or https. mailto is rejected.')
+                    : undefined}>
                   <Input
                     type={clickSpec.field === 'page' ? 'number' : 'text'}
                     min={clickSpec.field === 'page' ? 1 : undefined}
