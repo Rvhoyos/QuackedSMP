@@ -2,7 +2,7 @@ package mc.smpessentials.dashboard;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import mc.smpessentials.backup.BackupZipper;
+import mc.smpessentials.SmpUtilsMod;
 import mc.smpessentials.config.SmpConfig;
 import mc.smpessentials.dims.DimManager;
 import mc.smpessentials.timelapse.TimelapseFrameStore;
@@ -17,6 +17,9 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.zip.Deflater;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 import static mc.smpessentials.dashboard.AdminHandler.err;
 import static mc.smpessentials.dashboard.AdminHandler.jsonEscape;
@@ -69,8 +72,14 @@ public final class TimelapseHandler {
             for (TimelapseFrameStore.Frame f : frames) size += f.sizeBytes();
             total += size;
             if (written++ > 0) dims.append(',');
+            // The panel renders frames in <img> tags, which cannot carry an auth
+            // header, so each dimension ships a token its frame URLs can use. Minted
+            // here rather than on its own route so selecting a dimension costs no
+            // extra request; a list refresh renews it.
             dims.append("{\"id\":\"").append(jsonEscape(id))
-                .append("\",\"sizeBytes\":").append(size).append(",\"frames\":[");
+                .append("\",\"sizeBytes\":").append(size)
+                .append(",\"frameToken\":\"").append(AdminAuth.mintScopeToken(frameScope(id)))
+                .append("\",\"frames\":[");
             for (int i = 0; i < frames.size(); i++) {
                 if (i > 0) dims.append(',');
                 appendFrame(dims, frames.get(i));
@@ -114,26 +123,42 @@ public final class TimelapseHandler {
         }
     }
 
-    /** GET /api/admin/timelapse/frame?dim=...&name=... Streams one frame PNG. */
+    /**
+     * GET /api/admin/timelapse/frame?dim=...&amp;name=...&amp;t=... Streams one frame PNG.
+     * Authorised by the usual bearer header or by the dimension's frame token, since
+     * the panel loads these through {@code <img>}. Served cacheable and inline: a
+     * frame's name already identifies its bytes, so it can never go stale.
+     */
     public static DashboardServer.DownloadResult handleFrame(String method, Map<String, String> headers) {
-        if (!"GET".equals(method))            return new DashboardServer.DownloadResult.Error(405, "Method not allowed");
-        if (!SmpConfig.ADMIN_ENABLED)         return new DashboardServer.DownloadResult.Error(403, "Admin panel disabled");
-        if (!AdminAuth.isAuthorized(headers)) return new DashboardServer.DownloadResult.Error(403, "Unauthorized");
+        if (!"GET".equals(method))    return new DashboardServer.DownloadResult.Error(405, "Method not allowed");
+        if (!SmpConfig.ADMIN_ENABLED) return new DashboardServer.DownloadResult.Error(403, "Admin panel disabled");
         String qs   = headers.getOrDefault("x-query-string", "");
         String dim  = queryParam(qs, "dim");
         String name = queryParam(qs, "name");
-        if (name.isEmpty())  return new DashboardServer.DownloadResult.Error(400, "Missing name");
-        if (!validDim(dim))  return new DashboardServer.DownloadResult.Error(400, "Invalid dimension");
+        if (name.isEmpty()) return new DashboardServer.DownloadResult.Error(400, "Missing name");
+        if (!validDim(dim)) return new DashboardServer.DownloadResult.Error(400, "Invalid dimension");
+        if (!AdminAuth.isAuthorized(headers)
+                && !AdminAuth.isValidScopeToken(frameScope(dim), queryParam(qs, "t"))) {
+            return new DashboardServer.DownloadResult.Error(403, "Unauthorized");
+        }
         try {
             Path file = TimelapseFrameStore.forDimension(dim).pathOf(name);
             if (!Files.exists(file)) return new DashboardServer.DownloadResult.Error(404, "Frame not found");
-            return new DashboardServer.DownloadResult.File("image/png", name, file);
+            String etag = "\"" + name + "-" + Files.size(file) + "\"";
+            return new DashboardServer.DownloadResult.File("image/png", name, file,
+                    DashboardServer.Delivery.cacheableInline(etag), () -> {});
         } catch (IllegalArgumentException e) {
             return new DashboardServer.DownloadResult.Error(400, "Invalid frame name");
+        } catch (IOException e) {
+            return new DashboardServer.DownloadResult.Error(500, "Could not read frame");
         }
     }
 
-    /** GET /api/admin/timelapse/export?dim=... Zips one dimension's frames for offline assembly. */
+    /**
+     * GET /api/admin/timelapse/export?dim=... Streams one dimension's frames as a zip.
+     * Written straight to the socket: building the archive up front made the browser
+     * wait for the whole zip before receiving a single byte, which read as a hang.
+     */
     public static DashboardServer.DownloadResult handleExport(String method, Map<String, String> headers) {
         if (!"GET".equals(method))            return new DashboardServer.DownloadResult.Error(405, "Method not allowed");
         if (!SmpConfig.ADMIN_ENABLED)         return new DashboardServer.DownloadResult.Error(403, "Admin panel disabled");
@@ -142,19 +167,40 @@ public final class TimelapseHandler {
         if (!validDim(dim)) return new DashboardServer.DownloadResult.Error(400, "Invalid dimension");
 
         TimelapseFrameStore store = TimelapseFrameStore.forDimension(dim);
-        if (store.list().isEmpty()) return new DashboardServer.DownloadResult.Error(404, "No frames to export");
-        try {
-            Path zip = Files.createTempFile("timelapse-export-", ".zip");
-            BackupZipper.zip(store.dir(), zip);
-            String fileName = "timelapse-" + store.dir().getFileName() + ".zip";
-            return new DashboardServer.DownloadResult.File("application/zip", fileName, zip,
-                    () -> { try { Files.deleteIfExists(zip); } catch (IOException ignored) {} });
-        } catch (IOException e) {
-            return new DashboardServer.DownloadResult.Error(500, "Export failed");
-        }
+        List<TimelapseFrameStore.Frame> frames = store.list();
+        if (frames.isEmpty()) return new DashboardServer.DownloadResult.Error(404, "No frames to export");
+
+        String folder = store.dir().getFileName().toString();
+        return new DashboardServer.DownloadResult.Streamed("application/zip",
+                "timelapse-" + folder + ".zip",
+                out -> writeFrameZip(store, frames, folder, out));
     }
 
     // ── Helpers ──────────────────────────────────────────────────────────────
+
+    // Frames are PNG, so their bytes are already DEFLATE compressed: re-compressing
+    // them measured 1.9% smaller for roughly six times the CPU. Level 0 stores them
+    // as-is without the second pass over every file that a STORED entry's precomputed
+    // CRC would cost.
+    private static void writeFrameZip(TimelapseFrameStore store, List<TimelapseFrameStore.Frame> frames,
+                                      String folder, java.io.OutputStream out) throws IOException {
+        try (ZipOutputStream zip = new ZipOutputStream(out)) {
+            zip.setLevel(Deflater.NO_COMPRESSION);
+            for (TimelapseFrameStore.Frame frame : frames) {
+                Path file = store.pathOf(frame.name());
+                // A frame deleted between listing and reading is skipped, not fatal.
+                if (!Files.exists(file)) {
+                    SmpUtilsMod.LOGGER.warn("[Timelapse] Export skipped {}, no longer on disk.", frame.name());
+                    continue;
+                }
+                ZipEntry entry = new ZipEntry(folder + "/" + frame.name());
+                entry.setTime(frame.capturedAt());
+                zip.putNextEntry(entry);
+                Files.copy(file, zip);
+                zip.closeEntry();
+            }
+        }
+    }
 
     private static void appendFrame(StringBuilder sb, TimelapseFrameStore.Frame f) {
         sb.append(String.format(Locale.US,
@@ -166,5 +212,11 @@ public final class TimelapseHandler {
     // sanitizes the folder name, so this is a clean-error guard, not the only defense.
     private static boolean validDim(String dim) {
         return dim != null && dim.matches("[a-z0-9_.-]+:[a-z0-9/._-]+");
+    }
+
+    // Scope a frame token to one dimension, so a leaked frame URL reaches only that
+    // dimension's frames and nothing else on the panel.
+    private static String frameScope(String dimId) {
+        return "timelapse-frames:" + dimId;
     }
 }

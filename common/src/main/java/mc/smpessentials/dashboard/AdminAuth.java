@@ -4,9 +4,13 @@ import mc.smpessentials.SmpUtilsMod;
 import mc.smpessentials.config.ConfigIO;
 import mc.smpessentials.config.SmpConfig;
 
+import javax.crypto.Mac;
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
+import javax.crypto.spec.SecretKeySpec;
 import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
+import java.security.GeneralSecurityException;
 import java.security.MessageDigest;
 import java.security.SecureRandom;
 import java.util.Base64;
@@ -94,6 +98,63 @@ public final class AdminAuth {
 
     public static void clearSessions() {
         sessions.clear();
+    }
+
+    // ── Scoped resource tokens ─────────────────────────────────────────────────
+
+    // An <img> tag cannot send an Authorization header, so image routes take a
+    // signed token in the URL instead. It is scoped to one resource group and
+    // expires, so a leaked URL cannot be replayed against the rest of the panel
+    // the way the session token could. The key is regenerated every boot, which
+    // also invalidates every outstanding token on restart.
+    private static final byte[] SCOPE_KEY    = newScopeKey();
+    // Expiries snap to this grid so repeated mints of one scope return the SAME
+    // token. A token that changed per call would change the URL built from it, and
+    // a changed URL is a cache miss: the panel polls once a second during a capture,
+    // which would re-download every image it is showing.
+    private static final long   SCOPE_BUCKET = 60L * 60 * 1000;  // 1 h
+    private static final int    SCOPE_BUCKETS = 6;               // so 5 h to 6 h of validity
+
+    private static byte[] newScopeKey() {
+        byte[] key = new byte[32];
+        RANDOM.nextBytes(key);
+        return key;
+    }
+
+    /** Signs {@code scope}. Stable within the hour, so it is safe to mint on every poll. */
+    public static String mintScopeToken(String scope) {
+        long expiry = (System.currentTimeMillis() / SCOPE_BUCKET + SCOPE_BUCKETS) * SCOPE_BUCKET;
+        return expiry + "." + signScope(scope, expiry);
+    }
+
+    /** True when {@code token} was minted for exactly this scope and has not expired. */
+    public static boolean isValidScopeToken(String scope, String token) {
+        if (token == null || token.isBlank()) return false;
+        int dot = token.indexOf('.');
+        if (dot <= 0) return false;
+        long expiry;
+        try {
+            expiry = Long.parseLong(token.substring(0, dot));
+        } catch (NumberFormatException e) {
+            return false;
+        }
+        if (System.currentTimeMillis() > expiry) return false;
+        byte[] expected = signScope(scope, expiry).getBytes(StandardCharsets.UTF_8);
+        byte[] actual   = token.substring(dot + 1).getBytes(StandardCharsets.UTF_8);
+        return MessageDigest.isEqual(expected, actual);
+    }
+
+    private static String signScope(String scope, long expiry) {
+        try {
+            Mac mac = Mac.getInstance("HmacSHA256");
+            mac.init(new SecretKeySpec(SCOPE_KEY, "HmacSHA256"));
+            mac.update(scope.getBytes(StandardCharsets.UTF_8));
+            mac.update((byte) 0);
+            mac.update(Long.toString(expiry).getBytes(StandardCharsets.UTF_8));
+            return Base64.getUrlEncoder().withoutPadding().encodeToString(mac.doFinal());
+        } catch (GeneralSecurityException e) {
+            throw new IllegalStateException("HmacSHA256 unavailable", e);
+        }
     }
 
     // ── Rate limiting ──────────────────────────────────────────────────────────
