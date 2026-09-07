@@ -41,9 +41,10 @@ public final class RtpHandler {
 
         try {
             JsonObject req = JsonParser.parseString(body).getAsJsonObject();
-            if (req.has("enabled")) {
-                SmpConfig.RTP_ENABLED = req.get("enabled").getAsBoolean();
-            }
+
+            // Assign nothing until every check has passed. These statics are the live values the
+            // game reads, so a rejected save must leave them alone.
+            Boolean enabled = req.has("enabled") ? req.get("enabled").getAsBoolean() : null;
 
             ConfigData.RtpConfig config =
                     ConfigIO.gson().fromJson(req.get("config"), ConfigData.RtpConfig.class);
@@ -52,6 +53,7 @@ public final class RtpHandler {
             String badItem = firstUnreadableItem(config, server);
             if (badItem != null) return err(400, "Item rejected by the game: " + badItem);
 
+            if (enabled != null) SmpConfig.RTP_ENABLED = enabled;
             SmpConfig.RTP_WARMUP_SECONDS = Math.max(0, config.warmupSeconds);
             SmpConfig.RTP_COOLDOWN_SECONDS = Math.max(0, config.cooldownSeconds);
             SmpConfig.RTP_PROFILES = config.profiles != null ? config.profiles : new ArrayList<>();

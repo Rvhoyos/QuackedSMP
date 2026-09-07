@@ -14,7 +14,10 @@ public final class JoinMessageHandler {
 
     /** Called by platform-specific join events. */
     public static void onPlayerJoin(ServerPlayer player) {
-        player.sendSystemMessage(mc.smpessentials.util.TextUtil.motd(
-                mc.smpessentials.config.SmpConfig.WELCOME_MESSAGE, player));
+        String message = mc.smpessentials.config.SmpConfig.WELCOME_MESSAGE;
+        // Blanking the message is how an owner turns the greeting off, so send nothing at all
+        // rather than an empty line.
+        if (message == null || message.isBlank()) return;
+        player.sendSystemMessage(mc.smpessentials.util.TextUtil.motd(message, player));
     }
 }

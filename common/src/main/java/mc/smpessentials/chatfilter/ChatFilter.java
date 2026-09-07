@@ -42,15 +42,34 @@ public final class ChatFilter {
     private ChatFilter() {
     }
 
-    // Loads and merges the chat filter word/phrase config from disk. Logs any parse warnings.
+    // Seeds the builtin word lists, then takes over anything the retired config import queue left.
     public static void onServerStart(MinecraftServer server) {
         try {
-            var res = ChatFilterConfig.mergeFromConfig(server);
-            for (String w : res.warnings())
-                mc.smpessentials.SmpUtilsMod.LOGGER.warn("[QuackedSMP] Chat filter warning: {}", w);
+            ChatFilterBuiltins.merge(server);
+            importRetiredConfigQueue(server);
         } catch (Exception e) {
-            mc.smpessentials.SmpUtilsMod.LOGGER.error("[QuackedSMP] Failed to load chat filter config", e);
+            mc.smpessentials.SmpUtilsMod.LOGGER.error("[QuackedSMP] Failed to seed the chat filter", e);
         }
+    }
+
+    // Upgrade path for a config written before the chatfilter block was retired. ConfigIO rescues
+    // the words while parsing, because its write-back drops the key the moment the mod loads.
+    // Delete this together with ConfigIO.takeLegacyChatFilterQueue once no config can still carry it.
+    private static void importRetiredConfigQueue(MinecraftServer server) {
+        var queue = mc.smpessentials.config.ConfigIO.takeLegacyChatFilterQueue();
+        if (queue == null) return;
+
+        ChatFilterSavedData data = getData(server);
+        int added = 0;
+        for (String word : queue.contents()) {
+            if (data.add(word)) added++;
+        }
+        for (String word : queue.whitelist()) {
+            if (data.addWhitelist(word)) added++;
+        }
+        mc.smpessentials.SmpUtilsMod.LOGGER.info(
+                "[QuackedSMP] Chat filter: imported {} new entries from the retired chatfilter config"
+                        + " block. Edit the lists in the admin panel or with /chatfilter add.", added);
     }
 
     // Replaces blocked words with ****. Returns null/empty if the player is muted.
@@ -162,18 +181,22 @@ public final class ChatFilter {
 
             boolean blocked = data.containsNormalized(norm);
 
-            // Fallback: aggressive normalization for evasion detection
+            // Fallback: aggressive normalization for evasion detection. Three forms, tried in
+            // order, each one on the leet-normalized token:
+            //
+            //   form            catches                              input     result
+            //   leet            digits standing in for letters       "5h1P"    "ship"
+            //   squashed        any elongated run                    "shiiip"  "ship"
+            //   triple-squashed runs of 3 or more, doubles kept      "shippp"  "shipp"
+            //
+            // Squashing collapses real double letters, so the leet form is kept and checked
+            // separately for the sake of blocked words that genuinely contain one.
             if (!blocked) {
-                // 1. Check Leet-speak form (e.g. "N1Gg3R" -> "nigger")
-                // This catches words that rely on double letters (ass, nigger) which squashing
-                // ruins.
                 String leet = normalizeLeet(token);
                 if (!leet.equals(norm) && !data.isWhitelisted(leet)) {
                     blocked = data.containsNormalized(leet);
                 }
 
-                // 2. Check Squashed form (e.g. "fuuuck" -> "fuck")
-                // This catches elongated words.
                 if (!blocked) {
                     String squashed = squash(leet);
                     if (!squashed.equals(leet) && !data.isWhitelisted(squashed)) {
@@ -181,8 +204,6 @@ public final class ChatFilter {
                     }
                 }
 
-                // 3. Check Triple-Squashed form (e.g. "niggger" -> "nigger")
-                // This catches spammers trying to evade double-letter checks.
                 if (!blocked) {
                     String squashed2 = squash3PlusTo2(leet);
                     if (!squashed2.equals(leet) && !data.isWhitelisted(squashed2)) {
@@ -220,7 +241,8 @@ public final class ChatFilter {
 
     // ---- Normalization Pipeline ----
 
-    // Lowercase + NFKC normalization + accent strip. Collapses fullwidth chars (e.g. Ａ -> A).
+    // Lowercase, NFKC normalization, accent strip. Collapses fullwidth characters onto their
+    // ascii equivalents, so a fullwidth A is read as a plain A.
     public static String normalize(String s) {
         String lower = s.toLowerCase(Locale.ROOT);
         String nfkc = Normalizer.normalize(lower, Normalizer.Form.NFKC);
@@ -251,12 +273,13 @@ public final class ChatFilter {
         return cleaned.toString();
     }
 
-    // Collapses any run of repeated chars to one (fuuuck -> fuck).
+    // Collapses any run of repeated characters down to one, so "shiiip" is read as "ship".
     public static String squash(String s) {
         return REPEATED_CHARS.matcher(s).replaceAll("$1");
     }
 
-    // Collapses runs of 3+ repeated chars to 2 (niggger -> nigger), leaving intentional doubles intact.
+    // Collapses runs of 3 or more repeated characters down to 2, so "shippp" is read as
+    // "shipp", leaving intentional double letters intact.
     public static String squash3PlusTo2(String s) {
         // Find any character repeated 3 or more times ((.)\1{2,}) and replace with 2
         // instances ($1$1)

@@ -52,6 +52,38 @@ export const CLICK_ACTIONS = [
 
 export const GENERATIONS = ['Original', 'Copy of original', 'Copy of a copy', 'Tattered']
 
+// Vanilla parses an open_url address with new URI(...) and then refuses any scheme outside
+// Util.ALLOWED_UNTRUSTED_LINK_PROTOCOLS, which is http and https. A book carrying anything else
+// fails ItemStack.CODEC on the server, so catch it here rather than letting the save be rejected.
+// An empty address is not an error: buildSegment drops the click event entirely.
+export function badLinkReason(value) {
+  const address = String(value ?? '').trim()
+  if (address === '') return null
+  let parsed
+  try {
+    parsed = new URL(address)
+  } catch {
+    return 'Needs to start with http:// or https://'
+  }
+  if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+    return `The game rejects ${parsed.protocol.replace(':', '')} links. Use http or https.`
+  }
+  return null
+}
+
+// The first bad address anywhere in the book, with the page it sits on, because a link the editor
+// is not currently showing would otherwise fail the save with nothing on screen to explain it.
+export function firstBadLink(model) {
+  for (const [index, segments] of (model.pages || []).entries()) {
+    for (const seg of segments) {
+      if (seg.click?.action !== 'open_url') continue
+      const reason = badLinkReason(seg.click.value)
+      if (reason) return { page: index + 1, reason }
+    }
+  }
+  return null
+}
+
 export function emptySegment(style = {}) {
   return { text: '', click: { action: '', value: '' }, hover: '', ...style }
 }

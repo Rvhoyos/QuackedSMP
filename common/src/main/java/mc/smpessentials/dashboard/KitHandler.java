@@ -42,12 +42,13 @@ public final class KitHandler {
 
         try {
             JsonObject req = JsonParser.parseString(body).getAsJsonObject();
-            if (req.has("enabled")) {
-                SmpConfig.KITS_ENABLED = req.get("enabled").getAsBoolean();
-            }
-            if (req.has("cooldownSeconds")) {
-                SmpConfig.KIT_COOLDOWN_SECONDS = Math.max(0, req.get("cooldownSeconds").getAsLong());
-            }
+
+            // Assign nothing until every check has passed. These statics are the live values the
+            // game reads, so a rejected save must leave them alone.
+            Boolean enabled = req.has("enabled") ? req.get("enabled").getAsBoolean() : null;
+            Long cooldownSeconds = req.has("cooldownSeconds")
+                    ? Math.max(0, req.get("cooldownSeconds").getAsLong())
+                    : null;
 
             ConfigData.KitDef[] kits =
                     ConfigIO.gson().fromJson(req.get("kits"), ConfigData.KitDef[].class);
@@ -56,6 +57,8 @@ public final class KitHandler {
             String problem = firstProblem(kits, server);
             if (problem != null) return err(400, problem);
 
+            if (enabled != null) SmpConfig.KITS_ENABLED = enabled;
+            if (cooldownSeconds != null) SmpConfig.KIT_COOLDOWN_SECONDS = cooldownSeconds;
             SmpConfig.KIT_DEFINITIONS = new ArrayList<>(java.util.Arrays.asList(kits));
             ConfigIO.save();
             return "{\"ok\":true}";

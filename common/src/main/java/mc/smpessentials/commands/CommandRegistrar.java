@@ -19,8 +19,8 @@ public final class CommandRegistrar {
                 // --- /home ---
                 dispatcher.register(
                                 net.minecraft.commands.Commands.literal("home")
-                                                .requires(src -> src
-                                                                .getEntity() instanceof net.minecraft.server.level.ServerPlayer)
+                                                .requires(src -> mc.smpessentials.config.SmpConfig.TELEPORT_ENABLED
+                                                                && src.getEntity() instanceof net.minecraft.server.level.ServerPlayer)
                                                 .executes(ctx -> mc.smpessentials.commands.HomeCommand
                                                                 .execute(ctx.getSource())));
                 // --- /visit <name> ---
@@ -28,7 +28,8 @@ public final class CommandRegistrar {
                 // --- /spawn ---
                 dispatcher.register(
                                 Commands.literal("spawn")
-                                                .requires(src -> src.getEntity() instanceof ServerPlayer)
+                                                .requires(src -> mc.smpessentials.config.SmpConfig.TELEPORT_ENABLED
+                                                                && src.getEntity() instanceof ServerPlayer)
                                                 .executes(ctx -> mc.smpessentials.commands.SpawnCommand
                                                                 .execute(ctx.getSource())));
                 dispatcher.register(

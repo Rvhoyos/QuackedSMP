@@ -11,6 +11,7 @@ import mc.smpessentials.claims.SpawnProtection;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionResult;
+import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
 import net.neoforged.neoforge.event.ServerChatEvent;
@@ -56,6 +57,9 @@ public class SmpEvents {
         mc.smpessentials.timelapse.TimelapseService.get().start(event.getServer());
         mc.smpessentials.votifier.VoteHandler.init(event.getServer());
         mc.smpessentials.votifier.VotifierListener.start();
+        // Last: custom dimensions have been restored by now, and the dashboard is already serving,
+        // so its log feed shows the run while the server thread is busy with it.
+        mc.smpessentials.pregen.PregenRunner.onServerStarted(event.getServer());
     }
 
     @SubscribeEvent
@@ -110,7 +114,11 @@ public class SmpEvents {
     }
 
     // Order matters: hardcore must run first. See SmpUtilsModFabric for explanation.
-    @SubscribeEvent
+    // LOWEST because LivingDeathEvent fires before the death is final and another mod can still
+    // cancel it. Running last, with the default receiveCanceled=false, means a cancelled death
+    // never reaches us and no player is left alive with their inventory on the ground. Fabric
+    // fires AFTER_DEATH past that point already, so only this side needs the priority.
+    @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void onLivingDeath(net.neoforged.neoforge.event.entity.living.LivingDeathEvent event) {
         if (event.getEntity() instanceof ServerPlayer sp) {
             mc.smpessentials.hardcore.HardcoreSavedData.get(((net.minecraft.server.level.ServerLevel) sp.level()).getServer()).onPlayerDeath(sp);

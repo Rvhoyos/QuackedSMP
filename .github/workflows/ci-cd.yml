@@ -217,6 +217,7 @@ jobs:
           # numeric id gets resolved via the Eternal API and silently dropped if that
           # lookup fails, so slugs are used here.
           dependencies: |
+            fabric-api(required){modrinth:P7dR8mSH}{curseforge:fabric-api}
             spark(optional){modrinth:l6YH9Als}{curseforge:spark}
             simple-voice-chat(optional){modrinth:9eGKb6K1}{curseforge:simple-voice-chat}
             bluemap(optional){modrinth:swbUV1cr}{curseforge:bluemap}

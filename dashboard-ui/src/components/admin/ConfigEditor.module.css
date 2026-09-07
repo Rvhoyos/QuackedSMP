@@ -27,6 +27,7 @@
 .groupIcon { display: flex; image-rendering: pixelated; }
 .groupTitle { font-family: var(--font-pixel); font-size: 8px; letter-spacing: 0.4px; color: var(--txt-primary); text-shadow: 1px 1px 0 rgba(0,0,0,0.5); }
 .groupBody { padding: 10px 18px 16px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--gap-row) var(--gap-col); }
+.groupBodySingle { grid-template-columns: 1fr; }
 @media (max-width: 900px) { .groupBody { grid-template-columns: 1fr; } }
 
 /* ── Rows ──────────────────────────────────────────────────────────────────── */
@@ -65,7 +66,7 @@
 .textInput { width: 100%; font-family: var(--font-sans); }
 .numInput:focus, .textInput:focus { border-color: var(--mc-wood-light); }
 .textInput::placeholder { color: var(--txt-faint); }
-.suffix { font-family: var(--font-sans); font-size: 12.5px; color: var(--txt-muted); }
+.unit { font-family: var(--font-sans); font-size: 12.5px; color: var(--txt-muted); }
 
 /* ── Color input ───────────────────────────────────────────────────────────── */
 .colorWrap { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; }

@@ -39,6 +39,7 @@ public class BlueMapMarkerManager {
     public BlueMapMarkerManager(BlueMapAPI api) {
         this.api = api;
         icons.uploadAll(api, TagIcons.required());
+        MarkerStyles.install(api);
     }
 
     /** Rebuilds every layer. The periodic safety net, and the first draw after startup. */

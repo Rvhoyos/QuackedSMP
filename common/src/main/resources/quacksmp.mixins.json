@@ -6,6 +6,7 @@
   "client": [],
   "mixins": [
     "FishingHookMixin",
+    "BerryPickMixin",
     "EnchantmentMenuMixin",
     "BrewingStandMixin",
     "VillagerMixin",
@@ -19,6 +20,7 @@
     "LivingEntityMixin",
     "ExplosionMixin",
     "BlockItemMixin",
+    "BlockItemSpawnerMixin",
     "BucketItemMixin",
     "PlayerActionMixin",
     "MinecraftServerMixin",

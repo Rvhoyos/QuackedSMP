@@ -302,3 +302,14 @@
   background: #a6e3a1;
   transition: width 0.3s linear;
 }
+
+/* Export progress, shown under the toolbar while a zip streams. Mirrors .status
+   above so the two banners share one rhythm, in the wood tone rather than green
+   because it reports work in flight, not a result. */
+.exportBar {
+  margin: 8px 14px 0; padding: 8px 12px;
+  display: flex; flex-direction: column; gap: 6px;
+  background: rgba(203,166,247,0.07); border-left: 3px solid var(--mc-wood-light);
+}
+.exportLabel { font-family: var(--font-sans); font-size: 12.5px; color: var(--txt-secondary); }
+.exportCaveat { font-family: var(--font-sans); font-size: 12.5px; color: var(--txt-muted); }

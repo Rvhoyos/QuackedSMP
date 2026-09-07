@@ -45,16 +45,50 @@ public final class DashboardServer extends Thread {
         DownloadResult handle(String method, Map<String, String> headers);
     }
 
-    /** Outcome of a {@link DownloadRouteHandler}: either an error or a file to stream. */
+    /** Writes a response body whose length is not known up front. */
+    @FunctionalInterface
+    public interface StreamWriter {
+        void writeTo(OutputStream out) throws IOException;
+    }
+
+    /**
+     * How a download is presented to the browser. A one-off file the user saves is
+     * an attachment that must not be cached; a frame the page renders inline is
+     * content-addressed and can be cached hard.
+     */
+    public record Delivery(String cacheControl, String disposition, String etag) {
+        /** Default: save-to-disk, never stored. */
+        public static final Delivery ATTACHMENT = new Delivery("no-store", "attachment", null);
+
+        /** For a resource whose name already identifies its bytes, so it can never go stale. */
+        public static Delivery cacheableInline(String etag) {
+            return new Delivery("private, max-age=31536000, immutable", "inline", etag);
+        }
+    }
+
+    /** Outcome of a {@link DownloadRouteHandler}: an error, a file on disk, or a streamed body. */
     public sealed interface DownloadResult {
         record Error(int status, String message) implements DownloadResult {}
+
         /** {@code onComplete} fires after streaming finishes (success or IOException). */
-        record File(String contentType, String filename, Path path, Runnable onComplete) implements DownloadResult {
+        record File(String contentType, String filename, Path path, Delivery delivery,
+                    Runnable onComplete) implements DownloadResult {
             /** Convenience for routes that have no cleanup work to do after streaming. */
             public File(String contentType, String filename, Path path) {
-                this(contentType, filename, path, () -> {});
+                this(contentType, filename, path, Delivery.ATTACHMENT, () -> {});
+            }
+
+            public File(String contentType, String filename, Path path, Runnable onComplete) {
+                this(contentType, filename, path, Delivery.ATTACHMENT, onComplete);
             }
         }
+
+        /**
+         * A body produced on the fly. Length is unknown, so the dispatcher frames it
+         * with chunked transfer coding: the terminating zero-length chunk is what
+         * tells the client the download completed rather than being cut short.
+         */
+        record Streamed(String contentType, String filename, StreamWriter writer) implements DownloadResult {}
     }
 
     // HTTP route table: path → handler
@@ -270,30 +304,77 @@ public final class DashboardServer extends Thread {
                         json.getBytes(StandardCharsets.UTF_8));
             } else if (result instanceof DownloadResult.File file) {
                 try {
-                    writeFileResponse(out, file.contentType(), file.filename(), file.path());
+                    // A matching validator means the client already holds these bytes.
+                    String etag = file.delivery().etag();
+                    if (etag != null && etag.equals(headers.get("if-none-match"))) {
+                        writeNotModified(out, file.delivery());
+                    } else {
+                        writeFileResponse(out, file);
+                    }
                 } finally {
                     try { file.onComplete().run(); }
                     catch (Exception ignored) {}
                 }
+            } else if (result instanceof DownloadResult.Streamed streamed) {
+                writeStreamedResponse(out, streamed);
             }
         }
     }
 
-    private void writeFileResponse(OutputStream out, String contentType, String filename, Path file) throws IOException {
-        long length = Files.size(file);
-        String safeName = filename.replace("\"", "");
+    private void writeFileResponse(OutputStream out, DownloadResult.File file) throws IOException {
+        Delivery delivery = file.delivery();
         String head = "HTTP/1.1 200 OK\r\n"
-                + "Content-Type: " + contentType + "\r\n"
-                + "Content-Length: " + length + "\r\n"
-                + "Content-Disposition: attachment; filename=\"" + safeName + "\"\r\n"
-                + "Cache-Control: no-store\r\n"
-                + "Access-Control-Allow-Origin: *\r\n"
-                + "Access-Control-Allow-Methods: GET, OPTIONS\r\n"
-                + "Access-Control-Allow-Headers: Content-Type, Authorization\r\n"
+                + "Content-Type: " + file.contentType() + "\r\n"
+                + "Content-Length: " + Files.size(file.path()) + "\r\n"
+                + dispositionHeader(delivery.disposition(), file.filename())
+                + (delivery.etag() != null ? "ETag: " + delivery.etag() + "\r\n" : "")
+                + "Cache-Control: " + delivery.cacheControl() + "\r\n"
+                + downloadCorsHeaders()
                 + "Connection: close\r\n\r\n";
         out.write(head.getBytes(StandardCharsets.UTF_8));
-        Files.copy(file, out);
+        Files.copy(file.path(), out);
         out.flush();
+    }
+
+    // Chunked, not close-delimited: a body that simply ends when the socket does is
+    // indistinguishable from one truncated by a dropped connection, which on a
+    // multi-gigabyte archive means a silently incomplete file.
+    private void writeStreamedResponse(OutputStream out, DownloadResult.Streamed streamed) throws IOException {
+        String head = "HTTP/1.1 200 OK\r\n"
+                + "Content-Type: " + streamed.contentType() + "\r\n"
+                + "Transfer-Encoding: chunked\r\n"
+                + dispositionHeader("attachment", streamed.filename())
+                + "Cache-Control: no-store\r\n"
+                + downloadCorsHeaders()
+                + "Connection: close\r\n\r\n";
+        out.write(head.getBytes(StandardCharsets.UTF_8));
+        out.flush();
+        try (ChunkedOutputStream chunked = new ChunkedOutputStream(out)) {
+            streamed.writer().writeTo(chunked);
+        }
+        out.flush();
+    }
+
+    private void writeNotModified(OutputStream out, Delivery delivery) throws IOException {
+        String head = "HTTP/1.1 304 Not Modified\r\n"
+                + "ETag: " + delivery.etag() + "\r\n"
+                + "Cache-Control: " + delivery.cacheControl() + "\r\n"
+                + downloadCorsHeaders()
+                + "Connection: close\r\n\r\n";
+        out.write(head.getBytes(StandardCharsets.UTF_8));
+        out.flush();
+    }
+
+    private static String dispositionHeader(String disposition, String filename) {
+        return "Content-Disposition: " + disposition
+                + "; filename=\"" + filename.replace("\"", "") + "\"\r\n";
+    }
+
+    private static String downloadCorsHeaders() {
+        return "Access-Control-Allow-Origin: *\r\n"
+                + "Access-Control-Allow-Methods: GET, OPTIONS\r\n"
+                + "Access-Control-Allow-Headers: Content-Type, Authorization\r\n"
+                + "Access-Control-Expose-Headers: Content-Length, ETag\r\n";
     }
 
     private void serveStatic(OutputStream out, String path) throws IOException {

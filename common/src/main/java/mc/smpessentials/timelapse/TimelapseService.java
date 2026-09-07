@@ -84,7 +84,7 @@ public final class TimelapseService {
     private void tick() {
         try {
             MinecraftServer srv = server;
-            if (srv == null || !SmpConfig.TIMELAPSE_ENABLED || inProgress.get()) return;
+            if (srv == null || inProgress.get()) return;
 
             boolean playersOnline = srv.getPlayerList().getPlayerCount() > 0;
             if (playersOnline) activitySinceCapture = true;
@@ -128,8 +128,13 @@ public final class TimelapseService {
 
     // ── Capture ──────────────────────────────────────────────────────────────
 
-    /** Renders and stores one frame now on a worker thread. No-op if already capturing. */
+    /**
+     * Renders and stores one frame now on a worker thread. No-op if the feature is off or a capture
+     * is already running. The enabled check lives here rather than in the scheduler so the command
+     * and the panel button cannot capture while the feature is switched off.
+     */
     public void capture(MinecraftServer srv) {
+        if (!SmpConfig.TIMELAPSE_ENABLED) return;
         if (!inProgress.compareAndSet(false, true)) return;
         activitySinceCapture = false;
         Thread worker = new Thread(() -> {

@@ -10,12 +10,6 @@
   box-shadow: 0 6px 22px rgba(0,0,0,0.5), inset 0 0 0 1px rgba(0,0,0,0.4);
 }
 
-/* Bottom scrim guarantees text/button contrast over the scene. */
-.scrim {
-  position: absolute; inset: 0; pointer-events: none;
-  background: linear-gradient(180deg, transparent 42%, rgba(0,0,0,0.18) 64%, rgba(0,0,0,0.5) 100%);
-}
-
 /* Foreground identity, anchored to the ground line. */
 .plate {
   position: relative; z-index: 1;

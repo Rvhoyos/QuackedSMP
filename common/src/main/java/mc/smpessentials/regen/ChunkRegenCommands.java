@@ -66,6 +66,13 @@ public final class ChunkRegenCommands {
     }
 
     private static int confirmRegen(CommandContext<CommandSourceStack> ctx) {
+        // Regen destroys wilderness chunks and pregen builds them, so a server that ran both would
+        // spend every restart undoing the last one.
+        if (mc.smpessentials.config.SmpConfig.PREGEN_ENABLED) {
+            ctx.getSource().sendFailure(Component.literal(
+                    "Chunk pre-generation is enabled. Turn it off before queueing a regen."));
+            return 0;
+        }
         try {
             ChunkRegenManager.queueRegen(ctx.getSource().getServer());
             ctx.getSource().sendSuccess(

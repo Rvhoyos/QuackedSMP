@@ -1,5 +1,7 @@
 package mc.smpessentials.backup;
 
+import mc.smpessentials.SmpUtilsMod;
+
 import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -53,14 +55,23 @@ public final class BackupZipper {
                     ZipEntry entry = new ZipEntry(name);
                     entry.setTime(attrs.lastModifiedTime().toMillis());
                     zos.putNextEntry(entry);
-                    Files.copy(file, zos);
+                    try {
+                        Files.copy(file, zos);
+                    } catch (IOException e) {
+                        // A file removed or locked between the walk listing it and this
+                        // copy opening it (a temp save file, a rotating log) skips. Without
+                        // this the exception escapes the walk and kills the whole archive.
+                        SmpUtilsMod.LOGGER.warn("[Backup] Skipped {} during zip: {}",
+                                src.relativize(file), e.getMessage());
+                    }
                     zos.closeEntry();
                     return FileVisitResult.CONTINUE;
                 }
 
                 @Override
                 public FileVisitResult visitFileFailed(Path file, IOException exc) {
-                    // Skip files that disappear mid-zip (e.g. temp save files) instead of aborting.
+                    // Fires when the walk itself cannot read the entry, not for a failure
+                    // inside visitFile; that case is handled above.
                     return FileVisitResult.CONTINUE;
                 }
             });

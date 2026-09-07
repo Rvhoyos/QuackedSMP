@@ -16,11 +16,12 @@ import CommandBlocksPanel from './CommandBlocksPanel'
 import BackupsPanel from './BackupsPanel'
 import TimelapsePanel from './TimelapsePanel'
 import RtpPanel from './RtpPanel'
+import PregenPanel from './PregenPanel'
 import KitsPanel from './KitsPanel'
 import WelcomeBookPanel from './WelcomeBookPanel'
 import UpdateBanner from './UpdateBanner'
 import { TooltipProvider, ToastHost } from '../../ui'
-import { IconPlayerHead, IconCommandBlock, IconBookshelf, IconGlowstonePortal, IconSkills, IconFlag, IconChatFilter, IconMod, IconSword, IconEmerald, IconRepeatCmdBlock, IconShulkerBox, IconHardcoreHeart, IconGear, IconCamera, IconChorusFruit, IconLoot, IconWrittenBook } from './MinecraftIcons'
+import { IconPlayerHead, IconCommandBlock, IconBookshelf, IconGlowstonePortal, IconSkills, IconFlag, IconChatFilter, IconMod, IconSword, IconEmerald, IconRepeatCmdBlock, IconShulkerBox, IconHardcoreHeart, IconGear, IconCamera, IconChorusFruit, IconLoot, IconWrittenBook, IconChunkFill } from './MinecraftIcons'
 import styles from './AdminPanel.module.css'
 
 // Sidebar groups. Each item optionally gates on a config flag (hidden when the
@@ -31,7 +32,7 @@ const GROUPS = [
     { id: 'teams',   label: 'Teams',   Icon: IconSword },
   ]},
   { label: 'World', items: [
-    { id: 'dims',   label: 'Dimensions', Icon: IconGlowstonePortal },
+    { id: 'dims',   label: 'Dimensions', Icon: IconGlowstonePortal, configKey: 'dims_enabled' },
     { id: 'claims', label: 'Claims',     Icon: IconFlag,    configKey: 'claims_enabled' },
     { id: 'shops',  label: 'Shops',      Icon: IconEmerald, configKey: 'shops_enabled' },
   ]},
@@ -49,8 +50,9 @@ const GROUPS = [
   ]},
   { label: 'Systems', items: [
     { id: 'mods',      label: 'Mods',      Icon: IconMod },
-    { id: 'backups',   label: 'Backups',   Icon: IconShulkerBox },
-    { id: 'timelapse', label: 'Timelapse', Icon: IconCamera },
+    { id: 'backups',   label: 'Backups',   Icon: IconShulkerBox, configKey: 'backup_enabled' },
+    { id: 'timelapse', label: 'Timelapse', Icon: IconCamera, configKey: 'timelapse_enabled' },
+    { id: 'pregen',    label: 'Pregen',    Icon: IconChunkFill, configKey: 'pregen_enabled' },
   ]},
   { label: 'Setup', items: [
     { id: 'config',   label: 'Config',   Icon: IconGear },
@@ -65,10 +67,13 @@ export default function AdminPanel({ health, wsStatus, onBack }) {
   const [activeTab, setTab]     = useState('players')
   const [cfg,       setCfg]     = useState(null)
   const [navOpen,   setNavOpen] = useState(false)
+  // Set when something navigates to a specific settings section rather than the config tab at large.
+  const [configSection, setConfigSection] = useState(null)
 
   useEffect(() => {
-    if (!token) return
-    fetch('/api/admin/config', { headers: { Authorization: `Bearer ${token}` } })
+    // No token guard: with no admin password set the routes serve unauthenticated calls, and
+    // skipping the fetch left cfg null, so every configKey read as undefined and no tab ever hid.
+    fetch('/api/admin/config', { headers: token ? { Authorization: `Bearer ${token}` } : {} })
       .then(r => (r.status === 401 || r.status === 403) ? null : r.json())
       .then(d => { if (d && !d.error) setCfg(d) })
       .catch(() => {})
@@ -94,11 +99,15 @@ export default function AdminPanel({ health, wsStatus, onBack }) {
     sessionStorage.removeItem(TOKEN_KEY)
     setToken('')
   }
-  function pick(id) { setTab(id); setNavOpen(false) }
+  function pick(id, section) { setTab(id); setConfigSection(section ?? null); setNavOpen(false) }
+
+  // The Features tab toggles features, and the rail hides a feature's tab while it is off, so the
+  // rail has to learn about a toggle without waiting for a reload.
+  function applyFeature(key, value) { setCfg(c => ({ ...c, [key]: value })) }
 
   if (needsAuth) return <AdminGate onAuth={onAuth} />
 
-  const panelProps = { token, onExpired: logout, onNavigate: pick, features: cfg }
+  const panelProps = { token, onExpired: logout, onNavigate: pick, features: cfg, onFeatureChange: applyFeature }
 
   return (
     <TooltipProvider>
@@ -166,7 +175,8 @@ export default function AdminPanel({ health, wsStatus, onBack }) {
             {resolvedTab === 'mods'       && <ModsPanel {...panelProps} />}
             {resolvedTab === 'backups'    && <BackupsPanel {...panelProps} />}
             {resolvedTab === 'timelapse'  && <TimelapsePanel {...panelProps} />}
-            {resolvedTab === 'config'     && <ConfigEditor {...panelProps} />}
+            {resolvedTab === 'pregen'     && <PregenPanel {...panelProps} />}
+            {resolvedTab === 'config'     && <ConfigEditor {...panelProps} initialSection={configSection} />}
             {resolvedTab === 'features'   && <FeatureShowcase {...panelProps} />}
           </div>
           </div>

@@ -58,7 +58,8 @@ public final class DimCommands {
             Commands.literal("dim")
                 // /dim create <id> <type> [sub-params]
                 .then(Commands.literal("create")
-                    .requires(CommandRegistrar::isOp)
+                    .requires(src -> mc.smpessentials.config.SmpConfig.DIMS_ENABLED
+                            && CommandRegistrar.isOp(src))
                     .then(Commands.argument("id", DimensionArgument.dimension())
                         // Suppress suggestions on <id>, user is naming a NEW dimension
                         .suggests((ctx, builder) -> builder.buildFuture())
@@ -126,7 +127,8 @@ public final class DimCommands {
 
                 // /dim delete <id>
                 .then(Commands.literal("delete")
-                    .requires(CommandRegistrar::isOp)
+                    .requires(src -> mc.smpessentials.config.SmpConfig.DIMS_ENABLED
+                            && CommandRegistrar.isOp(src))
                     .then(Commands.argument("id", DimensionArgument.dimension())
                         .suggests(DimCommands::suggestCustomDims)
                         .executes(ctx -> {

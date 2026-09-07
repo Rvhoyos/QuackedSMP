@@ -39,6 +39,10 @@ public final class SmpConfig {
     public static java.util.Map<String, String> MESSAGES = new java.util.HashMap<>();
 
     // ---- Feature toggles ----
+    public static boolean KEEP_INV_ENABLED;
+    public static boolean TELEPORT_ENABLED;
+    public static boolean DIMS_ENABLED;
+    public static boolean BACKUP_ENABLED;
     public static boolean CLAIMS_ENABLED;
     public static boolean SKILLS_ENABLED;
     public static boolean CHATFILTER_ENABLED;
@@ -91,6 +95,8 @@ public final class SmpConfig {
     // Sends the vanilla withered-heart HUD to session members. Per-connection, so it only
     // takes effect on (re)connect; joining/leaving while online shows a passive warning.
     public static boolean HARDCORE_WITHERED_HEARTS;
+    // Sets the world to day when a session is created. Server wide, not per session.
+    public static boolean HARDCORE_START_AT_DAY;
     // Gives session members a scoreboard-team identity (nametag/tab color).
     // When off, TeamAutoAssign behaves exactly as before.
     public static boolean HARDCORE_TEAM_VISIBILITY;
@@ -146,16 +152,27 @@ public final class SmpConfig {
     public static int     TIMELAPSE_MAX_SKIPS;
     public static int     TIMELAPSE_MAX_FRAMES;
 
+    // ---- Chunk pre-generation ----
+    public static boolean PREGEN_ENABLED;
+    public static int     PREGEN_DISTANCE;
+    public static java.util.List<String> PREGEN_DIMENSIONS;
+
     // ---- Web Panel link (gated on public download) ----
     public static String  PANEL_URL;
     public static String  PANEL_MESSAGE;
     public static boolean PANEL_MESSAGE_ENABLED;
     public static int     PANEL_MESSAGE_INTERVAL; // Seconds
 
+    // Single gate for every public-download surface: the backup feature and the public download
+    // sub-setting must both be on.
+    public static boolean backupPublicAvailable() {
+        return BACKUP_ENABLED && BACKUP_PUBLIC_DOWNLOAD;
+    }
+
     // Single gate for both /smp download and the periodic broadcast: public download must be
-    // on and a URL configured. URL scheme (http/https) is validated at save time in AdminHandler.
+    // available and a URL configured. URL scheme (http/https) is validated at save time in AdminHandler.
     public static boolean panelLinkAvailable() {
-        return BACKUP_PUBLIC_DOWNLOAD && PANEL_URL != null && !PANEL_URL.isBlank();
+        return backupPublicAvailable() && PANEL_URL != null && !PANEL_URL.isBlank();
     }
 
     // panelMessage with {url} substituted for the configured panel URL. Still needs TextUtil.format
@@ -260,6 +277,10 @@ public final class SmpConfig {
         PROTECT_FIRE_CLAIMS = d.protectFireClaims;
         PROTECT_ENDERMAN = d.protectEnderman;
         PROTECT_FARMLAND = d.protectFarmland;
+        KEEP_INV_ENABLED = d.keepInvEnabled;
+        TELEPORT_ENABLED = d.teleportEnabled;
+        DIMS_ENABLED = d.dimsEnabled;
+        BACKUP_ENABLED = d.backupEnabled;
         CLAIMS_ENABLED = d.claimsEnabled;
         SKILLS_ENABLED = d.skillsEnabled;
         CHATFILTER_ENABLED = d.chatfilterEnabled;
@@ -308,6 +329,7 @@ public final class SmpConfig {
         HARDCORE_ENABLED = d.hardcoreEnabled;
         HARDCORE_DEATH_PERCENT = d.hardcoreDeathPercent;
         HARDCORE_WITHERED_HEARTS = d.hardcoreWitheredHearts;
+        HARDCORE_START_AT_DAY    = d.hardcoreStartAtDay;
         HARDCORE_TEAM_VISIBILITY = d.hardcoreTeamVisibility;
         HARDCORE_TEAM_NAME = d.hardcoreTeamName;
         HARDCORE_SIDEBAR_ENABLED = d.hardcoreSidebarEnabled;
@@ -356,6 +378,10 @@ public final class SmpConfig {
         TIMELAPSE_MAX_RENDER_MB    = d.timelapseMaxRenderMb;
         TIMELAPSE_MAX_SKIPS        = d.timelapseMaxSkips;
         TIMELAPSE_MAX_FRAMES       = d.timelapseMaxFrames;
+
+        PREGEN_ENABLED    = d.pregenEnabled;
+        PREGEN_DISTANCE   = d.pregen.distance;
+        PREGEN_DIMENSIONS = d.pregen.dimensions;
         PANEL_URL                    = d.panelUrl;
         PANEL_MESSAGE                = d.panelMessage;
         PANEL_MESSAGE_ENABLED        = d.panelMessageEnabled;

@@ -1264,6 +1264,30 @@ export function IconPulse({ size = 20 }) {
   )
 }
 
+// Question mark, for settings that reveal something the player cannot otherwise see.
+// Vanilla reserves the exclamation for a warning (world_list/warning) and marks the unknown
+// with a question mark (icon/ping_unknown), so this is the glyph that fits World Hints.
+export function IconQuestionMark({ size = 20 }) {
+  const g = '#FDD835', hi = '#FFEC70', d = '#ECC820'
+  return (
+    <svg viewBox="0 0 16 16" width={size} height={size} shapeRendering="crispEdges">
+      {/* Hook: top bar, left shoulder, right side, then a staircase down to the stem */}
+      {px(5, 1, 6, 2, g)}
+      {px(5, 1, 6, 1, hi)}
+      {px(4, 2, 2, 2, g)}
+      {px(10, 2, 2, 3, g)}
+      {px(9, 4, 2, 2, g)}
+      {px(8, 6, 2, 1, g)}
+      {/* Stem, down to the gap above the dot */}
+      {px(7, 7, 2, 3, g)}
+      {px(7, 9, 2, 1, d)}
+      {/* Dot */}
+      {px(7, 11, 2, 2, g)}
+      {px(7, 12, 2, 1, d)}
+    </svg>
+  )
+}
+
 // Blood droplet. Used for the Hardcore leaderboard "Bloodiest run" record so it
 // no longer shares IconSkull with the panel title.
 export function IconBloodDrop({ size = 20 }) {
@@ -1806,6 +1830,105 @@ export function IconX({ size = 11 }) {
       {px(3, 6, 2, 1, 'currentColor')}{px(5, 6, 2, 1, 'currentColor')}
       {px(2, 7, 2, 1, 'currentColor')}{px(6, 7, 2, 1, 'currentColor')}
       {px(1, 8, 2, 1, 'currentColor')}{px(7, 8, 2, 1, 'currentColor')}
+    </svg>
+  )
+}
+
+/**
+ * Chunk pre-generation: a 3x3 field of chunk tiles, generated ones filled in as grass over dirt
+ * and the rest still empty outlines. The staircase edge between them is the silhouette, so it
+ * does not read as another square block icon.
+ */
+export function IconChunkFill({ size = 18 }) {
+  const generated = [[0, 10], [5, 10], [10, 10], [0, 5], [5, 5], [0, 0]]
+  const empty = [[10, 5], [5, 0], [10, 0]]
+  return (
+    <svg viewBox="0 0 16 16" width={size} height={size} shapeRendering="crispEdges">
+      {empty.map(([x, y]) => (
+        <g key={`e${x}-${y}`}>
+          {px(x, y, 4, 1, '#54545F')}
+          {px(x, y + 3, 4, 1, '#54545F')}
+          {px(x, y + 1, 1, 2, '#54545F')}
+          {px(x + 3, y + 1, 1, 2, '#54545F')}
+        </g>
+      ))}
+      {generated.map(([x, y]) => (
+        <g key={`g${x}-${y}`}>
+          {px(x, y, 4, 1, '#7BC142')}
+          {px(x, y + 1, 4, 2, '#8B5A2B')}
+          {px(x, y + 3, 4, 1, '#6B4423')}
+        </g>
+      ))}
+    </svg>
+  )
+}
+
+/**
+ * Anti-Xray: a stone block with an ore vein showing through it in a dimmed, broken-up teal, so it
+ * reads as ore that is there but not visible. Deliberately unlike IconChunkFill (a tile field) and
+ * IconGrassBlock (a solid block face), which are the two other block-shaped icons.
+ */
+export function IconOreVeiled({ size = 18 }) {
+  const vein = [[4, 5], [7, 4], [6, 8], [10, 7], [9, 11], [4, 10]]
+  const glint = [[4, 5], [10, 7], [6, 8]]
+  return (
+    <svg viewBox="0 0 16 16" width={size} height={size} shapeRendering="crispEdges">
+      {px(2, 2, 12, 12, '#6E6E78')}
+      {px(2, 2, 12, 1, '#8A8A96')}
+      {px(2, 3, 1, 10, '#7C7C88')}
+      {px(13, 3, 1, 10, '#565660')}
+      {px(2, 13, 12, 1, '#4A4A54')}
+      {vein.map(([x, y]) => px(x, y, 2, 2, '#3E7F86'))}
+      {glint.map(([x, y]) => <g key={`gl${x}-${y}`}>{px(x, y, 1, 1, '#5FD0D8')}</g>)}
+    </svg>
+  )
+}
+
+/**
+ * Keep Inventory: a padlock sitting on a row of inventory slots, so it reads as "your slots stay
+ * shut". The slot-grid-plus-lock silhouette is not used anywhere else; IconBundle and IconChest are
+ * the other two carry-your-stuff icons and both are containers with no grid.
+ */
+export function IconLockedSlots({ size = 18 }) {
+  const slot = '#6E6E7A', slotTop = '#8A8A96'
+  return (
+    <svg viewBox="0 0 16 16" width={size} height={size} shapeRendering="crispEdges">
+      {/* shackle */}
+      {px(6, 0, 4, 1, '#B0B0BC')}
+      {px(5, 1, 1, 2, '#B0B0BC')}
+      {px(10, 1, 1, 2, '#B0B0BC')}
+      {/* lock body */}
+      {px(4, 3, 8, 4, '#C8A83A')}
+      {px(4, 3, 8, 1, '#E0C455')}
+      {px(7, 4, 2, 2, '#5A4A10')}
+      {/* slot bar */}
+      {px(1, 8, 14, 7, '#3A3A44')}
+      {px(2, 9, 12, 5, '#20202A')}
+      {[3, 7, 11].map(x => <g key={`s${x}`}>{px(x, 10, 3, 3, slot)}{px(x, 10, 3, 1, slotTop)}</g>)}
+    </svg>
+  )
+}
+
+/**
+ * Welcome Sidebar: a screen with a titled panel docked against its right edge, which is exactly
+ * where the sidebar appears in game. Deliberately unlike IconScoreboard, which is a filled panel
+ * with score numbers and fills the whole frame.
+ */
+export function IconSidebarPanel({ size = 18 }) {
+  return (
+    <svg viewBox="0 0 16 16" width={size} height={size} shapeRendering="crispEdges">
+      {/* screen */}
+      {px(0, 2, 16, 12, '#4A4A56')}
+      {px(1, 3, 14, 10, '#2A3A2A')}
+      {/* a scrap of world on the left, so the docked panel reads as an overlay */}
+      {px(2, 4, 2, 2, '#C8A83A')}
+      {px(1, 11, 7, 2, '#3A5A2A')}
+      {/* docked sidebar */}
+      {px(9, 3, 6, 10, '#3E4A6E')}
+      {px(9, 3, 6, 2, '#C8A83A')}
+      {px(10, 6, 4, 1, '#C8C8D2')}
+      {px(10, 8, 3, 1, '#C8C8D2')}
+      {px(10, 10, 4, 1, '#C8C8D2')}
     </svg>
   )
 }

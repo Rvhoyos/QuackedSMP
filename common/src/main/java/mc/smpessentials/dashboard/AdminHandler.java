@@ -187,9 +187,14 @@ public final class AdminHandler {
         sb.append(String.format("\"protect_enderman\":%b,", SmpConfig.PROTECT_ENDERMAN));
         sb.append(String.format("\"protect_farmland\":%b,", SmpConfig.PROTECT_FARMLAND));
         // Feature toggles
+        sb.append(String.format("\"keep_inv_enabled\":%b,", SmpConfig.KEEP_INV_ENABLED));
+        sb.append(String.format("\"teleport_enabled\":%b,", SmpConfig.TELEPORT_ENABLED));
+        sb.append(String.format("\"dims_enabled\":%b,", SmpConfig.DIMS_ENABLED));
+        sb.append(String.format("\"backup_enabled\":%b,", SmpConfig.BACKUP_ENABLED));
         sb.append(String.format("\"claims_enabled\":%b,", SmpConfig.CLAIMS_ENABLED));
         sb.append(String.format("\"skills_enabled\":%b,", SmpConfig.SKILLS_ENABLED));
         sb.append(String.format("\"chatfilter_enabled\":%b,", SmpConfig.CHATFILTER_ENABLED));
+        sb.append(String.format("\"antixray_enabled\":%b,", SmpConfig.ANTIXRAY_ENABLED));
         sb.append(String.format("\"shops_enabled\":%b,", SmpConfig.SHOPS_ENABLED));
         sb.append(String.format("\"economy_enabled\":%b,", SmpConfig.ECONOMY_ENABLED));
         sb.append(String.format("\"rtp_enabled\":%b,", SmpConfig.RTP_ENABLED));
@@ -209,6 +214,9 @@ public final class AdminHandler {
         sb.append(String.format("\"timelapse_max_render_mb\":%d,", SmpConfig.TIMELAPSE_MAX_RENDER_MB));
         sb.append(String.format("\"timelapse_max_skips\":%d,", SmpConfig.TIMELAPSE_MAX_SKIPS));
         sb.append(String.format("\"timelapse_max_frames\":%d,", SmpConfig.TIMELAPSE_MAX_FRAMES));
+        // Chunk pre-generation. The area itself is edited in the Pregen panel, which needs live
+        // server data this flat payload cannot carry; only the enable flag belongs here.
+        sb.append(String.format("\"pregen_enabled\":%b,", SmpConfig.PREGEN_ENABLED));
         // Web panel link (gated on public download)
         sb.append(String.format("\"panel_url\":\"%s\",", jsonEscape(SmpConfig.PANEL_URL)));
         sb.append(String.format("\"panel_message\":\"%s\",", jsonEscape(SmpConfig.PANEL_MESSAGE)));
@@ -217,6 +225,7 @@ public final class AdminHandler {
         // Hardcore
         sb.append(String.format("\"hardcore_enabled\":%b,", SmpConfig.HARDCORE_ENABLED));
         sb.append(String.format("\"hardcore_death_percent\":%d,", SmpConfig.HARDCORE_DEATH_PERCENT));
+        sb.append(String.format("\"hardcore_start_at_day\":%b,", SmpConfig.HARDCORE_START_AT_DAY));
         sb.append(String.format("\"hardcore_team_visibility\":%b,", SmpConfig.HARDCORE_TEAM_VISIBILITY));
         sb.append(String.format("\"hardcore_sidebar_enabled\":%b,", SmpConfig.HARDCORE_SIDEBAR_ENABLED));
         sb.append(String.format("\"hardcore_sidebar_interval_seconds\":%d,", SmpConfig.HARDCORE_SIDEBAR_INTERVAL_SECONDS));
@@ -314,7 +323,8 @@ public final class AdminHandler {
     }
 
     // POST /api/admin/config. Applies a partial config patch and hot-reloads. Port changes require restart.
-    public static String handleConfigPost(String method, Map<String, String> headers, String body) {
+    public static String handleConfigPost(String method, Map<String, String> headers, String body,
+                                          MinecraftServer server) {
         if (!"POST".equals(method))             return err(405, "Method not allowed");
         if (!SmpConfig.ADMIN_ENABLED)           return err(403, "Admin panel disabled");
         if (!AdminAuth.isAuthorized(headers))   return err(403, "Unauthorized");
@@ -336,9 +346,14 @@ public final class AdminHandler {
             if (patch.has("protect_enderman"))     { SmpConfig.PROTECT_ENDERMAN      = patch.get("protect_enderman").getAsBoolean();     changed++; }
             if (patch.has("protect_farmland"))     { SmpConfig.PROTECT_FARMLAND      = patch.get("protect_farmland").getAsBoolean();     changed++; }
             // Feature toggles
+            if (patch.has("keep_inv_enabled"))  { SmpConfig.KEEP_INV_ENABLED  = patch.get("keep_inv_enabled").getAsBoolean();  changed++; }
+            if (patch.has("teleport_enabled"))  { SmpConfig.TELEPORT_ENABLED  = patch.get("teleport_enabled").getAsBoolean();  changed++; }
+            if (patch.has("dims_enabled"))      { SmpConfig.DIMS_ENABLED      = patch.get("dims_enabled").getAsBoolean();      changed++; }
+            if (patch.has("backup_enabled"))    { SmpConfig.BACKUP_ENABLED    = patch.get("backup_enabled").getAsBoolean();    changed++; }
             if (patch.has("claims_enabled"))     { SmpConfig.CLAIMS_ENABLED     = patch.get("claims_enabled").getAsBoolean();     changed++; }
             if (patch.has("skills_enabled"))     { SmpConfig.SKILLS_ENABLED     = patch.get("skills_enabled").getAsBoolean();     changed++; }
             if (patch.has("chatfilter_enabled")) { SmpConfig.CHATFILTER_ENABLED = patch.get("chatfilter_enabled").getAsBoolean(); changed++; }
+            if (patch.has("antixray_enabled"))   { SmpConfig.ANTIXRAY_ENABLED   = patch.get("antixray_enabled").getAsBoolean();   changed++; }
             if (patch.has("shops_enabled"))     { SmpConfig.SHOPS_ENABLED     = patch.get("shops_enabled").getAsBoolean();     changed++; }
             if (patch.has("economy_enabled"))   { SmpConfig.ECONOMY_ENABLED   = patch.get("economy_enabled").getAsBoolean();   changed++; }
             if (patch.has("rtp_enabled"))       { SmpConfig.RTP_ENABLED       = patch.get("rtp_enabled").getAsBoolean();       changed++; }
@@ -357,6 +372,16 @@ public final class AdminHandler {
             if (patch.has("timelapse_max_render_mb"))    { SmpConfig.TIMELAPSE_MAX_RENDER_MB    = Math.max(0, patch.get("timelapse_max_render_mb").getAsInt());        changed++; }
             if (patch.has("timelapse_max_skips"))        { SmpConfig.TIMELAPSE_MAX_SKIPS        = Math.max(0, patch.get("timelapse_max_skips").getAsInt());            changed++; }
             if (patch.has("timelapse_max_frames"))       { SmpConfig.TIMELAPSE_MAX_FRAMES       = Math.max(0, patch.get("timelapse_max_frames").getAsInt());         changed++; }
+            // Chunk pre-generation. Turning it on while a regen is queued would have the next
+            // shutdown delete wilderness the following startup then rebuilds.
+            if (patch.has("pregen_enabled")) {
+                boolean on = patch.get("pregen_enabled").getAsBoolean();
+                if (on && mc.smpessentials.regen.ChunkRegenManager.isPending(server)) {
+                    return err(409, "A wilderness regen is queued. Cancel it before enabling pre-generation.");
+                }
+                SmpConfig.PREGEN_ENABLED = on;
+                changed++;
+            }
             // Web panel link
             if (patch.has("panel_url")) {
                 String url = patch.get("panel_url").getAsString().trim();
@@ -382,6 +407,7 @@ public final class AdminHandler {
             // Hardcore
             if (patch.has("hardcore_enabled"))        { SmpConfig.HARDCORE_ENABLED        = patch.get("hardcore_enabled").getAsBoolean();       changed++; }
             if (patch.has("hardcore_death_percent"))   { SmpConfig.HARDCORE_DEATH_PERCENT   = patch.get("hardcore_death_percent").getAsInt();     changed++; }
+            if (patch.has("hardcore_start_at_day"))     { SmpConfig.HARDCORE_START_AT_DAY     = patch.get("hardcore_start_at_day").getAsBoolean();     changed++; }
             if (patch.has("hardcore_team_visibility")) { SmpConfig.HARDCORE_TEAM_VISIBILITY = patch.get("hardcore_team_visibility").getAsBoolean(); changed++; }
             if (patch.has("hardcore_sidebar_enabled")) { SmpConfig.HARDCORE_SIDEBAR_ENABLED = patch.get("hardcore_sidebar_enabled").getAsBoolean(); changed++; }
             if (patch.has("hardcore_sidebar_interval_seconds")) { SmpConfig.HARDCORE_SIDEBAR_INTERVAL_SECONDS = Math.max(10, patch.get("hardcore_sidebar_interval_seconds").getAsInt()); changed++; }
@@ -484,6 +510,11 @@ public final class AdminHandler {
 
             if (changed > 0) {
                 ConfigIO.save();
+                // Keep Inventory owns the keep_inventory gamerule while it is on. GameRules.set
+                // notifies the server, so the write has to leave this HTTP thread.
+                if (patch.has("keep_inv_enabled") && server != null) {
+                    server.execute(() -> mc.smpessentials.keepinv.KeepInvSavedData.syncGamerule(server));
+                }
                 // Votifier: restart the TCP listener so the new enabled/port/token values take effect immediately.
                 if (patch.has("votifier_enabled") || patch.has("votifier_port") || patch.has("votifier_token")) {
                     mc.smpessentials.votifier.VotifierListener.restart();
@@ -522,7 +553,7 @@ public final class AdminHandler {
             String     name = req.get("name").getAsString().strip();
             String     uuid = req.get("uuid").getAsString().strip();
             int        lvl  = req.get("level").getAsInt();
-            if (lvl < 1 || lvl > 4) return err(400, "Level must be 1–4");
+            if (lvl < 1 || lvl > 4) return err(400, "Level must be 1 to 4");
 
             // Write ops.json synchronously on the HTTP thread
             Path opsPath = server.getFile("ops.json");
@@ -660,6 +691,7 @@ public final class AdminHandler {
                                          MinecraftServer server) {
         if (!"POST".equals(method))             return err(405, "Method not allowed");
         if (!SmpConfig.ADMIN_ENABLED)           return err(403, "Admin panel disabled");
+        if (!SmpConfig.DIMS_ENABLED)            return err(403, "Custom dimensions disabled");
         if (!AdminAuth.isAuthorized(headers))   return err(403, "Unauthorized");
         if (server == null)                     return err(503, "Server not ready");
         try {
@@ -705,6 +737,7 @@ public final class AdminHandler {
                                          MinecraftServer server) {
         if (!"POST".equals(method))             return err(405, "Method not allowed");
         if (!SmpConfig.ADMIN_ENABLED)           return err(403, "Admin panel disabled");
+        if (!SmpConfig.DIMS_ENABLED)            return err(403, "Custom dimensions disabled");
         if (!AdminAuth.isAuthorized(headers))   return err(403, "Unauthorized");
         if (server == null)                     return err(503, "Server not ready");
         try {
@@ -1076,7 +1109,7 @@ public final class AdminHandler {
             SkillType skill = SkillType.valueOf(req.get("skill").getAsString().toUpperCase(Locale.ROOT));
             int level       = req.get("level").getAsInt();
             if (level < 0 || level > SkillManager.MAX_LEVEL)
-                return err(400, "Level must be 0–" + SkillManager.MAX_LEVEL);
+                return err(400, "Level must be 0 to " + SkillManager.MAX_LEVEL);
             long xp = SkillManager.totalXpForLevel(level);
 
             CompletableFuture<String> future = new CompletableFuture<>();
@@ -1590,6 +1623,11 @@ public final class AdminHandler {
         }
 
         if ("POST".equals(method)) {
+            // Regen destroys wilderness chunks and pregen builds them, so a server that ran both
+            // would spend every restart undoing the last one.
+            if (SmpConfig.PREGEN_ENABLED) {
+                return err(409, "Chunk pre-generation is enabled. Turn it off before queueing a regen.");
+            }
             try {
                 mc.smpessentials.regen.ChunkRegenManager.queueRegen(server);
                 return "{\"ok\":true}";
@@ -2179,8 +2217,11 @@ public final class AdminHandler {
         return Integer.parseInt(result.substring(7, 10));
     }
 
+    // "__HTTP_" plus a 3-digit status plus "__" is 12 characters, the same 7 and 10 errStatus
+    // indexes into. Cutting 13 ate the opening brace and made every error body invalid JSON, so
+    // the panel's r.json() threw and showed its own fallback text instead of the server's reason.
     static String errBody(String result) {
-        return result.substring(13);
+        return result.substring(12);
     }
 
     private static String jsonStrArr(java.util.List<String> list) {

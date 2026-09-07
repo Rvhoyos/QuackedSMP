@@ -378,6 +378,8 @@ public class ConfigGui {
             // to Shift-Click)
             if (clickType == net.minecraft.world.inventory.ContainerInput.QUICK_MOVE) {
                 ConfigIO.resetToFactory();
+                mc.smpessentials.keepinv.KeepInvSavedData.syncGamerule(
+                        ((net.minecraft.server.level.ServerLevel) player.level()).getServer());
                 player.closeContainer();
                 player.sendSystemMessage(Component.literal("\u00a7aConfiguration reset to factory defaults!"));
                 return;
@@ -403,6 +405,8 @@ public class ConfigGui {
 
         if (reload) {
             SmpConfig.load();
+            mc.smpessentials.keepinv.KeepInvSavedData.syncGamerule(
+                    ((net.minecraft.server.level.ServerLevel) player.level()).getServer());
             player.closeContainer();
             player.sendSystemMessage(Component.literal("\u00a7eConfiguration reloaded from disk (changes discarded)."));
         }

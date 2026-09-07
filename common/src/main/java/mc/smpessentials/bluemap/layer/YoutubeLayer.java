@@ -50,9 +50,11 @@ public final class YoutubeLayer implements MarkerLayer {
             String href = MarkerHtml.escape(e.url());
             set.put("youtube_" + idx++, Maps.ranged(POIMarker.builder())
                     .label(e.label())
-                    .detail("<div style=\"font-family:sans-serif;\"><b>" + MarkerHtml.escape(e.label()) + "</b>"
-                            + "<br><a href=\"" + href + "\" target=\"_blank\" rel=\"noopener noreferrer\""
-                            + " style=\"color:#C4302B;font-weight:bold;\">&#9654; Watch on YouTube</a></div>")
+                    .detail("<div class=\"qs-popup\">"
+                            + "<span class=\"qs-popup-title\">" + MarkerHtml.escape(e.label()) + "</span>"
+                            + "<a class=\"qs-button\" href=\"" + href + "\""
+                            + " target=\"_blank\" rel=\"noopener noreferrer\">"
+                            + "Watch on YouTube</a></div>")
                     .position(e.x(), e.y() + 1.0, e.z())
                     .icon(iconUrl, 32, 32)
                     .build());

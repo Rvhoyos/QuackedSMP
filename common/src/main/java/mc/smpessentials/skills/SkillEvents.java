@@ -1,6 +1,7 @@
 package mc.smpessentials.skills;
 
 import mc.smpessentials.SmpUtilsMod;
+import mc.smpessentials.claims.ClaimAccessCache;
 import mc.smpessentials.config.SmpConfig;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
@@ -19,12 +20,13 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
-import net.minecraft.world.entity.monster.Monster;
+import net.minecraft.world.entity.monster.Enemy;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.*;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.*;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.DoubleBlockHalf;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -36,10 +38,20 @@ import java.util.UUID;
  */
 public final class SkillEvents {
 
-    // Track distance for Agility
-    private static final Map<UUID, BlockPos> lastPositions = new HashMap<>();
-    // Track distance accumulator for Agility (fractional blocks)
-    private static final Map<UUID, Double> distanceAccum = new HashMap<>();
+    /** Per-player state that only lives while the player is online. Cleared on logout. */
+    private static final class TickState {
+        BlockPos lastPos;
+        double walkedBlocks;
+        boolean dashGesture;
+        int heldSlot = -1;
+        Item heldItem;
+        // Last readiness the cooldown hint reported, so it can re-announce when either one flips.
+        boolean hintAbilityReady;
+        boolean hintInfusionReady;
+    }
+
+    private static final Map<UUID, TickState> tickStates = new HashMap<>();
+
     // Ticks since last age verify prompt per player (for periodic reprompt)
     private static final Map<UUID, Integer> agePromptTicks = new HashMap<>();
     private static final int AGE_REPROMPT_INTERVAL = 6000; // 5 minutes
@@ -99,9 +111,10 @@ public final class SkillEvents {
             }
 
             // ---- Farming (Crops) ----
-            else if (state.is(BlockTags.CROPS) && isMatureCrop(state)) {
-                awardXp(sp, data, SkillType.FARMING, 5);
-                applyAutoReplant(sp, data, state, pos, sl);
+            else if (isHarvestedCrop(state)) {
+                awardXp(sp, data, SkillType.FARMING, FARMING_XP);
+                if (isReplantable(state))
+                    applyAutoReplant(sp, data, state, pos, sl);
             }
         } catch (Exception e) {
             SmpUtilsMod.LOGGER.error("Error in SkillEvents block break handler", e);
@@ -126,7 +139,10 @@ public final class SkillEvents {
             ActiveAbilities.deactivateZoom(sp.getUUID(), sp);
         }
 
-        if (!(entity instanceof Monster mob))
+        // Enemy, not Monster: slimes and magma cubes are AgeableMob, ghasts and phantoms and the
+        // ender dragon are plain Mob, shulkers are AbstractGolem and hoglins are Animal. Monster
+        // implements Enemy, so this is a strict widening.
+        if (!(entity instanceof Enemy))
             return;
 
         Entity attacker = source.getEntity();
@@ -136,12 +152,12 @@ public final class SkillEvents {
         ServerLevel sl = (ServerLevel) sp.level();
         SkillData data = SkillData.get(sl);
 
-        double baseXp = mobXp(mob);
+        double baseXp = mobXp(entity);
 
         // Determine melee vs archery from damage source
         if (!source.isDirect()) {
             // Projectile = Archery
-            double dist = sp.distanceTo(mob);
+            double dist = sp.distanceTo(entity);
             double bonus = dist > 30 ? 2.0 : 1.0; // distance bonus
             awardXp(sp, data, SkillType.ARCHERY, baseXp * bonus);
 
@@ -149,7 +165,7 @@ public final class SkillEvents {
             int archLevel = data.getLevel(sp.getUUID(), SkillType.ARCHERY);
             double arrowChance = archLevel * 0.005; // 0.5% per level, 50% at Lv.100
             if (sp.getRandom().nextDouble() < arrowChance) {
-                Block.popResource(sl, mob.blockPosition(), new ItemStack(Items.ARROW, 1));
+                Block.popResource(sl, entity.blockPosition(), new ItemStack(Items.ARROW, 1));
                 sp.sendSystemMessage(Component.literal("\u00a76\u25c6 Arrow Recovered!"), true);
             }
         } else {
@@ -257,8 +273,8 @@ public final class SkillEvents {
     /**
      * Called every server tick for each player. Handles Agility XP accumulation
      * from horizontal movement (1 XP per 100 blocks walked), Dash trigger detection
-     * (sprint + sneak while airborne), and Scout Zoom per-tick updates (glow cone
-     * application and expiry check).
+     * (sprint + sneak while airborne), the held item cooldown hint, and Scout Zoom
+     * per-tick updates (glow cone application and expiry check).
      */
     public static void onPlayerTick(Player player) {
         if (!SmpConfig.SKILLS_ENABLED) return;
@@ -268,44 +284,108 @@ public final class SkillEvents {
             return;
 
         UUID uuid = sp.getUUID();
-        BlockPos current = sp.blockPosition();
-        BlockPos last = lastPositions.get(uuid);
+        ServerLevel sl = (ServerLevel) sp.level();
+        TickState state = tickStates.computeIfAbsent(uuid, id -> new TickState());
 
-        if (last != null && !sp.isPassenger() && !sp.isFallFlying()) {
-            double dx = current.getX() - last.getX();
-            double dz = current.getZ() - last.getZ();
+        BlockPos current = sp.blockPosition();
+        if (state.lastPos != null && !sp.isPassenger() && !sp.isFallFlying()) {
+            double dx = current.getX() - state.lastPos.getX();
+            double dz = current.getZ() - state.lastPos.getZ();
             double dist = Math.sqrt(dx * dx + dz * dz);
 
             if (dist > 0 && dist < 10) { // ignore teleports
-                double accum = distanceAccum.getOrDefault(uuid, 0.0) + dist;
-                ServerLevel sl = (ServerLevel) sp.level();
-
-                if (accum >= 100) { // 100 blocks walked = 1 XP
-                    SkillData data = SkillData.get(sl);
-                    int chunks = (int) (accum / 100);
-                    awardXp(sp, data, SkillType.AGILITY, chunks);
-                    accum -= chunks * 100;
+                state.walkedBlocks += dist;
+                if (state.walkedBlocks >= 100) { // 100 blocks walked = 1 XP
+                    int chunks = (int) (state.walkedBlocks / 100);
+                    awardXp(sp, SkillData.get(sl), SkillType.AGILITY, chunks);
+                    state.walkedBlocks -= chunks * 100;
                 }
-                distanceAccum.put(uuid, accum);
             }
         }
-        lastPositions.put(uuid, current);
+        state.lastPos = current;
 
         // Agility Dash Trigger: Sprint + Sneak while in air (not on ground).
         // Sprint + Sneak is a unique combo (normally stops sprint).
-        if (sp.isSprinting() && sp.isShiftKeyDown() && !sp.onGround()) {
-            ServerLevel sl = (ServerLevel) sp.level();
-            mc.smpessentials.skills.ActiveAbilities.tryActivateDash(sp, SkillData.get(sl), uuid);
+        // Fired on the rising edge only. The gesture holds for as long as the player stays
+        // airborne, so testing it every tick would re-announce the cooldown 20 times a second,
+        // starting on the tick straight after a successful dash.
+        boolean dashGesture = sp.isSprinting() && sp.isShiftKeyDown() && !sp.onGround();
+        if (dashGesture && !state.dashGesture) {
+            ActiveAbilities.tryActivateDash(sp, SkillData.get(sl), uuid);
         }
+        state.dashGesture = dashGesture;
+
+        tickCooldownHint(sp, sl, state);
 
         // Scout Zoom tick: update glow and check expiry
-        if (mc.smpessentials.skills.ActiveAbilities.isZoomActive(uuid)) {
-            ServerLevel sl = (ServerLevel) sp.level();
-            mc.smpessentials.skills.ActiveAbilities.onZoomTick(sp, SkillData.get(sl));
+        if (ActiveAbilities.isZoomActive(uuid)) {
+            ActiveAbilities.onZoomTick(sp, SkillData.get(sl));
         }
 
         // Age verify periodic reprompt
         tickAgeVerify(sp, uuid);
+    }
+
+    /**
+     * Shows what the item in hand can trigger and whether it is ready, because a player who cannot
+     * see a cooldown has no way to tell whether sneak + Q will fire an ability or just throw the
+     * item on the floor.
+     *
+     * Sent on a swap, and again whenever readiness itself flips, so using an ability replaces the
+     * stale "Ready" line with its cooldown and finishing one announces itself. Readiness only flips
+     * twice per cooldown, so this cannot spam. Deliberately NOT re-sent as the remaining time ticks
+     * down, which would overwrite every other action bar message once a second.
+     *
+     * The swap is keyed on the slot and the item rather than the stack, since durability loss
+     * changes the stack on every hit.
+     */
+    private static void tickCooldownHint(ServerPlayer sp, ServerLevel level, TickState state) {
+        int slot = sp.getInventory().getSelectedSlot();
+        ItemStack held = sp.getMainHandItem();
+        SkillData data = SkillData.get(level);
+        UUID uuid = sp.getUUID();
+
+        SkillType ability = ActiveAbilities.abilityFor(held);
+        boolean showAbility = ability != null && isAbilityUnlocked(data, uuid, ability);
+        // Arcane Infusion rides on any damaged item, so it can share the line with another ability.
+        boolean showInfusion = held.isDamageableItem() && held.isDamaged()
+                && isAbilityUnlocked(data, uuid, SkillType.ENCHANTING);
+
+        boolean abilityReady = showAbility && data.isAbilityReady(uuid, ability);
+        boolean infusionReady = showInfusion && data.isAbilityReady(uuid, SkillType.ENCHANTING);
+
+        boolean swapped = slot != state.heldSlot || held.getItem() != state.heldItem;
+        boolean flipped = abilityReady != state.hintAbilityReady
+                || infusionReady != state.hintInfusionReady;
+        state.heldSlot = slot;
+        state.heldItem = held.getItem();
+        state.hintAbilityReady = abilityReady;
+        state.hintInfusionReady = infusionReady;
+
+        if (!swapped && !flipped)
+            return;
+
+        StringBuilder hint = new StringBuilder();
+        if (showAbility)
+            appendCooldown(hint, abilityName(ability), abilityReady,
+                    data.getCooldownRemaining(uuid, ability));
+        if (showInfusion)
+            appendCooldown(hint, abilityName(SkillType.ENCHANTING), infusionReady,
+                    data.getCooldownRemaining(uuid, SkillType.ENCHANTING));
+
+        if (!hint.isEmpty())
+            sp.sendSystemMessage(Component.literal(hint.toString()), true);
+    }
+
+    private static boolean isAbilityUnlocked(SkillData data, UUID uuid, SkillType skill) {
+        return data.getLevel(uuid, skill) >= SmpConfig.getAbilityUnlockLevel(skill);
+    }
+
+    private static void appendCooldown(StringBuilder hint, String name, boolean ready, long remaining) {
+        if (!hint.isEmpty())
+            hint.append("\u00a78 | ");
+        hint.append("\u00a7e").append(name).append("\u00a77: ");
+        hint.append(ready ? "\u00a7aReady" : "\u00a7c" + ActiveAbilities.formatTime(remaining));
     }
 
     /**
@@ -361,14 +441,25 @@ public final class SkillEvents {
      */
     public static void onPlayerLoggedOut(Player player) {
         UUID uuid = player.getUUID();
-        lastPositions.remove(uuid);
-        distanceAccum.remove(uuid);
+        tickStates.remove(uuid);
         agePromptTicks.remove(uuid);
         mc.smpessentials.skills.ActiveAbilities.clearTreeFeller(uuid);
         // Restore offhand and discard injected spyglass on disconnect so the
         // temporary item is not persisted to the player's save file.
         if (player instanceof ServerPlayer sp)
             mc.smpessentials.skills.ActiveAbilities.deactivateZoom(uuid, sp);
+    }
+
+    /**
+     * Called by {@link mc.smpessentials.mixin.BerryPickMixin} once a berry pick has actually
+     * happened. Berries are picked by right-clicking rather than broken, so they never reach
+     * {@link #onBlockBreak}, and the pick is confirmed at the block's own return value rather than
+     * guessed from a right-click event that also fires when the click places a block instead.
+     */
+    public static void onBerriesPicked(ServerPlayer sp) {
+        if (!SmpConfig.SKILLS_ENABLED) return;
+        ServerLevel sl = (ServerLevel) sp.level();
+        awardXp(sp, SkillData.get(sl), SkillType.FARMING, FARMING_XP);
     }
 
     // ========== FISHING ==========
@@ -573,13 +664,17 @@ public final class SkillEvents {
         if (wcLevel < 20)
             return;
 
+        // The cube reaches past the log the player actually hit, so it can cross into a neighbouring
+        // claim or the spawn radius that the break event never saw.
+        ClaimAccessCache claims = new ClaimAccessCache(level, sp);
+
         int cleared = 0;
         for (int dx = -3; dx <= 3; dx++) {
             for (int dy = -3; dy <= 3; dy++) {
                 for (int dz = -3; dz <= 3; dz++) {
                     BlockPos leafPos = pos.offset(dx, dy, dz);
                     BlockState leafState = level.getBlockState(leafPos);
-                    if (leafState.is(BlockTags.LEAVES)) {
+                    if (leafState.is(BlockTags.LEAVES) && claims.canModify(leafPos)) {
                         level.destroyBlock(leafPos, true, sp);
                         cleared++;
                     }
@@ -652,13 +747,43 @@ public final class SkillEvents {
                 || b == Blocks.SNOW_BLOCK || b == Blocks.SNOW;
     }
 
-    private static boolean isMatureCrop(BlockState state) {
-        if (state.getBlock() instanceof CropBlock crop) {
-            return crop.isMaxAge(state);
-        }
-        // Melons and Pumpkins are always "mature" when present
+    // Farming XP per harvest, shared by the break path and the berry pick path.
+    private static final int FARMING_XP = 5;
+
+    /**
+     * True when breaking this block is a harvest.
+     *
+     * Deliberately not gated on BlockTags.CROPS: that tag holds the melon and pumpkin STEMS rather
+     * than the fruit blocks a player actually breaks, and it holds nothing for nether wart, cocoa,
+     * sugar cane, cactus or bamboo.
+     */
+    private static boolean isHarvestedCrop(BlockState state) {
         Block b = state.getBlock();
-        return b == Blocks.MELON || b == Blocks.PUMPKIN;
+        if (b instanceof CropBlock crop)
+            return crop.isMaxAge(state);
+        if (b instanceof PitcherCropBlock)
+            // Both halves carry AGE, so keying on the lower one keeps one plant to one award.
+            return state.getValue(DoublePlantBlock.HALF) == DoubleBlockHalf.LOWER
+                    && state.getValue(PitcherCropBlock.AGE) == PitcherCropBlock.MAX_AGE;
+        if (b instanceof NetherWartBlock)
+            return state.getValue(NetherWartBlock.AGE) == NetherWartBlock.MAX_AGE;
+        if (b instanceof CocoaBlock)
+            return state.getValue(CocoaBlock.AGE) == CocoaBlock.MAX_AGE;
+        // No ripeness to test: every one of these is harvested by breaking a grown segment.
+        return b == Blocks.MELON || b == Blocks.PUMPKIN
+                || b instanceof SugarCaneBlock
+                || b instanceof CactusBlock
+                || b instanceof BambooStalkBlock;
+    }
+
+    /**
+     * True when the crop grows back in place from its own default state. Narrower than
+     * {@link #isHarvestedCrop} because {@link #applyAutoReplant} sets defaultBlockState(), which
+     * would plant a melon block or a cane segment into thin air.
+     */
+    private static boolean isReplantable(BlockState state) {
+        Block b = state.getBlock();
+        return b instanceof CropBlock || b instanceof NetherWartBlock;
     }
 
     private static double mobXp(LivingEntity mob) {
