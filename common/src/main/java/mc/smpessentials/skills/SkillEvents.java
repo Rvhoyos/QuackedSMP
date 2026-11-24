@@ -581,28 +581,28 @@ public final class SkillEvents {
     private static void updateParentBuffs(ServerPlayer player, SkillData data) {
         Map<SkillType, Double> xpMap = data.getTypedXpMap(player.getUUID());
 
-        // Industrial → Speed buff (e.g. 0.20 = 20% speed at max)
+        // Industrial: Speed buff (e.g. 0.20 = 20% speed at max)
         int industrialLevel = SkillManager.parentLevel(SkillType.Category.INDUSTRIAL, xpMap);
         double speedBonus = SkillManager.perkScale(industrialLevel, SmpConfig.CAP_INDUSTRIAL_SPEED);
         applyModifier(player, Attributes.MOVEMENT_SPEED,
                 "quackedsmp", "industrial_speed", speedBonus,
                 AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
 
-        // Nature → Health buff: CAP_NATURE_HEALTH is in hearts; * 2 converts to HP units
+        // Nature: Health buff: CAP_NATURE_HEALTH is in hearts; * 2 converts to HP units
         int natureLevel = SkillManager.parentLevel(SkillType.Category.NATURE, xpMap);
         double healthBonus = SkillManager.perkScale(natureLevel, SmpConfig.CAP_NATURE_HEALTH) * 2;
         applyModifier(player, Attributes.MAX_HEALTH,
                 "quackedsmp", "nature_health", healthBonus,
                 AttributeModifier.Operation.ADD_VALUE);
 
-        // Combat → Damage buff (e.g. 0.15 = 15% damage at max)
+        // Combat: Damage buff (e.g. 0.15 = 15% damage at max)
         int combatLevel = SkillManager.parentLevel(SkillType.Category.COMBAT, xpMap);
         double damageBonus = SkillManager.perkScale(combatLevel, SmpConfig.CAP_COMBAT_DAMAGE);
         applyModifier(player, Attributes.ATTACK_DAMAGE,
                 "quackedsmp", "combat_damage", damageBonus,
                 AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
 
-        // Defense sub-skill → Armor bonus (flat armor points)
+        // Defense sub-skill: Armor bonus (flat armor points)
         int defenseLevel = data.getLevel(player.getUUID(), SkillType.DEFENSE);
         double armorBonus = SkillManager.perkScale(defenseLevel, SmpConfig.CAP_DEFENSE_ARMOR);
         applyModifier(player, Attributes.ARMOR,
@@ -836,7 +836,7 @@ public final class SkillEvents {
             // Archery: also announce Arrow Recovery passive
             if (skill == SkillType.ARCHERY) {
                 player.sendSystemMessage(Component.literal(
-                        "\u00a77Passive: \u00a7eArrow Recovery \u00a77\u2014 projectile kills have a "
+                        "\u00a77Passive: \u00a7eArrow Recovery\u00a77: projectile kills have a "
                         + "chance to return an arrow (0.5%/level)"));
             }
         } else if (newLevel < unlockLevel) {
@@ -850,7 +850,7 @@ public final class SkillEvents {
             int zoomUnlock = SmpConfig.getAbilityUnlockLevel("archery_zoom");
             if (newLevel >= zoomUnlock && oldLevel < zoomUnlock) {
                 announceAbilityUnlock(player, "Scout Zoom",
-                        "Sneak + Swap Offhand (F) with empty hands \u2014 spyglass zoom + enemy glow", false);
+                        "Sneak + Swap Offhand (F) with empty hands for spyglass zoom + enemy glow", false);
             } else if (newLevel < zoomUnlock) {
                 int left = zoomUnlock - newLevel;
                 announceAbilityProgress(player, "Scout Zoom",
@@ -876,7 +876,7 @@ public final class SkillEvents {
                 ? "\u00a7a\u00a7l\u2605 Passive Unlocked! \u00a7r"
                 : "\u00a76\u00a7l\u2605 Ability Unlocked! \u00a7r";
         player.sendSystemMessage(Component.literal(
-                prefix + "\u00a7e" + name + " \u00a77\u2014 " + trigger));
+                prefix + "\u00a7e" + name + "\u00a77: " + trigger));
         player.playSound(net.minecraft.sounds.SoundEvents.UI_TOAST_CHALLENGE_COMPLETE, 1.0f, 1.2f);
     }
 
@@ -922,17 +922,17 @@ public final class SkillEvents {
     private static String abilityTrigger(SkillType skill) {
         return switch (skill) {
             case AGILITY    -> "Sprint + Sneak while airborne";
-            case MINING     -> "Hold a pickaxe \u2192 Sneak + Q";
-            case EXCAVATION -> "Hold a shovel \u2192 Sneak + Q";
-            case WOODCUTTING-> "Hold an axe \u2192 Sneak + Q";
-            case FARMING    -> "Hold a hoe \u2192 Sneak + Q";
-            case FISHING    -> "Hold a fishing rod \u2192 Sneak + Q";
-            case MELEE      -> "Hold a sword \u2192 Sneak + Q";
-            case ARCHERY    -> "Hold a bow or crossbow \u2192 Sneak + Q";
-            case DEFENSE    -> "Hold a shield \u2192 Sneak + Q";
-            case ENCHANTING -> "Hold a damaged item \u2192 Sneak + Q";
-            case ALCHEMY    -> "Hold a book \u2192 Sneak + Q (aim at a spawner)";
-            case TRADING    -> "Hold an emerald \u2192 Sneak + Q";
+            case MINING     -> "Hold a pickaxe, then Sneak + Q";
+            case EXCAVATION -> "Hold a shovel, then Sneak + Q";
+            case WOODCUTTING-> "Hold an axe, then Sneak + Q";
+            case FARMING    -> "Hold a hoe, then Sneak + Q";
+            case FISHING    -> "Hold a fishing rod, then Sneak + Q";
+            case MELEE      -> "Hold a sword, then Sneak + Q";
+            case ARCHERY    -> "Hold a bow or crossbow, then Sneak + Q";
+            case DEFENSE    -> "Hold a shield, then Sneak + Q";
+            case ENCHANTING -> "Hold a damaged item, then Sneak + Q";
+            case ALCHEMY    -> "Hold a book, then Sneak + Q (aim at a spawner)";
+            case TRADING    -> "Hold an emerald, then Sneak + Q";
         };
     }
 }

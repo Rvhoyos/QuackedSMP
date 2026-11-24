@@ -7,7 +7,8 @@ import mc.smpessentials.config.ConfigIO;
 import mc.smpessentials.config.SmpConfig;
 import net.minecraft.server.MinecraftServer;
 
-import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
 import static mc.smpessentials.dashboard.AdminHandler.err;
@@ -53,13 +54,14 @@ public final class KitHandler {
             ConfigData.KitDef[] kits =
                     ConfigIO.gson().fromJson(req.get("kits"), ConfigData.KitDef[].class);
             if (kits == null) return err(400, "Missing kits");
+            List<ConfigData.KitDef> cleaned = ConfigData.KitsConfig.withoutNulls(Arrays.asList(kits));
 
-            String problem = firstProblem(kits, server);
+            String problem = firstProblem(cleaned, server);
             if (problem != null) return err(400, problem);
 
             if (enabled != null) SmpConfig.KITS_ENABLED = enabled;
             if (cooldownSeconds != null) SmpConfig.KIT_COOLDOWN_SECONDS = cooldownSeconds;
-            SmpConfig.KIT_DEFINITIONS = new ArrayList<>(java.util.Arrays.asList(kits));
+            SmpConfig.KIT_DEFINITIONS = cleaned;
             ConfigIO.save();
             return "{\"ok\":true}";
         } catch (RuntimeException e) {
@@ -72,17 +74,14 @@ public final class KitHandler {
      * will not accept. This is what stops an editor writing something that only fails later,
      * silently, when a player claims the kit.
      */
-    private static String firstProblem(ConfigData.KitDef[] kits, MinecraftServer server) {
+    private static String firstProblem(List<ConfigData.KitDef> kits, MinecraftServer server) {
         for (ConfigData.KitDef kit : kits) {
-            if (kit == null) continue;
             if (kit.name == null || kit.name.isBlank()) return "Every kit needs a name";
 
             String armor = firstUnreadableArmor(kit, server);
             if (armor != null) return kit.name + ": " + armor;
 
-            if (kit.items == null) continue;
             for (ConfigData.KitItem item : kit.items) {
-                if (item == null) continue;
                 String bad = ItemHandler.describeIfUnreadable(item.stack, server);
                 if (bad != null) return kit.name + ": " + bad;
             }
@@ -91,7 +90,6 @@ public final class KitHandler {
     }
 
     private static String firstUnreadableArmor(ConfigData.KitDef kit, MinecraftServer server) {
-        if (kit.armor == null) return null;
         String head  = ItemHandler.describeIfUnreadable(kit.armor.head, server);
         if (head != null) return "head: " + head;
         String chest = ItemHandler.describeIfUnreadable(kit.armor.chest, server);

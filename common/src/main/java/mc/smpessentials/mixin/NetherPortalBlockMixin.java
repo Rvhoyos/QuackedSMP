@@ -67,9 +67,9 @@ public abstract class NetherPortalBlockMixin {
         if (dest == null) return;
 
         // Determine destination position:
-        //   Outbound (→ custom dim): record entry pos for the return trip; use entry XZ so each
+        //   Outbound (into a custom dim): record entry pos for the return trip; use entry XZ so each
         //     overworld portal links to the matching position in the custom dim.
-        //   Inbound  (→ overworld): restore the position the entity entered from.
+        //   Inbound  (to the overworld): restore the position the entity entered from.
         final BlockPos origin;
         if (destKey.equals(Level.OVERWORLD)) {
             origin = DimManager.popReturnPos(entity, level.getServer());

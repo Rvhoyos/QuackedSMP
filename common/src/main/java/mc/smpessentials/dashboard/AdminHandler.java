@@ -557,7 +557,7 @@ public final class AdminHandler {
 
             // Write ops.json synchronously on the HTTP thread
             Path opsPath = server.getFile("ops.json");
-            SmpUtilsMod.LOGGER.info("[AdminPanel] setop: editing {} for {} ({}) → level {}", opsPath, name, uuid, lvl);
+            SmpUtilsMod.LOGGER.info("[AdminPanel] setop: editing {} for {} ({}) to level {}", opsPath, name, uuid, lvl);
 
             JsonArray ops;
             if (Files.exists(opsPath)) {

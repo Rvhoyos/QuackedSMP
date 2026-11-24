@@ -7,7 +7,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-// One-time migration for the 1.21.11 → 26.1 world storage restructure.
+// One-time migration for the 1.21.11 to 26.1 world storage restructure.
 // Mojang's FileFixerUpper moves vanilla data but ignores mod files.
 // Moves quackedsmp_*.dat from data/ to dimensions/minecraft/overworld/data/minecraft/.
 public final class SavedDataMigration {

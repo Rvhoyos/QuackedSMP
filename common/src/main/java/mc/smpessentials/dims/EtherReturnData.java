@@ -21,7 +21,7 @@ import java.util.UUID;
  */
 public final class EtherReturnData extends SavedData {
 
-    /** Codec over the internal {@code uuid-string → BlockPos} map. */
+    /** Codec over the internal map of uuid strings to {@code BlockPos}. */
     public static final Codec<EtherReturnData> CODEC =
             Codec.unboundedMap(Codec.STRING, BlockPos.CODEC)
                  .xmap(EtherReturnData::new, d -> d.positions);
@@ -36,7 +36,7 @@ public final class EtherReturnData extends SavedData {
             CODEC,
             DataFixTypes.LEVEL);
 
-    /** Mutable map of UUID string → last overworld entry position. */
+    /** Last overworld entry position by UUID string, mutable. */
     private final Map<String, BlockPos> positions;
 
     private EtherReturnData(Map<String, BlockPos> positions) {

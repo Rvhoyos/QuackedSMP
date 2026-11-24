@@ -480,26 +480,21 @@ function ColorLegend() {
           </div>
           <div className={styles.legendExamples}>
             <span className={styles.legendSectionLabel}>Examples</span>
-            <div className={styles.legendExample}>
+            <div className={styles.exampleTable}>
+              <span className={styles.exampleHead}>You type</span>
+              <span className={styles.exampleHead}>Players see</span>
               <code className={styles.exampleInput}>&amp;6Welcome to &amp;aQuackedSMP&amp;6!</code>
-              <span className={styles.exampleArrow}>→</span>
               <span className={styles.exampleOutput}>
                 <span style={{ color: '#FFAA00' }}>Welcome to </span>
                 <span style={{ color: '#55FF55' }}>QuackedSMP</span>
                 <span style={{ color: '#FFAA00' }}>!</span>
               </span>
-            </div>
-            <div className={styles.legendExample}>
               <code className={styles.exampleInput}>&amp;e1. &amp;fBe respectful.</code>
-              <span className={styles.exampleArrow}>→</span>
               <span className={styles.exampleOutput}>
                 <span style={{ color: '#FFFF55' }}>1. </span>
                 <span style={{ color: '#FFFFFF' }}>Be respectful.</span>
               </span>
-            </div>
-            <div className={styles.legendExample}>
               <code className={styles.exampleInput}>&amp;b[Tip] &amp;fUse &amp;a/claim&amp;f!</code>
-              <span className={styles.exampleArrow}>→</span>
               <span className={styles.exampleOutput}>
                 <span style={{ color: '#55FFFF' }}>[Tip] </span>
                 <span style={{ color: '#FFFFFF' }}>Use </span>

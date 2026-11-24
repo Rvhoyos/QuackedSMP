@@ -60,7 +60,7 @@ public final class ShopLayer implements MarkerLayer {
             if (!Maps.isDimension(map, level.dimension()))
                 continue;
 
-            // Chunk -> the shops standing in it, insertion ordered so the popup is stable.
+            // The shops standing in each chunk, insertion ordered so the popup is stable.
             Map<Long, List<ShopEntry>> byChunk = new LinkedHashMap<>();
             for (ShopEntry shop : ShopData.get(server).listAll()) {
                 if (!shop.dimension().equals(level.dimension()))

@@ -535,7 +535,7 @@ export function IconSword({ size = 20 }) {
 export function IconSpeedometer({ size = 20 }) {
   // 24x24, dial centered at (12,14), outer r=10, inner r=7.
   // 240° arc split into three 80° zones (SVG clockwise angles).
-  // Green: 150°→230°, Yellow: 230°→310°, Red: 310°→30°.
+  // Green 150° to 230°, yellow 230° to 310°, red 310° to 30°.
   return (
     <svg viewBox="0 0 24 24" width={size} height={size}>
       <circle cx="12" cy="14" r="11" fill="#1A1A2A"/>

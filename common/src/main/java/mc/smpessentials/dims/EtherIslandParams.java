@@ -40,8 +40,13 @@ public record EtherIslandParams(float threshold,
     // change the terrain. Cost rises smoothly on the way there, with no cliff, because compute()
     // walks every island the column scan found. Measured at default radius and spacing, one chunk
     // of columns over Y 0 to 255, against the default of -0.85:
-    //   -0.85 -> 6 islands/column, 1.0x     -0.6 -> 15, 2.1x      -0.4 -> 53, 7.8x
-    //   -0.2  -> 77, 11.6x                   0.0 -> 109, 16.2x     1.0 -> 225, 31.6x
+    //   threshold   islands/column   cost
+    //   -0.85       6                1.0x
+    //   -0.6        15               2.1x
+    //   -0.4        53               7.8x
+    //   -0.2        77               11.6x
+    //    0.0        109              16.2x
+    //    1.0        225              31.6x
     // So this is a slider that can make chunk generation 30 times dearer. That is the operator's
     // call to make, not a reason to hide the top of the range.
     public static final float THRESHOLD_MAX = 1.0f;

@@ -98,7 +98,7 @@ function PlayersTab({ token, onExpired }) {
       if (r.status === 401) { onExpired(); return }
       const d = await r.json()
       if (d.error) setError(d.error)
-      else { setPlayerData(prev => ({ ...prev, skills: { ...prev.skills, [skill]: { level: d.level, xp: d.xp } } })); setEditSkill(null); toast(`${SKILL_LABELS[skill]} → ${d.level}`) }
+      else { setPlayerData(prev => ({ ...prev, skills: { ...prev.skills, [skill]: { level: d.level, xp: d.xp } } })); setEditSkill(null); toast(`${SKILL_LABELS[skill]} set to level ${d.level}`) }
     } catch { setError('Failed to save') }
     setSaving(false)
   }

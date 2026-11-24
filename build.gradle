@@ -1,7 +1,6 @@
 plugins {
-    id 'net.fabricmc.fabric-loom' version '1.16.1' apply false
-    id 'net.neoforged.moddev' version '2.0.141' apply false
-    id 'com.gradleup.shadow' version '8.3.6' apply false
+    id 'net.fabricmc.fabric-loom' version '1.19.1' apply false
+    id 'net.neoforged.moddev' version '2.0.148' apply false
 }
 
 // Timelapse block-colour palette generator (./gradlew generateBlockColors).
@@ -47,7 +46,7 @@ tasks.register('npmBuild', Exec) {
             from   "$dashboardUiDir/dist"
             into   dashboardOutDir
         }
-        logger.lifecycle "[Dashboard] UI built → common/src/main/resources/dashboard/"
+        logger.lifecycle "[Dashboard] UI built into common/src/main/resources/dashboard/"
     }
 }
 

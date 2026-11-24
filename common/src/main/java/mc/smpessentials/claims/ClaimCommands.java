@@ -134,11 +134,6 @@ public final class ClaimCommands {
                                             .withHoverEvent(new net.minecraft.network.chat.HoverEvent.ShowText(
                                                     Component.literal(finalTooltip))));
 
-                                    // Add Click to claim? (Maybe dangerous, but fancy)
-                                    // cell.withStyle(style -> style.withClickEvent(new
-                                    // ClickEvent(ClickEvent.Action.RUN_COMMAND, "/claim " + current.x() + " " +
-                                    // current.z())));
-
                                     line.append(cell).append(Component.literal(" "));
                                 }
                                 ctx.getSource().sendSystemMessage(line);

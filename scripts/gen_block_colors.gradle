@@ -40,8 +40,8 @@ class BlockColorExtractor {
 
     final ZipFile zip
     final JsonSlurper slurper = new JsonSlurper()
-    final Map<String, Map> modelCache = [:]        // "ns:path" -> resolved {textures, elements}
-    final Map<String, String> colorCache = [:]     // texture path -> hex (avoids re-averaging)
+    final Map<String, Map> modelCache = [:]        // resolved {textures, elements} by "ns:path"
+    final Map<String, String> colorCache = [:]     // hex by texture path (avoids re-averaging)
 
     BlockColorExtractor(File jar) { this.zip = new ZipFile(jar) }
 
@@ -73,7 +73,7 @@ class BlockColorExtractor {
         outFile.text = JsonOutput.prettyPrint(JsonOutput.toJson(result)) + '\n'
         zip.close()
         logger.lifecycle("[Timelapse] block_colors.json: ${resolved} blocks coloured " +
-                "(${scanned} blockstates scanned) → ${outFile}")
+                "(${scanned} blockstates scanned), written to ${outFile}")
     }
 
     // Picks a single representative model reference from a blockstate. First
@@ -188,7 +188,7 @@ class BlockColorExtractor {
         zip.getInputStream(entry).withStream { slurper.parse(it) }
     }
 
-    // "minecraft:block/stone" -> ["minecraft", "block/stone"]; bare paths get the
+    // "minecraft:block/stone" splits into ["minecraft", "block/stone"]; bare paths get the
     // parent's namespace so #ref resolution stays within the same pack.
     private static String qualify(String parentNs, String ref) {
         ref.contains(':') ? ref : "${parentNs}:${ref}"

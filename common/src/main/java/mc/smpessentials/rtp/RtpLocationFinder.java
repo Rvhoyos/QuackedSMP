@@ -109,7 +109,7 @@ final class RtpLocationFinder {
         boolean reachedCeiling = false;
         boolean belowCeiling = false;
         for (int y = this.level.getMaxY(); y > this.level.getMinY(); y--) {
-            boolean solid = this.level.getBlockState(this.cursor.set(x, y, z)).blocksMotion();
+            boolean solid = this.level.getBlockState(this.cursor.set(x, y, z)).is(BlockTags.BLOCKS_MOTION);
             if (!reachedCeiling) {
                 reachedCeiling = solid;
             } else if (!belowCeiling) {
@@ -124,7 +124,7 @@ final class RtpLocationFinder {
     private boolean hasHeadroom(int x, int floorY, int z) {
         for (int dy = 1; dy <= PLAYER_HEIGHT; dy++) {
             BlockState state = this.level.getBlockState(this.cursor.set(x, floorY + dy, z));
-            if (state.blocksMotion() || isDeadly(state)) return false;
+            if (state.is(BlockTags.BLOCKS_MOTION) || isDeadly(state)) return false;
         }
         return true;
     }
@@ -134,12 +134,10 @@ final class RtpLocationFinder {
         return floor.is(Blocks.WATER) && !this.profile.allowWater;
     }
 
+    // Vanilla's own list of blocks a teleport should not land on. Lava is checked on its own
+    // because the tag leaves out fluid blocks.
     private static boolean isDeadly(BlockState state) {
-        return state.is(Blocks.LAVA)
-                || state.is(Blocks.MAGMA_BLOCK)
-                || state.is(Blocks.CACTUS)
-                || state.is(Blocks.POWDER_SNOW)
-                || state.is(BlockTags.FIRE);
+        return state.is(Blocks.LAVA) || state.is(BlockTags.DANGEROUS_FOR_TELEPORTATION);
     }
 
     /**

@@ -4,6 +4,7 @@ import com.google.gson.JsonElement;
 import com.mojang.serialization.JsonOps;
 import mc.smpessentials.config.ConfigData;
 import mc.smpessentials.config.SmpConfig;
+import mc.smpessentials.items.ItemHandoff;
 import mc.smpessentials.tier.TierService;
 import mc.smpessentials.welcomebook.WelcomeBookService;
 import net.minecraft.server.MinecraftServer;
@@ -62,11 +63,7 @@ public final class KitService {
         giveArmorPiece(player, kit.armor.feet, EquipmentSlot.FEET);
 
         for (ConfigData.KitItem ki : kit.items) {
-            decode(player, ki == null ? null : ki.stack).ifPresent(stack -> {
-                if (!player.getInventory().add(stack)) {
-                    player.drop(stack, false);
-                }
-            });
+            decode(player, ki.stack).ifPresent(stack -> ItemHandoff.give(player, stack));
         }
 
         if (kit.giveWelcomeBook) {
@@ -78,8 +75,8 @@ public final class KitService {
         decode(player, stored).ifPresent(stack -> {
             if (player.getItemBySlot(slot).isEmpty()) {
                 player.setItemSlot(slot, stack);
-            } else if (!player.getInventory().add(stack)) {
-                player.drop(stack, false);
+            } else {
+                ItemHandoff.give(player, stack);
             }
         });
     }

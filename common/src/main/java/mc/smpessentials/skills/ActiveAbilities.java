@@ -5,6 +5,7 @@ import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 
 import mc.smpessentials.claims.ClaimAccessCache;
 import mc.smpessentials.config.SmpConfig;
+import mc.smpessentials.items.ItemHandoff;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
@@ -22,6 +23,7 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.level.block.BonemealSource;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntity;
 
@@ -33,7 +35,7 @@ import java.util.*;
 // Agility Dash: sprint + sneak in air. Scout Zoom: sneak + F with both hands empty.
 public final class ActiveAbilities {
 
-    // Track active ability durations (player UUID -> expiry time ms)
+    // Track active ability durations (expiry time in ms, by player UUID)
     private static final Map<UUID, Long> treeFellerActive = new HashMap<>();
 
     // Captures zoom activation state: saved offhand item, expiry time, and spyglass count in main inventory before activation.
@@ -88,11 +90,8 @@ public final class ActiveAbilities {
         }
 
         if (handled) {
-            // Cancel the drop and return the item to the player.
-            // If the inventory is full, drop it to the world rather than losing it silently.
-            if (!sp.getInventory().add(entity.getItem())) {
-                sp.drop(entity.getItem(), false);
-            }
+            // Cancel the drop and return the item to the player, onto the ground if there is no room.
+            ItemHandoff.give(sp, entity.getItem());
             return true;
         }
 
@@ -297,10 +296,10 @@ public final class ActiveAbilities {
                     BlockState state = level.getBlockState(pos);
                     if (state.is(net.minecraft.tags.BlockTags.CROPS)
                             && state.getBlock() instanceof net.minecraft.world.level.block.BonemealableBlock bonemealable
-                            && bonemealable.isValidBonemealTarget(level, pos, state)
+                            && bonemealable.isValidBonemealTarget(level, pos, state, BonemealSource.INTERACTION)
                             && claims.canModify(pos)
-                            && bonemealable.isBonemealSuccess(level, level.getRandom(), pos, state)) {
-                        bonemealable.performBonemeal(level, level.getRandom(), pos, state);
+                            && bonemealable.isBonemealSuccess(level, level.getRandom(), pos, state, BonemealSource.INTERACTION)) {
+                        bonemealable.performBonemeal(level, level.getRandom(), pos, state, BonemealSource.INTERACTION);
                         bonemealed++;
                     }
                 }
@@ -417,7 +416,7 @@ public final class ActiveAbilities {
         Vec3 look = sp.getLookAngle();
         double power = 1.5 + (agiLevel * 0.01);
         sp.setDeltaMovement(look.x * power, Math.max(look.y * power, 0.4), look.z * power);
-        sp.hurtMarked = true;
+        sp.syncVelocity = true;
         announce(sp, "Dash", 0, SoundEvents.FIREWORK_ROCKET_LAUNCH);
     }
 
@@ -442,7 +441,7 @@ public final class ActiveAbilities {
             return;
         }
 
-        // Duration: 10s base, +0.25s per level → 35s at level 100
+        // Duration: 10s base, +0.25s per level, so 35s at level 100
         int durationTicks = (int) ((10 + archLevel * 0.25) * 20);
         long expiryMs = System.currentTimeMillis() + (durationTicks * 50L);
 

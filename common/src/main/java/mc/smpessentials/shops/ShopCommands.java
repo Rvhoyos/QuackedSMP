@@ -9,6 +9,7 @@ import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import mc.smpessentials.config.SmpConfig;
+import mc.smpessentials.items.ItemHandoff;
 
 public final class ShopCommands {
     private ShopCommands() {}
@@ -152,9 +153,7 @@ public final class ShopCommands {
         while (remaining > 0) {
             int batch = Math.min(remaining, 64);
             var stack = new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.EMERALD, batch);
-            if (!player.getInventory().add(stack)) {
-                player.drop(stack, false);
-            }
+            ItemHandoff.give(player, stack);
             remaining -= batch;
         }
 

@@ -6,7 +6,7 @@
 
 # QuackedSMP
 
-Server-side mod for **Minecraft 26.2** (Fabric + NeoForge). Claims, skills, anti-grief, custom dims, shops, hardcore, and more. Optional browser admin panel for config, backups, players, and commands.
+Server-side mod for **Minecraft 26.3** (Fabric + NeoForge). Claims, skills, anti-grief, custom dims, shops, hardcore, and more. Optional browser admin panel for config, backups, players, and commands.
 
 Nothing to install on the client.
 
@@ -24,6 +24,8 @@ Nothing to install on the client.
 3. Open in a browser:
    - Same PC as the server: `http://localhost:8125` (or `http://127.0.0.1:8125`)
    - Other device on your network: `http://<server-ip>:8125`
+
+New 26.3 servers start with the vanilla whitelist on (`white-list=true` in `server.properties`), so add players with `/whitelist add <name>` or turn it off there.
 
 The panel is optional and stays off until you set a password. Every game feature works without it.
 
@@ -75,7 +77,7 @@ the only tab that can turn a feature on.
 | | Shops | List player shops, delete shops, view bank balances, toggle economy. |
 | **Gameplay** | Skills | Browse skill levels. Set level / adjust XP per skill. |
 | | Hardcore | Active sessions, force-end a session. |
-| | RTP | Per-dimension `/rtp` profiles: radius, biome filter, arrival effects and rewards. |
+| | RTP | Per-dimension `/rtp` profiles: radius, water landing, arrival effects and rewards. |
 | | Kits | Build tier-gated kits, including books, enchanted gear, and coloured names. |
 | | Welcome Book | Write and preview the `/guide` book page by page. |
 | **Moderation** | Chat Filter | Blocked words and whitelist. Active mutes, unmute. |
@@ -203,7 +205,7 @@ All teleports have a 5 second warmup by default. Moving cancels them.
 | :--- | :--- |
 | `/home` | Your bed or respawn point, otherwise world spawn |
 | `/spawn` | World spawn |
-| `/rtp` | Random teleport, with per-dimension radius, biome filter, and arrival rewards |
+| `/rtp` | Random teleport to a safe spot, with per-dimension radius and arrival rewards |
 | `/visit <name>` | Travel to a named region you own or are trusted in |
 | `/tpr <player>` | Ask to teleport to someone |
 | `/tpa accept` / `yes` / `deny` / `no` | Answer a request |
@@ -316,7 +318,7 @@ Off by default (`hardcore_enabled`). Password-protected sessions under `/smp har
 
 ### Kits
 
-One kit claim per day by default (`kits.cooldownSeconds`, 86400). Kits can be locked to a VIP tier and are built in the panel. Ships with `starter` (everyone) and `vip` (tier 1).
+One kit claim per day by default (`kits.cooldownSeconds`, 86400). Kits can be locked to a VIP tier and are built in the panel. Ships with `starter` (everyone) and `vip` (tier 1). Anything that does not fit in a full inventory lands at the player's feet, and only that player can pick it up.
 
 | Command | Description |
 | :--- | :--- |
@@ -336,7 +338,7 @@ If you have Simple Voice Chat installed and `voicechat_enable` is on, players ca
 
 ### Wilderness Regen
 
-`/smp regen` (OP) resets **unclaimed** chunks on the next shutdown, leaving a 3-chunk buffer around every claim. Confirm, cancel, or check status with subcommands, or run it from the Commands tab.
+`/smp regen` (OP) resets unclaimed chunks on the next shutdown, leaving a 3-chunk buffer around every claim. Confirm, cancel, or check status with subcommands, or run it from the Commands tab.
 
 ### Chunk Pre-generation
 
@@ -352,7 +354,7 @@ The panel prices the area as you type: how many chunks, how much disk and how lo
 it your world already has. A distance past your world border, or one that would claim most of your
 free disk, is refused with the number that would fit.
 
-The work happens on the **next restart**, before the server accepts any players, and nobody can join
+The work happens on the next restart, before the server accepts any players, and nobody can join
 until it finishes. A finished area never delays a later startup, and a run cut short by a crash
 picks up where it left off rather than starting over. `/smp pregen status` and `/smp pregen estimate`
 report the same numbers in game.

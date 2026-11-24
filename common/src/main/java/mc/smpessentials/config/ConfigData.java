@@ -119,7 +119,11 @@ public final class ConfigData {
             Map.entry("tpa.teleporting_requester", "Teleporting {player} in 5 seconds..."),
             Map.entry("tpa.teleporting_to", "Teleported to {player}"),
             Map.entry("tpa.denied", "Teleport request denied by {player}"),
-            Map.entry("tpa.denied_confirm", "Denied the oldest pending request.")));
+            Map.entry("tpa.denied_confirm", "Denied the oldest pending request."),
+            // Ether vertical travel, shown on the action bar. Blank sends nothing.
+            Map.entry("ether.fall_out", ""),
+            Map.entry("ether.sky_entry", ""),
+            Map.entry("ether.sky_refused", "The ether is solid above you here.")));
 
     // Fills in any map entries missing from the file using defaults.
     // Called after GSON deserialization so new keys added in future versions appear automatically.
@@ -129,12 +133,30 @@ public final class ConfigData {
         defaults.skills.cooldowns.forEach(skills.cooldowns::putIfAbsent);
         defaults.skills.abilityUnlockLevels.forEach(skills.abilityUnlockLevels::putIfAbsent);
 
+        if (rtp != null) rtp.profiles = RtpConfig.withoutNulls(rtp.profiles);
+
         // Only reached when a config file already existed, which is exactly when there is
         // something older than the current kit format to bring forward.
-        if (kits != null && kits.kits != null) {
-            for (KitDef kit : kits.kits) {
-                if (kit != null) kit.migrateLegacyStacks();
-            }
+        if (kits != null) {
+            kits.kits = KitsConfig.withoutNulls(kits.kits);
+            for (KitDef kit : kits.kits) kit.migrateLegacyStacks();
+        }
+    }
+
+    private static <T> List<T> orEmpty(List<T> list) {
+        return list == null ? new ArrayList<>() : list;
+    }
+
+    // Removes null entries in place and reports how many went.
+    private static int dropNulls(List<?> list) {
+        int before = list.size();
+        list.removeIf(java.util.Objects::isNull);
+        return before - list.size();
+    }
+
+    private static void warnDropped(int dropped, String section) {
+        if (dropped > 0) {
+            mc.smpessentials.SmpUtilsMod.LOGGER.warn("[Config] Dropped {} empty entries from {}.", dropped, section);
         }
     }
 
@@ -383,6 +405,22 @@ public final class ConfigData {
                                 new KitItem("minecraft:oak_log", 32),
                                 new KitItem("minecraft:golden_apple", 2),
                                 new KitItem("minecraft:iron_pickaxe", 1))))));
+
+        /**
+         * The kit list with every null entry removed, so nothing the game reads holds a null. Applied
+         * wherever kits come in: the config file on load and the panel's save route.
+         */
+        public static List<KitDef> withoutNulls(List<KitDef> kits) {
+            List<KitDef> out = new ArrayList<>(orEmpty(kits));
+            int dropped = dropNulls(out);
+            for (KitDef kit : out) {
+                if (kit.armor == null) kit.armor = new KitArmor();
+                kit.items = orEmpty(kit.items);
+                dropped += dropNulls(kit.items);
+            }
+            warnDropped(dropped, "kits");
+            return out;
+        }
     }
 
     public static final class KitDef {
@@ -522,6 +560,22 @@ public final class ConfigData {
         public int warmupSeconds = 5;
         public int cooldownSeconds = 300;
         public List<RtpProfile> profiles = new ArrayList<>(List.of(defaultProfile()));
+
+        /**
+         * The profile list with every null entry removed, profiles and their effects and items, so
+         * nothing the game reads holds a null. Applied on load and in the panel's save route.
+         */
+        public static List<RtpProfile> withoutNulls(List<RtpProfile> profiles) {
+            List<RtpProfile> out = new ArrayList<>(orEmpty(profiles));
+            int dropped = dropNulls(out);
+            for (RtpProfile profile : out) {
+                profile.effects = orEmpty(profile.effects);
+                profile.items = orEmpty(profile.items);
+                dropped += dropNulls(profile.effects) + dropNulls(profile.items);
+            }
+            warnDropped(dropped, "rtp");
+            return out;
+        }
 
         // The out-of-the-box overworld profile, which does hand over the guide on arrival.
         private static RtpProfile defaultProfile() {
