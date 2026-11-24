@@ -244,7 +244,7 @@ Create dimensions at runtime, no datapack needed.
 | `nether` | Vanilla nether |
 | `end` | Vanilla end |
 
-Ether dimensions connect to the overworld vertically. Fall off the bottom of an ether and you drop into the overworld at the same coordinates, along with anything you threw or built. Glide high enough in the overworld and you climb into the linked ether, if `etherSkyEntryEnabled` is on.
+Ether dimensions connect to the overworld vertically. Fall off the bottom of an ether and you drop into the overworld at the same coordinates, along with anything you threw or built. Glide high enough in the overworld and you climb into the linked ether, if `ether_sky_entry_enabled` is on.
 
 **Shaping an ether.** All of these are optional and can go in any order, `biomes` last:
 
@@ -318,7 +318,7 @@ Off by default (`hardcore_enabled`). Password-protected sessions under `/smp har
 
 ### Kits
 
-One kit claim per day by default (`kits.cooldownSeconds`, 86400). Kits can be locked to a VIP tier and are built in the panel. Ships with `starter` (everyone) and `vip` (tier 1). Anything that does not fit in a full inventory lands at the player's feet, and only that player can pick it up.
+One kit claim per day by default (`kits.cooldown_seconds`, 86400). Kits can be locked to a VIP tier and are built in the panel. Ships with `starter` (everyone) and `vip` (tier 1). Anything that does not fit in a full inventory lands at the player's feet, and only that player can pick it up.
 
 | Command | Description |
 | :--- | :--- |
@@ -511,7 +511,7 @@ File: `config/quackedsmp.json`. Most values are editable from the panel's **Conf
 | `votifier.token` | `""` | Token shared with your server list |
 | `votifier.broadcast` | see JSON | Vote chat line |
 | `kits_enabled` | `false` | Kit system |
-| `kits.cooldownSeconds` | `86400` | Time between kit claims |
+| `kits.cooldown_seconds` | `86400` | Time between kit claims |
 | `kits.kits` | starter + vip | Kit definitions |
 | `hardcore_enabled` | `false` | Hardcore sessions |
 | `hardcore_death_percent` | `100` | Deaths vs peak players before a session ends |
