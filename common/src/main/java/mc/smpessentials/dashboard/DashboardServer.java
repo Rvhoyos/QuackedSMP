@@ -91,11 +91,11 @@ public final class DashboardServer extends Thread {
         record Streamed(String contentType, String filename, StreamWriter writer) implements DownloadResult {}
     }
 
-    // HTTP route table: path → handler
+    // HTTP route table, handler by path
     private final Map<String, RouteHandler>         routes         = new ConcurrentHashMap<>();
-    // Upload route table: path → handler (bypasses the 64 KB body cap)
+    // Upload route table, handler by path (bypasses the 64 KB body cap)
     private final Map<String, UploadRouteHandler>   uploadRoutes   = new ConcurrentHashMap<>();
-    // Download route table: path → handler (streams response body from disk)
+    // Download route table, handler by path (streams response body from disk)
     private final Map<String, DownloadRouteHandler> downloadRoutes = new ConcurrentHashMap<>();
 
     private final ExecutorService executor = Executors.newCachedThreadPool(r -> {
@@ -496,7 +496,7 @@ public final class DashboardServer extends Thread {
                     }
                     return;
                 }
-                case 0x9 -> { // Ping → Pong
+                case 0x9 -> { // Ping, answered with a Pong
                     byte[] pong = new byte[2 + Math.min(payload.length, 125)];
                     pong[0] = (byte) 0x8A;
                     pong[1] = (byte) Math.min(payload.length, 125);

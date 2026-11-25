@@ -21,7 +21,7 @@ public final class IconAssets {
 
     private static final String RESOURCE_DIR = "/bluemap/icons/";
 
-    // map id -> (icon name -> url). Resolved at upload time so marker building never touches
+    // Icon urls by map id, then by icon name. Resolved at upload time so marker building never touches
     // asset storage, which lets it run off the server thread.
     private final Map<String, Map<String, String>> urls = new ConcurrentHashMap<>();
 

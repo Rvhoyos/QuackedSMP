@@ -10,10 +10,6 @@ public final class RulesCommand {
     private RulesCommand() {
     }
 
-    /**
-     * Called from your CommandRegistrar: .executes(ctx ->
-     * RulesCommand.execute(ctx.getSource()))
-     */
     public static int execute(CommandSourceStack source) {
         try {
             ServerPlayer player = source.getPlayerOrException(); // throws CommandSyntaxException if console/CB

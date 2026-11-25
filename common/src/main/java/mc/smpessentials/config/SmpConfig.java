@@ -54,7 +54,7 @@ public final class SmpConfig {
     public static String VOTIFIER_TOKEN;
     public static String VOTE_BROADCAST;
     public static java.util.List<String> VOTE_REWARDS = new java.util.ArrayList<>();
-    // Tier number -> bonus reward commands. Stacks: tier 2 players get tier 1 + tier 2 bonuses.
+    // Bonus reward commands per tier number. Stacks: tier 2 players get tier 1 + tier 2 bonuses.
     public static java.util.Map<Integer, java.util.List<String>> VOTE_VIP_REWARDS = new java.util.HashMap<>();
 
     // ---- Dashboard ----

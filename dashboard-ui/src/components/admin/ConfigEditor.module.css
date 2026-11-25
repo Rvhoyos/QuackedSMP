@@ -154,9 +154,9 @@
 .legendCode { font-family: var(--font-mono); font-size: 12px; color: var(--txt-primary); background: #0A0A0A; padding: 1px 5px; }
 .legendLabel { font-family: var(--font-sans); font-size: 12.5px; color: var(--txt-muted); }
 .legendExamples { display: flex; flex-direction: column; gap: 8px; }
-.legendExample { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-.exampleInput { font-family: var(--font-mono); font-size: 12px; color: var(--txt-secondary); background: #0A0A0A; padding: 3px 7px; }
-.exampleArrow { color: var(--txt-faint); }
+.exampleTable { display: grid; grid-template-columns: minmax(0, max-content) minmax(0, 1fr); align-items: center; gap: 8px var(--gap-col); }
+.exampleHead { font-family: var(--font-pixel); font-size: 8px; line-height: 1.5; color: var(--txt-muted); letter-spacing: 0.4px; }
+.exampleInput { font-family: var(--font-mono); font-size: 12px; color: var(--txt-secondary); background: #0A0A0A; padding: 3px 7px; overflow-wrap: anywhere; justify-self: start; }
 .exampleOutput { font-family: var(--font-sans); font-size: 13px; }
 
 /* ── Two-pane settings navigator ───────────────────────────────────────────── */

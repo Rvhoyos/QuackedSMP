@@ -89,7 +89,7 @@ public final class VipCommand {
                             for (Map.Entry<UUID, Integer> entry : all.entrySet()) {
                                 String displayName = resolveDisplayName(entry.getKey(), server);
                                 sb.append("\n  ").append(displayName)
-                                  .append(" -> Tier ").append(entry.getValue())
+                                  .append(": Tier ").append(entry.getValue())
                                   .append(" (").append(TierService.getTierName(entry.getValue())).append(")");
                             }
                             ctx.getSource().sendSystemMessage(Component.literal(sb.toString()));

@@ -29,13 +29,13 @@ export const MC_COLORS = [
 
 // What a click actually does inside a book, traced through BookViewScreen.handleClickEvent and
 // Screen.defaultHandleGameClickEvent rather than assumed:
-//   change_page        -> the book turns the page itself
-//   run_command        -> closes the book, then sendUnattendedCommand as the clicking player
-//   open_url           -> a confirmation screen, then the system browser
-//   copy_to_clipboard  -> keyboardHandler.setClipboard
-//   suggest_command    -> calls activeScreen.insertText, which only ChatScreen implements.
-//                         BookViewScreen does not, so in a book it does nothing. Not offered.
-//   open_file          -> client only, refused when sent from a server. Not offered.
+//   change_page          the book turns the page itself
+//   run_command          closes the book, then sendUnattendedCommand as the clicking player
+//   open_url             a confirmation screen, then the system browser
+//   copy_to_clipboard    keyboardHandler.setClipboard
+//   suggest_command      calls activeScreen.insertText, which only ChatScreen implements.
+//                        BookViewScreen does not, so in a book it does nothing. Not offered.
+//   open_file            client only, refused when sent from a server. Not offered.
 export const CLICK_ACTIONS = [
   { id: '', label: 'Nothing', short: 'not clickable', field: null,
     what: 'Clicking does nothing.' },

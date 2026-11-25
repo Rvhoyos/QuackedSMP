@@ -27,13 +27,13 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.NetherPortalBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.dimension.LevelStem;
-import net.minecraft.world.level.levelgen.DensityFunction;
-import net.minecraft.world.level.levelgen.DensityFunctions;
 import net.minecraft.world.level.levelgen.FlatLevelSource;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.levelgen.NoiseBasedChunkGenerator;
 import net.minecraft.world.level.levelgen.NoiseGeneratorSettings;
 import net.minecraft.world.level.levelgen.NoiseRouter;
+import net.minecraft.world.level.levelgen.densityfunction.DensityFunction;
+import net.minecraft.world.level.levelgen.densityfunction.DensityFunctions;
 import net.minecraft.world.level.levelgen.flat.FlatLayerInfo;
 import net.minecraft.world.level.levelgen.flat.FlatLevelGeneratorSettings;
 import net.minecraft.world.level.storage.DerivedLevelData;
@@ -441,7 +441,7 @@ public final class DimManager {
             if (dest.getBlockState(new BlockPos(px + 1, scanY, z)).is(Blocks.NETHER_PORTAL)) return;
         }
 
-        // Frame: bottom at y, pillars y→y+4, top at y+4
+        // Frame: bottom at y, pillars y to y+4, top at y+4
         // Force-place frame blocks (not placeIfAir) so the frame is always complete even if
         // existing structure blocks are in the way, an incomplete frame breaks portal routing.
         for (int i = 0; i < 4; i++) dest.setBlock(new BlockPos(px+i, y,   z), frameBlock.defaultBlockState(), 3);
@@ -451,7 +451,7 @@ public final class DimManager {
         }
         for (int i = 0; i < 4; i++) dest.setBlock(new BlockPos(px+i, y+4, z), frameBlock.defaultBlockState(), 3);
 
-        // Interior: y+1 → y+3 (AXIS=X so mixin looks EAST/WEST for glowstone pillars)
+        // Interior: y+1 to y+3 (AXIS=X so mixin looks EAST/WEST for glowstone pillars)
         BlockState portal = Blocks.NETHER_PORTAL.defaultBlockState()
                 .setValue(NetherPortalBlock.AXIS, Direction.Axis.X);
         for (int dy = 1; dy <= 3; dy++) {
@@ -786,42 +786,39 @@ public final class DimManager {
         // would silently forbid the low and high ends of the configured island height band.
         // Islands are bounded by their own thickness, so nothing else needs the slide.
 
-        // postProcess: blend, interpolate, scale, squeeze
+        // postProcess: blend, interpolate, scale, squeeze. The 8 by 4 cell is the floating islands
+        // preset's own (26.2's size_horizontal 2, size_vertical 1). The beardifier carves and fills
+        // terrain around structures; 26.3 no longer adds it on its own, so it has to be in the router.
         DensityFunction blended = DensityFunctions.blendDensity(combined);
-        DensityFunction finalDensity = DensityFunctions.mul(
-                DensityFunctions.interpolated(blended),
-                DensityFunctions.constant(0.64)).squeeze();
+        DensityFunction finalDensity = DensityFunctions.add(
+                DensityFunctions.mul(
+                        DensityFunctions.interpolated(blended, 8, 4),
+                        DensityFunctions.constant(0.64f)).squeeze(),
+                DensityFunctions.beardifier());
 
-        // Build router: keep temperature/vegetation from existing for biome placement
+        // Keep temperature/vegetation from the preset for biome placement
         NoiseRouter router = new NoiseRouter(
-                DensityFunctions.zero(),      // barrier
-                DensityFunctions.zero(),      // fluidLevelFloodedness
-                DensityFunctions.zero(),      // fluidLevelSpread
-                DensityFunctions.zero(),      // lava
                 existingRouter.temperature(),
                 existingRouter.vegetation(),
                 DensityFunctions.zero(),      // continents
                 DensityFunctions.zero(),      // erosion
                 DensityFunctions.zero(),      // depth
                 DensityFunctions.zero(),      // ridges
-                DensityFunctions.zero(),      // initialDensityWithoutJaggedness
-                finalDensity,
-                DensityFunctions.zero(),      // veinToggle
-                DensityFunctions.zero(),      // veinRidged
-                DensityFunctions.zero());     // veinGap
+                DensityFunctions.zero(),      // chunkSurfaceLevel
+                finalDensity);
 
         NoiseGeneratorSettings customSettings = new NoiseGeneratorSettings(
                 floatingSettings.noiseSettings(),
                 floatingSettings.defaultBlock(),
                 floatingSettings.defaultFluid(),
                 router,
-                floatingSettings.surfaceRule(),
+                floatingSettings.materialRule(),
                 floatingSettings.spawnTarget(),
                 floatingSettings.seaLevel(),
                 floatingSettings.disableMobGeneration(),
-                floatingSettings.aquifersEnabled(),
-                floatingSettings.oreVeinsEnabled(),
-                floatingSettings.useLegacyRandomSource());
+                floatingSettings.aquifers(),
+                floatingSettings.useLegacyRandomSource(),
+                NoiseGeneratorSettings.DebugFunctions.EMPTY);
 
         return new LevelStem(overworldStem.type(), new NoiseBasedChunkGenerator(
                 parseBiomeSource(server, biomeListStr, problems), Holder.direct(customSettings)));

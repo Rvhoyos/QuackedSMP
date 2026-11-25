@@ -9,7 +9,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 
 // The client draws the withered hardcore heart HUD when the login packet's hardcore flag is
-// true (ClientboundLoginPacket -> ClientLevelData.isHardcore). That flag is set once per
+// true (ClientboundLoginPacket sets ClientLevelData.isHardcore). That flag is set once per
 // connection at login and cannot change afterward. Override it to true for players in a
 // hardcore session so they get the hardcore HUD, without flipping the world-level flag that
 // would affect everyone. Non-session players fall through to the real value.

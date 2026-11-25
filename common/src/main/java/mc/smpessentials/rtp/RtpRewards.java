@@ -2,6 +2,7 @@ package mc.smpessentials.rtp;
 
 import com.mojang.serialization.JsonOps;
 import mc.smpessentials.config.ConfigData;
+import mc.smpessentials.items.ItemHandoff;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
@@ -52,11 +53,7 @@ final class RtpRewards {
     }
 
     private static void giveItem(ServerPlayer player, ConfigData.RtpItem item) {
-        decode(player, item).ifPresent(stack -> {
-            if (!player.getInventory().add(stack)) {
-                player.drop(stack, false);
-            }
-        });
+        decode(player, item).ifPresent(stack -> ItemHandoff.give(player, stack));
     }
 
     /**

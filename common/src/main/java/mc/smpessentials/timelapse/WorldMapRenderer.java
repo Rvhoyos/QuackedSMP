@@ -57,14 +57,14 @@ public final class WorldMapRenderer {
         MapCanvas canvas = MapCanvas.covering(cluster.bounds(), budgetBytes);
         progress.begin(cluster.bounds(), cluster.chunkCount());
         progress.phase("painting");
-        paint(server, level, dimension, regionDir, cluster, canvas, progress);
+        paint(server, level, regionDir, cluster, canvas, progress);
         progress.phase("shading");
         return new RenderResult(canvas.toImage(), canvas.blocksPerPixel());
     }
 
     // Visits only chunks the region headers report as stored: reading a chunk that
     // was never generated would make vanilla create an empty region file for it.
-    private void paint(MinecraftServer server, ServerLevel level, ResourceKey<Level> dimension,
+    private void paint(MinecraftServer server, ServerLevel level,
                        Path regionDir, ChunkClusterFinder.Cluster cluster, MapCanvas canvas,
                        CaptureProgress progress) throws Exception {
         // getWorldPath(ROOT) ends in "." so it must be normalised before the folder name is readable.
@@ -77,7 +77,7 @@ public final class WorldMapRenderer {
         List<RegionPresence> regions = new ArrayList<>(cluster.regions());
         regions.sort(Comparator.comparingInt(RegionPresence::regionX).thenComparingInt(RegionPresence::regionZ));
 
-        try (RegionChunkReader reader = RegionChunkReader.open(dimension, regionDir, levelName)) {
+        try (RegionChunkReader reader = RegionChunkReader.open(level, regionDir, levelName)) {
             for (RegionPresence region : regions) {
                 for (int lx = 0; lx < RegionPresence.SIDE; lx++) {
                     for (int lz = 0; lz < RegionPresence.SIDE; lz++) {

@@ -4,6 +4,7 @@ import mc.smpessentials.claims.ClaimAccess;
 import mc.smpessentials.claims.SpawnProtection;
 import mc.smpessentials.commands.CommandRegistrar;
 import mc.smpessentials.config.SmpConfig;
+import mc.smpessentials.items.ItemHandoff;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
@@ -241,9 +242,7 @@ public final class ShopService {
         }
 
         for (ItemStack stack : payout) {
-            if (!buyer.getInventory().add(stack)) {
-                buyer.drop(stack, false);
-            }
+            ItemHandoff.give(buyer, stack);
         }
 
         String itemName = offer.variant().getHoverName().getString();

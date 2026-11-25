@@ -18,12 +18,12 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * /skills                         , concise overview of all your skills
- * /skills view <player>           , view another player's skills
- * /skills top [page]              , overall leaderboard
- * /skills top <skillname> [page]  , per-skill leaderboard
- * /skills <skillname>             , detailed info for one skill
- * /skills admin givexp/setlevel   , OP debug commands
+ * /skills                          concise overview of all your skills
+ * /skills view <player>            view another player's skills
+ * /skills top [page]               overall leaderboard
+ * /skills top <skillname> [page]   per-skill leaderboard
+ * /skills <skillname>              detailed info for one skill
+ * /skills admin givexp/setlevel    OP debug commands
  */
 public final class SkillCommands {
 
@@ -187,7 +187,7 @@ public final class SkillCommands {
         if (totalPages > 1)
             viewer.sendSystemMessage(Component.literal(
                     "\u00a77Page " + page + "/" + totalPages
-                            + " \u2014 /skills top"
+                            + " | /skills top"
                             + (skill != null ? " " + skill.name().toLowerCase() : "")
                             + " " + (page + 1 <= totalPages ? (page + 1) : page)));
         return 1;
@@ -219,8 +219,7 @@ public final class SkillCommands {
         long xpInLevel = (long) (xp - SkillManager.totalXpForLevel(level));
 
         sp.sendSystemMessage(Component.literal(
-                skill.category().color() + "\u00a7l" + capitalize(skill.name()) + " \u00a7r\u00a77\u2014 "
-                        + skill.category().displayName()));
+                skill.category().color() + "\u00a7l" + capitalize(skill.name()) + " \u00a7r\u00a77(" + skill.category().displayName() + ")"));
         sp.sendSystemMessage(Component.literal(
                 "\u00a7fLevel: \u00a7e" + level + "\u00a77/\u00a7e" + SkillManager.MAX_LEVEL));
         sp.sendSystemMessage(Component.literal(
@@ -270,17 +269,17 @@ public final class SkillCommands {
 
     private static String abilityTrigger(SkillType skill) {
         return switch (skill) {
-            case MINING     -> "Hold Pickaxe \u2192 Sneak + Drop (Q)";
-            case EXCAVATION -> "Hold Shovel \u2192 Sneak + Drop (Q)";
-            case WOODCUTTING -> "Hold Axe \u2192 Sneak + Drop (Q)";
-            case FARMING    -> "Hold Hoe \u2192 Sneak + Drop (Q)";
-            case FISHING    -> "Hold Fishing Rod \u2192 Sneak + Drop (Q)";
-            case MELEE      -> "Hold Sword \u2192 Sneak + Drop (Q)";
-            case ARCHERY    -> "Hold Bow/Crossbow \u2192 Sneak + Drop (Q)";
-            case DEFENSE    -> "Hold Shield \u2192 Sneak + Drop (Q)";
-            case ENCHANTING -> "Hold any damaged item \u2192 Sneak + Drop (Q)";
-            case ALCHEMY    -> "Look at Spawner, hold Book/Ench.Book \u2192 Sneak + Drop (Q)";
-            case TRADING    -> "Hold Emerald \u2192 Sneak + Drop (Q)";
+            case MINING     -> "Hold Pickaxe, then Sneak + Drop (Q)";
+            case EXCAVATION -> "Hold Shovel, then Sneak + Drop (Q)";
+            case WOODCUTTING -> "Hold Axe, then Sneak + Drop (Q)";
+            case FARMING    -> "Hold Hoe, then Sneak + Drop (Q)";
+            case FISHING    -> "Hold Fishing Rod, then Sneak + Drop (Q)";
+            case MELEE      -> "Hold Sword, then Sneak + Drop (Q)";
+            case ARCHERY    -> "Hold Bow/Crossbow, then Sneak + Drop (Q)";
+            case DEFENSE    -> "Hold Shield, then Sneak + Drop (Q)";
+            case ENCHANTING -> "Hold any damaged item, then Sneak + Drop (Q)";
+            case ALCHEMY    -> "Look at Spawner, hold Book/Ench.Book, then Sneak + Drop (Q)";
+            case TRADING    -> "Hold Emerald, then Sneak + Drop (Q)";
             case AGILITY    -> "Sprint + Jump + Sneak (tap Shift) while moving";
         };
     }

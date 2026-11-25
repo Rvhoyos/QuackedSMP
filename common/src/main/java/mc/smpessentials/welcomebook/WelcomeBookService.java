@@ -3,6 +3,7 @@ package mc.smpessentials.welcomebook;
 import com.google.gson.JsonElement;
 import com.mojang.serialization.JsonOps;
 import mc.smpessentials.config.SmpConfig;
+import mc.smpessentials.items.ItemHandoff;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
@@ -47,11 +48,7 @@ public final class WelcomeBookService {
 
     /** Adds the book to the player's inventory, dropping it when there is no room. */
     public static void give(ServerPlayer player) {
-        build(player).ifPresent(book -> {
-            if (!player.getInventory().add(book)) {
-                player.drop(book, false);
-            }
-        });
+        build(player).ifPresent(book -> ItemHandoff.give(player, book));
     }
 
     /**
@@ -68,9 +65,7 @@ public final class WelcomeBookService {
             player.sendSystemMessage(Component.literal("§cThe server guide is misconfigured."));
             return;
         }
-        if (!player.getInventory().add(book.get())) {
-            player.drop(book.get(), false);
-        }
+        ItemHandoff.give(player, book.get());
         player.sendSystemMessage(Component.literal("§aHere is the server guide."));
     }
 

@@ -27,7 +27,7 @@ public final class AdminAuth {
 
     private static final ConcurrentHashMap<String, Long>   sessions     = new ConcurrentHashMap<>();
 
-    // Rate limiting: ip → [failCount, lockUntilMs, windowStartMs]
+    // Rate limiting, per ip: [failCount, lockUntilMs, windowStartMs]
     private static final int  FAIL_LIMIT  = 5;
     private static final long WINDOW_MS   = 15L * 60 * 1000; // 15-minute failure window
     private static final long LOCKOUT_MS  = 5L  * 60 * 1000; // 5-minute lockout
