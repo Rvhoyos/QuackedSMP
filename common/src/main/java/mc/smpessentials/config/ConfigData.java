@@ -3,11 +3,15 @@ package mc.smpessentials.config;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.mojang.brigadier.StringReader;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
 // GSON POJO for quackedsmp.json. All defaults live here; one place to change them.
 // FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES maps camelCase fields to snake_case JSON keys.
@@ -140,6 +144,9 @@ public final class ConfigData {
         if (kits != null) {
             kits.kits = KitsConfig.withoutNulls(kits.kits);
             for (KitDef kit : kits.kits) kit.migrateLegacyStacks();
+            for (String problem : KitsConfig.nameProblems(kits.kits)) {
+                mc.smpessentials.SmpUtilsMod.LOGGER.warn("[Config] {}. /smp kit cannot claim that kit.", problem);
+            }
         }
     }
 
@@ -420,6 +427,27 @@ public final class ConfigData {
             }
             warnDropped(dropped, "kits");
             return out;
+        }
+
+        /**
+         * One line per kit that /smp kit can never claim: a blank name, a character the command
+         * cannot parse, or a name another kit already uses. The command reads the name as one
+         * Brigadier word and matches it ignoring case, so this mirrors exactly those two rules.
+         */
+        public static List<String> nameProblems(List<KitDef> kits) {
+            List<String> problems = new ArrayList<>();
+            Set<String> seen = new HashSet<>();
+            for (KitDef kit : kits) {
+                String name = kit.name;
+                if (name == null || name.isBlank()) {
+                    problems.add("Every kit needs a name");
+                } else if (!name.chars().allMatch(c -> StringReader.isAllowedInUnquotedString((char) c))) {
+                    problems.add("Kit name '" + name + "' can only use letters, digits and _ - . +");
+                } else if (!seen.add(name.toLowerCase(Locale.ROOT))) {
+                    problems.add("Two kits are named '" + name + "'");
+                }
+            }
+            return problems;
         }
     }
 

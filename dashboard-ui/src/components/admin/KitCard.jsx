@@ -50,7 +50,7 @@ export default function KitCard({ kit, registry, features, onNavigate, onChange,
       {(
         <>
           <div className={styles.row}>
-            <Field label="Name" hint="used in /smp kit" className={styles.grow}>
+            <Field label="Name" hint="used in /smp kit, no spaces" className={styles.grow}>
               <Input value={kit.name || ''} placeholder="starter"
                 onChange={e => set('name', e.target.value)} />
             </Field>

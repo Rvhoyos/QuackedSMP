@@ -70,13 +70,16 @@ public final class KitHandler {
     }
 
     /**
-     * Runs every stored stack back through ItemStack.CODEC and reports the first one the game
-     * will not accept. This is what stops an editor writing something that only fails later,
+     * Reports the first kit /smp kit could never claim (see KitsConfig.nameProblems), then runs
+     * every stored stack back through ItemStack.CODEC and reports the first one the game will not
+     * accept. This is what stops an editor writing something that only fails later,
      * silently, when a player claims the kit.
      */
     private static String firstProblem(List<ConfigData.KitDef> kits, MinecraftServer server) {
+        List<String> names = ConfigData.KitsConfig.nameProblems(kits);
+        if (!names.isEmpty()) return names.get(0);
+
         for (ConfigData.KitDef kit : kits) {
-            if (kit.name == null || kit.name.isBlank()) return "Every kit needs a name";
 
             String armor = firstUnreadableArmor(kit, server);
             if (armor != null) return kit.name + ": " + armor;
