@@ -36,9 +36,7 @@ public abstract class EnchantmentMenuMixin {
         ServerLevel sl = (ServerLevel) sp.level();
         SkillData data = SkillData.get(sl);
 
-        // XP scales with the enchantment's level cost:
-        // Slot 0 (cheap): costs[0] levels → 20 + cost*2 XP
-        // Slot 2 (expensive): costs[2] levels → 20 + cost*2 XP
+        // XP scales with the enchantment's level cost, 20 + cost*2 XP for every slot
         // e.g. a level-30 enchant awards 80 XP
         double xp = 20 + (this.costs[id] * 2.0);
         SkillEvents.awardXp(sp, data, SkillType.ENCHANTING, xp);

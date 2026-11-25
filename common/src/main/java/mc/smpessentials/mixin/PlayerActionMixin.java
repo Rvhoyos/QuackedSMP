@@ -18,7 +18,7 @@ import java.util.UUID;
 // 1. Scout Zoom activation/deactivation via SWAP_ITEM_WITH_OFFHAND (F key).
 // 2. Offhand slot lock while zoom is active to prevent spyglass duplication.
 // 3. Auto-deactivates zoom when the player opens any external container.
-// isSameThread() guard prevents double-firing on netty->server-thread reschedule.
+// isSameThread() guard prevents double-firing on netty to server thread reschedule.
 @Mixin(ServerGamePacketListenerImpl.class)
 public abstract class PlayerActionMixin {
 
@@ -37,7 +37,7 @@ public abstract class PlayerActionMixin {
         UUID uuid = player.getUUID();
 
         if (mc.smpessentials.skills.ActiveAbilities.isZoomActive(uuid)) {
-            // F while zoom is active → deactivate
+            // F while zoom is active deactivates it
             mc.smpessentials.skills.ActiveAbilities.deactivateZoom(uuid, player);
             player.sendSystemMessage(
                     net.minecraft.network.chat.Component.literal("\u00a77Scout Zoom deactivated."), true);
@@ -45,7 +45,7 @@ public abstract class PlayerActionMixin {
             return;
         }
 
-        // Sneak + F with both hands empty → activate
+        // Sneak + F with both hands empty activates it
         if (player.isShiftKeyDown()
                 && player.getMainHandItem().isEmpty()
                 && player.getOffhandItem().isEmpty()) {

@@ -28,16 +28,16 @@ function Lamp({ on }) {
 }
 
 // The public dashboard's identity + status block, set inside a live pixel-art
-// dusk scene. Owns the server name, the one live indicator, uptime/version,
-// and the primary actions. No separate header bar, no duplicate status strip.
+// scene that follows the server's own time of day. Owns the server name, the one
+// live indicator, uptime/version, and the primary actions. No separate header bar,
+// no duplicate status strip.
 export default function Hero({ health, wsStatus, sys, onDownload, onAdmin, downloading }) {
   const live = wsStatus === 'open'
   const uptime = fmtUptime(sys?.uptimeMs)
 
   return (
     <header className={styles.hero}>
-      <WorldScene />
-      <div className={styles.scrim} />
+      <WorldScene dayTime={health?.dayTime} sampledAt={health?.sampledAt} />
 
       <div className={styles.plate}>
         <div className={styles.left}>

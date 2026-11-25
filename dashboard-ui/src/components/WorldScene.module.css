@@ -1,19 +1,41 @@
-/* Decoupled dusk scene: sky fills the header, terrain anchors to the bottom,
-   sky detail (moon/stars/clouds) lives in the upper area. Nothing crops. */
-.scene { position: absolute; inset: 0; overflow: hidden; image-rendering: pixelated; }
+/* Decoupled scene: sky fills the header, terrain anchors to the bottom, sky detail
+   (sun, moon, stars, clouds) lives in the upper area. Nothing crops. Every colour
+   arrives as a custom property from skyCycle.js, so this file owns only layout. */
+.scene {
+  position: absolute; inset: 0; overflow: hidden; image-rendering: pixelated;
+  /* Sun and moon ride an arc measured from the terrain, not from the header, so a
+     taller header cannot leave them floating. The terrain SVG is 130px over 26
+     units and the near ridge sits at 9 to 23 of those, i.e. 45px to 85px up. */
+  --sky-horizon: 60px;
+  --sky-arc: 110px;
+}
 
-/* Banded (hard-stop) dusk gradient = deliberate pixel sky, not a smooth wash. */
+/* Banded (hard-stop) gradient = deliberate pixel sky, not a smooth wash. */
 .sky {
   position: absolute; inset: 0;
   background: linear-gradient(180deg,
-    #12122b 0 14%, #191834 14% 26%, #241f47 26% 38%,
-    #332a55 38% 50%, #4a3358 50% 60%, #6b4460 60% 70%,
-    #98555a 70% 80%, #c8843a 80% 90%, #e6ad6a 90% 100%);
+    var(--sky-0) 0 14%, var(--sky-1) 14% 26%, var(--sky-2) 26% 38%,
+    var(--sky-3) 38% 50%, var(--sky-4) 50% 60%, var(--sky-5) 60% 70%,
+    var(--sky-6) 70% 80%, var(--sky-7) 80% 90%, var(--sky-8) 90% 100%);
 }
 
-.moon { position: absolute; top: 22px; right: 7%; image-rendering: pixelated; filter: drop-shadow(0 0 6px rgba(228,224,240,0.3)); }
+.sun, .moon {
+  position: absolute;
+  transform: translate(-50%, 50%);
+  image-rendering: pixelated;
+}
+.sun {
+  left: calc(50% + var(--sun-x) * 42%);
+  bottom: calc(var(--sky-horizon) + var(--sun-elev) * var(--sky-arc));
+  filter: drop-shadow(0 0 7px rgba(255, 209, 94, 0.45));
+}
+.moon {
+  left: calc(50% + var(--moon-x) * 42%);
+  bottom: calc(var(--sky-horizon) + var(--moon-elev) * var(--sky-arc));
+  filter: drop-shadow(0 0 6px rgba(228, 224, 240, 0.3));
+}
 
-.star { position: absolute; background: #e8e6f2; opacity: 0.6; }
+.star { position: absolute; background: #e8e6f2; opacity: var(--star-op); }
 
 .cloudA, .cloudB { position: absolute; image-rendering: pixelated; }
 .cloudA { top: 30px; animation: driftA 90s linear infinite; }
@@ -28,9 +50,19 @@
   display: block;
 }
 
+/* Bottom scrim guarantees text and button contrast over the scene, so it deepens
+   with the sky: --scrim-a peaks at noon. */
+.scrim {
+  position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(180deg,
+    transparent 42%,
+    rgba(0, 0, 0, calc(var(--scrim-a) * 0.36)) 64%,
+    rgba(0, 0, 0, var(--scrim-a)) 100%);
+}
+
 @media (max-width: 640px) {
+  .scene { --sky-horizon: 44px; --sky-arc: 84px; }
   .terrain { height: 96px; }
-  .moon { top: 16px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .cloudA, .cloudB { animation: none; }

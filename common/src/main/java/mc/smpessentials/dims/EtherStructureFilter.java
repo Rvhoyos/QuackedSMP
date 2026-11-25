@@ -1,7 +1,6 @@
 package mc.smpessentials.dims;
 
 import net.minecraft.core.Holder;
-import net.minecraft.core.SectionPos;
 import net.minecraft.world.level.NoiseColumn;
 import net.minecraft.world.level.StructureManager;
 import net.minecraft.world.level.chunk.ChunkAccess;
@@ -35,15 +34,14 @@ public final class EtherStructureFilter {
 
     public static void discardFloatingStarts(ChunkGenerator generator, ChunkGeneratorStructureState state,
                                              StructureManager structureManager, ChunkAccess centerChunk) {
-        SectionPos sectionPos = SectionPos.bottomOf(centerChunk);
         RandomState randomState = state.randomState();
         for (Holder<StructureSet> setHolder : state.possibleStructureSets()) {
             for (StructureSet.StructureSelectionEntry entry : setHolder.value().structures()) {
                 Structure structure = entry.structure().value();
-                StructureStart start = structureManager.getStartForStructure(sectionPos, structure, centerChunk);
+                StructureStart start = structureManager.getStartForStructure(structure, centerChunk);
                 if (start == null || !start.isValid()) continue;
                 if (hasTerrain(generator, start.getBoundingBox(), centerChunk, randomState)) continue;
-                structureManager.setStartForStructure(sectionPos, structure, StructureStart.INVALID_START, centerChunk);
+                structureManager.setStartForStructure(structure, StructureStart.INVALID_START, centerChunk);
             }
         }
     }

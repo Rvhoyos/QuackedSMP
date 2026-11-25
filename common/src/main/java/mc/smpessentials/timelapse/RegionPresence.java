@@ -5,10 +5,10 @@ package mc.smpessentials.timelapse;
  * table. Owns the table's bit layout and the region-to-world coordinate
  * arithmetic; holds no chunk data.
  */
-record RegionPresence(int regionX, int regionZ, long[] mask) {
+public record RegionPresence(int regionX, int regionZ, long[] mask) {
 
     /** Chunks along one side of a region file. */
-    static final int SIDE = 32;
+    public static final int SIDE = 32;
 
     private static final int CHUNKS = SIDE * SIDE;
     private static final int MASK_LONGS = CHUNKS / Long.SIZE;
@@ -19,7 +19,7 @@ record RegionPresence(int regionX, int regionZ, long[] mask) {
      *
      * @param header the first 4096 bytes of the region file
      */
-    static RegionPresence fromHeader(int regionX, int regionZ, byte[] header) {
+    public static RegionPresence fromHeader(int regionX, int regionZ, byte[] header) {
         long[] mask = new long[MASK_LONGS];
         for (int i = 0; i < CHUNKS; i++) {
             int off = i * 4;
@@ -30,7 +30,7 @@ record RegionPresence(int regionX, int regionZ, long[] mask) {
         return new RegionPresence(regionX, regionZ, mask);
     }
 
-    boolean present(int localX, int localZ) {
+    public boolean present(int localX, int localZ) {
         int i = localZ * SIDE + localX;
         return (mask[i >>> 6] & (1L << (i & 63))) != 0;
     }

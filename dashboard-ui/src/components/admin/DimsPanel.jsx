@@ -261,7 +261,7 @@ export default function DimsPanel({ token, onExpired }) {
             </div>
 
             {isFlatType && (
-              <Field label="Flat layers (block:height, bottom→top)" hint="Blank uses the default layers">
+              <Field label="Flat layers (block:height, bottom to top)" hint="Blank uses the default layers">
                 <Input placeholder="minecraft:bedrock:1  minecraft:stone:6  minecraft:dirt:2  minecraft:grass_block:1" value={flatConfig} onChange={e => setFlatConfig(e.target.value)} spellCheck={false} />
               </Field>
             )}
@@ -426,7 +426,7 @@ export default function DimsPanel({ token, onExpired }) {
         )}
 
         <div className={styles.footHint}>
-          Portal: build a nether-portal-shaped frame (2–21 wide, 3–21 tall) with the portal block, then right-click a frame block with a water bucket.
+          Portal: build a nether-portal-shaped frame (2 to 21 wide, 3 to 21 tall) with the portal block, then right-click a frame block with a water bucket.
         </div>
       </div>
 

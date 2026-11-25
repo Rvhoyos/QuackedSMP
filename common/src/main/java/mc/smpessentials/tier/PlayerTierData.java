@@ -19,7 +19,7 @@ import java.util.*;
 public final class PlayerTierData extends SavedData {
 
     private final Map<UUID, Integer> tiers = new HashMap<>();
-    // Lowercase name -> tier; cleared as each player logs in. Persisted across restarts.
+    // Tier by lowercase name; cleared as each player logs in. Persisted across restarts.
     private final Map<String, Integer> pending = new HashMap<>();
 
     public PlayerTierData() {}

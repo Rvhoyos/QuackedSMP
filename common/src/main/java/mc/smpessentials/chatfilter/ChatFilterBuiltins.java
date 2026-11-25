@@ -1,22 +1,20 @@
 package mc.smpessentials.chatfilter;
 
-import mc.smpessentials.config.ConfigIO;
 import net.minecraft.server.MinecraftServer;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Loads chat filter words and whitelist from quackedsmp.json and merges into
- * SavedData. Also provides hardcoded builtin words so the filter works
- * out of the box without any configuration.
+ * The blocklist and whitelist the filter ships with, and the merge that puts them into SavedData so
+ * the filter works out of the box. Everything else in the lists is added from the panel or
+ * {@code /chatfilter add}, both of which write straight to SavedData.
  */
-public final class ChatFilterConfig {
-    private ChatFilterConfig() {
+public final class ChatFilterBuiltins {
+    private ChatFilterBuiltins() {
     }
 
     /** Hardcoded blocklist; always loaded regardless of configuration. */
-    private static final List<String> BUILTIN_WORDS = List.of(
+    private static final List<String> WORDS = List.of(
             "fuck", "shit", "ass", "bitch", "damn",
             "dick", "cock", "pussy", "cunt", "whore",
             "slut", "bastard", "nigger", "nigga", "nig", "faggot",
@@ -27,7 +25,7 @@ public final class ChatFilterConfig {
     /**
      * Hardcoded whitelist; prevents common false positives (Scunthorpe problem).
      */
-    private static final List<String> BUILTIN_WHITELIST = List.of(
+    private static final List<String> WHITELIST = List.of(
             // -- contains "ass" --
             "assassin", "assault", "assemble", "assert", "assess",
             "asset", "assign", "assist", "associate", "assume",
@@ -80,38 +78,25 @@ public final class ChatFilterConfig {
             "birch", "pitch", "ditch", "witch", "switch",
             "hitch", "snitch", "stitch", "basement");
 
-    public static Result mergeFromConfig(MinecraftServer server) {
+    /**
+     * Merges both lists into the filter's SavedData. Idempotent, so it is safe to call on every
+     * start and on every reload; a builtin an operator deleted from the panel comes back.
+     */
+    public static Result merge(MinecraftServer server) {
         ChatFilterSavedData data = ChatFilter.getData(server);
         int before = data.snapshot().size();
-        List<String> warnings = new ArrayList<>();
 
-        // 1. Always merge hardcoded builtins first
-        for (String word : BUILTIN_WORDS) {
+        for (String word : WORDS) {
             data.add(word);
         }
-        for (String word : BUILTIN_WHITELIST) {
+        for (String word : WHITELIST) {
             data.addWhitelist(word);
         }
 
-        // 2. Then layer JSON config on top, then clear the queue so words aren't re-imported next reload
-        var queue = ConfigIO.readChatFilterQueue();
-        for (String word : queue.contents) {
-            if (word != null && !word.isEmpty()) {
-                data.add(word);
-            }
-        }
-        for (String word : queue.whitelist) {
-            if (word != null && !word.isEmpty()) {
-                data.addWhitelist(word);
-            }
-        }
-        // Clear the import queue in the file now that words are in NBT.
-        ConfigIO.save();
-
         int after = data.snapshot().size();
-        return new Result(Math.max(after - before, 0), after, warnings);
+        return new Result(Math.max(after - before, 0), after);
     }
 
-    public record Result(int added, int total, List<String> warnings) {
+    public record Result(int restored, int total) {
     }
 }

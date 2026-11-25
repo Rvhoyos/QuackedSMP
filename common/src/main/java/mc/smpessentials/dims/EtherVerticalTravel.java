@@ -5,6 +5,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.tags.BlockTags;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.Relative;
@@ -67,8 +68,7 @@ public final class EtherVerticalTravel {
         if (DimManager.isEtherDim(level.dimension().identifier().toString())) {
             if (player.getY() >= level.dimensionTypeRegistration().value().minY()) return;
             dropIntoOverworld(player, level);
-            player.sendSystemMessage(
-                    Component.literal("The void pulls you back to the overworld."), true);
+            sendActionBar(player, "ether.fall_out");
             return;
         }
 
@@ -121,11 +121,16 @@ public final class EtherVerticalTravel {
         if (ether == null) return;
 
         if (riseInto(player, ether)) {
-            player.sendSystemMessage(Component.literal("You break through into the ether."), true);
+            sendActionBar(player, "ether.sky_entry");
         } else if (player.tickCount % REFUSAL_MESSAGE_INTERVAL == 0) {
-            player.sendSystemMessage(
-                    Component.literal("The ether is solid above you here."), true);
+            sendActionBar(player, "ether.sky_refused");
         }
+    }
+
+    // The text lives in the config messages map; a blank entry turns that line off.
+    private static void sendActionBar(ServerPlayer player, String messageKey) {
+        String text = SmpConfig.MESSAGES.get(messageKey);
+        if (text != null && !text.isBlank()) player.sendSystemMessage(Component.literal(text), true);
     }
 
     // Things a player dropped, built, placed, lit, or threw, and nothing carrying a passenger, so a
@@ -227,7 +232,7 @@ public final class EtherVerticalTravel {
 
     private static boolean fits(LevelChunk chunk, BlockPos.MutableBlockPos cursor, int x, int y, int z) {
         for (int dy = 0; dy < ARRIVAL_HEADROOM; dy++) {
-            if (chunk.getBlockState(cursor.set(x, y + dy, z)).blocksMotion()) return false;
+            if (chunk.getBlockState(cursor.set(x, y + dy, z)).is(BlockTags.BLOCKS_MOTION)) return false;
         }
         return true;
     }

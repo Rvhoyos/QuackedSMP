@@ -3,22 +3,40 @@
 
 .group { display: flex; flex-direction: column; gap: 10px; }
 .groupLabel { font-family: var(--font-pixel); font-size: 8px; letter-spacing: 0.5px; color: var(--txt-muted); text-shadow: 1px 1px 0 rgba(0,0,0,0.5); }
-.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: var(--gap-block); }
+/* start, not stretch: an expanded card grows on its own instead of padding out its whole row. */
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); align-items: start; gap: var(--gap-block); }
 
 .card {
-  display: flex; flex-direction: column; gap: 8px; padding: 14px;
+  position: relative;
+  display: flex; flex-direction: column; gap: 8px; padding: 10px 12px;
   background: var(--panel-card);
   border-top: 2px solid #56546a; border-left: 2px solid #56546a; border-bottom: 2px solid #0d0d0d; border-right: 2px solid #0d0d0d;
   transition: border-color var(--t-fast), opacity var(--t-fast);
 }
 .cardOff { opacity: 0.6; }
-.cardOn:hover { border-top-color: var(--mc-wood); border-left-color: var(--mc-wood); }
+.card:hover { border-top-color: var(--mc-wood); border-left-color: var(--mc-wood); }
 
-.cardTop { display: flex; align-items: center; gap: 9px; }
+/* Expand target. Sits under the name and the switch, so those two keep their own jobs. */
+.expand {
+  position: absolute; inset: 0; z-index: 1;
+  padding: 0; background: none; border: none; cursor: pointer;
+}
+.expand:focus-visible { outline: 2px solid var(--mc-wood-light); outline-offset: -2px; }
+
+.head { display: flex; align-items: center; gap: 9px; min-height: 24px; }
+
+.title { display: flex; align-items: center; gap: 9px; flex: 1; min-width: 0; padding: 0; background: none; border: none; text-align: left; }
+/* Only a name that leads somewhere is raised above the expand target. */
+.titleLink { position: relative; z-index: 2; cursor: pointer; }
+.titleLink:hover .name { color: var(--mc-wood-light); }
+.titleLink:focus-visible { outline: 2px solid var(--mc-wood-light); outline-offset: 2px; }
+
 .icon { display: flex; image-rendering: pixelated; flex-shrink: 0; }
-.name { font-family: var(--font-pixel); font-size: 8px; color: var(--txt-primary); text-shadow: 1px 1px 0 rgba(0,0,0,0.5); flex: 1; }
+.name { font-family: var(--font-pixel); font-size: 8px; color: var(--txt-primary); text-shadow: 1px 1px 0 rgba(0,0,0,0.5); }
 
-.desc { font-family: var(--font-sans); font-size: 13.5px; color: var(--txt-secondary); line-height: 1.6; margin: 0; flex: 1; }
+/* The switch is the only thing that ever toggles the feature, so it stays above the expand target. */
+.switch { position: relative; z-index: 2; display: flex; flex-shrink: 0; }
 
-.cardFoot { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 20px; }
+.body { display: flex; flex-direction: column; gap: 6px; }
+.desc { font-family: var(--font-sans); font-size: 13.5px; color: var(--txt-secondary); line-height: 1.6; margin: 0; }
 .restart { font-family: var(--font-sans); font-size: 12.5px; color: var(--yellow); }

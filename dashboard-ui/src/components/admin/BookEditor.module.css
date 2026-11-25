@@ -264,3 +264,6 @@
   border-top: 1px solid var(--mc-stone-dark);
   white-space: pre;
 }
+
+/* The link check reads as a refusal, not as guidance, so it takes the same red as the toasts. */
+.linkError { color: var(--red); }

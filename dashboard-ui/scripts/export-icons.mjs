@@ -27,7 +27,7 @@ const FALLBACK_COLOR = '#cdd6f4'
 // size would put 16px icons on the map. The viewBox keeps them crisp when scaled.
 const EXPORT_SIZE = 64
 
-// Component name to file name: IconShulkerBox -> shulker-box.svg, IconXPOrb -> xp-orb.svg.
+// Component name to file name: IconShulkerBox becomes shulker-box.svg, IconXPOrb becomes xp-orb.svg.
 // The acronym rule matters: without it XPOrb collapses to "xporb", which then silently fails
 // to resolve at runtime.
 function fileNameFor(componentName) {
@@ -70,7 +70,7 @@ try {
     count++
   }
 
-  console.log(`[icons] exported ${count} SVGs -> ${outDir}`)
+  console.log(`[icons] exported ${count} SVGs to ${outDir}`)
 } finally {
   await rm(tmpFile, { force: true })
 }

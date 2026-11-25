@@ -48,7 +48,7 @@ export default function PlayersPanel({ token, onExpired }) {
       else await exec(action === 'kick' ? `kick ${name} ${reason || 'Kicked by admin'}`
                     : action === 'ban'  ? `ban ${name} ${reason || 'Banned by admin'}`
                     : `deop ${name}`, ctx)
-      toast(`${action} → ${name}`)
+      toast(`${action}: ${name}`)
     } catch (e) { if (!e.expired) toast('Action failed', 'danger') }
     setConfirm(null); setReason(''); setOpLevel(4)
     setTimeout(() => refresh({ silent: true }), 400)

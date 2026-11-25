@@ -91,14 +91,14 @@ function PlayersTab({ token, onExpired }) {
 
   async function saveLevel(skill) {
     const level = parseInt(editLevel, 10)
-    if (isNaN(level) || level < 0 || level > 100) { setError('Level must be 0–100'); return }
+    if (isNaN(level) || level < 0 || level > 100) { setError('Level must be 0 to 100'); return }
     setSaving(true)
     try {
       const r = await fetch('/api/admin/skills/set', { method: 'POST', headers: { 'Content-Type': 'application/json', ...auth }, body: JSON.stringify({ uuid: selected.uuid, skill, level }) })
       if (r.status === 401) { onExpired(); return }
       const d = await r.json()
       if (d.error) setError(d.error)
-      else { setPlayerData(prev => ({ ...prev, skills: { ...prev.skills, [skill]: { level: d.level, xp: d.xp } } })); setEditSkill(null); toast(`${SKILL_LABELS[skill]} → ${d.level}`) }
+      else { setPlayerData(prev => ({ ...prev, skills: { ...prev.skills, [skill]: { level: d.level, xp: d.xp } } })); setEditSkill(null); toast(`${SKILL_LABELS[skill]} set to level ${d.level}`) }
     } catch { setError('Failed to save') }
     setSaving(false)
   }
@@ -146,7 +146,7 @@ function PlayersTab({ token, onExpired }) {
                         <Meter value={s.level} max={100} color={s.level >= 100 ? 'var(--mauve)' : 'var(--mc-wood-light)'} />
                         {isEditing ? (
                           <div className={styles.editRow}>
-                            <input className={styles.levelInput} type="number" value={editLevel} onChange={e => setEditLevel(e.target.value)} placeholder="0–100" min="0" max="100" autoFocus />
+                            <input className={styles.levelInput} type="number" value={editLevel} onChange={e => setEditLevel(e.target.value)} placeholder="0-100" min="0" max="100" autoFocus />
                             <Btn size="sm" variant="ok" disabled={saving} onClick={() => saveLevel(skill)}>{saving ? '…' : 'Save'}</Btn>
                             <Btn size="sm" variant="ghost" onClick={() => setEditSkill(null)}>×</Btn>
                           </div>

@@ -8,6 +8,7 @@ import mc.smpessentials.config.SmpConfig;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.GlobalPos;
 import net.minecraft.core.UUIDUtil;
+import net.minecraft.core.Holder;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -19,6 +20,8 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.clock.ClockTimeMarkers;
+import net.minecraft.world.clock.WorldClock;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.GameType;
@@ -73,7 +76,9 @@ public final class HardcoreSavedData extends SavedData {
             HardcoreRun.CODEC.listOf().optionalFieldOf("completed_runs", List.of())
                     .forGetter(d -> List.copyOf(d.completedRuns)),
             Codec.unboundedMap(Codec.STRING, Codec.STRING).optionalFieldOf("known_names", Map.of())
-                    .forGetter(d -> d.knownNamesToStringMap())
+                    .forGetter(d -> d.knownNamesToStringMap()),
+            UUIDUtil.CODEC.listOf().optionalFieldOf("pending_restores", List.of())
+                    .forGetter(d -> List.copyOf(d.pendingRestores))
     ).apply(i, HardcoreSavedData::fromCodec));
 
     public static final SavedDataType<HardcoreSavedData> TYPE = new SavedDataType<>(
@@ -90,6 +95,10 @@ public final class HardcoreSavedData extends SavedData {
     private final List<HardcoreRun> completedRuns = new ArrayList<>();
     // Persisted UUID to last-seen name, so leaderboards can display offline participants.
     private final Map<UUID, String> knownNames = new HashMap<>();
+    // Participants whose session ended while they were dead. Their stash stays in `stashes` and is
+    // applied once they respawn, because a dying player's inventory only survives respawn while the
+    // keep_inventory gamerule is on (ServerPlayer.restoreFrom).
+    private final Set<UUID> pendingRestores = new HashSet<>();
 
     // Transient, not persisted. Tracks the hardcore flag actually sent in each player's login
     // packet, so we can warn when live membership drifts from what the client HUD shows.
@@ -107,7 +116,8 @@ public final class HardcoreSavedData extends SavedData {
                                                 Map<String, CompoundTag> stashMap,
                                                 Map<String, String> playerSessionMap,
                                                 List<HardcoreRun> completedRunList,
-                                                Map<String, String> knownNameMap) {
+                                                Map<String, String> knownNameMap,
+                                                List<UUID> pendingRestoreList) {
         HardcoreSavedData data = new HardcoreSavedData();
         for (SessionData s : sessionList) {
             data.sessions.put(s.name, s);
@@ -116,6 +126,7 @@ public final class HardcoreSavedData extends SavedData {
         playerSessionMap.forEach((k, v) -> data.playerSessions.put(UUID.fromString(k), v));
         data.completedRuns.addAll(completedRunList);
         knownNameMap.forEach((k, v) -> data.knownNames.put(UUID.fromString(k), v));
+        data.pendingRestores.addAll(pendingRestoreList);
         return data;
     }
 
@@ -227,7 +238,18 @@ public final class HardcoreSavedData extends SavedData {
                 List.of(), List.of(), 0, 0, Map.of(), System.currentTimeMillis());
         sessions.put(name, session);
         setDirty();
+        if (SmpConfig.HARDCORE_START_AT_DAY) moveClockToDay(level);
         return null;
+    }
+
+    // Opens the run in daylight so a one life attempt never starts in a night the player cannot
+    // survive. The clock is server wide, so this moves time for everyone online, not just the
+    // session. A dimension with no day cycle has no clock and is left alone.
+    private static void moveClockToDay(ServerLevel level) {
+        Optional<Holder<WorldClock>> clock = level.dimensionTypeRegistration().value().defaultClock();
+        if (clock.isPresent()) {
+            level.getServer().clockManager().moveToTimeMarker(clock.get(), ClockTimeMarkers.DAY);
+        }
     }
 
     public String joinSession(String name, String password, ServerPlayer player) {
@@ -378,6 +400,10 @@ public final class HardcoreSavedData extends SavedData {
 
     // Called after a hardcore player respawns to set them to spectator
     public void onPlayerRespawn(ServerPlayer player) {
+        // Ahead of the session lookup: a session that ended on this player's own death already
+        // cleared their playerSessions entry, so the lookup below would return before restoring.
+        drainPendingRestore(player);
+
         UUID uuid = player.getUUID();
         String sessionName = playerSessions.get(uuid);
         if (sessionName == null) return;
@@ -436,6 +462,10 @@ public final class HardcoreSavedData extends SavedData {
 
     // Called when player reconnects to restore their hardcore state
     public void onPlayerReconnect(ServerPlayer player) {
+        // Covers quitting on the death screen: the respawn hook never fired, and `stashes` is
+        // persisted, so the wait survives a restart too.
+        drainPendingRestore(player);
+
         UUID uuid = player.getUUID();
         String sessionName = playerSessions.get(uuid);
         if (sessionName == null) return;
@@ -508,8 +538,17 @@ public final class HardcoreSavedData extends SavedData {
         for (UUID uuid : allParticipants) {
             ServerPlayer player = server.getPlayerList().getPlayer(uuid);
             if (player != null) {
-                restorePlayerState(player);
-                teleportToSpawn(player);
+                // The death that ends a session runs this while its own player is still dying.
+                // Writing the stash into that player would put it somewhere nothing reads again:
+                // vanilla drops the inventory it finds, and ServerPlayer.restoreFrom only carries
+                // one across respawn while keep_inventory is on. Wait for the new player instead.
+                if (player.isAlive()) {
+                    restorePlayerState(player);
+                    teleportToSpawn(player);
+                } else {
+                    pendingRestores.add(uuid);
+                    setDirty();
+                }
                 player.sendSystemMessage(Component.literal(message));
                 playerSessions.remove(uuid);
                 warnHeartsMismatchIfAny(player);
@@ -618,6 +657,14 @@ public final class HardcoreSavedData extends SavedData {
         return playerSessions.get(uuid);
     }
 
+    // True while the player is still carrying a session's gear: either they are in a session, or
+    // the session ended on their own death and their stash has not been handed back yet. The
+    // second case is why this is not just getPlayerSessionName, since ending a session clears
+    // membership before the death finishes.
+    public boolean holdsSessionGear(UUID uuid) {
+        return playerSessions.containsKey(uuid) || pendingRestores.contains(uuid);
+    }
+
     public Collection<SessionData> allSessions() {
         return Collections.unmodifiableCollection(sessions.values());
     }
@@ -694,6 +741,17 @@ public final class HardcoreSavedData extends SavedData {
     // Restores the player's normal (pre-session) life from the top-level stash.
     private void restorePlayerState(ServerPlayer player) {
         applyStashTag(player, stashes.remove(player.getUUID()));
+    }
+
+    // Hands back a stash that restoreAllParticipants could not apply because the player was mid
+    // death. Stays pending until it has a living player to land on: quitting on the death screen
+    // and rejoining comes back still dead, and the respawn hook is what finishes it.
+    private void drainPendingRestore(ServerPlayer player) {
+        if (!pendingRestores.contains(player.getUUID()) || !player.isAlive()) return;
+        pendingRestores.remove(player.getUUID());
+        restorePlayerState(player);
+        teleportToSpawn(player);
+        setDirty();
     }
 
     // Restores inventory, equipment, game mode, XP, health, food, and respawn point from a stash tag.

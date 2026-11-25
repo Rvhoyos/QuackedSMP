@@ -43,16 +43,20 @@ public final class WelcomeBookHandler {
 
         try {
             JsonObject req = JsonParser.parseString(body).getAsJsonObject();
-            if (req.has("enabled")) {
-                SmpConfig.WELCOME_BOOK_ENABLED = req.get("enabled").getAsBoolean();
-            }
 
+            // Assign nothing until every check has passed. These statics are the live values the
+            // game reads, so a rejected save must leave them alone.
+            Boolean enabled = req.has("enabled") ? req.get("enabled").getAsBoolean() : null;
+
+            JsonObject content = null;
             if (req.has("content") && !req.get("content").isJsonNull()) {
-                JsonObject content = req.getAsJsonObject("content");
+                content = req.getAsJsonObject("content");
                 String problem = describeIfUnreadable(content, server);
                 if (problem != null) return err(400, "Book rejected by the game: " + problem);
-                SmpConfig.WELCOME_BOOK_CONTENT = content;
             }
+
+            if (enabled != null) SmpConfig.WELCOME_BOOK_ENABLED = enabled;
+            if (content != null) SmpConfig.WELCOME_BOOK_CONTENT = content;
 
             ConfigIO.save();
             return "{\"ok\":true}";

@@ -1,0 +1,43 @@
+/* Styles for the markers this mod puts on the map. Installed by MarkerStyles. */
+
+/* BlueMap renders every marker inside a layer that is pointer-events: none, and only a POI's icon
+   element re-enables it, so a link inside a popup cannot be clicked. Hand the events back to the
+   popup, but only while it is open: a closed popup still sits on the map at opacity 0, and would
+   swallow map clicks around every marker. */
+#map-container .bm-marker-html.bm-marker-highlight .bm-marker-poi-label {
+  pointer-events: auto;
+}
+
+#map-container .qs-popup {
+  font-family: sans-serif;
+  line-height: 1.35;
+}
+
+#map-container .qs-popup-title {
+  display: block;
+  font-weight: bold;
+  margin-bottom: 0.6em;
+}
+
+#map-container .qs-button {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.45em 0.8em;
+  border-radius: 0.35em;
+  background: #c4302b;
+  color: #fff;
+  font-weight: bold;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+#map-container .qs-button:hover,
+#map-container .qs-button:focus {
+  background: #e0342e;
+}
+
+#map-container .qs-button:active {
+  transform: translateY(1px);
+}

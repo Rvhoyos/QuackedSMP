@@ -3,11 +3,15 @@ package mc.smpessentials.config;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.mojang.brigadier.StringReader;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
 // GSON POJO for quackedsmp.json. All defaults live here; one place to change them.
 // FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES maps camelCase fields to snake_case JSON keys.
@@ -25,6 +29,15 @@ public final class ConfigData {
     public boolean protectFireClaims = true;
     public boolean protectEnderman = true;
     public boolean protectFarmland = true;
+    // These four shipped before they had a flag, so they default ON: an absent JSON key takes the
+    // field initializer, and false here would switch them off on every server that upgrades.
+    public boolean keepInvEnabled = true;
+    public boolean teleportEnabled = true;
+    // Off blocks creating and deleting dims. Existing dims still load and stay usable.
+    public boolean dimsEnabled = true;
+    // Top-level gate over the whole backup* block below, periodic and public download included.
+    public boolean backupEnabled = true;
+
     // Big features default OFF: this is a modular plugin, operators opt in per feature.
     public boolean claimsEnabled = false;
     public boolean skillsEnabled = false;
@@ -110,7 +123,11 @@ public final class ConfigData {
             Map.entry("tpa.teleporting_requester", "Teleporting {player} in 5 seconds..."),
             Map.entry("tpa.teleporting_to", "Teleported to {player}"),
             Map.entry("tpa.denied", "Teleport request denied by {player}"),
-            Map.entry("tpa.denied_confirm", "Denied the oldest pending request.")));
+            Map.entry("tpa.denied_confirm", "Denied the oldest pending request."),
+            // Ether vertical travel, shown on the action bar. Blank sends nothing.
+            Map.entry("ether.fall_out", ""),
+            Map.entry("ether.sky_entry", ""),
+            Map.entry("ether.sky_refused", "The ether is solid above you here.")));
 
     // Fills in any map entries missing from the file using defaults.
     // Called after GSON deserialization so new keys added in future versions appear automatically.
@@ -120,12 +137,33 @@ public final class ConfigData {
         defaults.skills.cooldowns.forEach(skills.cooldowns::putIfAbsent);
         defaults.skills.abilityUnlockLevels.forEach(skills.abilityUnlockLevels::putIfAbsent);
 
+        if (rtp != null) rtp.profiles = RtpConfig.withoutNulls(rtp.profiles);
+
         // Only reached when a config file already existed, which is exactly when there is
         // something older than the current kit format to bring forward.
-        if (kits != null && kits.kits != null) {
-            for (KitDef kit : kits.kits) {
-                if (kit != null) kit.migrateLegacyStacks();
+        if (kits != null) {
+            kits.kits = KitsConfig.withoutNulls(kits.kits);
+            for (KitDef kit : kits.kits) kit.migrateLegacyStacks();
+            for (String problem : KitsConfig.nameProblems(kits.kits)) {
+                mc.smpessentials.SmpUtilsMod.LOGGER.warn("[Config] {}. /smp kit cannot claim that kit.", problem);
             }
+        }
+    }
+
+    private static <T> List<T> orEmpty(List<T> list) {
+        return list == null ? new ArrayList<>() : list;
+    }
+
+    // Removes null entries in place and reports how many went.
+    private static int dropNulls(List<?> list) {
+        int before = list.size();
+        list.removeIf(java.util.Objects::isNull);
+        return before - list.size();
+    }
+
+    private static void warnDropped(int dropped, String section) {
+        if (dropped > 0) {
+            mc.smpessentials.SmpUtilsMod.LOGGER.warn("[Config] Dropped {} empty entries from {}.", dropped, section);
         }
     }
 
@@ -133,6 +171,9 @@ public final class ConfigData {
     // Percent of peak players that must die to end a session. 100 = ends only when everyone dies.
     public int hardcoreDeathPercent = 100;
     public boolean hardcoreWitheredHearts = true;
+    // Moves the world clock to day when a session is created, so a one-life run never opens in a
+    // night the player cannot survive. The clock is server wide, so this affects everyone online.
+    public boolean hardcoreStartAtDay = true;
     // Optional scoreboard-team identity for session members (nametag/tab color). Off by
     // default: current behavior is unchanged until enabled. The team's color/prefix are edited
     // in the dashboard teams editor; only the name is fixed here.
@@ -200,8 +241,6 @@ public final class ConfigData {
     public DashboardConfig dashboard = new DashboardConfig();
     public DiscordConfig discord = new DiscordConfig();
     public SkillsConfig skills = new SkillsConfig();
-    // Import queue: loaded into NBT on startup/reload, then cleared from the file by ConfigIO.save().
-    public ChatFilterData chatfilter = new ChatFilterData();
     public boolean kitsEnabled = false;
     public Map<String, List<String>> teamAutoAssign = new HashMap<>();
 
@@ -262,6 +301,21 @@ public final class ConfigData {
     // are downsampled (every Nth dropped) so the timelapse degrades in smoothness
     // rather than losing its beginning.
     public int     timelapseMaxFrames       = 0;
+
+    // Chunk pre-generation: generates the area around spawn at startup so players never walk into
+    // terrain the server has to invent on the spot. Off by default (opt-in feature). The run is
+    // blocking, so a server with this on does not accept joins until it finishes.
+    public boolean pregenEnabled = false;
+    public PregenConfig pregen = new PregenConfig();
+
+    /** Which dimensions pre-generate and how far past the spawn protection radius they go. */
+    public static final class PregenConfig {
+        // Blocks beyond the spawn protection radius, in overworld scale. A dimension with a
+        // coordinate scale of its own (the nether's 8) covers the same ground with 1/8 the radius.
+        public int distance = 1000;
+        // Ids not present on the running server are skipped, the same way timelapse treats them.
+        public List<String> dimensions = new ArrayList<>(List.of("minecraft:overworld"));
+    }
 
     public static final class VotifierConfig {
         public boolean enabled = false;
@@ -334,11 +388,6 @@ public final class ConfigData {
         public double safeLanding = 1.0;
     }
 
-    public static final class ChatFilterData {
-        public List<String> contents = new ArrayList<>();
-        public List<String> whitelist = new ArrayList<>();
-    }
-
     public static final class KitsConfig {
         public long cooldownSeconds = 86400;
         public List<KitDef> kits = new ArrayList<>(List.of(
@@ -363,6 +412,43 @@ public final class ConfigData {
                                 new KitItem("minecraft:oak_log", 32),
                                 new KitItem("minecraft:golden_apple", 2),
                                 new KitItem("minecraft:iron_pickaxe", 1))))));
+
+        /**
+         * The kit list with every null entry removed, so nothing the game reads holds a null. Applied
+         * wherever kits come in: the config file on load and the panel's save route.
+         */
+        public static List<KitDef> withoutNulls(List<KitDef> kits) {
+            List<KitDef> out = new ArrayList<>(orEmpty(kits));
+            int dropped = dropNulls(out);
+            for (KitDef kit : out) {
+                if (kit.armor == null) kit.armor = new KitArmor();
+                kit.items = orEmpty(kit.items);
+                dropped += dropNulls(kit.items);
+            }
+            warnDropped(dropped, "kits");
+            return out;
+        }
+
+        /**
+         * One line per kit that /smp kit can never claim: a blank name, a character the command
+         * cannot parse, or a name another kit already uses. The command reads the name as one
+         * Brigadier word and matches it ignoring case, so this mirrors exactly those two rules.
+         */
+        public static List<String> nameProblems(List<KitDef> kits) {
+            List<String> problems = new ArrayList<>();
+            Set<String> seen = new HashSet<>();
+            for (KitDef kit : kits) {
+                String name = kit.name;
+                if (name == null || name.isBlank()) {
+                    problems.add("Every kit needs a name");
+                } else if (!name.chars().allMatch(c -> StringReader.isAllowedInUnquotedString((char) c))) {
+                    problems.add("Kit name '" + name + "' can only use letters, digits and _ - . +");
+                } else if (!seen.add(name.toLowerCase(Locale.ROOT))) {
+                    problems.add("Two kits are named '" + name + "'");
+                }
+            }
+            return problems;
+        }
     }
 
     public static final class KitDef {
@@ -502,6 +588,22 @@ public final class ConfigData {
         public int warmupSeconds = 5;
         public int cooldownSeconds = 300;
         public List<RtpProfile> profiles = new ArrayList<>(List.of(defaultProfile()));
+
+        /**
+         * The profile list with every null entry removed, profiles and their effects and items, so
+         * nothing the game reads holds a null. Applied on load and in the panel's save route.
+         */
+        public static List<RtpProfile> withoutNulls(List<RtpProfile> profiles) {
+            List<RtpProfile> out = new ArrayList<>(orEmpty(profiles));
+            int dropped = dropNulls(out);
+            for (RtpProfile profile : out) {
+                profile.effects = orEmpty(profile.effects);
+                profile.items = orEmpty(profile.items);
+                dropped += dropNulls(profile.effects) + dropNulls(profile.items);
+            }
+            warnDropped(dropped, "rtp");
+            return out;
+        }
 
         // The out-of-the-box overworld profile, which does hand over the guide on arrival.
         private static RtpProfile defaultProfile() {

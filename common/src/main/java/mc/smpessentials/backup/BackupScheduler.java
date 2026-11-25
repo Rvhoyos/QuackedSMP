@@ -75,7 +75,7 @@ public final class BackupScheduler {
     private void tick() {
         try {
             MinecraftServer srv = server;
-            if (srv == null || !SmpConfig.BACKUP_PERIODIC_ENABLED) return;
+            if (srv == null || !SmpConfig.BACKUP_ENABLED || !SmpConfig.BACKUP_PERIODIC_ENABLED) return;
             if (BackupService.get().isRunning())                   return;
 
             int players = srv.getPlayerList().getPlayerCount();

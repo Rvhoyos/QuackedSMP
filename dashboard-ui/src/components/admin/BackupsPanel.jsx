@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import DownloadProgress from '../DownloadProgress'
 import RestoreInfo from '../RestoreInfo'
 import { streamingDownload } from '../../lib/streamingDownload'
+import { fmtSize, fmtDate } from '../../lib/format'
 import { Toolbar, IconButton, Btn, Toggle, Field, Input, SectionCard, EmptyState, ErrorBanner, ConfirmDialog } from '../../ui'
 import { IconShulkerBox } from './MinecraftIcons'
 import styles from './BackupsPanel.module.css'
@@ -242,21 +243,6 @@ export default function BackupsPanel({ token, onExpired }) {
     if (!result.ok && !result.userCancelled) {
       setError(result.error || 'Download failed')
     }
-  }
-
-  function fmtSize(bytes) {
-    if (bytes < 1024) return `${bytes} B`
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
-    if (bytes < 1024 * 1024 * 1024) return `${(bytes / 1024 / 1024).toFixed(1)} MB`
-    return `${(bytes / 1024 / 1024 / 1024).toFixed(2)} GB`
-  }
-
-  function fmtDate(ms) {
-    const d = new Date(ms)
-    return d.toLocaleString(undefined, {
-      year: 'numeric', month: 'short', day: 'numeric',
-      hour: '2-digit', minute: '2-digit',
-    })
   }
 
   const urlErr = panelUrlError(panelUrl)

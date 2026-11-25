@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
-import { streamingDownload } from '../../lib/streamingDownload'
+import { streamingDownload, hasFileSystemAccess } from '../../lib/streamingDownload'
+import DownloadProgress from '../DownloadProgress'
 import { Toolbar, IconButton, Btn, Toggle, Field, Input, SectionCard, EmptyState, ErrorBanner, ConfirmDialog } from '../../ui'
 import { IconMapScroll } from './MinecraftIcons'
 import styles from './TimelapsePanel.module.css'
@@ -13,9 +14,20 @@ function dimLabel(id) {
   return path ? (ns === 'minecraft' ? path : id) : id
 }
 
+// An expired session is answered with 403; 401 only ever comes from the login route.
+function isExpired(res) { return res.status === 401 || res.status === 403 }
+
+// Frames are served cacheable, so <img> can load them straight from the browser
+// cache. The signed per-dimension token stands in for the auth header an <img>
+// cannot send.
+function frameUrl(dim, name, token) {
+  return `/api/admin/timelapse/frame?dim=${encodeURIComponent(dim)}`
+       + `&name=${encodeURIComponent(name)}&t=${encodeURIComponent(token)}`
+}
+
 export default function TimelapsePanel({ token, onExpired }) {
   const [confirmFrame, setConfirmFrame] = useState(null)
-  const [dims,       setDims]       = useState([]) // [{id, sizeBytes, frames(oldest-first)}]
+  const [dims,       setDims]       = useState([]) // [{id, sizeBytes, frameToken, frames(oldest-first)}]
   const [available,  setAvailable]  = useState([]) // all dim ids, the opt-in universe
   const [totalBytes, setTotalBytes] = useState(0)
   const [viewDim,    setViewDim]    = useState('') // dimension currently viewed
@@ -28,17 +40,14 @@ export default function TimelapsePanel({ token, onExpired }) {
   const [idx,      setIdx]      = useState(0)
   const [playing,  setPlaying]  = useState(false)
   const [speed,    setSpeed]    = useState(5)
-  const [srcUrl,   setSrcUrl]   = useState(null)
   const [maxHeap,  setMaxHeap]  = useState(0)   // server -Xmx in bytes, from JVM
   const [progress, setProgress] = useState(null) // live capture progress while running
+  const [exporting,  setExporting]  = useState(false)
+  const [dlProgress, setDlProgress] = useState(null)
 
-  // Editable capture settings, mirrored from /api/admin/config.
-  const [cfg, setCfg] = useState({ dimensions: ['minecraft:overworld'], maxRenderMb: 0, maxSkips: 3, maxFrames: 0 })
-
-  const auth      = { Authorization: `Bearer ${token}` }
-  const blobCache = useRef(new Map())   // "dim|name" -> objectURL
-  const playRef   = useRef(null)
-  const pollRef   = useRef(null)
+  const auth    = { Authorization: `Bearer ${token}` }
+  const pollRef = useRef(null)
+  const playRef = useRef(null)
 
   // Frames of the dimension being viewed (oldest-first); [] until one is selected.
   const dimEntry = dims.find(d => d.id === viewDim) || null
@@ -53,7 +62,7 @@ export default function TimelapsePanel({ token, onExpired }) {
     setError(null)
     try {
       const r = await fetch('/api/admin/timelapse', { headers: auth })
-      if (r.status === 401) { onExpired(); return }
+      if (isExpired(r)) { onExpired(); return }
       const d = await r.json()
       if (d.error) { setError(d.error); return }
       const dimList = Array.isArray(d.dims)
@@ -75,98 +84,29 @@ export default function TimelapsePanel({ token, onExpired }) {
 
   useEffect(() => { loadList() }, [loadList])
 
-  useEffect(() => {
-    fetch('/api/admin/config', { headers: auth })
-      .then(r => r.status === 401 ? null : r.json())
-      .then(d => {
-        if (d && !d.error) setCfg({
-          dimensions:  Array.isArray(d.timelapse_dimensions) ? d.timelapse_dimensions : ['minecraft:overworld'],
-          maxRenderMb: Number.isFinite(d.timelapse_max_render_mb) ? d.timelapse_max_render_mb : 0,
-          maxSkips:    Number.isFinite(d.timelapse_max_skips) ? d.timelapse_max_skips : 3,
-          maxFrames:   Number.isFinite(d.timelapse_max_frames) ? d.timelapse_max_frames : 0,
-        })
-      })
-      .catch(() => {})
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
-
-  async function patchConfig(patch) {
-    try {
-      const r = await fetch('/api/admin/config', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...auth },
-        body: JSON.stringify(patch),
-      })
-      if (r.status === 401) { onExpired(); return false }
-      const d = await r.json()
-      if (d.error) { setError(d.error); return false }
-      return true
-    } catch { setError('Failed to update setting'); return false }
-  }
-
-  async function toggleEnabled(next) {
-    setEnabled(next)
-    if (await patchConfig({ timelapse_enabled: next })) flash(next ? 'Timelapse capture on' : 'Timelapse capture off')
-    else setEnabled(!next)
-  }
-
-  async function saveInterval(mins) {
-    const v = Math.max(1, Number(mins) || 0)
-    setInterval_(v)
-    await patchConfig({ timelapse_interval_minutes: v })
-  }
-
-  async function saveCfgField(key, apiKey, value, min) {
-    const v = min != null ? Math.max(min, Number(value) || 0) : value
-    setCfg(c => ({ ...c, [key]: v }))
-    if (await patchConfig({ [apiKey]: v })) flash('Saved')
-  }
-
-  // Opt a dimension into (or out of) periodic + manual capture.
-  async function toggleCaptureDim(id, on) {
-    const next = on ? [...new Set([...cfg.dimensions, id])] : cfg.dimensions.filter(d => d !== id)
-    setCfg(c => ({ ...c, dimensions: next }))
-    if (await patchConfig({ timelapse_dimensions: next })) flash('Saved')
-    else setCfg(c => ({ ...c, dimensions: cfg.dimensions }))
-  }
-
-  // Free all cached object URLs on unmount.
-  useEffect(() => () => {
-    for (const url of blobCache.current.values()) URL.revokeObjectURL(url)
-    blobCache.current.clear()
-  }, [])
-
   // Reset playback to the start whenever the viewed dimension changes.
   useEffect(() => { setPlaying(false); setIdx(0) }, [viewDim])
 
-  // Keep the frame index inside the viewed dimension's range.
+  // Keep the stored index inside range. The rendered index is clamped separately,
+  // so a dimension with fewer frames never renders against a stale one.
   useEffect(() => { setIdx(i => Math.min(i, Math.max(0, frames.length - 1))) }, [frames.length])
 
-  // Frames need an auth header, which <img src> cannot send, so fetch each as a
-  // blob and hand the <img> an object URL. Cache by dim+name; prefetch the next few.
-  const ensureBlob = useCallback(async (name) => {
-    if (!name || !viewDim) return null
-    const key = `${viewDim}|${name}`
-    const cached = blobCache.current.get(key)
-    if (cached) return cached
-    const r = await fetch(
-      `/api/admin/timelapse/frame?dim=${encodeURIComponent(viewDim)}&name=${encodeURIComponent(name)}`,
-      { headers: auth })
-    if (r.status === 401) { onExpired(); return null }
-    if (!r.ok) return null
-    const url = URL.createObjectURL(await r.blob())
-    blobCache.current.set(key, url)
-    return url
-  }, [viewDim]) // eslint-disable-line react-hooks/exhaustive-deps
+  const safeIdx    = Math.min(idx, Math.max(0, frames.length - 1))
+  const current    = frames[safeIdx]
+  // The server buckets this so it is byte-identical across polls, which keeps the
+  // frame URLs stable and therefore cacheable.
+  const frameToken = dimEntry?.frameToken
+  const srcUrl     = current && frameToken ? frameUrl(viewDim, current.name, frameToken) : null
 
-  // Show the current frame and warm the next few.
+  // Warm the next few frames into the browser cache so playback does not stall.
+  // The cache dedupes by URL, so this cannot produce a duplicate download.
   useEffect(() => {
-    let alive = true
-    const cur = frames[idx]
-    if (!cur) { setSrcUrl(null); return }
-    ensureBlob(cur.name).then(url => { if (alive) setSrcUrl(url) })
-    for (let k = 1; k <= 3; k++) if (frames[idx + k]) ensureBlob(frames[idx + k].name)
-    return () => { alive = false }
-  }, [frames, idx, ensureBlob])
+    if (!frameToken) return
+    for (let k = 1; k <= 3; k++) {
+      const next = frames[safeIdx + k]
+      if (next) new Image().src = frameUrl(viewDim, next.name, frameToken)
+    }
+  }, [frames, safeIdx, viewDim, frameToken])
 
   // Playback: advance frames on a timer, stop at the end.
   useEffect(() => {
@@ -197,7 +137,7 @@ export default function TimelapsePanel({ token, onExpired }) {
     setError(null)
     try {
       const r = await fetch('/api/admin/timelapse/capture', { method: 'POST', headers: auth })
-      if (r.status === 401) { onExpired(); return }
+      if (isExpired(r)) { onExpired(); return }
       const d = await r.json()
       if (d.error) { if (r.status === 409) flash('A capture is already running'); else setError(d.error) }
       else { flash('Capturing frames…'); setRunning(true) }
@@ -207,14 +147,19 @@ export default function TimelapsePanel({ token, onExpired }) {
   // Download via authenticated fetch (a plain <a href> sends no Authorization
   // header, so the export route 403s whenever a dashboard password is set).
   async function exportFrames() {
-    if (frames.length === 0 || !viewDim) return
+    if (frames.length === 0 || !viewDim || exporting) return
     setError(null)
+    setExporting(true)
+    setDlProgress({ received: 0, total: 0, speed: 0, eta: null })
     const result = await streamingDownload({
       url: `/api/admin/timelapse/export?dim=${encodeURIComponent(viewDim)}`,
       filename: `timelapse-${viewDim.replace(':', '_')}.zip`,
       headers: auth,
+      onProgress: setDlProgress,
       allowBlobFallback: true,
     })
+    setExporting(false)
+    setDlProgress(null)
     if (!result.ok && !result.userCancelled) setError(result.error || 'Export failed')
   }
 
@@ -227,16 +172,10 @@ export default function TimelapsePanel({ token, onExpired }) {
         headers: { 'Content-Type': 'application/json', ...auth },
         body: JSON.stringify({ dim: viewDim, name }),
       })
-      if (r.status === 401) { onExpired(); return }
+      if (isExpired(r)) { onExpired(); return }
       const d = await r.json()
       if (d.error) setError(d.error)
-      else {
-        const key = `${viewDim}|${name}`
-        const url = blobCache.current.get(key)
-        if (url) { URL.revokeObjectURL(url); blobCache.current.delete(key) }
-        flash('Frame deleted')
-        loadList()
-      }
+      else { flash('Frame deleted'); loadList() }
     } catch { setError('Delete failed') }
   }
 
@@ -246,62 +185,45 @@ export default function TimelapsePanel({ token, onExpired }) {
     })
   }
 
-  const current = frames[idx]
-
-  // A forced (players-online) capture is bounded by the RAM cap; 0 = auto, which
-  // fits the render to free heap and downsamples only if a capture would not fit.
-  const capBytes = cfg.maxRenderMb > 0 ? cfg.maxRenderMb * 1024 ** 2 : 0
-  const heapPct  = capBytes > 0 && maxHeap > 0 ? capBytes / maxHeap : 0
-  function fmtBytes(b) {
-    if (b >= 1024 ** 3) return `${(b / 1024 ** 3).toFixed(2)} GB`
-    if (b >= 1024 ** 2) return `${Math.round(b / 1024 ** 2)} MB`
-    return `${Math.round(b / 1024)} KB`
-  }
-
   return (
     <div className={styles.wrap}>
       <Toolbar title="Timelapse" count={`${frames.length} frames${totalBytes > 0 ? ` · ${fmtBytes(totalBytes)}` : ''}`}>
         <IconButton tip="Refresh" onClick={() => loadList()} disabled={loading}>↻</IconButton>
-        <Btn size="sm" onClick={exportFrames} disabled={frames.length === 0}>Export .zip</Btn>
+        <Btn size="sm" onClick={exportFrames} disabled={frames.length === 0 || exporting}>
+          {exporting ? 'Exporting…' : 'Export .zip'}
+        </Btn>
         <Btn size="sm" variant="primary" onClick={captureNow} disabled={running}>{running ? 'Capturing…' : 'Capture Now'}</Btn>
       </Toolbar>
 
       <ErrorBanner>{error}</ErrorBanner>
       {status && <div className={styles.status}>{status}</div>}
 
+      {dlProgress && (
+        <div className={styles.exportBar}>
+          <span className={styles.exportLabel}>Exporting {dimLabel(viewDim)}…</span>
+          <DownloadProgress {...dlProgress} />
+          {!hasFileSystemAccess() && (
+            <span className={styles.exportCaveat}>
+              Your browser holds the archive in memory while downloading. Chrome, Edge or Brave
+              stream straight to disk and are better for a large frame set.
+            </span>
+          )}
+        </div>
+      )}
+
       <div className={styles.body}>
-        <SectionCard title="Capture Settings" subtitle="One pixel per block, per selected dimension. Runs when idle; forced after the skip limit.">
-          <div className={styles.toggleRow}>
-            <span className={styles.tLabel}>Automatically capture on a schedule{enabled ? `, every ${interval} min` : ''}</span>
-            <Toggle checked={enabled} onChange={toggleEnabled} aria-label="Auto capture" />
-          </div>
-
-          <Field label="Capture these dimensions">
-            <div className={styles.dimList}>
-              {available.length === 0
-                ? <span className={styles.dimEmpty}>No dimensions reported by the server yet.</span>
-                : available.map(id => (
-                    <label key={id} className={`${styles.dimCheck} ${cfg.dimensions.includes(id) ? styles.dimOn : ''}`}>
-                      <input type="checkbox" checked={cfg.dimensions.includes(id)} onChange={e => toggleCaptureDim(id, e.target.checked)} />
-                      {dimLabel(id)}
-                    </label>
-                  ))}
-            </div>
-          </Field>
-
-          <div className={styles.fieldGrid}>
-            <Field label="Interval (minutes)"><Input type="number" min={1} value={interval} onChange={e => setInterval_(Number(e.target.value))} onBlur={e => saveInterval(e.target.value)} /></Field>
-            <Field label="Max render RAM (MB, 0 = auto)"><Input type="number" min={0} value={cfg.maxRenderMb} onChange={e => setCfg(c => ({ ...c, maxRenderMb: Number(e.target.value) }))} onBlur={e => saveCfgField('maxRenderMb', 'timelapse_max_render_mb', e.target.value, 0)} /></Field>
-            <Field label="Idle skips before forcing (0 = every interval)"><Input type="number" min={0} value={cfg.maxSkips} onChange={e => setCfg(c => ({ ...c, maxSkips: Number(e.target.value) }))} onBlur={e => saveCfgField('maxSkips', 'timelapse_max_skips', e.target.value, 0)} /></Field>
-            <Field label="Max frames (0 = keep all)"><Input type="number" min={0} value={cfg.maxFrames} onChange={e => setCfg(c => ({ ...c, maxFrames: Number(e.target.value) }))} onBlur={e => saveCfgField('maxFrames', 'timelapse_max_frames', e.target.value, 0)} /></Field>
-          </div>
-
-          <div className={styles.memRow}>
-            {capBytes > 0
-              ? <><span className={styles.memValue}>up to {fmtBytes(capBytes)}</span><span className={styles.memLabel}>RAM cap for a forced capture{maxHeap > 0 && ` · ${Math.round(heapPct * 100)}% of server heap (${fmtBytes(maxHeap)})`}</span></>
-              : <span className={styles.memLabel}>Auto: fits each capture to free server RAM, downsampling only if it would not fit.</span>}
-          </div>
-        </SectionCard>
+        <CaptureSettings
+          token={token}
+          onExpired={onExpired}
+          enabled={enabled}
+          interval={interval}
+          available={available}
+          maxHeap={maxHeap}
+          onEnabledChange={setEnabled}
+          onIntervalChange={setInterval_}
+          onError={setError}
+          onFlash={flash}
+        />
 
         {running && <CaptureMap progress={progress} />}
 
@@ -317,24 +239,24 @@ export default function TimelapsePanel({ token, onExpired }) {
               </label>
             }
           >
-            <FrameViewer key={viewDim} src={srcUrl} alt={`Frame ${idx + 1}`} />
+            <FrameViewer key={viewDim} src={srcUrl} alt={`Frame ${safeIdx + 1}`} />
 
             <div className={styles.timestamp}>
               {current && (
                 <>
-                  <span>{fmtDate(current.capturedAt)} · frame {idx + 1} / {frames.length}</span>
+                  <span>{fmtDate(current.capturedAt)} · frame {safeIdx + 1} / {frames.length}</span>
                   {(() => { const b = resBadge(current.blocksPerPixel); return <span className={b.full ? styles.badgeFull : styles.badgeDown}>{b.text}</span> })()}
                   {dimEntry && <span className={styles.viewSize}>{fmtBytes(dimEntry.sizeBytes)} this dim</span>}
                 </>
               )}
             </div>
 
-            <input className={styles.scrub} type="range" min={0} max={Math.max(0, frames.length - 1)} value={idx} onChange={e => { setPlaying(false); setIdx(Number(e.target.value)) }} />
+            <input className={styles.scrub} type="range" min={0} max={Math.max(0, frames.length - 1)} value={safeIdx} onChange={e => { setPlaying(false); setIdx(Number(e.target.value)) }} />
 
             <div className={styles.controls}>
               <Btn size="sm" variant="ghost" onClick={() => { setPlaying(false); setIdx(0) }}>⏮</Btn>
               <Btn size="sm" variant="ghost" onClick={() => { setPlaying(false); setIdx(i => Math.max(0, i - 1)) }}>◀</Btn>
-              <Btn size="sm" variant="primary" onClick={() => { if (idx >= frames.length - 1) setIdx(0); setPlaying(p => !p) }}>{playing ? '⏸ Pause' : '▶ Play'}</Btn>
+              <Btn size="sm" variant="primary" onClick={() => { if (safeIdx >= frames.length - 1) setIdx(0); setPlaying(p => !p) }}>{playing ? '⏸ Pause' : '▶ Play'}</Btn>
               <Btn size="sm" variant="ghost" onClick={() => { setPlaying(false); setIdx(i => Math.min(frames.length - 1, i + 1)) }}>▶</Btn>
               <Btn size="sm" variant="ghost" onClick={() => { setPlaying(false); setIdx(frames.length - 1) }}>⏭</Btn>
               <label className={styles.speed}><span>Speed</span><select value={speed} onChange={e => setSpeed(Number(e.target.value))}>{SPEEDS.map(s => <option key={s} value={s}>{s} fps</option>)}</select></label>
@@ -353,6 +275,115 @@ export default function TimelapsePanel({ token, onExpired }) {
         onConfirm={() => deleteFrame(confirmFrame)}
       />
     </div>
+  )
+}
+
+function fmtBytes(b) {
+  if (b >= 1024 ** 3) return `${(b / 1024 ** 3).toFixed(2)} GB`
+  if (b >= 1024 ** 2) return `${Math.round(b / 1024 ** 2)} MB`
+  return `${Math.round(b / 1024)} KB`
+}
+
+// Everything that writes to /api/admin/config. Kept apart from playback: the two
+// share no state, and a new capture setting should not mean editing the viewer.
+function CaptureSettings({ token, onExpired, enabled, interval, available, maxHeap,
+                           onEnabledChange, onIntervalChange, onError, onFlash }) {
+  const [cfg, setCfg] = useState({ dimensions: ['minecraft:overworld'], maxRenderMb: 0, maxSkips: 3, maxFrames: 0 })
+  const auth = { Authorization: `Bearer ${token}` }
+
+  useEffect(() => {
+    fetch('/api/admin/config', { headers: auth })
+      .then(r => isExpired(r) ? null : r.json())
+      .then(d => {
+        if (d && !d.error) setCfg({
+          dimensions:  Array.isArray(d.timelapse_dimensions) ? d.timelapse_dimensions : ['minecraft:overworld'],
+          maxRenderMb: Number.isFinite(d.timelapse_max_render_mb) ? d.timelapse_max_render_mb : 0,
+          maxSkips:    Number.isFinite(d.timelapse_max_skips) ? d.timelapse_max_skips : 3,
+          maxFrames:   Number.isFinite(d.timelapse_max_frames) ? d.timelapse_max_frames : 0,
+        })
+      })
+      .catch(() => {})
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  async function patchConfig(patch) {
+    try {
+      const r = await fetch('/api/admin/config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...auth },
+        body: JSON.stringify(patch),
+      })
+      if (isExpired(r)) { onExpired(); return false }
+      const d = await r.json()
+      if (d.error) { onError(d.error); return false }
+      return true
+    } catch { onError('Failed to update setting'); return false }
+  }
+
+  async function toggleEnabled(next) {
+    onEnabledChange(next)
+    if (await patchConfig({ timelapse_enabled: next })) onFlash(next ? 'Timelapse capture on' : 'Timelapse capture off')
+    else onEnabledChange(!next)
+  }
+
+  async function saveInterval(mins) {
+    const v = Math.max(1, Number(mins) || 0)
+    onIntervalChange(v)
+    await patchConfig({ timelapse_interval_minutes: v })
+  }
+
+  async function saveCfgField(key, apiKey, value, min) {
+    const v = min != null ? Math.max(min, Number(value) || 0) : value
+    setCfg(c => ({ ...c, [key]: v }))
+    if (await patchConfig({ [apiKey]: v })) onFlash('Saved')
+  }
+
+  // Opt a dimension into (or out of) periodic + manual capture.
+  async function toggleCaptureDim(id, on) {
+    const next = on ? [...new Set([...cfg.dimensions, id])] : cfg.dimensions.filter(d => d !== id)
+    setCfg(c => ({ ...c, dimensions: next }))
+    if (!await patchConfig({ timelapse_dimensions: next })) setCfg(c => ({ ...c, dimensions: cfg.dimensions }))
+    else onFlash('Saved')
+  }
+
+  // A forced (players-online) capture is bounded by the RAM cap; 0 = auto, which
+  // fits the render to free heap and downsamples only if a capture would not fit.
+  const capBytes = cfg.maxRenderMb > 0 ? cfg.maxRenderMb * 1024 ** 2 : 0
+  const heapPct  = capBytes > 0 && maxHeap > 0 ? capBytes / maxHeap : 0
+
+  return (
+    <SectionCard title="Capture Settings" subtitle="One pixel per block, per selected dimension. Runs when idle, forced after the skip limit.">
+      <div className={styles.toggleRow}>
+        {/* This is the feature flag: off stops manual captures and /smp timelapse too. */}
+        <span className={styles.tLabel}>Timelapse capture{enabled ? `, automatically every ${interval} min` : ', off entirely'}</span>
+        <Toggle checked={enabled} onChange={toggleEnabled} aria-label="Timelapse capture" />
+      </div>
+
+      <Field label="Capture these dimensions">
+        <div className={styles.dimList}>
+          {available.length === 0
+            ? <span className={styles.dimEmpty}>No dimensions reported by the server yet.</span>
+            : available.map(id => (
+                <label key={id} className={`${styles.dimCheck} ${cfg.dimensions.includes(id) ? styles.dimOn : ''}`}>
+                  <input type="checkbox" checked={cfg.dimensions.includes(id)} onChange={e => toggleCaptureDim(id, e.target.checked)} />
+                  {dimLabel(id)}
+                </label>
+              ))}
+        </div>
+      </Field>
+
+      <div className={styles.fieldGrid}>
+        <Field label="Interval (minutes)"><Input type="number" min={1} value={interval} onChange={e => onIntervalChange(Number(e.target.value))} onBlur={e => saveInterval(e.target.value)} /></Field>
+        <Field label="Max render RAM (MB, 0 = auto)"><Input type="number" min={0} value={cfg.maxRenderMb} onChange={e => setCfg(c => ({ ...c, maxRenderMb: Number(e.target.value) }))} onBlur={e => saveCfgField('maxRenderMb', 'timelapse_max_render_mb', e.target.value, 0)} /></Field>
+        <Field label="Idle skips before forcing (0 = every interval)"><Input type="number" min={0} value={cfg.maxSkips} onChange={e => setCfg(c => ({ ...c, maxSkips: Number(e.target.value) }))} onBlur={e => saveCfgField('maxSkips', 'timelapse_max_skips', e.target.value, 0)} /></Field>
+        <Field label="Max frames (0 = keep all)"><Input type="number" min={0} value={cfg.maxFrames} onChange={e => setCfg(c => ({ ...c, maxFrames: Number(e.target.value) }))} onBlur={e => saveCfgField('maxFrames', 'timelapse_max_frames', e.target.value, 0)} /></Field>
+      </div>
+
+      <div className={styles.memRow}>
+        {capBytes > 0
+          ? <><span className={styles.memValue}>up to {fmtBytes(capBytes)}</span><span className={styles.memLabel}>RAM cap for a forced capture{maxHeap > 0 && ` · ${Math.round(heapPct * 100)}% of server heap (${fmtBytes(maxHeap)})`}</span></>
+          : <span className={styles.memLabel}>Auto: fits each capture to free server RAM, downsampling only if it would not fit.</span>}
+      </div>
+    </SectionCard>
   )
 }
 

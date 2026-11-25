@@ -10,14 +10,14 @@ import java.util.List;
 import java.util.Map;
 
 // Assigns players to scoreboard teams based on which dimension they are in.
-// Config: SmpConfig.TEAM_AUTO_ASSIGN (team name -> list of dimension resource IDs).
+// Config: SmpConfig.TEAM_AUTO_ASSIGN (dimension resource IDs per team name).
 public final class TeamAutoAssign {
     private TeamAutoAssign() {}
 
-    // dim resource ID (e.g. "minecraft:overworld") -> team name
+    // dim resource ID (e.g. "minecraft:overworld") to team name
     private static volatile Map<String, String> reverseMap = Map.of();
 
-    // Rebuilds the dim->team reverse lookup from config. Call on load/reload.
+    // Rebuilds the dim to team reverse lookup from config. Call on load/reload.
     public static void buildReverseMap() {
         Map<String, String> map = new HashMap<>();
         for (var entry : SmpConfig.TEAM_AUTO_ASSIGN.entrySet()) {

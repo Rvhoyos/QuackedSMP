@@ -14,7 +14,7 @@ import java.util.stream.Collectors;
 
 /** Owner-wide whitelist (applies to ALL of an owner's claims). */
 public final class WhitelistSavedData extends SavedData {
-    private final Map<UUID, Set<UUID>> byOwner; // owner -> trusted set
+    private final Map<UUID, Set<UUID>> byOwner; // trusted players, keyed by owner
 
     public static final Codec<WhitelistSavedData> CODEC = RecordCodecBuilder.create(i -> i.group(
             Codec.list(Entry.CODEC).fieldOf("entries").forGetter(s -> s.byOwner.entrySet().stream()

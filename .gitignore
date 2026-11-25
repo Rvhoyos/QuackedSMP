@@ -1,39 +1,30 @@
-# --- Gradle & Java build output ---
 **/build/
 **/out/
 **/bin/
 .gradle/
 .gradle-vscode/
 
-# --- Dev runtime & logs (Minecraft) ---
 **/run/
 **/runs/
 **/logs/
 **/crash-reports/
 **/.architectury-transformer/
 
-# --- IDE project files ---
 .idea/
 **/.eclipse/
 *.iml
 .vscode/*
 !.vscode/tasks.json
 
-# --- OS cruft (harmless to ignore anywhere) ---
 **/.DS_Store
 **/Thumbs.db
 
-# --- Dashboard UI ---
 dashboard-ui/node_modules/
 dashboard-ui/dist/
 
-# --- Planning / scratch docs (not release artifacts) ---
 docs/*
-# except assets the README links to
 !docs/tutorial-thumbnail.png
 
-# --- Root-level build artifact (fabric/neoforge META-INF are legitimate) ---
 /META-INF/
 
-# --- Stray extracted vanilla .class files (use javap for inspection, don't commit) ---
 /net/

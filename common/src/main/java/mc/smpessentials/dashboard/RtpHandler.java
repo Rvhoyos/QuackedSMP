@@ -7,7 +7,6 @@ import mc.smpessentials.config.ConfigIO;
 import mc.smpessentials.config.SmpConfig;
 import net.minecraft.server.MinecraftServer;
 
-import java.util.ArrayList;
 import java.util.Map;
 
 import static mc.smpessentials.dashboard.AdminHandler.err;
@@ -41,20 +40,23 @@ public final class RtpHandler {
 
         try {
             JsonObject req = JsonParser.parseString(body).getAsJsonObject();
-            if (req.has("enabled")) {
-                SmpConfig.RTP_ENABLED = req.get("enabled").getAsBoolean();
-            }
+
+            // Assign nothing until every check has passed. These statics are the live values the
+            // game reads, so a rejected save must leave them alone.
+            Boolean enabled = req.has("enabled") ? req.get("enabled").getAsBoolean() : null;
 
             ConfigData.RtpConfig config =
                     ConfigIO.gson().fromJson(req.get("config"), ConfigData.RtpConfig.class);
             if (config == null) return err(400, "Missing config");
+            config.profiles = ConfigData.RtpConfig.withoutNulls(config.profiles);
 
             String badItem = firstUnreadableItem(config, server);
             if (badItem != null) return err(400, "Item rejected by the game: " + badItem);
 
+            if (enabled != null) SmpConfig.RTP_ENABLED = enabled;
             SmpConfig.RTP_WARMUP_SECONDS = Math.max(0, config.warmupSeconds);
             SmpConfig.RTP_COOLDOWN_SECONDS = Math.max(0, config.cooldownSeconds);
-            SmpConfig.RTP_PROFILES = config.profiles != null ? config.profiles : new ArrayList<>();
+            SmpConfig.RTP_PROFILES = config.profiles;
 
             ConfigIO.save();
             return "{\"ok\":true}";
@@ -69,11 +71,8 @@ public final class RtpHandler {
      * something that only fails later, silently, when a player lands.
      */
     private static String firstUnreadableItem(ConfigData.RtpConfig config, MinecraftServer server) {
-        if (config.profiles == null) return null;
         for (ConfigData.RtpProfile profile : config.profiles) {
-            if (profile == null || profile.items == null) continue;
             for (ConfigData.RtpItem item : profile.items) {
-                if (item == null) continue;
                 String problem = ItemHandler.describeIfUnreadable(item.stack, server);
                 if (problem != null) return profile.dimension + ": " + problem;
             }

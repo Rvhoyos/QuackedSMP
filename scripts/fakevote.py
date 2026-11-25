@@ -62,7 +62,7 @@ def send_vote(token: str, username: str, host: str, port: int) -> None:
     if '"ok"' in response:
         print(f"Vote accepted for {username}!")
     else:
-        print("Vote rejected — check token or server logs.")
+        print("Vote rejected, check token or server logs.")
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:

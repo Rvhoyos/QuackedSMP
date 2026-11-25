@@ -1,10 +1,19 @@
+import { memo } from 'react'
+import useServerDayTime from './useServerDayTime'
+import { skyAt, FALLBACK_TICK } from './skyCycle'
 import styles from './WorldScene.module.css'
 
-// A hand-drawn pixel-art dusk scene behind the World Header. Decoupled layers
-// so nothing crops at any header width:
-//   - sky   : a banded (hard-stop) dusk gradient filling the whole header
-//   - moon / stars / clouds : positioned in the upper sky, always visible
+// A hand-drawn pixel-art scene behind the World Header, painted at the server's own
+// time of day. Decoupled layers so nothing crops at any header width:
+//   - sky     : a banded (hard-stop) gradient filling the whole header
+//   - sun/moon: one arc, 180 degrees apart, sinking behind the hills at each end
+//   - stars / clouds : positioned in the upper sky, always visible
 //   - terrain : a wide, short SVG anchored to the bottom (hills never crop)
+//   - scrim   : the bottom fade that keeps the header text readable over any sky
+//
+// Every colour reaches the layers as a CSS custom property set on the root, so the
+// terrain, stars and clouds are built once and only the root re-renders as the
+// clock moves. See skyCycle.js for where the palette comes from.
 
 // Terrain is a very wide, short viewBox so slice-to-fill never cuts the hills.
 const TW = 320
@@ -50,20 +59,84 @@ const stars = [
 ]
 
 // A blocky pixel cloud.
-function Cloud({ className }) {
+const Cloud = memo(function Cloud({ className }) {
   return (
     <svg className={className} viewBox="0 0 32 14" width={72} height={31} shapeRendering="crispEdges" aria-hidden="true">
-      <rect x="4" y="4" width="20" height="4" fill="#d8b6c0" opacity="0.5" />
-      <rect x="0" y="8" width="30" height="4" fill="#d8b6c0" opacity="0.5" />
-      <rect x="8" y="0" width="12" height="4" fill="#e6c8b0" opacity="0.5" />
+      <rect x="4" y="4" width="20" height="4" fill="var(--cloud-a)" opacity="0.5" />
+      <rect x="0" y="8" width="30" height="4" fill="var(--cloud-a)" opacity="0.5" />
+      <rect x="8" y="0" width="12" height="4" fill="var(--cloud-b)" opacity="0.5" />
     </svg>
   )
-}
+})
 
-export default function WorldScene() {
+const Stars = memo(function Stars() {
   return (
-    <div className={styles.scene} aria-hidden="true">
+    <>
+      {stars.map(([l, t, s], i) => (
+        <span key={i} className={styles.star} style={{ left: l, top: t, width: s, height: s }} />
+      ))}
+    </>
+  )
+})
+
+const Terrain = memo(function Terrain() {
+  return (
+    <svg className={styles.terrain} viewBox={`0 0 ${TW} ${TH}`} preserveAspectRatio="xMidYMax slice" shapeRendering="crispEdges">
+      {farHill.map((c, i) => (
+        <rect key={`f${i}`} x={c.x} y={c.top} width={COL} height={TH - c.top} fill="var(--far-hill)" />
+      ))}
+      {nearHill.map((c, i) => (
+        <g key={`n${i}`}>
+          <rect x={c.x} y={c.top} width={COL} height={TH - c.top} fill="var(--near-hill)" />
+          <rect x={c.x} y={c.top} width={COL} height={1.5} fill="var(--grass)" />
+        </g>
+      ))}
+      {trees.map((t, i) => <rect key={`t${i}`} {...t} fill="var(--tree)" />)}
+      <rect x={lanternX - 2} y={lanternY - 2} width={5} height={5} fill="#ffcf6a" style={{ opacity: 'var(--glow)' }} />
+      <rect x={lanternX} y={lanternY} width={2} height={2} fill="#ffd77a" />
+    </svg>
+  )
+})
+
+export default function WorldScene({ dayTime, sampledAt }) {
+  const tick = useServerDayTime(dayTime, sampledAt)
+  const sky  = skyAt(tick ?? FALLBACK_TICK)
+
+  const sceneVars = {
+    '--far-hill': sky.farHill,
+    '--near-hill': sky.nearHill,
+    '--grass': sky.grass,
+    '--tree': sky.tree,
+    '--cloud-a': sky.cloudA,
+    '--cloud-b': sky.cloudB,
+    '--star-op': sky.starOpacity,
+    '--glow': sky.glow,
+    '--scrim-a': sky.scrim,
+    '--sun-x': sky.sunX,
+    '--sun-elev': sky.sunElev,
+    '--moon-x': sky.moonX,
+    '--moon-elev': sky.moonElev,
+  }
+  sky.bands.forEach((c, i) => { sceneVars[`--sky-${i}`] = c })
+
+  return (
+    <div className={styles.scene} style={sceneVars} aria-hidden="true">
       <div className={styles.sky} />
+
+      {/* Sun */}
+      <svg className={styles.sun} viewBox="0 0 16 16" width={26} height={26} shapeRendering="crispEdges">
+        <rect x="7" y="0" width="2" height="3" fill="#ffd95e" />
+        <rect x="7" y="13" width="2" height="3" fill="#ffd95e" />
+        <rect x="0" y="7" width="3" height="2" fill="#ffd95e" />
+        <rect x="13" y="7" width="3" height="2" fill="#ffd95e" />
+        <rect x="3" y="3" width="2" height="2" fill="#ffd95e" />
+        <rect x="11" y="3" width="2" height="2" fill="#ffd95e" />
+        <rect x="3" y="11" width="2" height="2" fill="#ffd95e" />
+        <rect x="11" y="11" width="2" height="2" fill="#ffd95e" />
+        <rect x="4" y="4" width="8" height="8" fill="#ffbe3d" />
+        <rect x="5" y="5" width="6" height="6" fill="#ffe58a" />
+        <rect x="6" y="6" width="3" height="3" fill="#fff6cf" />
+      </svg>
 
       {/* Moon */}
       <svg className={styles.moon} viewBox="0 0 16 16" width={26} height={26} shapeRendering="crispEdges">
@@ -74,30 +147,14 @@ export default function WorldScene() {
         <rect x="10" y="9" width="2" height="2" fill="#c7c2da" />
       </svg>
 
-      {/* Stars */}
-      {stars.map(([l, t, s], i) => (
-        <span key={i} className={styles.star} style={{ left: l, top: t, width: s, height: s }} />
-      ))}
+      <Stars />
 
-      {/* Clouds */}
       <Cloud className={styles.cloudA} />
       <Cloud className={styles.cloudB} />
 
-      {/* Terrain */}
-      <svg className={styles.terrain} viewBox={`0 0 ${TW} ${TH}`} preserveAspectRatio="xMidYMax slice" shapeRendering="crispEdges">
-        {farHill.map((c, i) => (
-          <rect key={`f${i}`} x={c.x} y={c.top} width={COL} height={TH - c.top} fill="#2f3a4a" />
-        ))}
-        {nearHill.map((c, i) => (
-          <g key={`n${i}`}>
-            <rect x={c.x} y={c.top} width={COL} height={TH - c.top} fill="#33562f" />
-            <rect x={c.x} y={c.top} width={COL} height={1.5} fill="#5a9c46" />
-          </g>
-        ))}
-        {trees.map((t, i) => <rect key={`t${i}`} {...t} fill="#1e3019" />)}
-        <rect x={lanternX - 2} y={lanternY - 2} width={5} height={5} fill="#ffcf6a" opacity={0.22} />
-        <rect x={lanternX} y={lanternY} width={2} height={2} fill="#ffd77a" />
-      </svg>
+      <Terrain />
+
+      <div className={styles.scrim} />
     </div>
   )
 }

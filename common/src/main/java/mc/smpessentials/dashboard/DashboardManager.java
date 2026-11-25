@@ -116,9 +116,14 @@ public final class DashboardManager {
             int     online        = mcServer != null ? mcServer.getPlayerList().getPlayerCount() : 0;
             boolean adminOn       = SmpConfig.ADMIN_ENABLED;
             boolean hasPassword   = !SmpConfig.ADMIN_PASSWORD_HASH.isBlank();
-            boolean publicBackup  = SmpConfig.BACKUP_PUBLIC_DOWNLOAD;
+            boolean publicBackup  = SmpConfig.backupPublicAvailable();
             String  serverName    = SmpConfig.SERVER_NAME;
             String version = mc.smpessentials.SmpUtilsMod.VERSION;
+            // Overworld day time, 0 to 23999. The public header paints its sky from it.
+            // -1 means the levels are not loaded yet, which the panel reads as unknown.
+            long dayTime = (mcServer != null && mcServer.overworld() != null)
+                    ? mcServer.overworld().getOverworldClockTime() % 24000L
+                    : -1L;
             // Restore info rides along only when public download is on. The seed is included
             // only when the owner also opts into disclosure; otherwise it stays admin-only.
             String restore = "";
@@ -129,8 +134,8 @@ public final class DashboardManager {
                 }
             }
             return String.format(
-                    "{\"status\":\"ok\",\"online\":%d,\"adminEnabled\":%b,\"hasPassword\":%b,\"backupPublicEnabled\":%b,\"serverName\":\"%s\",\"version\":\"%s\"%s}",
-                    online, adminOn, hasPassword, publicBackup, jsonEscape(serverName), jsonEscape(version), restore);
+                    "{\"status\":\"ok\",\"online\":%d,\"adminEnabled\":%b,\"hasPassword\":%b,\"backupPublicEnabled\":%b,\"serverName\":\"%s\",\"version\":\"%s\",\"dayTime\":%d%s}",
+                    online, adminOn, hasPassword, publicBackup, jsonEscape(serverName), jsonEscape(version), dayTime, restore);
         });
         s.addRoute("/api/metrics", () -> {
             Runtime rt       = Runtime.getRuntime();
@@ -182,7 +187,7 @@ public final class DashboardManager {
         s.addRoute("/api/admin/config",
                 (m, h, b) -> "GET".equals(m)
                         ? AdminHandler.handleConfigGet(m, h, b, mcServer)
-                        : AdminHandler.handleConfigPost(m, h, b));
+                        : AdminHandler.handleConfigPost(m, h, b, mcServer));
         s.addRoute("/api/admin/setop",
                 (m, h, b) -> AdminHandler.handleSetOp(m, h, b, mcServer));
         s.addRoute("/api/admin/players/settier",
@@ -310,7 +315,9 @@ public final class DashboardManager {
         s.addDownloadRoute("/api/admin/backups/download",
                 BackupHandler::handleDownload);
 
-        // Public latest-snapshot download (gated by BACKUP_PUBLIC_DOWNLOAD)
+        // Public latest-snapshot name and download (both gated by backupPublicAvailable)
+        s.addRoute("/api/backups/latest",
+                BackupHandler::handleLatestInfo);
         s.addDownloadRoute("/api/backups/latest/download",
                 (m, h) -> BackupHandler.handleLatestPublic(m, h, mcServer));
 
@@ -325,6 +332,14 @@ public final class DashboardManager {
                 TimelapseHandler::handleFrame);
         s.addDownloadRoute("/api/admin/timelapse/export",
                 TimelapseHandler::handleExport);
+
+        // Chunk pre-generation
+        s.addRoute("/api/admin/pregen",
+                (m, h, b) -> PregenHandler.handleGet(m, h, b, mcServer));
+        s.addRoute("/api/admin/pregen/save",
+                (m, h, b) -> PregenHandler.handleSave(m, h, b, mcServer));
+        s.addRoute("/api/admin/pregen/preview",
+                (m, h, b) -> PregenHandler.handlePreview(m, h, b, mcServer));
 
         s.addRoute("/api/admin/rtp",
                 (m, h, b) -> RtpHandler.handleGet(m, h, b, mcServer));
